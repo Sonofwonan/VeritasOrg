@@ -1,16 +1,61 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
+
 import NotFound from "@/pages/not-found";
+import AuthPage from "@/pages/auth-page";
+import DashboardPage from "@/pages/dashboard";
+import AccountsPage from "@/pages/accounts-page";
+import InvestmentsPage from "@/pages/investments-page";
+import TransfersPage from "@/pages/transfers-page";
+
+function ProtectedRoute({ component: Component, ...rest }: any) {
+  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setLocation("/auth");
+    }
+  }, [user, isLoading, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  return <Component {...rest} />;
+}
 
 function Router() {
   return (
     <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
-      {/* Fallback to 404 */}
+      <Route path="/auth" component={AuthPage} />
+      
+      {/* Protected Routes */}
+      <Route path="/">
+        {() => <ProtectedRoute component={DashboardPage} />}
+      </Route>
+      <Route path="/accounts">
+        {() => <ProtectedRoute component={AccountsPage} />}
+      </Route>
+      <Route path="/investments">
+        {() => <ProtectedRoute component={InvestmentsPage} />}
+      </Route>
+      <Route path="/transfers">
+        {() => <ProtectedRoute component={TransfersPage} />}
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );

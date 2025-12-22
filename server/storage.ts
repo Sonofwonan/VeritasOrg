@@ -1,38 +1,196 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import { eq, sql } from "drizzle-orm";
+import {
+  users, accounts, transactions, investments,
+  type User, type InsertUser, type Account, type InsertAccount,
+  type Transaction, type InsertTransaction, type Investment, type InsertInvestment
+} from "@shared/schema";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  // Users
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+
+  // Accounts
+  getAccounts(userId: number): Promise<Account[]>;
+  getAccount(id: number): Promise<Account | undefined>;
+  createAccount(account: InsertAccount): Promise<Account>;
+  
+  // Investments
+  getInvestments(accountId: number): Promise<Investment[]>;
+  
+  // Transactions (Atomic Operations)
+  transferFunds(fromAccountId: number, toAccountId: number, amount: string): Promise<Transaction>;
+  buyAsset(accountId: number, symbol: string, amount: string, price: number): Promise<Investment>;
+  sellAsset(accountId: number, symbol: string, shares: string, price: number): Promise<Investment>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async getAccounts(userId: number): Promise<Account[]> {
+    return await db.select().from(accounts).where(eq(accounts.userId, userId));
+  }
+
+  async getAccount(id: number): Promise<Account | undefined> {
+    const [account] = await db.select().from(accounts).where(eq(accounts.id, id));
+    return account;
+  }
+
+  async createAccount(insertAccount: InsertAccount): Promise<Account> {
+    const [account] = await db.insert(accounts).values(insertAccount).returning();
+    return account;
+  }
+
+  async getInvestments(accountId: number): Promise<Investment[]> {
+    return await db.select().from(investments).where(eq(investments.accountId, accountId));
+  }
+
+  async transferFunds(fromAccountId: number, toAccountId: number, amount: string): Promise<Transaction> {
+    return await db.transaction(async (tx) => {
+      // 1. Deduct from sender
+      const [fromAccount] = await tx.select().from(accounts).where(eq(accounts.id, fromAccountId));
+      if (!fromAccount) throw new Error("Source account not found");
+      if (Number(fromAccount.balance) < Number(amount)) throw new Error("Insufficient funds");
+
+      await tx.update(accounts)
+        .set({ balance: sql`${accounts.balance} - ${amount}` })
+        .where(eq(accounts.id, fromAccountId));
+
+      // 2. Add to receiver
+      await tx.update(accounts)
+        .set({ balance: sql`${accounts.balance} + ${amount}` })
+        .where(eq(accounts.id, toAccountId));
+
+      // 3. Record transaction
+      const [transaction] = await tx.insert(transactions).values({
+        fromAccountId,
+        toAccountId,
+        amount,
+        transactionType: 'transfer',
+        status: 'completed',
+        isDemo: true,
+      }).returning();
+
+      return transaction;
+    });
+  }
+
+  async buyAsset(accountId: number, symbol: string, amount: string, price: number): Promise<Investment> {
+    return await db.transaction(async (tx) => {
+      // 1. Check balance
+      const [account] = await tx.select().from(accounts).where(eq(accounts.id, accountId));
+      if (!account) throw new Error("Account not found");
+      if (Number(account.balance) < Number(amount)) throw new Error("Insufficient funds");
+
+      // 2. Deduct balance
+      await tx.update(accounts)
+        .set({ balance: sql`${accounts.balance} - ${amount}` })
+        .where(eq(accounts.id, accountId));
+
+      // 3. Calculate shares
+      const shares = (Number(amount) / price).toFixed(4);
+
+      // 4. Update or Insert investment
+      // Check if already owns this symbol
+      const [existing] = await tx.select().from(investments)
+        .where(eq(investments.accountId, accountId))
+        .where(eq(investments.symbol, symbol));
+
+      let investment;
+      if (existing) {
+        // Update existing
+         [investment] = await tx.update(investments)
+          .set({ 
+            shares: sql`${investments.shares} + ${shares}`,
+            // Weighted average price could be implemented here, but for simplicity keep purchase price of last or initial?
+            // Let's keep purchase price as average cost basis
+            purchasePrice: sql`((${investments.shares} * ${investments.purchasePrice}) + (${shares} * ${price})) / (${investments.shares} + ${shares})`
+          })
+          .where(eq(investments.id, existing.id))
+          .returning();
+      } else {
+        // Insert new
+        [investment] = await tx.insert(investments).values({
+          accountId,
+          symbol,
+          shares,
+          purchasePrice: String(price),
+          currentPrice: String(price),
+        }).returning();
+      }
+
+      // 5. Record transaction
+      await tx.insert(transactions).values({
+        fromAccountId: accountId, // Used as source for 'buy'
+        amount,
+        transactionType: 'buy',
+        status: 'completed',
+        isDemo: true,
+      });
+
+      return investment;
+    });
+  }
+
+  async sellAsset(accountId: number, symbol: string, shares: string, price: number): Promise<Investment> {
+    return await db.transaction(async (tx) => {
+      // 1. Check shares
+      const [existing] = await tx.select().from(investments)
+        .where(eq(investments.accountId, accountId))
+        .where(eq(investments.symbol, symbol));
+
+      if (!existing || Number(existing.shares) < Number(shares)) throw new Error("Insufficient shares");
+
+      const amount = (Number(shares) * price).toFixed(2);
+
+      // 2. Add balance
+      await tx.update(accounts)
+        .set({ balance: sql`${accounts.balance} + ${amount}` })
+        .where(eq(accounts.id, accountId));
+
+      // 3. Deduct shares
+      let investment;
+      const newShares = Number(existing.shares) - Number(shares);
+      
+      if (newShares <= 0.0001) { // Floating point safety, if ~0 delete
+         await tx.delete(investments).where(eq(investments.id, existing.id));
+         // Return a dummy investment object or the deleted one for response?
+         // We'll return the state before deletion but with 0 shares to indicate sold out
+         investment = { ...existing, shares: "0" };
+      } else {
+         [investment] = await tx.update(investments)
+          .set({ shares: String(newShares) })
+          .where(eq(investments.id, existing.id))
+          .returning();
+      }
+
+      // 4. Record transaction
+      await tx.insert(transactions).values({
+        toAccountId: accountId, // Used as destination for 'sell' proceeds
+        amount,
+        transactionType: 'sell',
+        status: 'completed',
+        isDemo: true,
+      });
+
+      return investment;
+    });
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
