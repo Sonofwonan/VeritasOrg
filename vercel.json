@@ -4,10 +4,5 @@
   "env": {
     "DATABASE_URL": "@database_url",
     "SESSION_SECRET": "@session_secret"
-  },
-  "functions": {
-    "server/index.ts": {
-      "runtime": "nodejs20.x"
-    }
   }
 }
