@@ -1,0 +1,190 @@
+AI Instruction Set for Building a Demo Investment Platform
+1️⃣ Project Setup
+
+Initialize the project
+
+Frontend: Next.js + React + Tailwind CSS
+
+Backend: Supabase + Serverless Functions (or Node.js API)
+
+Git repository for version control
+
+Connect Supabase
+
+Create a project in Supabase (free tier)
+
+Enable:
+
+PostgreSQL database
+
+Authentication (email/password)
+
+Realtime subscriptions (optional, for dashboards)
+
+Note the SUPABASE_URL and SUPABASE_ANON_KEY
+
+2️⃣ Database Design (Demo Mode)
+
+Tables:
+
+users
+
+id (uuid, PK)
+name (text)
+email (text, unique)
+password_hash (text)
+created_at (timestamp)
+
+
+accounts
+
+id (uuid, PK)
+user_id (uuid, FK to users)
+account_type (enum: 'cash', 'investment')
+balance (numeric)
+is_demo (boolean) -- true for demo mode
+created_at (timestamp)
+
+
+transactions
+
+id (uuid, PK)
+from_account (uuid, FK to accounts)
+to_account (uuid, FK to accounts)
+amount (numeric)
+transaction_type (enum: 'transfer', 'buy', 'sell')
+status (enum: 'completed', 'failed')
+is_demo (boolean)
+timestamp (timestamp)
+
+
+investments
+
+id (uuid, PK)
+account_id (uuid, FK to accounts)
+symbol (text)
+shares (numeric)
+purchase_price (numeric)
+current_price (numeric)
+created_at (timestamp)
+
+3️⃣ Backend Logic for Demo Transactions
+
+Goal: Ensure transfers and buys/sells update balances and transactions like real, without using real money.
+
+Steps for AI Implementation:
+
+Transfer Function (demo mode)
+
+Input: from_account_id, to_account_id, amount
+
+Steps:
+
+Check from_account.balance >= amount
+
+Deduct amount from from_account.balance
+
+Add amount to to_account.balance
+
+Insert a record into transactions with is_demo = true
+
+Return updated balances to frontend
+
+Buy Investment
+
+Input: account_id, symbol, amount
+
+Steps:
+
+Check account.balance >= amount
+
+Fetch mock market price for symbol (random or from free API)
+
+Calculate shares = amount / price
+
+Deduct amount from account.balance
+
+Insert/update investments table
+
+Log transaction in transactions table with is_demo = true
+
+Sell Investment
+
+Input: account_id, symbol, shares
+
+Steps:
+
+Check investments.shares >= shares
+
+Calculate amount = shares * current_price
+
+Add amount to account.balance
+
+Deduct shares from investments table
+
+Log transaction in transactions table with is_demo = true
+
+4️⃣ Frontend UI (Demo Mode)
+
+Pages & Components:
+
+Dashboard
+
+Show cash balances, investment balances, portfolio charts
+
+Update realtime when a demo transaction occurs
+
+Transfer Page
+
+Form: From Account, To Account, Amount
+
+Submit triggers demo transfer backend function
+
+Show updated balances + transaction confirmation
+
+Investment Page
+
+List available symbols (mock)
+
+Buy/Sell forms
+
+Show portfolio holdings
+
+Display gains/losses charts
+
+5️⃣ Insights for AI / Developer
+
+Demo mode logic should be identical to real mode, except no real money is moved.
+
+Transactions must be atomic:
+
+Update balances and insert transactions in a single DB transaction
+
+Prevent negative balances
+
+Portfolio updates:
+
+For mock data, simulate market price changes with random percentage shifts every few seconds
+
+Frontend updates:
+
+Use Supabase Realtime or React state to reflect transfers instantly
+
+Future-ready design:
+
+Keep is_demo flag; later switch to real payment API by toggling the flag
+
+Modularize transaction functions so real money logic replaces demo logic easily
+
+6️⃣ Suggested Free Tools
+
+Supabase: auth, database, real-time updates
+
+Vercel: deploy Next.js frontend and API routes
+
+Mock market data API: Alpha Vantage free tier, IEX sandbox, or JSON files
+
+Charting: Recharts or Chart.js for portfolio visualization
+
+✅ Outcome:
+When a user clicks “Transfer $50” or “Buy 10 shares”, your AI-powered app will update balances, record the transaction, and update charts instantly — just like a real platform — all within free tiers.
