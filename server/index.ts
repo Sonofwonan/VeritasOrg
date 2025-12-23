@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -21,6 +22,18 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+
+// Configure CORS to allow the frontend (Vercel) to call the API and include cookies
+const corsOptions: cors.CorsOptions = {
+  credentials: true,
+};
+if (process.env.CLIENT_URL) {
+  corsOptions.origin = process.env.CLIENT_URL;
+} else if (process.env.NODE_ENV !== "production") {
+  // In development reflect origin
+  corsOptions.origin = true as any;
+}
+app.use(cors(corsOptions));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

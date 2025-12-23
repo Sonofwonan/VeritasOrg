@@ -6,13 +6,14 @@ This project uses an Express backend, a Vite React frontend, Drizzle ORM and exp
 
 1. Go to https://app.supabase.com and create a new project.
 2. In the Project Settings → Database → Connection string, copy the `DATABASE_URL` connection string.
-3. In this repo, create a local `.env` with (or for quick testing you can use the committed `/.env` in this repo — it contains **placeholder test values only** and should be removed or replaced before production):
+3. Copy `.env.example` to `.env` and fill in your **real** values (do **not** commit `.env` — it contains secrets). Example `.env` values (for reference only):
 
 ```
 DATABASE_URL="<your-supabase-connection-string>"
 SESSION_SECRET="<your-session-secret>"
 NODE_ENV="development"
 PORT=5000
+VITE_API_URL="http://localhost:5000"
 CLIENT_URL="http://localhost:5173"
 ```
 

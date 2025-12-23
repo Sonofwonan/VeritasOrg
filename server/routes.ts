@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { api, errorSchemas } from "@shared/routes";
 import { z } from "zod";
+import { type User } from "@shared/schema";
 
 // Mock market data service
 const MOCK_SYMBOLS = {
@@ -93,14 +94,14 @@ export async function registerRoutes(
 
   // Account Routes
   app.get(api.accounts.list.path, requireAuth, async (req, res) => {
-    const accounts = await storage.getAccounts(req.user!.id);
+    const accounts = await storage.getAccounts((req.user as User).id);
     res.json(accounts);
   });
 
   app.post(api.accounts.create.path, requireAuth, async (req, res) => {
     try {
       const input = api.accounts.create.input.parse(req.body);
-      const account = await storage.createAccount({ ...input, userId: req.user!.id });
+      const account = await storage.createAccount({ ...input, userId: (req.user as User).id });
       res.status(201).json(account);
     } catch (err) {
        res.status(400).json({ message: "Invalid input" });
@@ -109,7 +110,7 @@ export async function registerRoutes(
 
   app.get(api.accounts.get.path, requireAuth, async (req, res) => {
     const account = await storage.getAccount(Number(req.params.id));
-    if (!account || account.userId !== req.user!.id) {
+    if (!account || account.userId !== (req.user as User).id) {
       return res.status(404).json({ message: "Account not found" });
     }
     res.json(account);
@@ -121,7 +122,7 @@ export async function registerRoutes(
       const { fromAccountId, toAccountId, amount } = api.transactions.transfer.input.parse(req.body);
       // Verify ownership of fromAccount
       const fromAccount = await storage.getAccount(fromAccountId);
-      if (!fromAccount || fromAccount.userId !== req.user!.id) {
+      if (!fromAccount || fromAccount.userId !== (req.user as User).id) {
         return res.status(403).json({ message: "Unauthorized source account" });
       }
       
@@ -136,7 +137,7 @@ export async function registerRoutes(
   app.get(api.investments.list.path, requireAuth, async (req, res) => {
     // Return all investments for all user accounts
     // For simplicity, just get accounts then get investments
-    const accounts = await storage.getAccounts(req.user!.id);
+    const accounts = await storage.getAccounts((req.user as User).id);
     const allInvestments = [];
     for (const acc of accounts) {
       const invs = await storage.getInvestments(acc.id);
@@ -150,7 +151,7 @@ export async function registerRoutes(
       const { accountId, symbol, amount } = api.investments.buy.input.parse(req.body);
        // Verify ownership
       const account = await storage.getAccount(accountId);
-      if (!account || account.userId !== req.user!.id) {
+      if (!account || account.userId !== (req.user as User).id) {
         return res.status(403).json({ message: "Unauthorized account" });
       }
 
@@ -167,7 +168,7 @@ export async function registerRoutes(
       const { accountId, symbol, shares } = api.investments.sell.input.parse(req.body);
        // Verify ownership
       const account = await storage.getAccount(accountId);
-      if (!account || account.userId !== req.user!.id) {
+      if (!account || account.userId !== (req.user as User).id) {
         return res.status(403).json({ message: "Unauthorized account" });
       }
 

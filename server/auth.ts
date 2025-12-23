@@ -31,7 +31,13 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || "default_secret",
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
+    cookie: {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: process.env.NODE_ENV === "production",
+      // For production with frontend on a different domain (Vercel), use 'none' so the cookie is sent cross-site
+      sameSite: process.env.NODE_ENV === "production" ? ("none" as const) : ("lax" as const),
+      domain: process.env.COOKIE_DOMAIN || undefined,
+    },
   };
 
   if (app.get("env") === "production") {
@@ -43,9 +49,9 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
       try {
-        const user = await storage.getUserByEmail(username);
+        const user = await storage.getUserByEmail(email);
         if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false);
         }

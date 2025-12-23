@@ -229,7 +229,7 @@ export default function InvestmentsPage() {
                 <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-lg">
                   <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
                   <p>No active investments found.</p>
-                  <Button variant="link" onClick={() => document.querySelector<HTMLInputElement>('input[type="number"]')?.focus()}>
+                  <Button variant="ghost" className="underline" onClick={() => document.querySelector<HTMLInputElement>('input[type="number"]')?.focus()}>
                     Make your first trade
                   </Button>
                 </div>

@@ -4,6 +4,8 @@
   "env": {
     "DATABASE_URL": "@database_url",
     "SESSION_SECRET": "@session_secret",
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "VITE_API_URL": "@api_url",
+    "CLIENT_URL": "@client_url"
   }
 }

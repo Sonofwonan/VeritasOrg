@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import {
   users, accounts, transactions, investments,
   type User, type InsertUser, type Account, type InsertAccount,
@@ -108,8 +108,7 @@ export class DatabaseStorage implements IStorage {
       // 4. Update or Insert investment
       // Check if already owns this symbol
       const [existing] = await tx.select().from(investments)
-        .where(eq(investments.accountId, accountId))
-        .where(eq(investments.symbol, symbol));
+        .where(and(eq(investments.accountId, accountId), eq(investments.symbol, symbol)));
 
       let investment;
       if (existing) {
@@ -151,8 +150,7 @@ export class DatabaseStorage implements IStorage {
     return await db.transaction(async (tx) => {
       // 1. Check shares
       const [existing] = await tx.select().from(investments)
-        .where(eq(investments.accountId, accountId))
-        .where(eq(investments.symbol, symbol));
+        .where(and(eq(investments.accountId, accountId), eq(investments.symbol, symbol)));
 
       if (!existing || Number(existing.shares) < Number(shares)) throw new Error("Insufficient shares");
 
