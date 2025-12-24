@@ -43,3 +43,8 @@ outputType = "webview"
 
 [agent]
 expertMode = true
+
+[userenv]
+
+[userenv.shared]
+DATABASE_URL_SUPABASE_NEW = "postgresql://postgres.umdalmfytahjjmfqahtr:Wqazxc123$Piercepap-31@aws-1-eu-west-1.pooler.supabase.com:6543/postgres"
