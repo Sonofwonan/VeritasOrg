@@ -1,74 +1,33 @@
-# Deployment Guide: Vercel + Supabase
+# Veritas Wealth - Deployment Guide (Zero-Cost Production)
 
-## Step 1: Set Up Supabase Database
+This guide provides instructions for deploying Veritas Wealth to a zero-cost production stack using Vercel, Render, and Supabase.
 
-1. Go to [supabase.com](https://supabase.com) and create a free account
-2. Create a new project
-3. Wait for the project to initialize
-4. Go to **Settings → Database** and copy your `Connection String` (JDBC or URI format)
-   - Select "URI" format
-   - Copy the full connection string: `postgresql://postgres:password@host:port/postgres`
-5. Keep this safe—you'll need it for Vercel environment variables
+## 1. Supabase (Database)
+1. Create a project at [supabase.com](https://supabase.com).
+2. Go to **Project Settings > Database**.
+3. Copy the **Connection String** (URI). It looks like: `postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres`
+4. In your project here, run `npm run db:push` using this URL to initialize the tables.
 
-## Step 2: Migrate Database Schema to Supabase
+## 2. Render (Backend)
+1. Create a **Web Service** at [render.com](https://render.com).
+2. Connect your GitHub repository.
+3. Set **Build Command**: `npm install && npm run build`
+4. Set **Start Command**: `node dist/index.cjs`
+5. Add these **Environment Variables**:
+   - `DATABASE_URL`: Your Supabase connection string.
+   - `SESSION_SECRET`: A long random string (e.g., `a7k9mxq2w8j3h5f6g1b4c9d2e7k3n8p1`).
+   - `NODE_ENV`: `production`
+   - `CLIENT_URL`: `https://your-app-name.vercel.app` (Your Vercel URL).
+   - `PORT`: `5000`
 
-1. Update your local `.env` file:
-   ```bash
-   DATABASE_URL="postgresql://user:password@host:port/database"
-   ```
-
-2. Run migrations:
-   ```bash
-   npm run db:push
-   ```
-
-3. Seed with demo data (optional):
-   ```bash
-   npx tsx server/seed.ts
-   ```
-
-## Step 3: Deploy to Vercel
-
-### Push your code to GitHub
-```bash
-git init
-git add .
-git commit -m "Init investment platform"
-git remote add origin https://github.com/YOUR_USERNAME/investment-platform.git
-git push -u origin main
-```
-
-### Deploy via Vercel Dashboard
-1. Go to [vercel.com](https://vercel.com) and sign in with GitHub
-2. Click **New Project**
-3. Select your repository
-4. In **Environment Variables**, add:
-   - `DATABASE_URL`: (from Supabase connection string)
-   - `SESSION_SECRET`: (generate a random string: `openssl rand -base64 32`)
-5. Click **Deploy**
-
-## Step 4: Frontend Configuration
-
-The frontend automatically configures API calls to your backend:
-- In development: `http://localhost:5000`
-- In production: `https://your-vercel-app.vercel.app`
-
-No changes needed—the build process handles this.
+## 3. Vercel (Frontend)
+1. Create a project at [vercel.com](https://vercel.com).
+2. Connect your GitHub repository.
+3. Add these **Environment Variables**:
+   - `VITE_API_URL`: `https://your-backend-name.onrender.com` (Your Render URL).
+4. Vercel will automatically detect the Vite build and deploy.
 
 ## Troubleshooting
-
-- **Database connection fails**: Verify `DATABASE_URL` format and whitelist Vercel IPs in Supabase firewall
-- **Session not persisting**: Ensure `SESSION_SECRET` is set in Vercel environment
-- **CORS errors**: Backend runs on same Vercel domain as frontend
-- **Cold starts**: Supabase and Vercel both have brief cold starts on first request
-
-## Monitoring
-
-- **Vercel**: Logs available at vercel.com/dashboard
-- **Supabase**: Logs available at supabase.com dashboard under "Logs"
-
-## Scaling
-
-- **Database**: Upgrade Supabase plan for higher connections
-- **API**: Vercel Functions auto-scale; monitor usage at vercel.com
-- **Costs**: Both services have generous free tiers; paid plans start at ~$5/month each
+- **401 Errors**: Ensure `CLIENT_URL` on Render matches your Vercel URL exactly (no trailing slash).
+- **CORS**: The backend is configured to allow cross-site cookies via `sameSite: "none"` and `secure: true`.
+- **Render Sleep**: The free tier of Render sleeps after 15 mins. The first request might take 30-60s to wake up the server.
