@@ -62,7 +62,10 @@ export async function registerRoutes(
   });
 
   app.post(api.auth.login.path, (req, res, next) => {
-    // passport local strategy
+    // Convert email field to username for Passport LocalStrategy
+    const { email, password } = req.body;
+    req.body.username = email;
+    
     const nextAuth = (err: any, user: any, info: any) => {
         if (err) return next(err);
         if (!user) return res.status(401).json({ message: "Invalid credentials" });
@@ -71,13 +74,6 @@ export async function registerRoutes(
             return res.status(200).json(user);
         });
     };
-    // Need to trick passport since our schema expects username but we use email
-    // Actually our storage.ts uses getUserByEmail so it matches
-    // But passport-local defaults to 'username' and 'password' in body.
-    // Ensure frontend sends 'username' as the email field, or configure passport strategy.
-    // In auth.ts we used default LocalStrategy which looks for 'username' in body.
-    // So frontend MUST send { username: "email@example.com", password: "..." }
-    // API contract says { username, password }.
     return require("passport").authenticate("local", nextAuth)(req, res, next);
   });
 
