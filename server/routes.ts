@@ -40,10 +40,20 @@ export async function registerRoutes(
       const user = await storage.createUser({ ...input, password: hashedPassword });
       
       req.login(user, (err) => {
-        if (err) return res.status(500).json({ message: "Login failed after registration" });
+        if (err) {
+          console.error('Registration login error:', err);
+          return res.status(500).json({ message: "Login failed after registration" });
+        }
+        // Log session/cookie info for easier debugging in production
+        try {
+          console.log('Registered user id:', user.id, 'sessionID:', (req as any).sessionID);
+        } catch (e) {
+          console.error('Error logging session info after registration', e);
+        }
         res.status(201).json(user);
       });
     } catch (err) {
+      console.error('Registration error:', err instanceof Error ? err.stack || err.message : err);
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
       }
