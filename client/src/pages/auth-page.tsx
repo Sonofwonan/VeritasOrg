@@ -134,7 +134,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="you@example.com" {...field} />
+                            <Input placeholder="you@example.com" {...field} autoComplete="email" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -147,7 +147,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input type="password" {...field} />
+                            <Input type="password" {...field} autoComplete="current-password" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -175,7 +175,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Full Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="John Doe" {...field} />
+                            <Input placeholder="John Doe" {...field} autoComplete="name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -202,7 +202,7 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input type="password" {...field} />
+                            <Input type="password" {...field} autoComplete="current-password" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
