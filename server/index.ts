@@ -26,13 +26,24 @@ app.use(express.urlencoded({ extended: false }));
 // Configure CORS to allow the frontend (Vercel) to call the API and include cookies
 const corsOptions: cors.CorsOptions = {
   credentials: true,
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // In production, check CLIENT_URL env var
+    // In development, allow any origin
+    if (process.env.NODE_ENV === "production") {
+      if (process.env.CLIENT_URL && origin === process.env.CLIENT_URL) {
+        callback(null, true);
+      } else if (!origin) {
+        // Allow same-origin requests (no origin header)
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    } else {
+      // Development: allow all origins
+      callback(null, true);
+    }
+  },
 };
-if (process.env.CLIENT_URL) {
-  corsOptions.origin = process.env.CLIENT_URL;
-} else if (process.env.NODE_ENV !== "production") {
-  // In development reflect origin
-  corsOptions.origin = true as any;
-}
 app.use(cors(corsOptions));
 
 export function log(message: string, source = "express") {
