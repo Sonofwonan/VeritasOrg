@@ -1,0 +1,44 @@
+17:06:10.441 Running build in Washington, D.C., USA (East) – iad1
+17:06:10.444 Build machine configuration: 2 cores, 8 GB
+17:06:10.770 Cloning github.com/Sonofwonan/VeritasOrg (Branch: main, Commit: abeaebc)
+17:06:10.771 Previous build caches not available.
+17:06:11.191 Cloning completed: 418.000ms
+17:06:12.664 Running "vercel build"
+17:06:13.119 Vercel CLI 50.1.3
+17:06:13.725 Installing dependencies...
+17:06:23.235 
+17:06:23.235 added 481 packages in 9s
+17:06:23.236 
+17:06:23.236 67 packages are looking for funding
+17:06:23.236   run `npm fund` for details
+17:06:23.391 
+17:06:23.392 > veritas-wealth@1.0.0 build
+17:06:23.392 > NODE_ENV=production tsx script/build.ts
+17:06:23.392 
+17:06:24.248 building client...
+17:06:24.326 [36mvite v7.3.0 [32mbuilding client environment for production...[36m[39m
+17:06:24.575 transforming...
+17:06:30.517 [32m✓[39m 2450 modules transformed.
+17:06:31.116 rendering chunks...
+17:06:31.132 computing gzip size...
+17:06:31.160 [2m../dist/public/[22m[32mindex.html                 [39m[1m[2m  2.05 kB[22m[1m[22m[2m │ gzip:   0.79 kB[22m
+17:06:31.160 [2m../dist/public/[22m[2massets/[22m[35mindex-BRRiCZVF.css  [39m[1m[2m 71.60 kB[22m[1m[22m[2m │ gzip:  12.03 kB[22m
+17:06:31.160 [2m../dist/public/[22m[2massets/[22m[36mindex-Bzo7EIzU.js   [39m[1m[33m875.68 kB[39m[22m[2m │ gzip: 257.38 kB[22m
+17:06:31.160 [33m
+17:06:31.161 (!) Some chunks are larger than 500 kB after minification. Consider:
+17:06:31.161 - Using dynamic import() to code-split the application
+17:06:31.161 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+17:06:31.161 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+17:06:31.161 [32m✓ built in 6.62s[39m
+17:06:31.161 building server...
+17:06:31.380 
+17:06:31.386   dist/index.cjs  1.1mb ⚠️
+17:06:31.386 
+17:06:31.386 ⚡ Done in 208ms
+17:06:31.526 Build Completed in /vercel/output [18s]
+17:06:31.623 Deploying outputs...
+17:06:33.892 Deployment completed
+17:06:34.877 Creating build cache...
+17:06:47.963 Created build cache: 13.081s
+17:06:47.964 Uploading build cache [74.21 MB]
+17:06:48.893 Build cache uploaded: 933.144ms
