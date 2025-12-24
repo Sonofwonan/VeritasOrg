@@ -8,5 +8,4 @@
     "VITE_API_URL": "@api_url",
     "CLIENT_URL": "@client_url"
   }
-
-]
+}]
