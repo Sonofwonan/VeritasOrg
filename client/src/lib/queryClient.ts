@@ -1,6 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -33,7 +33,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
-    const fullUrl = url.startsWith('http') ? url : API_BASE + url;
+    const fullUrl = url.startsWith('http') ? url : (url.startsWith('/') ? API_BASE + url : API_BASE + '/' + url);
     const res = await fetch(fullUrl, {
       credentials: "include",
     });
