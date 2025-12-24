@@ -93,3 +93,14 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertAccount = z.infer<typeof insertAccountSchema>;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type InsertInvestment = z.infer<typeof insertInvestmentSchema>;
+
+// Set runtime schema explicitly to avoid relying on Postgres search_path (helps with connection poolers like Supabase)
+;(users as any)[Symbol.for('drizzle:Schema')] = 'public';
+;(accounts as any)[Symbol.for('drizzle:Schema')] = 'public';
+;(transactions as any)[Symbol.for('drizzle:Schema')] = 'public';
+;(investments as any)[Symbol.for('drizzle:Schema')] = 'public';
+
+// Enums: attach schema at runtime so generated SQL references public.<enum_name>
+;(accountTypeEnum as any).schema = 'public';
+;(transactionTypeEnum as any).schema = 'public';
+;(transactionStatusEnum as any).schema = 'public';

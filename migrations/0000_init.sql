@@ -1,7 +1,7 @@
 CREATE TYPE "public"."account_type" AS ENUM('cash', 'investment');--> statement-breakpoint
 CREATE TYPE "public"."transaction_status" AS ENUM('completed', 'failed');--> statement-breakpoint
 CREATE TYPE "public"."transaction_type" AS ENUM('transfer', 'buy', 'sell');--> statement-breakpoint
-CREATE TABLE "accounts" (
+CREATE TABLE "public"."accounts" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"account_type" "account_type" NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE "accounts" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "investments" (
+CREATE TABLE "public"."investments" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"account_id" integer NOT NULL,
 	"symbol" text NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE "investments" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "transactions" (
+CREATE TABLE "public"."transactions" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"from_account_id" integer,
 	"to_account_id" integer,
@@ -31,7 +31,7 @@ CREATE TABLE "transactions" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "users" (
+CREATE TABLE "public"."users" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"email" text NOT NULL,
 	"name" text NOT NULL,

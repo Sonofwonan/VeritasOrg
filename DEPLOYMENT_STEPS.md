@@ -19,6 +19,8 @@ CLIENT_URL="http://localhost:5173"
 
 4. Push the schema/migrations to the DB from your machine:
 
+> ⚠️ **Schema / search_path note:** The app explicitly sets table schemas to `public` (to avoid reliance on Postgres default `search_path`, which can break with poolers like Supabase's). A hardening migration `migrations/0001_harden_public_schema.sql` is included to ensure the `public` schema exists and provide guidance.
+
 ```bash
 # ensure env var is set locally
 export DATABASE_URL="<your-supabase-connection-string>"
