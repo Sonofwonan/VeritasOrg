@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
 import NotFound from "@/pages/not-found";
+import HomePage from "@/pages/home";
 import AuthPage from "@/pages/auth-page";
 import DashboardPage from "@/pages/dashboard";
 import AccountsPage from "@/pages/accounts-page";
@@ -40,10 +41,11 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
 function Router() {
   return (
     <Switch>
+      <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
-      
+
       {/* Protected Routes */}
-      <Route path="/">
+      <Route path="/dashboard">
         {() => <ProtectedRoute component={DashboardPage} />}
       </Route>
       <Route path="/accounts">

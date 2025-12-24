@@ -36,7 +36,7 @@ export default function AuthPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) setLocation("/");
+    if (user) setLocation("/dashboard");
   }, [user, setLocation]);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
