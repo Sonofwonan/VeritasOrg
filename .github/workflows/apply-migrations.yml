@@ -1,0 +1,33 @@
+name: Apply DB Migrations
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  apply-migrations:
+    name: Apply migrations to DB
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "${DATABASE_URL}" ]; then echo "ERROR: DATABASE_URL secret is not set" && exit 1; fi
+          echo "Running drizzle-kit push..."
+          DATABASE_URL="$DATABASE_URL" npm run db:push

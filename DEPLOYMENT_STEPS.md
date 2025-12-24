@@ -66,6 +66,7 @@ Note: The repo already contains `vercel.json` placeholders for these environment
 
 - Add a GitHub Action to run `npm run check` and `npm run build` on PRs.
 - Add a workflow step to run `drizzle-kit push` using a `DATABASE_URL` secret on merges to `main` (be careful; migration runs modify production DB).
+- Optionally, add a dedicated workflow to automatically apply migrations on push to `main` using the `DATABASE_URL` secret (example: `.github/workflows/apply-migrations.yml`). Ensure `DATABASE_URL` is stored as a repository secret and consider running migrations against a staging DB before production.
 
 ---
 
