@@ -62,10 +62,6 @@ export async function registerRoutes(
   });
 
   app.post(api.auth.login.path, (req, res, next) => {
-    // Convert email field to username for Passport LocalStrategy
-    const { email, password } = req.body;
-    req.body.username = email;
-    
     const nextAuth = (err: any, user: any, info: any) => {
         if (err) return next(err);
         if (!user) return res.status(401).json({ message: "Invalid credentials" });
