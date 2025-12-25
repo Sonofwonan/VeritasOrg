@@ -33,7 +33,8 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
-    const fullUrl = url.startsWith('http') ? url : (url.startsWith('/api') ? API_BASE.replace('/api', '') + url : (url.startsWith('/') ? API_BASE + url : API_BASE + '/' + url));
+    const cleanUrl = url.startsWith('/') ? url : '/' + url;
+    const fullUrl = cleanUrl.startsWith('http') ? cleanUrl : (cleanUrl.startsWith('/api') ? API_BASE.replace('/api', '') + cleanUrl : API_BASE + cleanUrl);
     const res = await fetch(fullUrl, {
       credentials: "include",
     });
