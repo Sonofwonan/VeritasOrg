@@ -88,13 +88,15 @@ export default function AuthPage() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-background">
       {/* Visual Side - Left Panel */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-[#0a0a0a] text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-50" />
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
+          style={{ backgroundImage: 'url(/assets/invest-bg.jpeg)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-black/80" />
         
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-12">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-black font-bold text-xl shadow-lg shadow-primary/20">
-              V
-            </div>
+            <img src="/logo.png" alt="Veritas Wealth Logo" className="w-10 h-10 object-contain shadow-lg shadow-primary/20" />
             <span className="text-2xl font-bold tracking-tight">Veritas Wealth</span>
           </div>
 

@@ -95,16 +95,15 @@ export default function HomePage() {
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-30"
-          style={{ backgroundImage: 'url(/assets/IMG_3476_1766680873153.jpeg)' }}
+          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
+          style={{ backgroundImage: 'url(/assets/hero-bg.jpeg)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-background/70 to-background/90" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-transparent to-[#0a0a0a] opacity-80" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-background/40 to-background/60" />
         
-        <div className="relative max-w-7xl mx-auto px-6 py-24 sm:py-32">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/20">
-              V
-            </div>
+        <div className="relative max-w-7xl mx-auto px-6 py-28 sm:py-36">
+          <div className="flex items-center gap-4 mb-10">
+            <img src="/logo.png" alt="Veritas Wealth Logo" className="w-12 h-12 object-contain shadow-2xl shadow-primary/40" />
             <span className="text-2xl font-bold tracking-tight">Veritas Wealth</span>
           </div>
           <div className="text-center space-y-8">
@@ -182,8 +181,12 @@ export default function HomePage() {
       </div>
 
       {/* Success Stories */}
-      <div className="bg-muted/30 py-20">
-        <div className="max-w-7xl mx-auto px-6">
+      <div className="relative py-24 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-5"
+          style={{ backgroundImage: 'url(/assets/team-bg.jpeg)' }}
+        />
+        <div className="relative max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Success Stories from Real Investors</h2>
             <p className="text-lg text-muted-foreground">See how our clients have grown their wealth</p>
@@ -219,11 +222,16 @@ export default function HomePage() {
       </div>
 
       {/* Market Insights */}
-      <div className="max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">Market Insights & Education</h2>
-          <p className="text-lg text-muted-foreground">Stay informed with real-time market data and expert analysis</p>
-        </div>
+      <div className="relative py-24 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-10"
+          style={{ backgroundImage: 'url(/assets/market-bg.jpeg)' }}
+        />
+        <div className="relative max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">Market Insights & Education</h2>
+            <p className="text-lg text-muted-foreground">Stay informed with real-time market data and expert analysis</p>
+          </div>
 
         <div className="grid md:grid-cols-2 gap-8">
           <Card className="border">
