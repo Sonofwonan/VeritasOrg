@@ -42,10 +42,11 @@ Add or update these variables:
 
 ```
 SESSION_SECRET=<strong-random-string-min-32-chars>
-NODE_ENV=production
 CLIENT_URL=https://yourdomain.vercel.app
 DATABASE_URL=<your-supabase-connection>
 ```
+
+**CRITICAL**: Do NOT set `NODE_ENV` as an environment variable on Render. The build script automatically sets `NODE_ENV=production` during the build phase. Having it as an env var causes conflicts.
 
 **Example SESSION_SECRET** (generate your own):
 ```
@@ -55,9 +56,9 @@ a7k9mxq2w8j3h5f6g1b4c9d2e7k3n8p1
 ### Why This Fixes the 401 Error
 
 1. **SESSION_SECRET**: Signs session cookies so they can't be tampered with
-2. **NODE_ENV=production**: Enables secure cookies (HTTPS only) and proper CORS handling
-3. **CLIENT_URL**: Tells CORS which frontend domain can access the API
-4. **DATABASE_URL**: Supabase PostgreSQL connection where sessions are stored
+2. **CLIENT_URL**: Tells CORS which frontend domain can access the API
+3. **DATABASE_URL**: Supabase PostgreSQL connection where sessions are stored
+4. **NODE_ENV**: Automatically set to `production` by the build script (do not add manually!)
 
 Sessions use `connect-pg-simple` middleware which stores session data in the PostgreSQL `session` table. The flow:
 1. User logs in on frontend
