@@ -291,7 +291,7 @@ export default function HomePage() {
                 <BarChart3 className="w-8 h-8 text-primary" />
               </div>
               <CardTitle className="text-2xl text-blue-600 dark:text-blue-400">Brokerage account</CardTitle>
-            </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-6">
               <p className="text-lg text-muted-foreground">
                 Trade smarter with $0 commissions¹ for online US stock, ETF, and option trades; fractional share trading for a slice of your favorite companies; and powerful research tools.
@@ -320,12 +320,12 @@ export default function HomePage() {
                 <div className="space-y-2">
                   <p className="font-bold">Help Center</p>
                   <p className="text-sm text-muted-foreground">Browse our extensive library of guides and FAQs.</p>
-                  <Button variant="link" className="px-0 text-primary">Visit Help Center</Button>
+                  <Button variant="ghost" className="px-0 text-primary hover:bg-transparent">Visit Help Center</Button>
                 </div>
                 <div className="space-y-2">
                   <p className="font-bold">Contact Support</p>
                   <p className="text-sm text-muted-foreground">Get in touch with our representative instantly.</p>
-                  <Button variant="link" className="px-0 text-primary">Chat with us</Button>
+                  <Button variant="ghost" className="px-0 text-primary hover:bg-transparent">Chat with us</Button>
                 </div>
               </div>
             </div>
