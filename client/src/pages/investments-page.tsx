@@ -7,11 +7,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, Search } from "lucide-react";
+import { ArrowUp, ArrowDown, TrendingUp, BookOpen, Zap, DollarSign } from "lucide-react";
 
 const STOCKS = ["AAPL", "GOOGL", "TSLA", "AMZN", "MSFT"];
+const ETFS = ["SPY", "QQQ", "IVV", "VOO", "VTI"];
+const ROBO_PORTFOLIOS = [
+  { id: "conservative", name: "Conservative", allocation: "80% Bonds, 20% Stocks", risk: "Low" },
+  { id: "balanced", name: "Balanced", allocation: "60% Stocks, 40% Bonds", risk: "Medium" },
+  { id: "growth", name: "Growth", allocation: "80% Stocks, 20% Bonds", risk: "High" },
+  { id: "aggressive", name: "Aggressive Growth", allocation: "95% Stocks, 5% Cash", risk: "Very High" },
+];
+
+const RESEARCH_ARTICLES = [
+  { title: "Market Volatility: What You Should Know", category: "Market Analysis", date: "Dec 24, 2025" },
+  { title: "Diversification Strategy Guide", category: "Strategy", date: "Dec 23, 2025" },
+  { title: "Understanding ETFs vs Mutual Funds", category: "Education", date: "Dec 22, 2025" },
+  { title: "Tax-Loss Harvesting Explained", category: "Tax Planning", date: "Dec 21, 2025" },
+];
 
 export default function InvestmentsPage() {
   const { data: investments, isLoading: loadingInv } = useInvestments();
@@ -20,15 +35,28 @@ export default function InvestmentsPage() {
   const sellMutation = useSellInvestment();
   const { toast } = useToast();
 
+  // Stock Trading State
   const [selectedSymbol, setSelectedSymbol] = useState("AAPL");
   const [amount, setAmount] = useState("");
   const [shares, setShares] = useState("");
   const [selectedAccount, setSelectedAccount] = useState<string>("");
 
-  // Market data for selected symbol
-  const { data: quote } = useMarketQuote(selectedSymbol);
+  // ETF/Fractional Trading State
+  const [selectedETF, setSelectedETF] = useState("SPY");
+  const [etfAmount, setEtfAmount] = useState("");
+  const [etfAccount, setEtfAccount] = useState<string>("");
 
-  const investmentAccounts = accounts?.filter(a => a.accountType === "investment") || [];
+  // Robo-Advisor State
+  const [selectedRobo, setSelectedRobo] = useState("balanced");
+  const [roboAccount, setRoboAccount] = useState<string>("");
+
+  // Market data
+  const { data: quote } = useMarketQuote(selectedSymbol);
+  const { data: etfQuote } = useMarketQuote(selectedETF);
+
+  const investmentAccounts = accounts?.filter(a => 
+    ['brokerage', 'traditional_ira', 'roth_ira', '401k', '529_plan'].includes(a.accountType)
+  ) || [];
 
   const handleBuy = () => {
     if (!selectedAccount) {
@@ -70,174 +98,516 @@ export default function InvestmentsPage() {
     });
   };
 
+  const handleFractionalBuy = () => {
+    if (!etfAccount) {
+      toast({ title: "Select an account", variant: "destructive" });
+      return;
+    }
+    toast({ 
+      title: "Fractional Share Order Placed", 
+      description: `Buying $${etfAmount} of ${selectedETF} - fractional shares purchased successfully.` 
+    });
+    setEtfAmount("");
+  };
+
+  const handleRoboSetup = () => {
+    if (!roboAccount) {
+      toast({ title: "Select an account", variant: "destructive" });
+      return;
+    }
+    const portfolio = ROBO_PORTFOLIOS.find(p => p.id === selectedRobo);
+    toast({ 
+      title: "Robo-Advisor Activated", 
+      description: `Your ${portfolio?.name} portfolio is now actively managed. Rebalancing happens quarterly.` 
+    });
+  };
+
   return (
     <LayoutShell>
       <div className="mb-8">
         <h2 className="text-3xl font-bold font-display">Investments</h2>
-        <p className="text-muted-foreground">Manage your portfolio and trade stocks.</p>
+        <p className="text-muted-foreground">Trade stocks, ETFs, access research, and manage your portfolio.</p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Trading Panel */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="border-none shadow-xl shadow-primary/5 overflow-hidden">
-            <div className="bg-primary/5 p-6 border-b border-primary/10">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-2xl font-bold">{selectedSymbol}</h3>
-                  <p className="text-sm text-muted-foreground">Real-time Quote</p>
-                </div>
-                {quote && (
-                  <div className={`text-right ${quote.change >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    <p className="text-2xl font-bold">${quote.price.toFixed(2)}</p>
-                    <p className="text-sm font-medium flex items-center justify-end gap-1">
-                      {quote.change >= 0 ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>}
-                      {quote.changePercent.toFixed(2)}%
-                    </p>
+      <Tabs defaultValue="stocks" className="w-full">
+        <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsTrigger value="stocks" className="gap-2">
+            <TrendingUp className="w-4 h-4" />
+            <span className="hidden sm:inline">Stocks</span>
+          </TabsTrigger>
+          <TabsTrigger value="etfs" className="gap-2">
+            <DollarSign className="w-4 h-4" />
+            <span className="hidden sm:inline">ETFs</span>
+          </TabsTrigger>
+          <TabsTrigger value="robo" className="gap-2">
+            <Zap className="w-4 h-4" />
+            <span className="hidden sm:inline">Robo</span>
+          </TabsTrigger>
+          <TabsTrigger value="research" className="gap-2">
+            <BookOpen className="w-4 h-4" />
+            <span className="hidden sm:inline">Research</span>
+          </TabsTrigger>
+          <TabsTrigger value="cash" className="gap-2">
+            <DollarSign className="w-4 h-4" />
+            <span className="hidden sm:inline">Cash</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Stock Trading */}
+        <TabsContent value="stocks" className="space-y-6">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Trading Panel */}
+            <div className="lg:col-span-1">
+              <Card className="border-none shadow-xl shadow-primary/5 overflow-hidden">
+                <div className="bg-primary/5 p-6 border-b border-primary/10">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-2xl font-bold">{selectedSymbol}</h3>
+                      <p className="text-sm text-muted-foreground">Stock Quote</p>
+                    </div>
+                    {quote && (
+                      <div className={`text-right ${quote.change >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        <p className="text-2xl font-bold">${quote.price.toFixed(2)}</p>
+                        <p className="text-sm font-medium flex items-center justify-end gap-1">
+                          {quote.change >= 0 ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>}
+                          {quote.changePercent.toFixed(2)}%
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              
-              <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select Stock" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STOCKS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
+                  
+                  <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Select Stock" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STOCKS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <CardContent className="p-6">
+                  <div className="mb-4">
+                    <Label className="text-xs mb-2 block">Source Account</Label>
+                    <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {investmentAccounts.map(a => (
+                          <SelectItem key={a.id} value={a.id.toString()}>
+                            Account #{a.id} (${Number(a.balance).toFixed(0)})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Tabs defaultValue="buy" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                      <TabsTrigger value="buy">Buy</TabsTrigger>
+                      <TabsTrigger value="sell">Sell</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="buy" className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Amount ($)</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+                          <Input 
+                            type="number" 
+                            placeholder="0.00" 
+                            className="pl-7"
+                            value={amount}
+                            onChange={e => setAmount(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <Button 
+                        className="w-full bg-emerald-600 hover:bg-emerald-700" 
+                        onClick={handleBuy}
+                        disabled={buyMutation.isPending}
+                      >
+                        {buyMutation.isPending ? "Processing..." : "Buy Stock"}
+                      </Button>
+                    </TabsContent>
+
+                    <TabsContent value="sell" className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Shares</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="0" 
+                          value={shares}
+                          onChange={e => setShares(e.target.value)}
+                        />
+                      </div>
+                      <Button 
+                        className="w-full bg-rose-600 hover:bg-rose-700" 
+                        onClick={handleSell}
+                        disabled={sellMutation.isPending}
+                      >
+                        {sellMutation.isPending ? "Processing..." : "Sell Shares"}
+                      </Button>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
             </div>
 
-            <CardContent className="p-6">
-              <div className="mb-4">
-                <Label className="text-xs mb-2 block">Source Account</Label>
-                <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Brokerage Account" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {investmentAccounts.map(a => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
-                        Account #{a.id} (${Number(a.balance).toFixed(0)})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Portfolio Table */}
+            <div className="lg:col-span-2">
+              <Card className="border-none shadow-lg">
+                <CardHeader>
+                  <CardTitle>Current Holdings</CardTitle>
+                  <CardDescription>Your stock positions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingInv ? (
+                    <p className="text-center py-8 text-muted-foreground">Loading portfolio...</p>
+                  ) : investments && investments.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Symbol</TableHead>
+                          <TableHead>Shares</TableHead>
+                          <TableHead>Avg Price</TableHead>
+                          <TableHead>Current Price</TableHead>
+                          <TableHead className="text-right">Market Value</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {investments.map((inv) => {
+                          const marketValue = Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice);
+                          const gain = Number(inv.currentPrice) - Number(inv.purchasePrice);
+                          return (
+                            <TableRow key={inv.id}>
+                              <TableCell className="font-bold">{inv.symbol}</TableCell>
+                              <TableCell>{Number(inv.shares).toFixed(4)}</TableCell>
+                              <TableCell>${Number(inv.purchasePrice).toFixed(2)}</TableCell>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span>${Number(inv.currentPrice || inv.purchasePrice).toFixed(2)}</span>
+                                  {gain !== 0 && (
+                                    <span className={`text-xs ${gain > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                      {gain > 0 ? '+' : ''}{((gain / Number(inv.purchasePrice)) * 100).toFixed(2)}%
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right font-medium">
+                                ${marketValue.toFixed(2)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-center py-8 text-muted-foreground">No holdings yet</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
 
-              <Tabs defaultValue="buy" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="buy">Buy</TabsTrigger>
-                  <TabsTrigger value="sell">Sell</TabsTrigger>
-                </TabsList>
+        {/* ETF/Fractional Trading */}
+        <TabsContent value="etfs" className="space-y-6">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <Card className="border-none shadow-xl shadow-primary/5 overflow-hidden">
+                <div className="bg-primary/5 p-6 border-b border-primary/10">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-2xl font-bold">{selectedETF}</h3>
+                      <p className="text-sm text-muted-foreground">ETF - Fractional Shares Available</p>
+                    </div>
+                    {etfQuote && (
+                      <div className={`text-right ${etfQuote.change >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        <p className="text-2xl font-bold">${etfQuote.price.toFixed(2)}</p>
+                        <p className="text-sm font-medium flex items-center justify-end gap-1">
+                          {etfQuote.change >= 0 ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>}
+                          {etfQuote.changePercent.toFixed(2)}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Select value={selectedETF} onValueChange={setSelectedETF}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Select ETF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ETFS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <TabsContent value="buy" className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Amount ($)</Label>
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <Label className="text-xs mb-2 block">Account</Label>
+                    <Select value={etfAccount} onValueChange={setEtfAccount}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {investmentAccounts.map(a => (
+                          <SelectItem key={a.id} value={a.id.toString()}>
+                            Account #{a.id} (${Number(a.balance).toFixed(0)})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Invest Amount ($)</Label>
                     <div className="relative">
                       <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
                       <Input 
                         type="number" 
-                        placeholder="0.00" 
+                        placeholder="Any amount - fractional shares" 
                         className="pl-7"
-                        value={amount}
-                        onChange={e => setAmount(e.target.value)}
+                        value={etfAmount}
+                        onChange={e => setEtfAmount(e.target.value)}
                       />
                     </div>
+                    <p className="text-xs text-muted-foreground mt-2">Invest any amount. You'll automatically receive fractional shares.</p>
                   </div>
-                  <Button 
-                    className="w-full bg-emerald-600 hover:bg-emerald-700" 
-                    onClick={handleBuy}
-                    disabled={buyMutation.isPending}
-                  >
-                    {buyMutation.isPending ? "Processing..." : "Execute Buy Order"}
-                  </Button>
-                </TabsContent>
 
-                <TabsContent value="sell" className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Shares</Label>
-                    <Input 
-                      type="number" 
-                      placeholder="0" 
-                      value={shares}
-                      onChange={e => setShares(e.target.value)}
-                    />
+                  <Button 
+                    className="w-full bg-blue-600 hover:bg-blue-700" 
+                    onClick={handleFractionalBuy}
+                  >
+                    Buy Fractional Shares
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="lg:col-span-2">
+              <Card className="border-none shadow-lg">
+                <CardHeader>
+                  <CardTitle>Popular ETFs</CardTitle>
+                  <CardDescription>Low-cost diversified investment options</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {[
+                      { symbol: "SPY", name: "S&P 500 ETF", expense: "0.03%" },
+                      { symbol: "QQQ", name: "Nasdaq-100 ETF", expense: "0.20%" },
+                      { symbol: "IVV", name: "Core S&P 500 ETF", expense: "0.03%" },
+                      { symbol: "VOO", name: "Vanguard S&P 500", expense: "0.03%" },
+                      { symbol: "VTI", name: "Total Stock Market", expense: "0.03%" },
+                    ].map(etf => (
+                      <div key={etf.symbol} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
+                        <div>
+                          <p className="font-semibold text-sm">{etf.symbol}</p>
+                          <p className="text-xs text-muted-foreground">{etf.name}</p>
+                        </div>
+                        <Badge variant="outline">Exp: {etf.expense}</Badge>
+                      </div>
+                    ))}
                   </div>
-                  <Button 
-                    className="w-full bg-rose-600 hover:bg-rose-700" 
-                    onClick={handleSell}
-                    disabled={sellMutation.isPending}
-                  >
-                    {sellMutation.isPending ? "Processing..." : "Execute Sell Order"}
-                  </Button>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
 
-        {/* Portfolio Table */}
-        <div className="lg:col-span-2">
-          <Card className="border-none shadow-lg">
+        {/* Robo-Advisor */}
+        <TabsContent value="robo" className="space-y-6">
+          <Card className="border-none shadow-xl shadow-primary/5">
             <CardHeader>
-              <CardTitle>Current Holdings</CardTitle>
-              <CardDescription>Your active positions across all accounts</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-primary" />
+                Automated Portfolio Management
+              </CardTitle>
+              <CardDescription>Set your risk tolerance and let our algorithm manage your portfolio automatically</CardDescription>
             </CardHeader>
             <CardContent>
-              {loadingInv ? (
-                <p className="text-center py-8 text-muted-foreground">Loading portfolio...</p>
-              ) : investments && investments.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Symbol</TableHead>
-                      <TableHead>Shares</TableHead>
-                      <TableHead>Avg Price</TableHead>
-                      <TableHead>Current Price</TableHead>
-                      <TableHead className="text-right">Market Value</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {investments.map((inv) => {
-                      const marketValue = Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice);
-                      const gain = Number(inv.currentPrice) - Number(inv.purchasePrice);
-                      return (
-                        <TableRow key={inv.id}>
-                          <TableCell className="font-bold">{inv.symbol}</TableCell>
-                          <TableCell>{Number(inv.shares).toFixed(4)}</TableCell>
-                          <TableCell>${Number(inv.purchasePrice).toFixed(2)}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span>${Number(inv.currentPrice || inv.purchasePrice).toFixed(2)}</span>
-                              {gain !== 0 && (
-                                <span className={`text-xs ${gain > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                  {gain > 0 ? '+' : ''}{((gain / Number(inv.purchasePrice)) * 100).toFixed(2)}%
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            ${marketValue.toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-lg">
-                  <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                  <p>No active investments found.</p>
-                  <Button variant="ghost" className="underline" onClick={() => document.querySelector<HTMLInputElement>('input[type="number"]')?.focus()}>
-                    Make your first trade
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">Select Your Portfolio</Label>
+                  {ROBO_PORTFOLIOS.map(portfolio => (
+                    <div 
+                      key={portfolio.id}
+                      className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                        selectedRobo === portfolio.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      onClick={() => setSelectedRobo(portfolio.id)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold">{portfolio.name}</h4>
+                          <p className="text-sm text-muted-foreground">{portfolio.allocation}</p>
+                        </div>
+                        <Badge variant={portfolio.risk === 'Low' ? 'secondary' : 'default'}>
+                          {portfolio.risk} Risk
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="pt-4">
+                    <Label className="text-base font-semibold mb-2 block">Choose Account</Label>
+                    <Select value={roboAccount} onValueChange={setRoboAccount}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {investmentAccounts.map(a => (
+                          <SelectItem key={a.id} value={a.id.toString()}>
+                            Account #{a.id} (${Number(a.balance).toFixed(0)})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button 
+                    className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
+                    onClick={handleRoboSetup}
+                  >
+                    Activate Robo-Advisor
                   </Button>
                 </div>
-              )}
+
+                <div className="space-y-4">
+                  <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                    <h4 className="font-semibold text-sm mb-2">How It Works</h4>
+                    <ul className="text-sm space-y-2 text-muted-foreground">
+                      <li>✓ Automatic allocation based on your risk tolerance</li>
+                      <li>✓ Quarterly rebalancing to maintain target allocation</li>
+                      <li>✓ Tax-loss harvesting to reduce your tax burden</li>
+                      <li>✓ Low-cost diversified portfolio</li>
+                      <li>✓ Professional management 24/7</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+
+        {/* Research & Education */}
+        <TabsContent value="research" className="space-y-6">
+          <Card className="border-none shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Investment Research & Education
+              </CardTitle>
+              <CardDescription>Learn from expert analysis and educational content</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                {RESEARCH_ARTICLES.map((article, idx) => (
+                  <div 
+                    key={idx}
+                    className="p-4 rounded-lg border hover:border-primary/50 hover:bg-muted/30 transition-all cursor-pointer group"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <Badge variant="outline" className="text-xs">{article.category}</Badge>
+                      <span className="text-xs text-muted-foreground">{article.date}</span>
+                    </div>
+                    <h4 className="font-semibold group-hover:text-primary transition-colors">{article.title}</h4>
+                    <Button variant="ghost" size="sm" className="mt-3 p-0 h-auto">
+                      Read More →
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-6 border">
+                <h4 className="font-semibold mb-2">Investment Academy</h4>
+                <p className="text-sm text-muted-foreground mb-4">Complete courses on stock investing, ETF strategies, tax optimization, and more.</p>
+                <Button variant="outline">Explore Courses</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Cash Management */}
+        <TabsContent value="cash" className="space-y-6">
+          <Card className="border-none shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" />
+                Cash Management & Money Market
+              </CardTitle>
+              <CardDescription>Earn yield on your cash while maintaining liquidity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6 mb-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">High-Yield Cash Sweep</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Current APY</p>
+                      <p className="text-3xl font-bold text-green-600">4.85%</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">FDIC insured up to $250k per bank partner</p>
+                    <Button className="w-full mt-4">Enable Cash Sweep</Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Money Market Fund</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Current Yield</p>
+                      <p className="text-3xl font-bold text-blue-600">4.65%</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Low-risk investment with daily liquidity</p>
+                    <Button className="w-full mt-4" variant="outline">Invest</Button>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card className="bg-muted/30">
+                <CardHeader>
+                  <CardTitle className="text-base">Your Cash Positions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Account</TableHead>
+                        <TableHead>Cash Balance</TableHead>
+                        <TableHead>APY</TableHead>
+                        <TableHead>Monthly Interest</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {investmentAccounts.map(a => {
+                        const balance = Number(a.balance);
+                        const apy = 0.0485;
+                        const monthlyInterest = (balance * apy) / 12;
+                        return (
+                          <TableRow key={a.id}>
+                            <TableCell>Account #{a.id}</TableCell>
+                            <TableCell>${balance.toFixed(2)}</TableCell>
+                            <TableCell>{(apy * 100).toFixed(2)}%</TableCell>
+                            <TableCell className="font-medium text-green-600">+${monthlyInterest.toFixed(2)}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </LayoutShell>
   );
 }
