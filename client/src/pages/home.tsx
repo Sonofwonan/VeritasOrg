@@ -82,6 +82,13 @@ export default function HomePage() {
     }
   }, [user, setLocation]);
 
+  const scrollTo = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -103,9 +110,24 @@ export default function HomePage() {
           </div>
           <div className="hidden md:flex items-center gap-8">
             <nav className="flex items-center gap-6">
-              <button className="text-sm font-medium hover:text-primary transition-colors">Platform</button>
-              <button className="text-sm font-medium hover:text-primary transition-colors">Solutions</button>
-              <button className="text-sm font-medium hover:text-primary transition-colors">Resources</button>
+              <button 
+                onClick={() => scrollTo('features')} 
+                className="text-sm font-medium hover:text-primary transition-colors"
+              >
+                Features
+              </button>
+              <button 
+                onClick={() => scrollTo('investment-options')} 
+                className="text-sm font-medium hover:text-primary transition-colors"
+              >
+                Investments
+              </button>
+              <button 
+                onClick={() => scrollTo('support')} 
+                className="text-sm font-medium hover:text-primary transition-colors"
+              >
+                Support
+              </button>
             </nav>
             <div className="flex items-center gap-4">
               <Button 
@@ -184,7 +206,7 @@ export default function HomePage() {
       </div>
 
       {/* Features Section */}
-      <div className="max-w-7xl mx-auto px-6 py-20">
+      <div id="features" className="max-w-7xl mx-auto px-6 py-20">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-4">Powerful Features for Smart Investors</h2>
           <p className="text-lg text-muted-foreground">Everything you need to manage your wealth in one place</p>
@@ -207,6 +229,134 @@ export default function HomePage() {
               </Card>
             );
           })}
+        </div>
+      </div>
+
+      {/* Investment Options Section (from Image) */}
+      <div id="investment-options" className="max-w-7xl mx-auto px-6 py-24 border-t">
+        <div className="text-center mb-16 space-y-4">
+          <h2 className="text-4xl font-bold tracking-tight">Investing isn't just about money — it's about your future</h2>
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            Let us help you create the future you want for yourself and your loved ones. Whether you're new to investing or an experienced trader, we're here to help you on your way.
+          </p>
+        </div>
+
+        <div className="grid gap-12 max-w-4xl mx-auto">
+          {/* Retirement & IRAs */}
+          <Card className="border-0 shadow-none text-center p-8 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl">
+            <CardHeader className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <TrendingUp className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl text-blue-600 dark:text-blue-400">Retirement & IRAs</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-lg text-muted-foreground">
+                Save for retirement with access to a broad range of investments, exceptional service, planning tools, and free investment guidance.
+              </p>
+              <Button 
+                onClick={() => setLocation('/auth')} 
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 h-12 rounded-md"
+              >
+                Open an account
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Planning & Advice */}
+          <Card className="border-0 shadow-none text-center p-8 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl">
+            <CardHeader className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <Users className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl text-blue-600 dark:text-blue-400">Planning & advice</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-lg text-muted-foreground">
+                Start making real progress on your financial goals with help from our investment management services.
+              </p>
+              <Button 
+                onClick={() => setLocation('/auth')} 
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 h-12 rounded-md"
+              >
+                Find an advisor
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Brokerage Account */}
+          <Card className="border-0 shadow-none text-center p-8 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl">
+            <CardHeader className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <BarChart3 className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl text-blue-600 dark:text-blue-400">Brokerage account</CardTitle>
+            </CardTitle>
+            <CardContent className="space-y-6">
+              <p className="text-lg text-muted-foreground">
+                Trade smarter with $0 commissions¹ for online US stock, ETF, and option trades; fractional share trading for a slice of your favorite companies; and powerful research tools.
+              </p>
+              <Button 
+                onClick={() => setLocation('/auth')} 
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 h-12 rounded-md"
+              >
+                Open an account
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Support Section */}
+      <div id="support" className="bg-zinc-50 dark:bg-zinc-950 py-24 border-y">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <div className="space-y-6">
+              <h2 className="text-4xl font-bold tracking-tight">Need help with your account?</h2>
+              <p className="text-lg text-muted-foreground">
+                Our dedicated support team and financial advisors are available 24/7 to assist you with any questions about our platform or your investment strategy.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <p className="font-bold">Help Center</p>
+                  <p className="text-sm text-muted-foreground">Browse our extensive library of guides and FAQs.</p>
+                  <Button variant="link" className="px-0 text-primary">Visit Help Center</Button>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-bold">Contact Support</p>
+                  <p className="text-sm text-muted-foreground">Get in touch with our representative instantly.</p>
+                  <Button variant="link" className="px-0 text-primary">Chat with us</Button>
+                </div>
+              </div>
+            </div>
+            <Card className="bg-primary text-primary-foreground p-8">
+              <CardHeader>
+                <CardTitle className="text-2xl">Expert Financial Guidance</CardTitle>
+                <CardDescription className="text-primary-foreground/80">
+                  Schedule a complimentary consultation with a certified wealth advisor.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    Personalized investment roadmap
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    Portfolio health assessment
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    Retirement planning strategy
+                  </li>
+                </ul>
+                <Button variant="secondary" className="w-full font-bold">
+                  Schedule Consultation
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
