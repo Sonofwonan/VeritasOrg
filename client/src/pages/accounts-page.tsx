@@ -242,7 +242,7 @@ export default function AccountsPage() {
                 </div>
               </div>
               <div className="space-y-2 text-sm">
-                <p><span className="text-muted-foreground">Cardholder:</span> {user?.username || 'Account Owner'}</p>
+                <p><span className="text-muted-foreground">Cardholder:</span> {user?.name || 'Account Owner'}</p>
                 <p><span className="text-muted-foreground">Expires:</span> 12/27</p>
                 <p><span className="text-muted-foreground">Status:</span> <span className="text-green-600 font-medium">Active</span></p>
               </div>

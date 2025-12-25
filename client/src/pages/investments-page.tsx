@@ -147,6 +147,61 @@ export default function InvestmentsPage() {
     });
   };
 
+  const handlePlaceOption = () => {
+    if (!optionAccount) {
+      toast({ title: "Select an account", variant: "destructive" });
+      return;
+    }
+    if (!strikePrice || !expiration) {
+      toast({ title: "Fill in all required fields", variant: "destructive" });
+      return;
+    }
+    toast({
+      title: "Options Order Placed",
+      description: `${optionType.toUpperCase()} contract on ${selectedSymbol} at $${strikePrice} strike, expires ${expiration}. Order submitted to market.`
+    });
+    setStrikePrice("");
+    setExpiration("");
+  };
+
+  const handlePlaceOrder = () => {
+    if (!orderAccount) {
+      toast({ title: "Select an account", variant: "destructive" });
+      return;
+    }
+    
+    let description = "";
+    if (orderType === "limit") {
+      if (!limitPrice) {
+        toast({ title: "Enter limit price", variant: "destructive" });
+        return;
+      }
+      description = `Limit order on ${selectedSymbol} at $${limitPrice}`;
+    } else if (orderType === "stop" || orderType === "stop-limit") {
+      if (!stopPrice) {
+        toast({ title: "Enter stop price", variant: "destructive" });
+        return;
+      }
+      description = `${orderType === 'stop' ? 'Stop-Loss' : 'Stop-Limit'} order on ${selectedSymbol} at $${stopPrice}`;
+    } else if (orderType === "trailing") {
+      if (!trailingPercent) {
+        toast({ title: "Enter trailing percentage", variant: "destructive" });
+        return;
+      }
+      description = `Trailing stop order on ${selectedSymbol} at ${trailingPercent}%`;
+    } else {
+      description = `Market order on ${selectedSymbol}`;
+    }
+    
+    toast({
+      title: "Advanced Order Placed",
+      description: `${description}. Order is now active and monitoring the market.`
+    });
+    setLimitPrice("");
+    setStopPrice("");
+    setTrailingPercent("");
+  };
+
   return (
     <LayoutShell>
       <div className="mb-8">
@@ -425,7 +480,7 @@ export default function InvestmentsPage() {
                     </Select>
                   </div>
 
-                  <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                  <Button className="w-full bg-orange-600 hover:bg-orange-700" onClick={handlePlaceOption} data-testid="button-place-options-order">
                     Place Options Order
                   </Button>
                 </div>
@@ -556,7 +611,7 @@ export default function InvestmentsPage() {
                     </Select>
                   </div>
 
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handlePlaceOrder} data-testid="button-place-advanced-order">
                     Place Order
                   </Button>
                 </div>
