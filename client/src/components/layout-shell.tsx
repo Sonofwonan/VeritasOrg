@@ -34,10 +34,10 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-full py-6">
       <div className="px-6 mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold text-sm">
-            R
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-white font-bold text-sm">
+            V
           </div>
-          <h1 className="text-2xl font-bold font-display">Replit</h1>
+          <h1 className="text-2xl font-bold font-display">Veritas</h1>
         </div>
         <p className="text-xs text-muted-foreground mt-1">Wealth Management Platform</p>
       </div>
@@ -94,10 +94,10 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b z-40 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold text-xs">
-            R
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-white font-bold text-xs">
+            V
           </div>
-          <h1 className="font-bold text-lg font-display">Replit</h1>
+          <h1 className="font-bold text-lg font-display">Veritas</h1>
         </div>
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>

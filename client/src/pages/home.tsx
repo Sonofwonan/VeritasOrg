@@ -95,12 +95,18 @@ export default function HomePage() {
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-20"
+          className="absolute inset-0 bg-cover bg-center opacity-30"
           style={{ backgroundImage: 'url(/assets/IMG_3476_1766680873153.jpeg)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background/60 to-accent/10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-background/70 to-background/90" />
         
-        <div className="relative max-w-7xl mx-auto px-6 py-20 sm:py-28">
+        <div className="relative max-w-7xl mx-auto px-6 py-24 sm:py-32">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/20">
+              V
+            </div>
+            <span className="text-2xl font-bold tracking-tight">Veritas Wealth</span>
+          </div>
           <div className="text-center space-y-8">
             <div className="space-y-4">
               <h1 className="text-5xl sm:text-7xl font-bold tracking-tight">
