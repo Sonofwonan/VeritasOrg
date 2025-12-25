@@ -9,21 +9,22 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { insertUserSchema } from "@shared/routes";
-import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { insertUserSchema } from "@shared/schema";
+import { useEffect, useState } from "react";
+import { Loader2, ArrowRight, CheckCircle2, Shield, TrendingUp, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email"),
@@ -34,6 +35,8 @@ export default function AuthPage() {
   const { login, register, user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [view, setView] = useState<"login" | "register">("register");
+  const [step, setStep] = useState(1);
 
   useEffect(() => {
     if (user) setLocation("/dashboard");
@@ -57,7 +60,7 @@ export default function AuthPage() {
           description: error.message,
           variant: "destructive",
         });
-      }
+      },
     });
   };
 
@@ -69,7 +72,7 @@ export default function AuthPage() {
           description: error.message,
           variant: "destructive",
         });
-      }
+      },
     });
   };
 
@@ -82,49 +85,70 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Visual Side */}
-      <div className="hidden lg:flex flex-col justify-center p-12 bg-primary text-primary-foreground relative overflow-hidden">
-        {/* Abstract shapes/gradient background */}
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1611974765270-ca12586343bb?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/90 to-primary/40"></div>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-background">
+      {/* Visual Side - Left Panel */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-[#0a0a0a] text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-50" />
         
-        <div className="relative z-10 max-w-md">
-          <h1 className="text-5xl font-bold font-display mb-6 tracking-tight">
-            Banking for the future.
-          </h1>
-          <p className="text-xl opacity-90 leading-relaxed">
-            Manage your assets, track investments, and execute transfers with professional-grade tools designed for modern finance.
-          </p>
-          
-          <div className="mt-12 flex items-center gap-4">
-            <div className="flex -space-x-4">
-               {[1,2,3].map(i => (
-                 <div key={i} className="w-10 h-10 rounded-full border-2 border-primary bg-primary-foreground/20 backdrop-blur-sm" />
-               ))}
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-12">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-black font-bold text-xl shadow-lg shadow-primary/20">
+              V
             </div>
-            <p className="text-sm font-medium">Join 10,000+ users today</p>
+            <span className="text-2xl font-bold tracking-tight">Veritas Wealth</span>
+          </div>
+
+          <div className="space-y-6 max-w-lg">
+            <h1 className="text-6xl font-bold font-display tracking-tight leading-[1.1]">
+              The future of <span className="text-primary">personal wealth.</span>
+            </h1>
+            <p className="text-xl text-zinc-400 leading-relaxed">
+              Experience professional-grade wealth management with a platform designed for the modern investor.
+            </p>
+          </div>
+        </div>
+
+        <div className="relative z-10 grid grid-cols-2 gap-8 pt-12 border-t border-zinc-800">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-primary">
+              <Shield className="w-5 h-5" />
+              <span className="font-semibold">Secure</span>
+            </div>
+            <p className="text-sm text-zinc-500">Bank-level encryption and multi-factor security as standard.</p>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-primary">
+              <TrendingUp className="w-5 h-5" />
+              <span className="font-semibold">Insightful</span>
+            </div>
+            <p className="text-sm text-zinc-500">Real-time market analytics and AI-powered portfolio insights.</p>
           </div>
         </div>
       </div>
 
-      {/* Form Side */}
-      <div className="flex items-center justify-center p-6 bg-muted/30">
-        <Card className="w-full max-w-md border-none shadow-2xl shadow-primary/5">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
-            <CardDescription className="text-center">
-              Enter your credentials to access your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
+      {/* Form Side - Right Panel */}
+      <div className="flex-1 flex flex-col justify-center p-6 sm:p-12 lg:p-24 bg-zinc-50 dark:bg-[#111]">
+        <div className="w-full max-w-md mx-auto space-y-8">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold tracking-tight">
+              {view === "login" ? "Welcome back" : "Create your account"}
+            </h2>
+            <p className="text-zinc-500">
+              {view === "login" 
+                ? "Enter your details to access your dashboard." 
+                : "Join Veritas Wealth and start your journey today."}
+            </p>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {view === "login" ? (
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
                 <Form {...loginForm}>
                   <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
                     <FormField
@@ -132,9 +156,13 @@ export default function AuthPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Email Address</FormLabel>
                           <FormControl>
-                            <Input placeholder="you@example.com" {...field} autoComplete="email" />
+                            <Input 
+                              className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
+                              placeholder="name@company.com" 
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -145,93 +173,173 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" {...field} autoComplete="current-password" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button 
-                      type="submit" 
-                      className="w-full mt-2" 
-                      disabled={login.isPending}
-                    >
-                      {login.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                      Sign In
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
-              
-              <TabsContent value="register">
-                <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
-                    <FormField
-                      control={registerForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John Doe" {...field} autoComplete="name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={registerForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <div className="flex items-center justify-between">
+                            <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Password</FormLabel>
+                            <Button variant="link" className="px-0 h-auto text-xs text-primary font-bold">Forgot password?</Button>
+                          </div>
                           <FormControl>
                             <Input 
-                              type="email" 
-                              placeholder="john@example.com" 
+                              type="password" 
+                              className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
                               {...field} 
-                              autoComplete="username email"
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
-                    <FormField
-                      control={registerForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" {...field} autoComplete="current-password" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     <Button 
                       type="submit" 
-                      className="w-full mt-2 bg-accent hover:bg-accent/90 text-accent-foreground"
-                      disabled={register.isPending}
+                      className="w-full h-12 text-base font-bold shadow-lg shadow-primary/20" 
+                      disabled={login.isPending}
                     >
-                      {register.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                      Create Account
+                      {login.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Sign in to Veritas"}
                     </Button>
                   </form>
                 </Form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-          <CardFooter className="flex justify-center border-t p-6">
-            <p className="text-xs text-muted-foreground text-center">
-              By continuing, you agree to our Terms of Service and Privacy Policy.
+              </motion.div>
+            ) : (
+              <motion.div
+                key="register"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <div className="flex gap-2 mb-8">
+                  {[1, 2].map((s) => (
+                    <div 
+                      key={s} 
+                      className={`h-1 flex-1 rounded-full transition-colors duration-300 ${s <= step ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-800'}`} 
+                    />
+                  ))}
+                </div>
+
+                <Form {...registerForm}>
+                  <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
+                    {step === 1 ? (
+                      <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        className="space-y-4"
+                      >
+                        <FormField
+                          control={registerForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Full Name</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
+                                  placeholder="Johnathan Doe" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={registerForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Work Email</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
+                                  placeholder="john@company.com" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button 
+                          type="button" 
+                          onClick={() => setStep(2)}
+                          className="w-full h-12 text-base font-bold group"
+                        >
+                          Continue
+                          <ChevronRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                        </Button>
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        className="space-y-4"
+                      >
+                        <FormField
+                          control={registerForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Secure Password</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="password" 
+                                  className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="space-y-3 pt-2">
+                          <div className="flex items-center gap-2 text-xs text-zinc-500">
+                            <CheckCircle2 className="w-3 h-3 text-primary" />
+                            <span>At least 8 characters long</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-zinc-500">
+                            <CheckCircle2 className="w-3 h-3 text-primary" />
+                            <span>Includes symbols or numbers</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                          <Button 
+                            type="button" 
+                            variant="outline"
+                            onClick={() => setStep(1)}
+                            className="h-12 px-4"
+                          >
+                            Back
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            className="flex-1 h-12 text-base font-bold shadow-lg shadow-primary/20" 
+                            disabled={register.isPending}
+                          >
+                            {register.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Complete setup"}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </form>
+                </Form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="pt-8 text-center">
+            <p className="text-sm text-zinc-500">
+              {view === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+              <button 
+                onClick={() => {
+                  setView(view === "login" ? "register" : "login");
+                  setStep(1);
+                }}
+                className="text-primary font-bold hover:underline"
+              >
+                {view === "login" ? "Create one now" : "Sign in here"}
+              </button>
             </p>
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
