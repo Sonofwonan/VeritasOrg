@@ -1,0 +1,50 @@
+2025-12-25T01:56:04.015519455Z     '  }\n' +
+2025-12-25T01:56:04.015521535Z     '  body {\n' +
+2025-12-25T01:56:04.015523735Z     '    @apply bg-background text-foreground antialiased font-sans;\n' +
+2025-12-25T01:56:04.015525805Z     '  }\n' +
+2025-12-25T01:56:04.015527925Z     '  h1, h2, h3, h4, h5, h6 {\n' +
+2025-12-25T01:56:04.015530065Z     '    @apply font-display font-bold tracking-tight;\n' +
+2025-12-25T01:56:04.015532145Z     '  }\n' +
+2025-12-25T01:56:04.015534195Z     '}\n' +
+2025-12-25T01:56:04.015536245Z     '\n' +
+2025-12-25T01:56:04.015538326Z     '@layer utilities {\n' +
+2025-12-25T01:56:04.015540386Z     '  .glass-card {\n' +
+2025-12-25T01:56:04.015543806Z     '    @apply bg-white/70 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;\n' +
+2025-12-25T01:56:04.015545906Z     '  }\n' +
+2025-12-25T01:56:04.015547976Z     '  .text-gradient {\n' +
+2025-12-25T01:56:04.015550246Z     '    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;\n' +
+2025-12-25T01:56:04.015552296Z     '  }\n' +
+2025-12-25T01:56:04.015554366Z     '}\n',
+2025-12-25T01:56:04.015556406Z   plugin: 'vite:css',
+2025-12-25T01:56:04.015558486Z   hook: 'transform',
+2025-12-25T01:56:04.015571786Z   id: '/opt/render/project/src/client/src/index.css',
+2025-12-25T01:56:04.015574127Z   watchFiles: [
+2025-12-25T01:56:04.015576307Z     '/opt/render/project/src/client/index.html',
+2025-12-25T01:56:04.015578456Z     '/opt/render/project/src/client/src/main.tsx',
+2025-12-25T01:56:04.015580816Z     '/opt/render/project/src/package.json',
+2025-12-25T01:56:04.015582877Z     '/opt/render/project/src/node_modules/react-dom/client.js',
+2025-12-25T01:56:04.015585007Z     '/opt/render/project/src/node_modules/react/jsx-runtime.js',
+2025-12-25T01:56:04.015587087Z     '/opt/render/project/src/client/src/App.tsx',
+2025-12-25T01:56:04.015589247Z     '/opt/render/project/src/client/src/index.css',
+2025-12-25T01:56:04.015591337Z     '/opt/render/project/src/node_modules/react-dom/index.js',
+2025-12-25T01:56:04.015593517Z     '/opt/render/project/src/node_modules/react/cjs/react-jsx-runtime.production.min.js',
+2025-12-25T01:56:04.015595587Z     '/opt/render/project/src/node_modules/wouter/esm/index.js',
+2025-12-25T01:56:04.015597697Z     '/opt/render/project/src/node_modules/@tanstack/react-query/build/modern/index.js',
+2025-12-25T01:56:04.015599767Z     '/opt/render/project/src/client/src/lib/queryClient.ts',
+2025-12-25T01:56:04.015601917Z     '/opt/render/project/src/client/src/components/ui/toaster.tsx',
+2025-12-25T01:56:04.015604067Z     '/opt/render/project/src/client/src/components/ui/tooltip.tsx',
+2025-12-25T01:56:04.015606137Z     '/opt/render/project/src/client/src/hooks/use-auth.ts',
+2025-12-25T01:56:04.015608187Z     '/opt/render/project/src/node_modules/react/index.js',
+2025-12-25T01:56:04.015610307Z     '/opt/render/project/src/client/src/pages/home.tsx',
+2025-12-25T01:56:04.015612388Z     '/opt/render/project/src/client/src/pages/not-found.tsx',
+2025-12-25T01:56:04.015617808Z     '/opt/render/project/src/client/src/pages/auth-page.tsx',
+2025-12-25T01:56:04.015619948Z     '/opt/render/project/src/client/src/pages/dashboard.tsx',
+2025-12-25T01:56:04.015650529Z     '/opt/render/project/src/client/src/pages/accounts-page.tsx',
+2025-12-25T01:56:04.015652778Z     '/opt/render/project/src/node_modules/lucide-react/dist/esm/lucide-react.js',
+2025-12-25T01:56:04.015654949Z     '/opt/render/project/src/client/src/pages/investments-page.tsx',
+2025-12-25T01:56:04.015656979Z     '/opt/render/project/src/client/src/pages/transfers-page.tsx',
+2025-12-25T01:56:04.015659169Z     '/opt/render/project/src/node_modules/react-dom/cjs/react-dom.production.min.js'
+2025-12-25T01:56:04.015661339Z   ]
+2025-12-25T01:56:04.015663559Z }
+2025-12-25T01:56:04.09889526Z ==> Build failed 😞
+2025-12-25T01:56:04.09891063Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
