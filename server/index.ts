@@ -27,20 +27,21 @@ app.use(express.urlencoded({ extended: false }));
 const corsOptions: cors.CorsOptions = {
   credentials: true,
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    // In production, check CLIENT_URL env var
-    // In development, allow any origin
-    if (process.env.NODE_ENV === "production") {
-      if (process.env.CLIENT_URL && origin === process.env.CLIENT_URL) {
-        callback(null, true);
-      } else if (!origin) {
-        // Allow same-origin requests (no origin header)
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"));
-      }
-    } else {
-      // Development: allow all origins
+    if (!origin) {
       callback(null, true);
+      return;
+    }
+
+    const allowedOrigins = [
+      process.env.CLIENT_URL,
+      "https://veritaswealth.vercel.app",
+      "https://veritas-wealth.vercel.app"
+    ].filter(Boolean);
+
+    if (process.env.NODE_ENV !== "production" || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
 };
