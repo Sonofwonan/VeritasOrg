@@ -175,7 +175,7 @@ export default function AuthPage() {
                         <FormItem>
                           <div className="flex items-center justify-between">
                             <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Password</FormLabel>
-                            <Button variant="link" className="px-0 h-auto text-xs text-primary font-bold">Forgot password?</Button>
+                            <Button variant="ghost" className="px-0 h-auto text-xs text-primary font-bold hover:bg-transparent">Forgot password?</Button>
                           </div>
                           <FormControl>
                             <Input 
