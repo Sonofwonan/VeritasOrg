@@ -7,7 +7,9 @@ import {
   ArrowRightLeft, 
   LogOut, 
   Menu,
-  X
+  X,
+  BookOpen,
+  Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -18,6 +20,8 @@ const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Accounts", href: "/accounts", icon: Wallet },
   { label: "Investments", href: "/investments", icon: TrendingUp },
+  { label: "Goals", href: "/goals", icon: Target },
+  { label: "Learning", href: "/education", icon: BookOpen },
   { label: "Transfers", href: "/transfers", icon: ArrowRightLeft },
 ];
 

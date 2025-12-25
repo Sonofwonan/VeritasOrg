@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Target, TrendingUp, Home, GraduationCap, Heart, PieChart, Plus } from "lucide-react";
+import { Target, TrendingUp, Home, GraduationCap, Heart, PieChart, Plus, Flame, Star } from "lucide-react";
 
 const GOAL_TEMPLATES = [
   { id: "retirement", name: "Retirement", icon: PieChart, targetAmount: "1000000", timeline: "30 years", description: "Build wealth for retirement" },
@@ -63,6 +63,9 @@ export default function GoalsPage() {
     return remaining / months;
   };
 
+  const completedGoals = goals.filter(g => g.progress === 100).length;
+  const totalSaved = goals.reduce((sum, g) => sum + g.current, 0);
+
   return (
     <LayoutShell>
       <div className="mb-8 flex items-center justify-between">
@@ -70,6 +73,43 @@ export default function GoalsPage() {
           <h2 className="text-3xl font-bold font-display">Financial Goals</h2>
           <p className="text-muted-foreground">Track and achieve your financial milestones</p>
         </div>
+      </div>
+
+      {/* Goals Overview */}
+      <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <Card className="border-none shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <Target className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium text-muted-foreground">{goals.length} Total</span>
+            </div>
+            <p className="text-3xl font-bold font-display">{goals.length}</p>
+            <p className="text-sm text-muted-foreground">Active Goals</p>
+          </CardContent>
+        </Card>
+        <Card className="border-none shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <Flame className="w-5 h-5 text-emerald-600" />
+              <span className="text-sm font-medium text-muted-foreground">{completedGoals} Achieved</span>
+            </div>
+            <p className="text-3xl font-bold font-display">${totalSaved.toLocaleString()}</p>
+            <p className="text-sm text-muted-foreground">Total Saved</p>
+          </CardContent>
+        </Card>
+        <Card className="border-none shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <Star className="w-5 h-5 text-amber-600" />
+              <span className="text-sm font-medium text-muted-foreground">{completedGoals} Complete</span>
+            </div>
+            <p className="text-3xl font-bold font-display">{completedGoals}</p>
+            <p className="text-sm text-muted-foreground">Goals Completed</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mb-8 flex items-center justify-between">
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2 shadow-lg shadow-primary/20">

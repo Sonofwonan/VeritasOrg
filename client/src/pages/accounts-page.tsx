@@ -276,6 +276,37 @@ export default function AccountsPage() {
 
         <Card className="mt-6">
           <CardHeader>
+            <CardTitle className="text-base">Recent Transactions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center p-3 rounded border hover-elevate transition-all">
+                <div>
+                  <p className="font-medium">Whole Foods Market</p>
+                  <p className="text-xs text-muted-foreground">Dec 24, 2025</p>
+                </div>
+                <p className="font-medium text-rose-600">-$87.43</p>
+              </div>
+              <div className="flex justify-between items-center p-3 rounded border hover-elevate transition-all">
+                <div>
+                  <p className="font-medium">Starbucks Coffee</p>
+                  <p className="text-xs text-muted-foreground">Dec 23, 2025</p>
+                </div>
+                <p className="font-medium text-rose-600">-$6.25</p>
+              </div>
+              <div className="flex justify-between items-center p-3 rounded border hover-elevate transition-all">
+                <div>
+                  <p className="font-medium">Salary Deposit</p>
+                  <p className="text-xs text-muted-foreground">Dec 22, 2025</p>
+                </div>
+                <p className="font-medium text-emerald-600">+$3,500.00</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
             <CardTitle className="text-base">Card Controls & Security</CardTitle>
           </CardHeader>
           <CardContent>
@@ -291,7 +322,7 @@ export default function AccountsPage() {
                     <span className="text-muted-foreground">ATM Withdrawal Limit</span>
                     <span className="font-medium">$500</span>
                   </div>
-                  <Button variant="outline" size="sm" className="w-full text-xs">Edit Limits</Button>
+                  <Button variant="outline" size="sm" className="w-full text-xs" data-testid="button-edit-limits">Edit Limits</Button>
                 </div>
               </div>
               <div className="space-y-3">
