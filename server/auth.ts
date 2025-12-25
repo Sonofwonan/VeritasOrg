@@ -33,9 +33,8 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: process.env.NODE_ENV === "production",
-      // For production with frontend on a different domain (Vercel), use 'none' so the cookie is sent cross-site
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
       domain: process.env.COOKIE_DOMAIN || undefined,
       httpOnly: true,
     },

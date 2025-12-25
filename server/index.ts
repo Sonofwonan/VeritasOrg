@@ -16,6 +16,7 @@ declare module "http" {
 // Set trust proxy for cross-domain cookies
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
+  app.set("trust proxy", "loopback, linklocal, uniquelocal");
 }
 
 app.use(
