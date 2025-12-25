@@ -1,9 +1,27 @@
 import { useAccounts, useCreateAccount } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
-import { Plus, Wallet, CreditCard, ArrowRight } from "lucide-react";
+import { Plus, Wallet, CreditCard, ArrowRight, Briefcase } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+
+type AccountType = 'checking' | 'savings' | 'money_market' | 'cd' | 'high_yield_savings' | 'brokerage' | 'traditional_ira' | 'roth_ira' | '401k' | '529_plan' | 'trust_account' | 'business_checking' | 'business_savings';
+
+const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
+  checking: 'Checking Account',
+  savings: 'Savings Account',
+  money_market: 'Money Market Account',
+  cd: 'Certificate of Deposit',
+  high_yield_savings: 'High-Yield Savings',
+  brokerage: 'Brokerage Account',
+  traditional_ira: 'Traditional IRA',
+  roth_ira: 'Roth IRA',
+  '401k': '401(k) / 403(b)',
+  '529_plan': '529 Savings Plan',
+  trust_account: 'Trust Account',
+  business_checking: 'Business Checking',
+  business_savings: 'Business Savings',
+};
 import {
   Dialog,
   DialogContent,
@@ -28,8 +46,8 @@ export default function AccountsPage() {
   const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   
-  const [newAccount, setNewAccount] = useState({
-    accountType: "cash" as "cash" | "investment",
+  const [newAccount, setNewAccount] = useState<{accountType: AccountType, balance: string}>({
+    accountType: "checking",
     balance: "5000",
   });
 
@@ -86,14 +104,34 @@ export default function AccountsPage() {
                 <Label>Account Type</Label>
                 <Select 
                   value={newAccount.accountType} 
-                  onValueChange={(v: "cash" | "investment") => setNewAccount(prev => ({ ...prev, accountType: v }))}
+                  onValueChange={(v: any) => setNewAccount(prev => ({ ...prev, accountType: v }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cash">Cash / Checking</SelectItem>
-                    <SelectItem value="investment">Investment / Brokerage</SelectItem>
+                    <div className="px-2 py-1.5">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">Deposit Accounts</p>
+                      <SelectItem value="checking">Checking Account</SelectItem>
+                      <SelectItem value="savings">Savings Account</SelectItem>
+                      <SelectItem value="money_market">Money Market Account</SelectItem>
+                      <SelectItem value="cd">Certificate of Deposit (CD)</SelectItem>
+                      <SelectItem value="high_yield_savings">High-Yield Savings</SelectItem>
+                    </div>
+                    <div className="px-2 py-1.5">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">Investment & Retirement</p>
+                      <SelectItem value="brokerage">Brokerage Account</SelectItem>
+                      <SelectItem value="traditional_ira">Traditional IRA</SelectItem>
+                      <SelectItem value="roth_ira">Roth IRA</SelectItem>
+                      <SelectItem value="401k">401(k) / 403(b)</SelectItem>
+                      <SelectItem value="529_plan">529 Savings Plan</SelectItem>
+                    </div>
+                    <div className="px-2 py-1.5">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">Other Accounts</p>
+                      <SelectItem value="trust_account">Trust Account</SelectItem>
+                      <SelectItem value="business_checking">Business Checking</SelectItem>
+                      <SelectItem value="business_savings">Business Savings</SelectItem>
+                    </div>
                   </SelectContent>
                 </Select>
               </div>
@@ -123,8 +161,10 @@ export default function AccountsPage() {
           <Card key={account.id} className="group relative overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5">
             {/* Background decoration */}
             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-              {account.accountType === 'investment' ? (
+              {['brokerage', 'traditional_ira', 'roth_ira', '401k', '529_plan'].includes(account.accountType) ? (
                 <CreditCard className="w-24 h-24" />
+              ) : ['trust_account', 'business_checking', 'business_savings'].includes(account.accountType) ? (
+                <Briefcase className="w-24 h-24" />
               ) : (
                 <Wallet className="w-24 h-24" />
               )}
@@ -134,13 +174,19 @@ export default function AccountsPage() {
               <div className="flex justify-between items-start mb-2">
                 <div className={`
                   p-3 rounded-xl 
-                  ${account.accountType === 'investment' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}
+                  ${['brokerage', 'traditional_ira', 'roth_ira', '401k', '529_plan'].includes(account.accountType) ? 'bg-purple-100 text-purple-600' : ['trust_account', 'business_checking', 'business_savings'].includes(account.accountType) ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}
                 `}>
-                  {account.accountType === 'investment' ? <CreditCard className="w-6 h-6" /> : <Wallet className="w-6 h-6" />}
+                  {['brokerage', 'traditional_ira', 'roth_ira', '401k', '529_plan'].includes(account.accountType) ? (
+                    <CreditCard className="w-6 h-6" />
+                  ) : ['trust_account', 'business_checking', 'business_savings'].includes(account.accountType) ? (
+                    <Briefcase className="w-6 h-6" />
+                  ) : (
+                    <Wallet className="w-6 h-6" />
+                  )}
                 </div>
               </div>
               <CardTitle className="text-xl">
-                {account.accountType === 'investment' ? 'Brokerage Account' : 'Checking Account'}
+                {ACCOUNT_TYPE_LABELS[account.accountType] || account.accountType}
               </CardTitle>
               <CardDescription>ID: ****{account.id}</CardDescription>
             </CardHeader>

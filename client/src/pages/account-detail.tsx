@@ -2,11 +2,29 @@ import { useAccounts } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Download, TrendingUp, TrendingDown, Wallet, CreditCard } from "lucide-react";
+import { ArrowLeft, Download, TrendingUp, TrendingDown, Wallet, CreditCard, Briefcase } from "lucide-react";
 import { useLocation } from "wouter";
 import { useParams } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+
+type AccountType = 'checking' | 'savings' | 'money_market' | 'cd' | 'high_yield_savings' | 'brokerage' | 'traditional_ira' | 'roth_ira' | '401k' | '529_plan' | 'trust_account' | 'business_checking' | 'business_savings';
+
+const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
+  checking: 'Checking Account',
+  savings: 'Savings Account',
+  money_market: 'Money Market Account',
+  cd: 'Certificate of Deposit',
+  high_yield_savings: 'High-Yield Savings',
+  brokerage: 'Brokerage Account',
+  traditional_ira: 'Traditional IRA',
+  roth_ira: 'Roth IRA',
+  '401k': '401(k) / 403(b)',
+  '529_plan': '529 Savings Plan',
+  trust_account: 'Trust Account',
+  business_checking: 'Business Checking',
+  business_savings: 'Business Savings',
+};
 
 export default function AccountDetailPage() {
   const params = useParams();
@@ -43,7 +61,7 @@ export default function AccountDetailPage() {
   }
 
   const accountBalance = Number(account.balance);
-  const isInvestment = account.accountType === 'investment';
+  const isInvestment = ['brokerage', 'traditional_ira', 'roth_ira', '401k', '529_plan'].includes(account.accountType);
 
   // Generate mock transaction history for demo
   const mockTransactions = [
@@ -99,7 +117,7 @@ export default function AccountDetailPage() {
         
         <div className="space-y-2">
           <h2 className="text-3xl font-bold font-display">
-            {isInvestment ? 'Brokerage Account' : 'Checking Account'}
+            {ACCOUNT_TYPE_LABELS[account.accountType] || account.accountType}
           </h2>
           <p className="text-muted-foreground">Account ID: {account.id}</p>
         </div>
@@ -138,7 +156,7 @@ export default function AccountDetailPage() {
           <CardContent className="space-y-4 text-sm">
             <div>
               <p className="text-muted-foreground">Type</p>
-              <p className="font-semibold capitalize">{account.accountType === 'investment' ? 'Brokerage' : 'Checking'}</p>
+              <p className="font-semibold">{ACCOUNT_TYPE_LABELS[account.accountType] || account.accountType}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Created</p>

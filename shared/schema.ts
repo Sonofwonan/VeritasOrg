@@ -3,7 +3,24 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-export const accountTypeEnum = pgEnum('account_type', ['cash', 'investment']);
+export const accountTypeEnum = pgEnum('account_type', [
+  // Deposit Accounts
+  'checking',
+  'savings',
+  'money_market',
+  'cd',
+  'high_yield_savings',
+  // Investment/Retirement
+  'brokerage',
+  'traditional_ira',
+  'roth_ira',
+  '401k',
+  '529_plan',
+  // Other
+  'trust_account',
+  'business_checking',
+  'business_savings'
+]);
 export const transactionTypeEnum = pgEnum('transaction_type', ['transfer', 'buy', 'sell']);
 export const transactionStatusEnum = pgEnum('transaction_status', ['completed', 'failed']);
 
