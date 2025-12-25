@@ -38,15 +38,23 @@ const corsOptions: cors.CorsOptions = {
       return;
     }
 
+    // In development, allow all origins
+    if (process.env.NODE_ENV !== "production") {
+      callback(null, true);
+      return;
+    }
+
+    // In production, allow specific domains
     const allowedOrigins = [
       process.env.CLIENT_URL,
       "https://veritaswealth.vercel.app",
       "https://veritas-wealth.vercel.app"
     ].filter(Boolean);
 
-    if (process.env.NODE_ENV !== "production" || allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error(`CORS blocked origin: ${origin}. Allowed: ${allowedOrigins.join(", ")}`);
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
