@@ -49,7 +49,7 @@ export default function AuthPage() {
 
   const registerForm = useForm<z.infer<typeof insertUserSchema>>({
     resolver: zodResolver(insertUserSchema),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: { name: "", email: "", password: "", userType: "personal" },
   });
 
   const onLogin = (data: z.infer<typeof loginSchema>) => {
@@ -231,6 +231,50 @@ export default function AuthPage() {
                         animate={{ opacity: 1 }} 
                         className="space-y-4"
                       >
+                        <FormField
+                          control={registerForm.control}
+                          name="userType"
+                          render={({ field }) => (
+                            <FormItem className="space-y-3">
+                              <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Account Type</FormLabel>
+                              <FormControl>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <button
+                                    type="button"
+                                    onClick={() => field.onChange("personal")}
+                                    className={cn(
+                                      "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
+                                      field.value === "personal"
+                                        ? "border-primary bg-primary/5 text-primary"
+                                        : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+                                    )}
+                                  >
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                      <TrendingUp className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <span className="font-bold text-sm text-foreground">Personal</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => field.onChange("business")}
+                                    className={cn(
+                                      "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
+                                      field.value === "business"
+                                        ? "border-primary bg-primary/5 text-primary"
+                                        : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+                                    )}
+                                  >
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                      <Shield className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <span className="font-bold text-sm text-foreground">Business</span>
+                                  </button>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         <FormField
                           control={registerForm.control}
                           name="name"
