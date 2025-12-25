@@ -8,12 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Target, TrendingUp, Home, Graduation, Heart, PieChart, Plus } from "lucide-react";
+import { Target, TrendingUp, Home, GraduationCap, Heart, PieChart, Plus } from "lucide-react";
 
 const GOAL_TEMPLATES = [
   { id: "retirement", name: "Retirement", icon: PieChart, targetAmount: "1000000", timeline: "30 years", description: "Build wealth for retirement" },
   { id: "home", name: "Home Purchase", icon: Home, targetAmount: "250000", timeline: "5 years", description: "Save for down payment" },
-  { id: "education", name: "Education", icon: Graduation, targetAmount: "100000", timeline: "10 years", description: "Save for college or further education" },
+  { id: "education", name: "Education", icon: GraduationCap, targetAmount: "100000", timeline: "10 years", description: "Save for college or further education" },
   { id: "vacation", name: "Vacation", icon: Heart, targetAmount: "10000", timeline: "1 year", description: "Dream vacation fund" },
 ];
 
@@ -28,7 +28,7 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<any[]>([
     { id: 1, name: "Retirement Fund", target: 1000000, current: 245000, deadline: "2055", progress: 24.5, icon: PieChart },
     { id: 2, name: "Home Down Payment", target: 250000, current: 85000, deadline: "2030", progress: 34, icon: Home },
-    { id: 3, name: "College Fund", target: 100000, current: 45000, deadline: "2033", progress: 45, icon: Graduation },
+    { id: 3, name: "College Fund", target: 100000, current: 45000, deadline: "2033", progress: 45, icon: GraduationCap },
   ]);
 
   const handleCreateGoal = () => {
