@@ -149,58 +149,95 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <div className="relative pt-20 overflow-hidden">
+      <div className="relative pt-20 overflow-hidden min-h-[90vh] flex items-center">
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
-          style={{ backgroundImage: 'url(/assets/hero-bg.jpeg)' }}
+          className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-overlay transition-opacity duration-1000"
+          style={{ backgroundImage: 'url(/attached_assets/IMG_3468_1766686477600.jpeg)' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-transparent to-[#0a0a0a] opacity-80" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-background/40 to-background/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-accent/5" />
         
-        <div className="relative max-w-7xl mx-auto px-6 py-32 sm:py-44">
-          <div className="text-center space-y-8 max-w-4xl mx-auto">
-            <div className="space-y-4">
-              <h1 className="text-5xl sm:text-7xl font-bold tracking-tight">
-                Wealth Management
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-                  Made Simple
-                </span>
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Professional-grade tools for managing investments, tracking assets, and building lasting wealth. 
-                Join thousands of investors who trust Veritas.
-              </p>
-            </div>
+        <div className="relative max-w-7xl mx-auto px-6 py-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8 animate-in fade-in slide-in-from-left duration-1000">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-bold">
+                <Shield className="w-4 h-4" />
+                <span>Institutional Grade Wealth Management</span>
+              </div>
+              <div className="space-y-4">
+                <h1 className="text-6xl sm:text-7xl font-bold tracking-tight leading-[1.1]">
+                  Secure Your Future with
+                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+                    Veritas Wealth
+                  </span>
+                </h1>
+                <p className="text-xl text-zinc-300 max-w-xl leading-relaxed">
+                  We bridge the gap between institutional sophistication and personal wealth management. 
+                  Experience a platform built on transparency, security, and proven results.
+                </p>
+              </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button 
-                onClick={() => setLocation('/auth')} 
-                size="lg"
-                className="px-8 h-12 text-base"
-                data-testid="button-get-started"
-              >
-                Get Started Free
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setLocation('/auth')} 
-                size="lg"
-                className="px-8 h-12 text-base"
-                data-testid="button-sign-in"
-              >
-                Sign In
-              </Button>
-            </div>
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <Button 
+                  onClick={() => setLocation('/auth')} 
+                  size="lg"
+                  className="w-full sm:w-auto px-8 h-14 text-lg font-bold shadow-2xl shadow-primary/40"
+                  data-testid="button-get-started"
+                >
+                  Open an Account
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setLocation('/auth')} 
+                  size="lg"
+                  className="w-full sm:w-auto px-8 h-14 text-lg font-bold border-zinc-700 hover:bg-zinc-800"
+                  data-testid="button-sign-in"
+                >
+                  Sign In
+                </Button>
+              </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12 border-t">
-              {stats.map((stat) => (
-                <div key={stat.label} className="space-y-2">
-                  <p className="text-3xl font-bold text-primary">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
+              <div className="pt-8 flex items-center gap-6 border-t border-zinc-800/50">
+                <div className="flex -space-x-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-background bg-zinc-800 flex items-center justify-center overflow-hidden">
+                      <img src={`https://i.pravatar.cc/150?u=${i}`} alt="user" />
+                    </div>
+                  ))}
                 </div>
-              ))}
+                <p className="text-sm text-zinc-400 font-medium">
+                  Joined by <span className="text-white font-bold">850,000+</span> global investors
+                </p>
+              </div>
             </div>
+
+            <div className="hidden lg:block relative animate-in zoom-in fade-in duration-1000 delay-200">
+              <div className="relative z-10 rounded-3xl overflow-hidden border border-zinc-800 shadow-2xl shadow-primary/20">
+                <img 
+                  src="/attached_assets/IMG_3469_1766686477600.jpeg" 
+                  alt="Veritas Wealth Dashboard" 
+                  className="w-full h-auto"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              </div>
+              {/* Floating decorative elements */}
+              <div className="absolute -top-6 -right-6 w-32 h-32 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-accent/20 rounded-full blur-3xl animate-pulse delay-700" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Section - High Contrast */}
+      <div className="bg-[#0a0a0a] border-y border-zinc-800 py-12 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center space-y-2 animate-in fade-in zoom-in duration-700">
+                <p className="text-4xl md:text-5xl font-bold text-primary tabular-nums tracking-tighter">{stat.value}</p>
+                <p className="text-xs uppercase tracking-[0.2em] font-bold text-zinc-500">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -243,20 +280,24 @@ export default function HomePage() {
 
         <div className="grid gap-12 max-w-4xl mx-auto">
           {/* Retirement & IRAs */}
-          <Card className="border-0 shadow-none text-center p-8 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl">
-            <CardHeader className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+          <Card className="border-0 shadow-none text-center p-8 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl group overflow-hidden relative">
+            <div 
+              className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-cover bg-center"
+              style={{ backgroundImage: 'url(/attached_assets/IMG_3484_1766686477600.jpeg)' }}
+            />
+            <CardHeader className="flex flex-col items-center relative z-10">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <TrendingUp className="w-8 h-8 text-primary" />
               </div>
               <CardTitle className="text-2xl text-blue-600 dark:text-blue-400">Retirement & IRAs</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 relative z-10">
               <p className="text-lg text-muted-foreground">
                 Save for retirement with access to a broad range of investments, exceptional service, planning tools, and free investment guidance.
               </p>
               <Button 
                 onClick={() => setLocation('/auth')} 
-                className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 h-12 rounded-md"
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 h-12 rounded-md hover-elevate"
               >
                 Open an account
               </Button>
@@ -264,20 +305,24 @@ export default function HomePage() {
           </Card>
 
           {/* Planning & Advice */}
-          <Card className="border-0 shadow-none text-center p-8 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl">
-            <CardHeader className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+          <Card className="border-0 shadow-none text-center p-8 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl group overflow-hidden relative">
+            <div 
+              className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-cover bg-center"
+              style={{ backgroundImage: 'url(/attached_assets/IMG_3483_1766686477600.jpeg)' }}
+            />
+            <CardHeader className="flex flex-col items-center relative z-10">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <Users className="w-8 h-8 text-primary" />
               </div>
               <CardTitle className="text-2xl text-blue-600 dark:text-blue-400">Planning & advice</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 relative z-10">
               <p className="text-lg text-muted-foreground">
                 Start making real progress on your financial goals with help from our investment management services.
               </p>
               <Button 
                 onClick={() => setLocation('/auth')} 
-                className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 h-12 rounded-md"
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 h-12 rounded-md hover-elevate"
               >
                 Find an advisor
               </Button>
@@ -285,20 +330,24 @@ export default function HomePage() {
           </Card>
 
           {/* Brokerage Account */}
-          <Card className="border-0 shadow-none text-center p-8 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl">
-            <CardHeader className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+          <Card className="border-0 shadow-none text-center p-8 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl group overflow-hidden relative">
+            <div 
+              className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 bg-cover bg-center"
+              style={{ backgroundImage: 'url(/attached_assets/IMG_3475_1766686477600.jpeg)' }}
+            />
+            <CardHeader className="flex flex-col items-center relative z-10">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <BarChart3 className="w-8 h-8 text-primary" />
               </div>
               <CardTitle className="text-2xl text-blue-600 dark:text-blue-400">Brokerage account</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 relative z-10">
               <p className="text-lg text-muted-foreground">
                 Trade smarter with $0 commissions¹ for online US stock, ETF, and option trades; fractional share trading for a slice of your favorite companies; and powerful research tools.
               </p>
               <Button 
                 onClick={() => setLocation('/auth')} 
-                className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 h-12 rounded-md"
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 h-12 rounded-md hover-elevate"
               >
                 Open an account
               </Button>
