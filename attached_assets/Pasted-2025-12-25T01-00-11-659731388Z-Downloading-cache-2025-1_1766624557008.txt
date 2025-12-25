@@ -1,0 +1,39 @@
+2025-12-25T01:00:11.659731388Z ==> Downloading cache...
+2025-12-25T01:00:11.702105415Z ==> Cloning from https://github.com/Sonofwonan/VeritasOrg
+2025-12-25T01:00:12.734274755Z ==> Checking out commit 5be033cef5319c1ded15489d674eac99d0d6ffd7 in branch main
+2025-12-25T01:00:19.859064111Z ==> Downloaded 200MB in 3s. Extraction took 5s.
+2025-12-25T01:00:26.875948703Z ==> Using Node.js version 22.16.0 (default)
+2025-12-25T01:00:26.903522792Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2025-12-25T01:00:27.036474733Z ==> Running build command 'npm install && npm run build'...
+2025-12-25T01:00:28.414708268Z 
+2025-12-25T01:00:28.414735049Z up to date, audited 380 packages in 1s
+2025-12-25T01:00:28.41475031Z 
+2025-12-25T01:00:28.41475686Z 54 packages are looking for funding
+2025-12-25T01:00:28.414763501Z   run `npm fund` for details
+2025-12-25T01:00:28.415708096Z 
+2025-12-25T01:00:28.415722666Z found 0 vulnerabilities
+2025-12-25T01:00:28.658633517Z 
+2025-12-25T01:00:28.658656448Z > veritas-wealth@1.0.0 build
+2025-12-25T01:00:28.658662159Z > NODE_ENV=production tsx script/build.ts
+2025-12-25T01:00:28.658665889Z 
+2025-12-25T01:00:28.955877168Z 
+2025-12-25T01:00:28.955901449Z node:internal/modules/run_main:123
+2025-12-25T01:00:28.955907769Z     triggerUncaughtException(
+2025-12-25T01:00:28.955912259Z     ^
+2025-12-25T01:00:28.956082887Z Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite' imported from /opt/render/project/src/script/build.ts
+2025-12-25T01:00:28.956094148Z     at Object.getPackageJSONURL (node:internal/modules/package_json_reader:256:9)
+2025-12-25T01:00:28.956097808Z     at packageResolve (node:internal/modules/esm/resolve:768:81)
+2025-12-25T01:00:28.956100708Z     at moduleResolve (node:internal/modules/esm/resolve:854:18)
+2025-12-25T01:00:28.956103538Z     at defaultResolve (node:internal/modules/esm/resolve:984:11)
+2025-12-25T01:00:28.956106259Z     at nextResolve (node:internal/modules/esm/hooks:748:28)
+2025-12-25T01:00:28.956109029Z     at resolveBase (file:///opt/render/project/src/node_modules/tsx/dist/esm/index.mjs?1766624428827:2:3744)
+2025-12-25T01:00:28.956112579Z     at resolveDirectory (file:///opt/render/project/src/node_modules/tsx/dist/esm/index.mjs?1766624428827:2:4243)
+2025-12-25T01:00:28.956115639Z     at resolveTsPaths (file:///opt/render/project/src/node_modules/tsx/dist/esm/index.mjs?1766624428827:2:4984)
+2025-12-25T01:00:28.956118639Z     at async resolve (file:///opt/render/project/src/node_modules/tsx/dist/esm/index.mjs?1766624428827:2:5355)
+2025-12-25T01:00:28.956125019Z     at async nextResolve (node:internal/modules/esm/hooks:748:22) {
+2025-12-25T01:00:28.95613049Z   code: 'ERR_MODULE_NOT_FOUND'
+2025-12-25T01:00:28.95613465Z }
+2025-12-25T01:00:28.95613894Z 
+2025-12-25T01:00:28.9561432Z Node.js v22.16.0
+2025-12-25T01:00:29.093209407Z ==> Build failed 😞
+2025-12-25T01:00:29.113973691Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
