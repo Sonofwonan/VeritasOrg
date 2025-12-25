@@ -15,7 +15,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Accounts", href: "/accounts", icon: Wallet },
   { label: "Investments", href: "/investments", icon: TrendingUp },
   { label: "Transfers", href: "/transfers", icon: ArrowRightLeft },

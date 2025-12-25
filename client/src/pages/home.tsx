@@ -1,7 +1,9 @@
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Lock, Zap, BarChart3, Users, Trophy } from "lucide-react";
+import { TrendingUp, Lock, Zap, BarChart3, Users, Trophy, Loader2 } from "lucide-react";
 
 const features = [
   {
@@ -72,6 +74,21 @@ const stats = [
 
 export default function HomePage() {
   const [, setLocation] = useLocation();
+  const { user, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      setLocation("/dashboard");
+    }
+  }, [user, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
