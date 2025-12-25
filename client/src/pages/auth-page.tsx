@@ -65,8 +65,10 @@ export default function AuthPage() {
     });
   };
 
+  const userType = registerForm.watch("userType");
+
   const nextStep = async () => {
-    const isValid = await registerForm.trigger(['name', 'email']);
+    const isValid = await registerForm.trigger(['name', 'email', 'userType']);
     if (isValid) setStep(2);
   };
 
@@ -108,10 +110,10 @@ export default function AuthPage() {
 
           <div className="space-y-6 max-w-lg">
             <h1 className="text-6xl font-bold font-display tracking-tight leading-[1.1]">
-              The future of <span className="text-primary">personal wealth.</span>
+              The future of <span className="text-primary">{userType === 'business' ? 'enterprise' : 'personal'} wealth.</span>
             </h1>
             <p className="text-xl text-zinc-400 leading-relaxed">
-              Experience professional-grade wealth management with a platform designed for the modern investor.
+              Experience professional-grade wealth management with a platform designed for the {userType === 'business' ? 'modern enterprise' : 'modern investor'}.
             </p>
           </div>
         </div>
@@ -335,6 +337,7 @@ export default function AuthPage() {
                                 <Input 
                                   type="password" 
                                   className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
+                                  autoComplete="new-password"
                                   {...field} 
                                 />
                               </FormControl>
