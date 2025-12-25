@@ -42,9 +42,17 @@ export default function DashboardPage() {
 
   return (
     <LayoutShell>
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold font-display text-foreground tracking-tight">Overview</h2>
-        <p className="text-muted-foreground">Welcome back, here's your financial summary.</p>
+      {/* Hero background section */}
+      <div className="relative -mx-4 -mt-4 mb-8 px-4 py-8 rounded-lg overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-15"
+          style={{ backgroundImage: 'url(/assets/IMG_3468_1766680873153.jpeg)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/40 to-accent/20" />
+        <div className="relative">
+          <h2 className="text-3xl font-bold font-display text-foreground tracking-tight">Overview</h2>
+          <p className="text-muted-foreground">Welcome back, here's your financial summary.</p>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">

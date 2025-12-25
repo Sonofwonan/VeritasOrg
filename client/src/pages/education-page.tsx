@@ -153,9 +153,17 @@ export default function EducationPage() {
 
   return (
     <LayoutShell>
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold font-display">Learning Center</h2>
-        <p className="text-muted-foreground">Master investing with our comprehensive courses</p>
+      {/* Hero background section */}
+      <div className="relative -mx-4 -mt-4 mb-8 px-4 py-8 rounded-lg overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-15"
+          style={{ backgroundImage: 'url(/assets/IMG_3475_1766680873153.jpeg)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-accent/20" />
+        <div className="relative">
+          <h2 className="text-3xl font-bold font-display">Learning Center</h2>
+          <p className="text-muted-foreground">Master investing with our comprehensive courses</p>
+        </div>
       </div>
 
       {/* Learning Overview */}

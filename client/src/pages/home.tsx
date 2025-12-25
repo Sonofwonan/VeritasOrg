@@ -94,7 +94,11 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: 'url(/assets/IMG_3476_1766680873153.jpeg)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background/60 to-accent/10" />
         
         <div className="relative max-w-7xl mx-auto px-6 py-20 sm:py-28">
           <div className="text-center space-y-8">

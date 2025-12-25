@@ -68,8 +68,14 @@ export default function GoalsPage() {
 
   return (
     <LayoutShell>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
+      {/* Hero background section */}
+      <div className="relative -mx-4 -mt-4 mb-8 px-4 py-8 rounded-lg overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-15"
+          style={{ backgroundImage: 'url(/assets/IMG_3475_1766680873153.jpeg)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-accent/20" />
+        <div className="relative mb-0">
           <h2 className="text-3xl font-bold font-display">Financial Goals</h2>
           <p className="text-muted-foreground">Track and achieve your financial milestones</p>
         </div>
