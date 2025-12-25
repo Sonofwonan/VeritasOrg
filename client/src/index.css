@@ -1,78 +1,42 @@
+@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Outfit", sans-serif;
 
-:root {
-  /* Elegant Fintech Palette */
-  --font-sans: 'Inter', sans-serif;
-  --font-display: 'Outfit', sans-serif;
+  --color-background: oklch(0.98 0.01 220);
+  --color-foreground: oklch(0.25 0.08 222);
 
-  --background: 220 20% 98%; /* Soft cool gray */
-  --foreground: 222 47% 11%; /* Deep navy */
-  
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  
-  --primary: 226 70% 55%; /* Professional Blue */
-  --primary-foreground: 210 40% 98%;
-  
-  --secondary: 220 14% 96%;
-  --secondary-foreground: 222 47% 11%;
-  
-  --muted: 220 14% 94%;
-  --muted-foreground: 215 16% 47%;
-  
-  --accent: 162 60% 50%; /* Growth Green */
-  --accent-foreground: 222 47% 11%;
-  
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 226 70% 55%;
-  
-  --radius: 0.75rem;
+  --color-card: white;
+  --color-card-foreground: oklch(0.25 0.08 222);
 
-  /* Custom Chart Colors */
-  --chart-primary: 226 70% 55%;
-  --chart-success: 162 60% 50%;
-  --chart-danger: 0 84% 60%;
-}
+  --color-popover: white;
+  --color-popover-foreground: oklch(0.25 0.08 222);
 
-.dark {
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
-  
-  --card: 222 47% 13%;
-  --card-foreground: 210 40% 98%;
-  
-  --popover: 222 47% 13%;
-  --popover-foreground: 210 40% 98%;
-  
-  --primary: 226 70% 65%;
-  --primary-foreground: 222 47% 11%;
-  
-  --secondary: 217 33% 17%;
-  --secondary-foreground: 210 40% 98%;
-  
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
-  
-  --accent: 162 60% 45%;
-  --accent-foreground: 222 47% 11%;
-  
-  --destructive: 0 62% 30%;
-  --destructive-foreground: 210 40% 98%;
-  
-  --border: 217 33% 20%;
-  --input: 217 33% 20%;
-  --ring: 224 76% 48%;
+  --color-primary: oklch(0.65 0.15 226);
+  --color-primary-foreground: oklch(0.98 0.01 210);
+
+  --color-secondary: oklch(0.96 0.01 220);
+  --color-secondary-foreground: oklch(0.25 0.08 222);
+
+  --color-muted: oklch(0.94 0.01 220);
+  --color-muted-foreground: oklch(0.55 0.05 215);
+
+  --color-accent: oklch(0.70 0.15 162);
+  --color-accent-foreground: oklch(0.25 0.08 222);
+
+  --color-destructive: oklch(0.60 0.20 0);
+  --color-destructive-foreground: oklch(0.98 0.01 210);
+
+  --color-border: oklch(0.91 0.02 214);
+  --color-input: oklch(0.91 0.02 214);
+  --color-ring: oklch(0.65 0.15 226);
+
+  --radius-xl: 1rem;
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
 }
 
 @layer base {
