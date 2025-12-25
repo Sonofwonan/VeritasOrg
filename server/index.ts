@@ -13,6 +13,11 @@ declare module "http" {
   }
 }
 
+// Set trust proxy for cross-domain cookies
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 app.use(
   express.json({
     verify: (req, _res, buf) => {
