@@ -1,0 +1,50 @@
+2025-12-25T02:42:38.141569732Z     '    @apply bg-background text-foreground antialiased font-sans;\n' +
+2025-12-25T02:42:38.141572692Z     '  }\n' +
+2025-12-25T02:42:38.141575342Z     '  h1, h2, h3, h4, h5, h6 {\n' +
+2025-12-25T02:42:38.141578292Z     '    @apply font-display font-bold tracking-tight;\n' +
+2025-12-25T02:42:38.141581032Z     '  }\n' +
+2025-12-25T02:42:38.141583832Z     '}\n' +
+2025-12-25T02:42:38.141586582Z     '\n' +
+2025-12-25T02:42:38.141589603Z     '@layer utilities {\n' +
+2025-12-25T02:42:38.141592692Z     '  .glass-card {\n' +
+2025-12-25T02:42:38.141595963Z     '    @apply bg-white/70 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;\n' +
+2025-12-25T02:42:38.141599013Z     '  }\n' +
+2025-12-25T02:42:38.141601873Z     '  .text-gradient {\n' +
+2025-12-25T02:42:38.141604753Z     '    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;\n' +
+2025-12-25T02:42:38.141607413Z     '  }\n' +
+2025-12-25T02:42:38.141610063Z     '}\n',
+2025-12-25T02:42:38.141612713Z   plugin: 'vite:css',
+2025-12-25T02:42:38.141615433Z   hook: 'transform',
+2025-12-25T02:42:38.141664454Z   id: '/opt/render/project/src/client/src/index.css',
+2025-12-25T02:42:38.141672785Z   watchFiles: [
+2025-12-25T02:42:38.141676015Z     '/opt/render/project/src/client/index.html',
+2025-12-25T02:42:38.141679115Z     '/opt/render/project/src/client/src/main.tsx',
+2025-12-25T02:42:38.141682145Z     '/opt/render/project/src/package.json',
+2025-12-25T02:42:38.141685545Z     '/opt/render/project/src/node_modules/react/jsx-runtime.js',
+2025-12-25T02:42:38.141688625Z     '/opt/render/project/src/node_modules/react-dom/client.js',
+2025-12-25T02:42:38.141691675Z     '/opt/render/project/src/client/src/App.tsx',
+2025-12-25T02:42:38.141694735Z     '/opt/render/project/src/client/src/index.css',
+2025-12-25T02:42:38.141697975Z     '/opt/render/project/src/node_modules/react/cjs/react-jsx-runtime.production.min.js',
+2025-12-25T02:42:38.141701606Z     '/opt/render/project/src/node_modules/react-dom/index.js',
+2025-12-25T02:42:38.141707946Z     '/opt/render/project/src/node_modules/react/index.js',
+2025-12-25T02:42:38.141711076Z     '/opt/render/project/src/node_modules/react-dom/cjs/react-dom.production.min.js',
+2025-12-25T02:42:38.141714016Z     '/opt/render/project/src/node_modules/wouter/esm/index.js',
+2025-12-25T02:42:38.141716716Z     '/opt/render/project/src/node_modules/@tanstack/react-query/build/modern/index.js',
+2025-12-25T02:42:38.141719716Z     '/opt/render/project/src/client/src/lib/queryClient.ts',
+2025-12-25T02:42:38.141722596Z     '/opt/render/project/src/client/src/components/ui/toaster.tsx',
+2025-12-25T02:42:38.141725346Z     '/opt/render/project/src/client/src/pages/home.tsx',
+2025-12-25T02:42:38.141728006Z     '/opt/render/project/src/client/src/components/ui/tooltip.tsx',
+2025-12-25T02:42:38.141730826Z     '/opt/render/project/src/client/src/hooks/use-auth.ts',
+2025-12-25T02:42:38.141740116Z     '/opt/render/project/src/client/src/pages/not-found.tsx',
+2025-12-25T02:42:38.141743287Z     '/opt/render/project/src/client/src/pages/auth-page.tsx',
+2025-12-25T02:42:38.141746177Z     '/opt/render/project/src/client/src/pages/accounts-page.tsx',
+2025-12-25T02:42:38.141749467Z     '/opt/render/project/src/node_modules/lucide-react/dist/esm/lucide-react.js',
+2025-12-25T02:42:38.141752627Z     '/opt/render/project/src/client/src/pages/dashboard.tsx',
+2025-12-25T02:42:38.141755667Z     '/opt/render/project/src/client/src/pages/investments-page.tsx',
+2025-12-25T02:42:38.141758657Z     '/opt/render/project/src/client/src/pages/transfers-page.tsx',
+2025-12-25T02:42:38.141761697Z     '/opt/render/project/src/node_modules/scheduler/index.js',
+2025-12-25T02:42:38.141764557Z     '/opt/render/project/src/node_modules/react/cjs/react.production.min.js'
+2025-12-25T02:42:38.141767527Z   ]
+2025-12-25T02:42:38.141771008Z }
+2025-12-25T02:42:38.226382974Z ==> Build failed 😞
+2025-12-25T02:42:38.226402695Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
