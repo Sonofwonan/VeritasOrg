@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import { Loader2, ArrowRight, CheckCircle2, Shield, TrendingUp, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email"),
