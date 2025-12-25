@@ -64,6 +64,11 @@ export default function AuthPage() {
     });
   };
 
+  const nextStep = async () => {
+    const isValid = await registerForm.trigger(['name', 'email']);
+    if (isValid) setStep(2);
+  };
+
   const onRegister = (data: z.infer<typeof insertUserSchema>) => {
     register.mutate(data, {
       onError: (error) => {
@@ -262,7 +267,7 @@ export default function AuthPage() {
                         />
                         <Button 
                           type="button" 
-                          onClick={() => setStep(2)}
+                          onClick={nextStep}
                           className="w-full h-12 text-base font-bold group"
                         >
                           Continue

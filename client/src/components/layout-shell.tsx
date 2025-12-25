@@ -64,7 +64,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
               {user?.name?.[0] || 'U'}
             </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-semibold truncate">{user?.name}</p>
+              <p className="text-sm font-bold truncate leading-tight">{user?.name}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
           </div>

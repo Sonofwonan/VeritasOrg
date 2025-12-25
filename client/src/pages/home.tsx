@@ -92,8 +92,42 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Enhanced Navigation Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="Veritas Wealth Logo" className="w-10 h-10 object-contain drop-shadow-md" />
+            <span className="text-2xl font-bold tracking-tight font-display bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+              Veritas Wealth
+            </span>
+          </div>
+          <div className="hidden md:flex items-center gap-8">
+            <nav className="flex items-center gap-6">
+              <button className="text-sm font-medium hover:text-primary transition-colors">Platform</button>
+              <button className="text-sm font-medium hover:text-primary transition-colors">Solutions</button>
+              <button className="text-sm font-medium hover:text-primary transition-colors">Resources</button>
+            </nav>
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setLocation('/auth')}
+                className="font-bold"
+              >
+                Sign In
+              </Button>
+              <Button 
+                onClick={() => setLocation('/auth')}
+                className="font-bold shadow-lg shadow-primary/20"
+              >
+                Get Started
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <div className="relative pt-20 overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
           style={{ backgroundImage: 'url(/assets/hero-bg.jpeg)' }}
@@ -101,12 +135,8 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-transparent to-[#0a0a0a] opacity-80" />
         <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-background/40 to-background/60" />
         
-        <div className="relative max-w-7xl mx-auto px-6 py-28 sm:py-36">
-          <div className="flex items-center gap-4 mb-10">
-            <img src="/logo.png" alt="Veritas Wealth Logo" className="w-12 h-12 object-contain shadow-2xl shadow-primary/40" />
-            <span className="text-2xl font-bold tracking-tight">Veritas Wealth</span>
-          </div>
-          <div className="text-center space-y-8">
+        <div className="relative max-w-7xl mx-auto px-6 py-32 sm:py-44">
+          <div className="text-center space-y-8 max-w-4xl mx-auto">
             <div className="space-y-4">
               <h1 className="text-5xl sm:text-7xl font-bold tracking-tight">
                 Wealth Management
