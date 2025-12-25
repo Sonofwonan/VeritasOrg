@@ -1,7 +1,7 @@
 import { useAccounts, useCreateAccount } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
-import { Plus, Wallet, CreditCard, ArrowRight, Briefcase } from "lucide-react";
+import { Plus, Wallet, CreditCard, ArrowRight, Briefcase, Eye, EyeOff } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 
@@ -200,19 +200,113 @@ export default function AccountsPage() {
               </div>
             </CardContent>
             
-            <CardFooter className="bg-muted/30 border-t p-4">
+            <CardFooter className="bg-muted/30 border-t flex gap-2 p-4">
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full gap-2"
+                className="flex-1 gap-2"
                 onClick={() => setLocation(`/accounts/${account.id}`)}
               >
-                View Details
+                Details
                 <ArrowRight className="w-4 h-4" />
               </Button>
+              {['checking', 'savings', 'money_market'].includes(account.accountType) && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  title="Order Debit Card"
+                >
+                  <CreditCard className="w-4 h-4" />
+                </Button>
+              )}
             </CardFooter>
           </Card>
         ))}
+      </div>
+
+      <div className="mt-12 border-t pt-8">
+        <h3 className="text-xl font-bold mb-6">Debit Card Management</h3>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-primary" />
+                Physical Debit Card
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg p-4 border border-primary/20 aspect-video flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Veritas Wealth</p>
+                  <p className="font-mono text-sm">•••• •••• •••• 4829</p>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm">
+                <p><span className="text-muted-foreground">Cardholder:</span> {user?.username || 'Account Owner'}</p>
+                <p><span className="text-muted-foreground">Expires:</span> 12/27</p>
+                <p><span className="text-muted-foreground">Status:</span> <span className="text-green-600 font-medium">Active</span></p>
+              </div>
+              <Button variant="outline" className="w-full">Lock Card</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-blue-600" />
+                Virtual Debit Card
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 aspect-video flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Instant Virtual Card</p>
+                  <p className="font-mono text-sm">Use immediately for online shopping</p>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm">
+                <p><span className="text-muted-foreground">Type:</span> Single-use or recurring</p>
+                <p><span className="text-muted-foreground">Setup Time:</span> Instant</p>
+                <p><span className="text-muted-foreground">Limit:</span> Customizable per transaction</p>
+              </div>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">Create Virtual Card</Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-base">Card Controls & Security</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm">Spending Controls</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center p-2 rounded border">
+                    <span className="text-muted-foreground">Daily Limit</span>
+                    <span className="font-medium">$2,500</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 rounded border">
+                    <span className="text-muted-foreground">ATM Withdrawal Limit</span>
+                    <span className="font-medium">$500</span>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full text-xs">Edit Limits</Button>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm">Security Features</h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  <li>✓ Real-time fraud monitoring</li>
+                  <li>✓ Transaction notifications</li>
+                  <li>✓ Instant card lock/unlock</li>
+                  <li>✓ Contactless payments</li>
+                  <li>✓ EMV chip protection</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </LayoutShell>
   );

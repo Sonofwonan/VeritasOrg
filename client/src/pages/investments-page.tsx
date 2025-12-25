@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, TrendingUp, BookOpen, Zap, DollarSign } from "lucide-react";
+import { ArrowUp, ArrowDown, TrendingUp, BookOpen, Zap, DollarSign, Settings, Zap as ZapIcon } from "lucide-react";
 
 const STOCKS = ["AAPL", "GOOGL", "TSLA", "AMZN", "MSFT"];
 const ETFS = ["SPY", "QQQ", "IVV", "VOO", "VTI"];
@@ -26,6 +26,18 @@ const RESEARCH_ARTICLES = [
   { title: "Diversification Strategy Guide", category: "Strategy", date: "Dec 23, 2025" },
   { title: "Understanding ETFs vs Mutual Funds", category: "Education", date: "Dec 22, 2025" },
   { title: "Tax-Loss Harvesting Explained", category: "Tax Planning", date: "Dec 21, 2025" },
+  { title: "Options Trading 101: Calls and Puts", category: "Options Education", date: "Dec 25, 2025" },
+  { title: "Advanced Order Types Guide", category: "Trading Tools", date: "Dec 24, 2025" },
+  { title: "Risk Management Strategies", category: "Risk", date: "Dec 23, 2025" },
+  { title: "Technical Analysis Mastery", category: "Technical Analysis", date: "Dec 22, 2025" },
+];
+
+const EDUCATION_COURSES = [
+  { id: 1, title: "Getting Started with Stocks", level: "Beginner", duration: "2 hours", completion: 100 },
+  { id: 2, title: "Advanced Portfolio Management", level: "Advanced", duration: "4 hours", completion: 45 },
+  { id: 3, title: "Options Trading Strategies", level: "Intermediate", duration: "3 hours", completion: 0 },
+  { id: 4, title: "Financial Planning Essentials", level: "Beginner", duration: "1.5 hours", completion: 75 },
+  { id: 5, title: "Tax-Efficient Investing", level: "Intermediate", duration: "2.5 hours", completion: 30 },
 ];
 
 export default function InvestmentsPage() {
@@ -49,6 +61,19 @@ export default function InvestmentsPage() {
   // Robo-Advisor State
   const [selectedRobo, setSelectedRobo] = useState("balanced");
   const [roboAccount, setRoboAccount] = useState<string>("");
+
+  // Options Trading State
+  const [optionType, setOptionType] = useState<"call" | "put">("call");
+  const [strikePrice, setStrikePrice] = useState("");
+  const [expiration, setExpiration] = useState("");
+  const [optionAccount, setOptionAccount] = useState<string>("");
+
+  // Advanced Orders State
+  const [orderType, setOrderType] = useState("limit");
+  const [limitPrice, setLimitPrice] = useState("");
+  const [stopPrice, setStopPrice] = useState("");
+  const [trailingPercent, setTrailingPercent] = useState("");
+  const [orderAccount, setOrderAccount] = useState<string>("");
 
   // Market data
   const { data: quote } = useMarketQuote(selectedSymbol);
@@ -130,24 +155,32 @@ export default function InvestmentsPage() {
       </div>
 
       <Tabs defaultValue="stocks" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-6">
-          <TabsTrigger value="stocks" className="gap-2">
+        <TabsList className="grid w-full grid-cols-7 mb-6 overflow-x-auto">
+          <TabsTrigger value="stocks" className="gap-2 text-xs sm:text-sm">
             <TrendingUp className="w-4 h-4" />
             <span className="hidden sm:inline">Stocks</span>
           </TabsTrigger>
-          <TabsTrigger value="etfs" className="gap-2">
+          <TabsTrigger value="etfs" className="gap-2 text-xs sm:text-sm">
             <DollarSign className="w-4 h-4" />
             <span className="hidden sm:inline">ETFs</span>
           </TabsTrigger>
-          <TabsTrigger value="robo" className="gap-2">
+          <TabsTrigger value="options" className="gap-2 text-xs sm:text-sm">
+            <ZapIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Options</span>
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="gap-2 text-xs sm:text-sm">
+            <Settings className="w-4 h-4" />
+            <span className="hidden sm:inline">Orders</span>
+          </TabsTrigger>
+          <TabsTrigger value="robo" className="gap-2 text-xs sm:text-sm">
             <Zap className="w-4 h-4" />
             <span className="hidden sm:inline">Robo</span>
           </TabsTrigger>
-          <TabsTrigger value="research" className="gap-2">
+          <TabsTrigger value="research" className="gap-2 text-xs sm:text-sm">
             <BookOpen className="w-4 h-4" />
             <span className="hidden sm:inline">Research</span>
           </TabsTrigger>
-          <TabsTrigger value="cash" className="gap-2">
+          <TabsTrigger value="cash" className="gap-2 text-xs sm:text-sm">
             <DollarSign className="w-4 h-4" />
             <span className="hidden sm:inline">Cash</span>
           </TabsTrigger>
@@ -310,6 +343,261 @@ export default function InvestmentsPage() {
               </Card>
             </div>
           </div>
+        </TabsContent>
+
+        {/* Options Trading */}
+        <TabsContent value="options" className="space-y-6">
+          <Card className="border-none shadow-xl shadow-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ZapIcon className="w-5 h-5 text-primary" />
+                Options Trading
+              </CardTitle>
+              <CardDescription>Trade calls and puts with flexible strike prices and expiration dates</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label>Stock Symbol</Label>
+                    <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STOCKS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Contract Type</Label>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant={optionType === 'call' ? 'default' : 'outline'}
+                        className="flex-1"
+                        onClick={() => setOptionType('call')}
+                      >
+                        Call
+                      </Button>
+                      <Button 
+                        variant={optionType === 'put' ? 'default' : 'outline'}
+                        className="flex-1"
+                        onClick={() => setOptionType('put')}
+                      >
+                        Put
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Strike Price ($)</Label>
+                    <Input 
+                      type="number"
+                      placeholder="150.00"
+                      value={strikePrice}
+                      onChange={(e) => setStrikePrice(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Expiration Date</Label>
+                    <Input 
+                      type="date"
+                      value={expiration}
+                      onChange={(e) => setExpiration(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Account</Label>
+                    <Select value={optionAccount} onValueChange={setOptionAccount}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {investmentAccounts.map(a => (
+                          <SelectItem key={a.id} value={a.id.toString()}>
+                            Account #{a.id}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                    Place Options Order
+                  </Button>
+                </div>
+
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                    <h4 className="font-semibold text-sm mb-2 text-amber-900 dark:text-amber-100">Options Basics</h4>
+                    <ul className="text-sm space-y-2 text-amber-800 dark:text-amber-200">
+                      <li><strong>Calls:</strong> Bet that the stock price will rise above the strike price</li>
+                      <li><strong>Puts:</strong> Bet that the stock price will fall below the strike price</li>
+                      <li><strong>Leverage:</strong> Control 100 shares with less capital than buying stock outright</li>
+                      <li><strong>Risk:</strong> Your risk is limited to the premium paid (the option price)</li>
+                      <li><strong>Expiration:</strong> Options expire on the date you select - choose wisely</li>
+                    </ul>
+                  </div>
+
+                  <Card className="bg-muted/30">
+                    <CardHeader>
+                      <CardTitle className="text-base">Available Options Chains</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm">
+                        {[145, 150, 155, 160, 165].map(strike => (
+                          <div key={strike} className="flex justify-between items-center p-2 rounded border">
+                            <span>${strike}.00 {optionType === 'call' ? 'Call' : 'Put'}</span>
+                            <span className="font-semibold text-primary">${(Math.random() * 5 + 1).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Advanced Orders */}
+        <TabsContent value="orders" className="space-y-6">
+          <Card className="border-none shadow-xl shadow-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-primary" />
+                Advanced Order Types
+              </CardTitle>
+              <CardDescription>Set sophisticated trading rules to execute automatically</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label>Stock Symbol</Label>
+                    <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STOCKS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Order Type</Label>
+                    <Select value={orderType} onValueChange={setOrderType}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="market">Market Order</SelectItem>
+                        <SelectItem value="limit">Limit Order</SelectItem>
+                        <SelectItem value="stop">Stop-Loss</SelectItem>
+                        <SelectItem value="stop-limit">Stop-Limit</SelectItem>
+                        <SelectItem value="trailing">Trailing Stop</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {orderType === 'limit' && (
+                    <div className="grid gap-2">
+                      <Label>Limit Price ($)</Label>
+                      <Input 
+                        type="number"
+                        placeholder="Buy/sell at this price or better"
+                        value={limitPrice}
+                        onChange={(e) => setLimitPrice(e.target.value)}
+                      />
+                    </div>
+                  )}
+
+                  {(orderType === 'stop' || orderType === 'stop-limit') && (
+                    <div className="grid gap-2">
+                      <Label>Stop Price ($)</Label>
+                      <Input 
+                        type="number"
+                        placeholder="Trigger price"
+                        value={stopPrice}
+                        onChange={(e) => setStopPrice(e.target.value)}
+                      />
+                    </div>
+                  )}
+
+                  {orderType === 'trailing' && (
+                    <div className="grid gap-2">
+                      <Label>Trailing Stop (%)</Label>
+                      <Input 
+                        type="number"
+                        placeholder="e.g., 5 for 5%"
+                        value={trailingPercent}
+                        onChange={(e) => setTrailingPercent(e.target.value)}
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid gap-2">
+                    <Label>Account</Label>
+                    <Select value={orderAccount} onValueChange={setOrderAccount}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {investmentAccounts.map(a => (
+                          <SelectItem key={a.id} value={a.id.toString()}>
+                            Account #{a.id}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    Place Order
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                    <CardHeader>
+                      <CardTitle className="text-base">Order Type Guide</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                      <div>
+                        <p className="font-semibold text-blue-900 dark:text-blue-100">Limit Order</p>
+                        <p className="text-blue-800 dark:text-blue-200">Only execute at your specified price or better</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-blue-900 dark:text-blue-100">Stop-Loss</p>
+                        <p className="text-blue-800 dark:text-blue-200">Sell automatically if price falls below trigger</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-blue-900 dark:text-blue-100">Trailing Stop</p>
+                        <p className="text-blue-800 dark:text-blue-200">Automatically lock in gains with percentage trailing</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-blue-900 dark:text-blue-100">Stop-Limit</p>
+                        <p className="text-blue-800 dark:text-blue-200">Combine stop trigger with limit price protection</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-muted/30">
+                    <CardHeader>
+                      <CardTitle className="text-base">Your Active Orders</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">No active advanced orders</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ETF/Fractional Trading */}
@@ -522,10 +810,40 @@ export default function InvestmentsPage() {
                 ))}
               </div>
 
-              <div className="mt-8 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-6 border">
-                <h4 className="font-semibold mb-2">Investment Academy</h4>
-                <p className="text-sm text-muted-foreground mb-4">Complete courses on stock investing, ETF strategies, tax optimization, and more.</p>
-                <Button variant="outline">Explore Courses</Button>
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-4">Investment Academy - Courses</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {EDUCATION_COURSES.map(course => (
+                    <Card key={course.id} className="hover:border-primary/50">
+                      <CardContent className="pt-6">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-semibold text-sm">{course.title}</h4>
+                            <p className="text-xs text-muted-foreground">{course.duration}</p>
+                          </div>
+                          <Badge variant="outline" className="text-xs">{course.level}</Badge>
+                        </div>
+                        {course.completion > 0 && (
+                          <div className="mt-3">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="text-muted-foreground">Progress</span>
+                              <span className="font-medium">{course.completion}%</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                              <div 
+                                className="bg-primary h-full"
+                                style={{ width: `${course.completion}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        <Button variant={course.completion > 0 ? 'outline' : 'default'} size="sm" className="w-full mt-3">
+                          {course.completion > 0 ? 'Continue' : 'Start'} Course
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
