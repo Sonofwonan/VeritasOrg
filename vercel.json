@@ -1,18 +1,14 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
-  "cleanUrls": true,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://veritas-wealth.onrender.com/api/$1"
+      "source": "/api/(.*)",
+      "destination": "https://veritas-wealth.onrender.com/api/$1"
     },
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
