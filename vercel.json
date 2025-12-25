@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://veritas-wealth.onrender.com/api/$1"
+      "destination": "https://veritasorg.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
