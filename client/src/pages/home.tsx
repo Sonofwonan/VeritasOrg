@@ -233,52 +233,53 @@ export default function HomePage() {
             <p className="text-lg text-muted-foreground">Stay informed with real-time market data and expert analysis</p>
           </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <Card className="border">
-            <CardHeader>
-              <CardTitle>Market Volatility Report</CardTitle>
-              <CardDescription>Current market conditions and trends</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Tech Stocks (NASDAQ)</span>
-                  <span className="text-sm font-bold text-accent">+4.2%</span>
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="border">
+              <CardHeader>
+                <CardTitle>Market Volatility Report</CardTitle>
+                <CardDescription>Current market conditions and trends</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Tech Stocks (NASDAQ)</span>
+                    <span className="text-sm font-bold text-accent">+4.2%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Broad Market (S&P 500)</span>
+                    <span className="text-sm font-bold text-primary">+2.1%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Bonds & Treasuries</span>
+                    <span className="text-sm font-bold">-0.8%</span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Broad Market (S&P 500)</span>
-                  <span className="text-sm font-bold text-primary">+2.1%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Bonds & Treasuries</span>
-                  <span className="text-sm font-bold">-0.8%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border">
-            <CardHeader>
-              <CardTitle>Investment Strategies</CardTitle>
-              <CardDescription>Proven approaches for different goals</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm font-semibold mb-1">Growth Portfolio</p>
-                  <p className="text-xs text-muted-foreground">70% stocks, 30% bonds - for long-term growth</p>
+            <Card className="border">
+              <CardHeader>
+                <CardTitle>Investment Strategies</CardTitle>
+                <CardDescription>Proven approaches for different goals</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-sm font-semibold mb-1">Growth Portfolio</p>
+                    <p className="text-xs text-muted-foreground">70% stocks, 30% bonds - for long-term growth</p>
+                  </div>
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-sm font-semibold mb-1">Balanced Portfolio</p>
+                    <p className="text-xs text-muted-foreground">50% stocks, 50% bonds - for stability</p>
+                  </div>
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-sm font-semibold mb-1">Income Portfolio</p>
+                    <p className="text-xs text-muted-foreground">Dividend stocks & fixed income - for cash flow</p>
+                  </div>
                 </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm font-semibold mb-1">Balanced Portfolio</p>
-                  <p className="text-xs text-muted-foreground">50% stocks, 50% bonds - for stability</p>
-                </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm font-semibold mb-1">Income Portfolio</p>
-                  <p className="text-xs text-muted-foreground">Dividend stocks & fixed income - for cash flow</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
