@@ -1,0 +1,100 @@
+2025-12-25T03:35:59.150910823Z     '\n' +
+2025-12-25T03:35:59.150913683Z     '    --muted: 220 14% 94%;\n' +
+2025-12-25T03:35:59.150916533Z     '    --muted-foreground: 215 16% 47%;\n' +
+2025-12-25T03:35:59.150919483Z     '\n' +
+2025-12-25T03:35:59.150922443Z     '    --accent: 162 60% 50%;\n' +
+2025-12-25T03:35:59.150925453Z     '    --accent-foreground: 222 47% 11%;\n' +
+2025-12-25T03:35:59.150928113Z     '\n' +
+2025-12-25T03:35:59.150930583Z     '    --destructive: 0 84% 60%;\n' +
+2025-12-25T03:35:59.150933303Z     '    --destructive-foreground: 210 40% 98%;\n' +
+2025-12-25T03:35:59.150936144Z     '\n' +
+2025-12-25T03:35:59.150939144Z     '    --border: 214 32% 91%;\n' +
+2025-12-25T03:35:59.150942214Z     '    --input: 214 32% 91%;\n' +
+2025-12-25T03:35:59.150945634Z     '    --ring: 226 70% 55%;\n' +
+2025-12-25T03:35:59.150948974Z     '\n' +
+2025-12-25T03:35:59.150952184Z     '    --radius: 0.75rem;\n' +
+2025-12-25T03:35:59.150955614Z     '  }\n' +
+2025-12-25T03:35:59.150959134Z     '\n' +
+2025-12-25T03:35:59.150962724Z     '  .dark {\n' +
+2025-12-25T03:35:59.150966234Z     '    --background: 222 47% 11%;\n' +
+2025-12-25T03:35:59.150969614Z     '    --foreground: 210 40% 98%;\n' +
+2025-12-25T03:35:59.150984715Z     '\n' +
+2025-12-25T03:35:59.150988545Z     '    --card: 222 47% 13%;\n' +
+2025-12-25T03:35:59.150992075Z     '    --card-foreground: 210 40% 98%;\n' +
+2025-12-25T03:35:59.150995435Z     '\n' +
+2025-12-25T03:35:59.150998795Z     '    --popover: 222 47% 13%;\n' +
+2025-12-25T03:35:59.151002475Z     '    --popover-foreground: 210 40% 98%;\n' +
+2025-12-25T03:35:59.151005075Z     '\n' +
+2025-12-25T03:35:59.151007175Z     '    --primary: 226 70% 65%;\n' +
+2025-12-25T03:35:59.151009295Z     '    --primary-foreground: 222 47% 11%;\n' +
+2025-12-25T03:35:59.151011425Z     '\n' +
+2025-12-25T03:35:59.151013515Z     '    --secondary: 217 33% 17%;\n' +
+2025-12-25T03:35:59.151015675Z     '    --secondary-foreground: 210 40% 98%;\n' +
+2025-12-25T03:35:59.151017695Z     '\n' +
+2025-12-25T03:35:59.151019706Z     '    --muted: 217 33% 17%;\n' +
+2025-12-25T03:35:59.151021746Z     '    --muted-foreground: 215 20% 65%;\n' +
+2025-12-25T03:35:59.151023916Z     '\n' +
+2025-12-25T03:35:59.151025946Z     '    --accent: 162 60% 45%;\n' +
+2025-12-25T03:35:59.151028036Z     '    --accent-foreground: 222 47% 11%;\n' +
+2025-12-25T03:35:59.151030276Z     '\n' +
+2025-12-25T03:35:59.151032326Z     '    --destructive: 0 62% 30%;\n' +
+2025-12-25T03:35:59.151042666Z     '    --destructive-foreground: 210 40% 98%;\n' +
+2025-12-25T03:35:59.151044876Z     '\n' +
+2025-12-25T03:35:59.151046956Z     '    --border: 217 33% 20%;\n' +
+2025-12-25T03:35:59.151052407Z     '    --input: 217 33% 20%;\n' +
+2025-12-25T03:35:59.151054707Z     '    --ring: 224 76% 48%;\n' +
+2025-12-25T03:35:59.151056947Z     '  }\n' +
+2025-12-25T03:35:59.151059036Z     '}\n' +
+2025-12-25T03:35:59.151062747Z     '\n' +
+2025-12-25T03:35:59.151066717Z     '@layer base {\n' +
+2025-12-25T03:35:59.151070307Z     '  * {\n' +
+2025-12-25T03:35:59.151073517Z     '    @apply border-border;\n' +
+2025-12-25T03:35:59.151076877Z     '  }\n' +
+2025-12-25T03:35:59.151080247Z     '  body {\n' +
+2025-12-25T03:35:59.151083837Z     '    @apply bg-background text-foreground antialiased font-sans;\n' +
+2025-12-25T03:35:59.151087057Z     '  }\n' +
+2025-12-25T03:35:59.151090777Z     '  h1, h2, h3, h4, h5, h6 {\n' +
+2025-12-25T03:35:59.151093677Z     '    @apply font-display font-bold tracking-tight;\n' +
+2025-12-25T03:35:59.151095748Z     '  }\n' +
+2025-12-25T03:35:59.151097817Z     '}\n' +
+2025-12-25T03:35:59.151099888Z     '\n' +
+2025-12-25T03:35:59.151102298Z     '@layer utilities {\n' +
+2025-12-25T03:35:59.151104558Z     '  .glass-card {\n' +
+2025-12-25T03:35:59.151107018Z     '    @apply bg-white/70 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg;\n' +
+2025-12-25T03:35:59.151109138Z     '  }\n' +
+2025-12-25T03:35:59.151111228Z     '  .text-gradient {\n' +
+2025-12-25T03:35:59.151113348Z     '    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;\n' +
+2025-12-25T03:35:59.151115438Z     '  }\n' +
+2025-12-25T03:35:59.151117488Z     '}\n',
+2025-12-25T03:35:59.151119548Z   plugin: 'vite:css',
+2025-12-25T03:35:59.151121718Z   hook: 'transform',
+2025-12-25T03:35:59.151167909Z   id: '/opt/render/project/src/client/src/index.css',
+2025-12-25T03:35:59.15117511Z   watchFiles: [
+2025-12-25T03:35:59.15117938Z     '/opt/render/project/src/client/index.html',
+2025-12-25T03:35:59.15118161Z     '/opt/render/project/src/client/src/main.tsx',
+2025-12-25T03:35:59.15118379Z     '/opt/render/project/src/package.json',
+2025-12-25T03:35:59.15118593Z     '/opt/render/project/src/node_modules/react/jsx-runtime.js',
+2025-12-25T03:35:59.15119001Z     '/opt/render/project/src/node_modules/react-dom/client.js',
+2025-12-25T03:35:59.15119223Z     '/opt/render/project/src/client/src/App.tsx',
+2025-12-25T03:35:59.15119431Z     '/opt/render/project/src/client/src/index.css',
+2025-12-25T03:35:59.15119646Z     '/opt/render/project/src/node_modules/react/cjs/react-jsx-runtime.production.min.js',
+2025-12-25T03:35:59.15119857Z     '/opt/render/project/src/node_modules/react-dom/index.js',
+2025-12-25T03:35:59.15120066Z     '/opt/render/project/src/node_modules/wouter/esm/index.js',
+2025-12-25T03:35:59.1512028Z     '/opt/render/project/src/node_modules/@tanstack/react-query/build/modern/index.js',
+2025-12-25T03:35:59.15120488Z     '/opt/render/project/src/node_modules/react/index.js',
+2025-12-25T03:35:59.15120708Z     '/opt/render/project/src/node_modules/lucide-react/dist/esm/lucide-react.js',
+2025-12-25T03:35:59.1512092Z     '/opt/render/project/src/client/src/lib/queryClient.ts',
+2025-12-25T03:35:59.151211411Z     '/opt/render/project/src/client/src/components/ui/toaster.tsx',
+2025-12-25T03:35:59.1512136Z     '/opt/render/project/src/client/src/components/ui/tooltip.tsx',
+2025-12-25T03:35:59.15121568Z     '/opt/render/project/src/client/src/hooks/use-auth.ts',
+2025-12-25T03:35:59.151217771Z     '/opt/render/project/src/client/src/pages/not-found.tsx',
+2025-12-25T03:35:59.151225271Z     '/opt/render/project/src/client/src/pages/home.tsx',
+2025-12-25T03:35:59.151227441Z     '/opt/render/project/src/client/src/pages/auth-page.tsx',
+2025-12-25T03:35:59.151231411Z     '/opt/render/project/src/client/src/pages/dashboard.tsx',
+2025-12-25T03:35:59.151235771Z     '/opt/render/project/src/client/src/pages/accounts-page.tsx',
+2025-12-25T03:35:59.151238661Z     '/opt/render/project/src/client/src/pages/investments-page.tsx',
+2025-12-25T03:35:59.151241321Z     '/opt/render/project/src/client/src/pages/transfers-page.tsx'
+2025-12-25T03:35:59.151244111Z   ]
+2025-12-25T03:35:59.151246931Z }
+2025-12-25T03:35:59.235163897Z ==> Build failed 😞
+2025-12-25T03:35:59.235187538Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
