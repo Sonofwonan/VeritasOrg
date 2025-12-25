@@ -37,16 +37,18 @@ export function setupAuth(app: Express) {
       // For production with frontend on a different domain (Vercel), use 'none' so the cookie is sent cross-site
       sameSite: process.env.NODE_ENV === "production" ? ("none" as const) : ("lax" as const),
       domain: process.env.COOKIE_DOMAIN || undefined,
+      httpOnly: true,
     },
   };
-
-  if (app.get("env") === "production") {
-    app.set("trust proxy", 1);
-  }
 
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Set trust proxy for cross-domain cookies
+  if (app.get("env") === "production") {
+    app.set("trust proxy", 1);
+  }
 
   passport.use(
     new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
