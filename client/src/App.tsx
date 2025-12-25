@@ -12,6 +12,7 @@ import HomePage from "@/pages/home";
 import AuthPage from "@/pages/auth-page";
 import DashboardPage from "@/pages/dashboard";
 import AccountsPage from "@/pages/accounts-page";
+import AccountDetailPage from "@/pages/account-detail";
 import InvestmentsPage from "@/pages/investments-page";
 import TransfersPage from "@/pages/transfers-page";
 
@@ -50,6 +51,9 @@ function Router() {
       </Route>
       <Route path="/accounts">
         {() => <ProtectedRoute component={AccountsPage} />}
+      </Route>
+      <Route path="/accounts/:id">
+        {() => <ProtectedRoute component={AccountDetailPage} />}
       </Route>
       <Route path="/investments">
         {() => <ProtectedRoute component={InvestmentsPage} />}

@@ -1,7 +1,8 @@
 import { useAccounts, useCreateAccount } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
-import { Plus, Wallet, CreditCard } from "lucide-react";
+import { Plus, Wallet, CreditCard, ArrowRight } from "lucide-react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import {
   Dialog,
@@ -24,11 +25,12 @@ export default function AccountsPage() {
   const createAccount = useCreateAccount();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   
   const [newAccount, setNewAccount] = useState({
     accountType: "cash" as "cash" | "investment",
-    balance: "1000", // Default starting balance for demo
+    balance: "5000",
   });
 
   const handleCreate = () => {
@@ -38,7 +40,7 @@ export default function AccountsPage() {
       userId: user.id,
       accountType: newAccount.accountType,
       balance: newAccount.balance,
-      isDemo: true,
+      isDemo: false,
     }, {
       onSuccess: () => {
         setIsOpen(false);
@@ -76,7 +78,7 @@ export default function AccountsPage() {
             <DialogHeader>
               <DialogTitle>Open New Account</DialogTitle>
               <DialogDescription>
-                Choose an account type to get started. Initial deposit is simulated.
+                Choose an account type and set your initial deposit.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -96,11 +98,12 @@ export default function AccountsPage() {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label>Initial Deposit (Demo)</Label>
+                <Label>Initial Deposit</Label>
                 <Input 
                   type="number" 
                   value={newAccount.balance}
                   onChange={(e) => setNewAccount(prev => ({ ...prev, balance: e.target.value }))}
+                  placeholder="5000"
                 />
               </div>
             </div>
@@ -135,9 +138,6 @@ export default function AccountsPage() {
                 `}>
                   {account.accountType === 'investment' ? <CreditCard className="w-6 h-6" /> : <Wallet className="w-6 h-6" />}
                 </div>
-                {account.isDemo && (
-                  <span className="text-[10px] font-mono bg-muted px-2 py-1 rounded text-muted-foreground">DEMO</span>
-                )}
               </div>
               <CardTitle className="text-xl">
                 {account.accountType === 'investment' ? 'Brokerage Account' : 'Checking Account'}
@@ -154,9 +154,16 @@ export default function AccountsPage() {
               </div>
             </CardContent>
             
-            <CardFooter className="bg-muted/30 border-t p-4 flex gap-2">
-              <Button variant="outline" size="sm" className="w-full">Details</Button>
-              <Button variant="ghost" size="sm" className="w-full">History</Button>
+            <CardFooter className="bg-muted/30 border-t p-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full gap-2"
+                onClick={() => setLocation(`/accounts/${account.id}`)}
+              >
+                View Details
+                <ArrowRight className="w-4 h-4" />
+              </Button>
             </CardFooter>
           </Card>
         ))}

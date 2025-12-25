@@ -30,9 +30,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-full py-6">
       <div className="px-6 mb-8">
         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 font-display">
-          FinTech<span className="text-primary">Demo</span>
+          Veritas<span className="text-primary">Wealth</span>
         </h1>
-        <p className="text-xs text-muted-foreground mt-1">Premium Banking</p>
+        <p className="text-xs text-muted-foreground mt-1">Premium Wealth Management</p>
       </div>
 
       <nav className="flex-1 px-4 space-y-1">
@@ -86,7 +86,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b z-40 flex items-center justify-between px-4">
-        <h1 className="font-bold text-lg font-display">FinTechDemo</h1>
+        <h1 className="font-bold text-lg font-display">Veritas Wealth</h1>
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon">
