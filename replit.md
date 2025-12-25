@@ -20,7 +20,7 @@ A professional wealth management platform with authentication, portfolio managem
   - 6 feature cards (Smart Investments, Security, Analytics, Tools, Expert Support, Proven Results)
   - Success stories with before/after wealth comparisons (3 user testimonials)
   - Market insights section (market volatility, investment strategies)
-  - Statistics dashboard (50K+ users, $4.2B assets managed, 99.9% uptime, 12% avg return)
+  - Statistics dashboard (850K+ users, $142.8B assets managed, 99.99% uptime, 15.4% avg return)
   - CTA sections encouraging sign-up
 - **Styling**: Professional cards with hover-elevate effects, gradient accents, semantic colors
 - **File**: `client/src/pages/home.tsx`

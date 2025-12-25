@@ -39,37 +39,37 @@ const features = [
 ];
 
 const successStories = [
-  {
-    name: "Sarah Mitchell",
-    role: "Portfolio Manager",
-    achievement: "Grew net worth from $500K to $2.3M in 5 years",
-    quote: "Veritas Wealth gave me the tools and insights to optimize my investment strategy. The real-time analytics are game-changing.",
-    initial: "$500K",
-    current: "$2.3M"
-  },
-  {
-    name: "James Chen",
-    role: "Entrepreneur",
-    achievement: "Diversified portfolio across 15+ asset classes",
-    quote: "The platform made it easy to manage my diverse portfolio without the complexity. Highly recommended for serious investors.",
-    initial: "$250K",
-    current: "$890K"
-  },
-  {
-    name: "Emma Rodriguez",
-    role: "Financial Advisor",
-    achievement: "Manages $15M+ in client assets",
-    quote: "I recommend Veritas to all my clients. The security, UX, and features are unmatched in the industry.",
-    initial: "$100K",
-    current: "$1.2M"
-  }
+    {
+      name: "Sarah Mitchell",
+      role: "Global Portfolio Manager",
+      achievement: "Managed $4.5B in institutional assets",
+      quote: "Veritas Wealth provides the institutional-grade infrastructure required for serious capital management. Their analytics are unparalleled.",
+      initial: "$10M+",
+      current: "$142M+"
+    },
+    {
+      name: "James Chen",
+      role: "Venture Capitalist",
+      achievement: "Early-stage investor in 3 Decacorns",
+      quote: "The efficiency of capital deployment through Veritas is what sets them apart. It's the only platform that keeps pace with high-velocity investing.",
+      initial: "$2.5M",
+      current: "$18.4M"
+    },
+    {
+      name: "Emma Rodriguez",
+      role: "Family Office Principal",
+      achievement: "Preserving multi-generational wealth",
+      quote: "We trust Veritas with our most sensitive family assets. Their security protocols and reporting standards are the gold standard.",
+      initial: "$50M",
+      current: "$120M"
+    }
 ];
 
 const stats = [
-  { value: "50,000+", label: "Active Users" },
-  { value: "$4.2B", label: "Assets Managed" },
-  { value: "99.9%", label: "Uptime" },
-  { value: "12%", label: "Avg Annual Return" }
+  { value: "850,000+", label: "Active Investors" },
+  { value: "$142.8B", label: "Assets Under Management" },
+  { value: "99.99%", label: "System Uptime" },
+  { value: "15.4%", label: "Avg Annual Return" }
 ];
 
 export default function HomePage() {
