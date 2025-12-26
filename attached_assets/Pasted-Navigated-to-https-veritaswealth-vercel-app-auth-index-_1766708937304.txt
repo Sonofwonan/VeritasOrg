@@ -1,0 +1,70 @@
+Navigated to https://veritaswealth.vercel.app/auth
+index-eVwvKezi.js:8  GET https://veritaswealth.vercel.app/api/user 502 (Bad Gateway)
+si @ index-eVwvKezi.js:8
+queryFn @ index-eVwvKezi.js:8
+i @ index-eVwvKezi.js:8
+w @ index-eVwvKezi.js:8
+start @ index-eVwvKezi.js:8
+fetch @ index-eVwvKezi.js:8
+#d @ index-eVwvKezi.js:8
+onSubscribe @ index-eVwvKezi.js:8
+subscribe @ index-eVwvKezi.js:8
+(anonymous) @ index-eVwvKezi.js:8
+QA @ index-eVwvKezi.js:6
+gh @ index-eVwvKezi.js:8
+Gs @ index-eVwvKezi.js:8
+GO @ index-eVwvKezi.js:8
+Na @ index-eVwvKezi.js:6
+CU @ index-eVwvKezi.js:8
+Oo @ index-eVwvKezi.js:8
+KO @ index-eVwvKezi.js:8
+T @ index-eVwvKezi.js:1
+R @ index-eVwvKezi.js:1Understand this error
+index-eVwvKezi.js:8 Fetch failed loading: GET "https://veritaswealth.vercel.app/api/user".
+si @ index-eVwvKezi.js:8
+queryFn @ index-eVwvKezi.js:8
+i @ index-eVwvKezi.js:8
+w @ index-eVwvKezi.js:8
+start @ index-eVwvKezi.js:8
+fetch @ index-eVwvKezi.js:8
+#d @ index-eVwvKezi.js:8
+onSubscribe @ index-eVwvKezi.js:8
+subscribe @ index-eVwvKezi.js:8
+(anonymous) @ index-eVwvKezi.js:8
+QA @ index-eVwvKezi.js:6
+gh @ index-eVwvKezi.js:8
+Gs @ index-eVwvKezi.js:8
+GO @ index-eVwvKezi.js:8
+Na @ index-eVwvKezi.js:6
+CU @ index-eVwvKezi.js:8
+Oo @ index-eVwvKezi.js:8
+KO @ index-eVwvKezi.js:8
+T @ index-eVwvKezi.js:1
+R @ index-eVwvKezi.js:1
+index-eVwvKezi.js:8 [Violation] 'setTimeout' handler took 51ms
+auth:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" class=​"flex w-full rounded-md border px-3 py-2 text-base ring-offset-background file:​border-0 file:​bg-transparent file:​text-sm file:​font-medium file:​text-foreground placeholder:​text-muted-foreground focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2 disabled:​cursor-not-allowed disabled:​opacity-50 md:​text-sm h-12 bg-white dark:​bg-zinc-900 border-zinc-200 dark:​border-zinc-800 focus:​ring-primary" name=​"password" id=​":​r6:​-form-item" aria-describedby=​":​r6:​-form-item-description" aria-invalid=​"false" value>​flex
+index-eVwvKezi.js:8  POST https://veritaswealth.vercel.app/api/login 502 (Bad Gateway)
+si @ index-eVwvKezi.js:8
+mutationFn @ index-eVwvKezi.js:8
+fn @ index-eVwvKezi.js:8
+w @ index-eVwvKezi.js:8
+start @ index-eVwvKezi.js:8
+execute @ index-eVwvKezi.js:8
+await in execute
+mutate @ index-eVwvKezi.js:8
+(anonymous) @ index-eVwvKezi.js:8
+g @ index-eVwvKezi.js:16
+(anonymous) @ index-eVwvKezi.js:8
+await in (anonymous)
+Gq @ index-eVwvKezi.js:5
+Yq @ index-eVwvKezi.js:5
+Qq @ index-eVwvKezi.js:5
+_A @ index-eVwvKezi.js:5
+PA @ index-eVwvKezi.js:5
+(anonymous) @ index-eVwvKezi.js:5
+Vy @ index-eVwvKezi.js:8
+NT @ index-eVwvKezi.js:5
+Vv @ index-eVwvKezi.js:5
+_v @ index-eVwvKezi.js:5
+h6 @ index-eVwvKezi.js:5Understand this error
+index-eVwvKezi.js:8 Fetch failed loading: POST "https://veritaswealth.vercel.app/api/login".
