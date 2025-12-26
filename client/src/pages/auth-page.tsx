@@ -56,6 +56,16 @@ export default function AuthPage() {
     mode: "onChange",
   });
 
+  // Force clean password on view toggle
+  useEffect(() => {
+    if (view === 'register' && step === 2) {
+      const currentPass = registerForm.getValues("password");
+      if (currentPass === "personal") {
+        registerForm.setValue("password", "");
+      }
+    }
+  }, [view, step, registerForm]);
+
   const onLogin = (data: z.infer<typeof loginSchema>) => {
     login.mutate(data, {
       onError: (error) => {
