@@ -60,11 +60,16 @@ export default function AuthPage() {
   useEffect(() => {
     if (view === 'register' && step === 2) {
       const currentPass = registerForm.getValues("password");
-      if (currentPass === "personal") {
+      if (currentPass === "personal" || !currentPass) {
         registerForm.setValue("password", "");
       }
     }
   }, [view, step, registerForm]);
+
+  // Handle account type selection separately to avoid default value bleed
+  const setAccountType = (type: "personal" | "business") => {
+    registerForm.setValue("userType", type);
+  };
 
   const onLogin = (data: z.infer<typeof loginSchema>) => {
     login.mutate(data, {
@@ -277,7 +282,7 @@ export default function AuthPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                   <button
                                     type="button"
-                                    onClick={() => field.onChange("personal")}
+                                    onClick={() => setAccountType("personal")}
                                     className={cn(
                                       "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
                                       field.value === "personal"
@@ -292,7 +297,7 @@ export default function AuthPage() {
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => field.onChange("business")}
+                                    onClick={() => setAccountType("business")}
                                     className={cn(
                                       "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
                                       field.value === "business"
