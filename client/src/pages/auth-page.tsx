@@ -59,10 +59,14 @@ export default function AuthPage() {
   // Force clean password on view toggle
   useEffect(() => {
     if (view === 'register' && step === 2) {
-      const currentPass = registerForm.getValues("password");
-      if (currentPass === "personal" || !currentPass) {
-        registerForm.setValue("password", "");
-      }
+      // Small timeout to ensure the field is rendered and focus logic is settled
+      const timer = setTimeout(() => {
+        const currentPass = registerForm.getValues("password");
+        if (currentPass === "personal" || currentPass === "business" || !currentPass) {
+          registerForm.setValue("password", "");
+        }
+      }, 50);
+      return () => clearTimeout(timer);
     }
   }, [view, step, registerForm]);
 
