@@ -149,7 +149,7 @@ export default function AuthPage() {
                           <div className="relative">
                             <Input 
                               type={showPassword ? "text" : "password"} 
-                              {...field} 
+                              {...field}
                             />
                             <Button
                               type="button"
@@ -158,7 +158,7 @@ export default function AuthPage() {
                               className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                               onClick={() => setShowPassword(!showPassword)}
                             >
-                              {showPassword ? <Shield className="w-4 h-4" /> : <Shield className="w-4 h-4 opacity-50" />}
+                              <Shield className={cn("w-4 h-4", !showPassword && "opacity-50")} />
                             </Button>
                           </div>
                         </FormControl>
