@@ -40,6 +40,7 @@ export function setupAuth(app: Express) {
     },
   };
 
+  // Ensure JSON parsing is handled before session
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());

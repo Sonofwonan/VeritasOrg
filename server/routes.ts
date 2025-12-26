@@ -62,6 +62,11 @@ export async function registerRoutes(
   });
 
   app.post(api.auth.login.path, (req, res, next) => {
+    // Ensure we handle JSON headers correctly
+    if (!req.is('json')) {
+      return res.status(400).json({ message: "Content-Type must be application/json" });
+    }
+
     const nextAuth = (err: any, user: any, info: any) => {
         if (err) {
           console.error('[auth] Authentication error:', err);
