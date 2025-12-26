@@ -197,16 +197,11 @@ export default function AuthPage() {
                               <Input 
                                 type={showPassword ? "text" : "password"} 
                                 className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary pr-10" 
-                                autoComplete="new-password"
+                                autoComplete="off"
                                 {...field} 
                                 value={field.value || ""}
                                 onChange={(e) => {
                                   field.onChange(e.target.value);
-                                }}
-                                onFocus={(e) => {
-                                  if (e.target.value === "") {
-                                    field.onChange("");
-                                  }
                                 }}
                               />
                               <button
@@ -366,16 +361,11 @@ export default function AuthPage() {
                                   <Input 
                                     type={showPassword ? "text" : "password"} 
                                     className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary pr-10" 
-                                    autoComplete="new-password"
+                                    autoComplete="off"
                                     {...field} 
                                     value={field.value || ""}
                                     onChange={(e) => {
                                       field.onChange(e.target.value);
-                                    }}
-                                    onFocus={(e) => {
-                                      if (e.target.value === "") {
-                                        field.onChange("");
-                                      }
                                     }}
                                   />
                                   <button
