@@ -22,9 +22,8 @@ import {
 } from "@/components/ui/form";
 import { insertUserSchema } from "@shared/schema";
 import { useEffect, useState } from "react";
-import { Loader2, ArrowRight, CheckCircle2, Shield, TrendingUp, ChevronRight } from "lucide-react";
+import { Loader2, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
@@ -87,7 +86,6 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-background">
-      {/* Visual Side */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-center p-12 bg-[#0a0a0a] text-white relative overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay"
@@ -109,7 +107,6 @@ export default function AuthPage() {
         </div>
       </div>
 
-      {/* Form Side */}
       <div className="flex-1 flex flex-col justify-center p-6 sm:p-12 bg-zinc-50 dark:bg-[#111]">
         <Card className="w-full max-w-md mx-auto border-0 shadow-none bg-transparent">
           <CardHeader className="p-0 mb-8">
