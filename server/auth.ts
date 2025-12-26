@@ -45,9 +45,7 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   // Set trust proxy for cross-domain cookies
-  if (app.get("env") === "production") {
-    app.set("trust proxy", 1);
-  }
+  app.set("trust proxy", 1);
 
   passport.use(
     new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
