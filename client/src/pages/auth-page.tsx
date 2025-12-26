@@ -56,10 +56,12 @@ export default function AuthPage() {
   const onLogin = (data: z.infer<typeof loginSchema>) => {
     login.mutate(data, {
       onError: (error) => {
+        const isBadGateway = error.message.includes("502");
         toast({
-          title: "Login failed",
+          title: isBadGateway ? "Service Unavailable" : "Login failed",
           description: error.message,
           variant: "destructive",
+          duration: isBadGateway ? 10000 : 5000,
         });
       },
     });
