@@ -195,6 +195,8 @@ export default function AuthPage() {
                               className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
                               autoComplete="current-password"
                               {...field} 
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value)}
                             />
                           </FormControl>
                           <FormMessage />
@@ -342,6 +344,8 @@ export default function AuthPage() {
                                   className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
                                   autoComplete="new-password"
                                   {...field} 
+                                  value={field.value || ""}
+                                  onChange={(e) => field.onChange(e.target.value)}
                                 />
                               </FormControl>
                               <FormMessage />
