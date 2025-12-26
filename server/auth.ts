@@ -34,25 +34,20 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: "lax",
       httpOnly: true,
       path: "/",
     },
   };
 
-  // Ensure JSON parsing is handled before session
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
 
   // Set trust proxy for cross-domain cookies
-  app.set("trust proxy", 1);
-
-  // Add debugging middleware for login
-  app.post("/api/login", (req, res, next) => {
-    console.log(`[auth] Login attempt for: ${req.body?.email}`);
-    next();
-  });
+  if (app.get("env") === "production") {
+    app.set("trust proxy", 1);
+  }
 
   passport.use(
     new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {

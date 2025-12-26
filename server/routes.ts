@@ -36,17 +36,20 @@ export async function registerRoutes(
       if (existing) {
         return res.status(400).json({ message: "Email already exists" });
       }
-      console.log(`[auth] Registering user: ${input.email}`);
       const hashedPassword = await hashPassword(input.password);
       const user = await storage.createUser({ ...input, password: hashedPassword });
-      console.log(`[auth] User created: ${user.id}`);
       
       req.login(user, (err) => {
         if (err) {
-          console.error('[auth] Registration login error:', err);
+          console.error('Registration login error:', err);
           return res.status(500).json({ message: "Login failed after registration" });
         }
-        console.log(`[auth] Session initialized for user: ${user.id}`);
+        // Log session/cookie info for easier debugging in production
+        try {
+          console.log('Registered user id:', user.id, 'sessionID:', (req as any).sessionID);
+        } catch (e) {
+          console.error('Error logging session info after registration', e);
+        }
         res.status(201).json(user);
       });
     } catch (err) {
@@ -59,26 +62,11 @@ export async function registerRoutes(
   });
 
   app.post(api.auth.login.path, (req, res, next) => {
-    // Ensure we handle JSON headers correctly
-    if (!req.is('json')) {
-      return res.status(400).json({ message: "Content-Type must be application/json" });
-    }
-
     const nextAuth = (err: any, user: any, info: any) => {
-        if (err) {
-          console.error('[auth] Authentication error:', err);
-          return next(err);
-        }
-        if (!user) {
-          console.log('[auth] Authentication failed:', info?.message || 'Invalid credentials');
-          return res.status(401).json({ message: info?.message || "Invalid credentials" });
-        }
+        if (err) return next(err);
+        if (!user) return res.status(401).json({ message: "Invalid credentials" });
         req.logIn(user, (err) => {
-            if (err) {
-              console.error('[auth] Login error:', err);
-              return next(err);
-            }
-            console.log(`[auth] Login successful for user: ${user.email}`);
+            if (err) return next(err);
             return res.status(200).json(user);
         });
     };

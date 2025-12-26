@@ -26,15 +26,8 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: z.infer<typeof api.auth.login.input>) => {
-      try {
-        const res = await apiRequest(api.auth.login.method, api.auth.login.path, credentials);
-        return api.auth.login.responses[200].parse(await res.json());
-      } catch (e) {
-        if (e instanceof Error && e.message.includes("502")) {
-          throw new Error("The server is currently unreachable (502). This usually happens during a deployment or if the backend service is restarting on Render. Please try again in 30 seconds.");
-        }
-        throw e;
-      }
+      const res = await apiRequest(api.auth.login.method, api.auth.login.path, credentials);
+      return api.auth.login.responses[200].parse(await res.json());
     },
     onSuccess: (user) => {
       queryClient.setQueryData([api.auth.me.path], user);
