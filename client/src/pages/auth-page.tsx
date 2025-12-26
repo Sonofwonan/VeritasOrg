@@ -51,6 +51,7 @@ export default function AuthPage() {
   const registerForm = useForm<z.infer<typeof insertUserSchema>>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: { name: "", email: "", password: "", userType: "personal" },
+    mode: "onChange",
   });
 
   const onLogin = (data: z.infer<typeof loginSchema>) => {
@@ -193,10 +194,17 @@ export default function AuthPage() {
                             <Input 
                               type="password" 
                               className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
-                              autoComplete="current-password"
+                              autoComplete="new-password"
                               {...field} 
                               value={field.value || ""}
-                              onChange={(e) => field.onChange(e.target.value)}
+                              onChange={(e) => {
+                                field.onChange(e.target.value);
+                              }}
+                              onFocus={(e) => {
+                                if (e.target.value === "") {
+                                  field.onChange("");
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -345,7 +353,14 @@ export default function AuthPage() {
                                   autoComplete="new-password"
                                   {...field} 
                                   value={field.value || ""}
-                                  onChange={(e) => field.onChange(e.target.value)}
+                                  onChange={(e) => {
+                                    field.onChange(e.target.value);
+                                  }}
+                                  onFocus={(e) => {
+                                    if (e.target.value === "") {
+                                      field.onChange("");
+                                    }
+                                  }}
                                 />
                               </FormControl>
                               <FormMessage />
