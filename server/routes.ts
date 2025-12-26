@@ -36,20 +36,17 @@ export async function registerRoutes(
       if (existing) {
         return res.status(400).json({ message: "Email already exists" });
       }
+      console.log(`[auth] Registering user: ${input.email}`);
       const hashedPassword = await hashPassword(input.password);
       const user = await storage.createUser({ ...input, password: hashedPassword });
+      console.log(`[auth] User created: ${user.id}`);
       
       req.login(user, (err) => {
         if (err) {
-          console.error('Registration login error:', err);
+          console.error('[auth] Registration login error:', err);
           return res.status(500).json({ message: "Login failed after registration" });
         }
-        // Log session/cookie info for easier debugging in production
-        try {
-          console.log('Registered user id:', user.id, 'sessionID:', (req as any).sessionID);
-        } catch (e) {
-          console.error('Error logging session info after registration', e);
-        }
+        console.log(`[auth] Session initialized for user: ${user.id}`);
         res.status(201).json(user);
       });
     } catch (err) {
