@@ -63,10 +63,20 @@ export async function registerRoutes(
 
   app.post(api.auth.login.path, (req, res, next) => {
     const nextAuth = (err: any, user: any, info: any) => {
-        if (err) return next(err);
-        if (!user) return res.status(401).json({ message: "Invalid credentials" });
+        if (err) {
+          console.error('[auth] Authentication error:', err);
+          return next(err);
+        }
+        if (!user) {
+          console.log('[auth] Authentication failed:', info?.message || 'Invalid credentials');
+          return res.status(401).json({ message: info?.message || "Invalid credentials" });
+        }
         req.logIn(user, (err) => {
-            if (err) return next(err);
+            if (err) {
+              console.error('[auth] Login error:', err);
+              return next(err);
+            }
+            console.log(`[auth] Login successful for user: ${user.email}`);
             return res.status(200).json(user);
         });
     };
