@@ -56,23 +56,21 @@ export default function AuthPage() {
     mode: "onChange",
   });
 
-  // Force clean password on view toggle
-  useEffect(() => {
-    if (view === 'register' && step === 2) {
-      // Small timeout to ensure the field is rendered and focus logic is settled
-      const timer = setTimeout(() => {
-        const currentPass = registerForm.getValues("password");
-        if (currentPass === "personal" || currentPass === "business" || !currentPass) {
-          registerForm.setValue("password", "");
-        }
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [view, step, registerForm]);
+  // Remove the leak by explicitly clearing password if it matches userType strings
+  const currentPassword = registerForm.watch("password");
+  const currentUserType = registerForm.watch("userType");
 
-  // Handle account type selection separately to avoid default value bleed
+  useEffect(() => {
+    if (currentPassword === "personal" || currentPassword === "business") {
+      registerForm.setValue("password", "");
+    }
+  }, [currentPassword, registerForm]);
+
+  // Handle account type selection separately
   const setAccountType = (type: "personal" | "business") => {
     registerForm.setValue("userType", type);
+    // Explicitly clear password whenever userType changes to prevent any potential sync/leak
+    registerForm.setValue("password", "");
   };
 
   const onLogin = (data: z.infer<typeof loginSchema>) => {
