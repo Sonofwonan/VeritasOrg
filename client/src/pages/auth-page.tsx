@@ -45,11 +45,13 @@ export default function AuthPage() {
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
+    mode: "onChange",
   });
 
   const registerForm = useForm<z.infer<typeof insertUserSchema>>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: { name: "", email: "", password: "", userType: "personal" },
+    mode: "onChange",
   });
 
   const onLogin = (data: z.infer<typeof loginSchema>) => {
