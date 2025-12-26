@@ -37,7 +37,6 @@ export function setupAuth(app: Express) {
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       httpOnly: true,
       path: "/",
-      domain: process.env.NODE_ENV === "production" ? ".vercel.app" : undefined,
     },
   };
 
