@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import { Loader2, ArrowRight, CheckCircle2, Shield, TrendingUp, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email"),
@@ -37,6 +38,7 @@ export default function AuthPage() {
   const { toast } = useToast();
   const [view, setView] = useState<"login" | "register">("register");
   const [step, setStep] = useState(1);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user) setLocation("/dashboard");
@@ -45,12 +47,28 @@ export default function AuthPage() {
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
+    mode: "onChange",
   });
 
   const registerForm = useForm<z.infer<typeof insertUserSchema>>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: { name: "", email: "", password: "", userType: "personal" },
+    mode: "onChange",
   });
+
+  // Re-adding the cleanup logic to resolve the leak while maintaining onboarding
+  const currentPassword = registerForm.watch("password");
+
+  useEffect(() => {
+    if (currentPassword === "personal" || currentPassword === "business") {
+      registerForm.setValue("password", "");
+    }
+  }, [currentPassword, registerForm]);
+
+  const setAccountType = (type: "personal" | "business") => {
+    registerForm.setValue("userType", type);
+    registerForm.setValue("password", "");
+  };
 
   const onLogin = (data: z.infer<typeof loginSchema>) => {
     login.mutate(data, {
@@ -63,6 +81,8 @@ export default function AuthPage() {
       },
     });
   };
+
+  const userType = registerForm.watch("userType");
 
   const nextStep = async () => {
     const isValid = await registerForm.trigger(['name', 'email']);
@@ -107,10 +127,10 @@ export default function AuthPage() {
 
           <div className="space-y-6 max-w-lg">
             <h1 className="text-6xl font-bold font-display tracking-tight leading-[1.1]">
-              The future of <span className="text-primary">personal wealth.</span>
+              The future of <span className="text-primary">{userType === 'business' ? 'enterprise' : 'personal'} wealth.</span>
             </h1>
             <p className="text-xl text-zinc-400 leading-relaxed">
-              Experience professional-grade wealth management with a platform designed for the modern investor.
+              Experience professional-grade wealth management with a platform designed for the {userType === 'business' ? 'modern enterprise' : 'modern investor'}.
             </p>
           </div>
         </div>
@@ -185,11 +205,24 @@ export default function AuthPage() {
                             <Button variant="ghost" className="px-0 h-auto text-xs text-primary font-bold hover:bg-transparent">Forgot password?</Button>
                           </div>
                           <FormControl>
-                            <Input 
-                              type="password" 
-                              className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
-                              {...field} 
-                            />
+                            <div className="relative">
+                              <Input 
+                                type={showPassword ? "text" : "password"} 
+                                className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary pr-10" 
+                                autoComplete="off"
+                                {...field} 
+                                value={field.value || ""}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                onClick={() => setShowPassword(!showPassword)}
+                              >
+                                <Shield className={cn("w-4 h-4", !showPassword && "opacity-50")} />
+                              </Button>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -241,7 +274,7 @@ export default function AuthPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                   <button
                                     type="button"
-                                    onClick={() => field.onChange("personal")}
+                                    onClick={() => setAccountType("personal")}
                                     className={cn(
                                       "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
                                       field.value === "personal"
@@ -256,7 +289,7 @@ export default function AuthPage() {
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => field.onChange("business")}
+                                    onClick={() => setAccountType("business")}
                                     className={cn(
                                       "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
                                       field.value === "business"
@@ -331,11 +364,28 @@ export default function AuthPage() {
                             <FormItem>
                               <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Secure Password</FormLabel>
                               <FormControl>
-                                <Input 
-                                  type="password" 
-                                  className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
-                                  {...field} 
-                                />
+                                <div className="relative">
+                                  <Input 
+                                    type={showPassword ? "text" : "password"} 
+                                    className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary pr-10" 
+                                    autoComplete="off"
+                                    {...field} 
+                                    value={field.value || ""}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 h-auto p-0 hover:bg-transparent"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                  >
+                                    {showPassword ? (
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-eye-off"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                                    ) : (
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    )}
+                                  </Button>
+                                </div>
                               </FormControl>
                               <FormMessage />
                             </FormItem>
