@@ -127,7 +127,9 @@ export const insertUserSchema = createInsertSchema(users, {
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 }).omit({ id: true, createdAt: true });
-export const insertAccountSchema = createInsertSchema(accounts).omit({ id: true, createdAt: true });
+export const insertAccountSchema = createInsertSchema(accounts, {
+  userId: z.number().optional(),
+}).omit({ id: true, createdAt: true });
 export const insertPayeeSchema = createInsertSchema(payees).omit({ id: true, createdAt: true });
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true });
 export const insertInvestmentSchema = createInsertSchema(investments).omit({ id: true, createdAt: true });
