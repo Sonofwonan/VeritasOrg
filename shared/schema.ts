@@ -5,21 +5,21 @@ import { relations } from "drizzle-orm";
 
 export const accountTypeEnum = pgEnum('account_type', [
   // Deposit Accounts
-  'checking',
-  'savings',
-  'money_market',
-  'cd',
-  'high_yield_savings',
+  'Checking Account',
+  'Savings Account',
+  'Money Market Account',
+  'Certificate of Deposit (CCD)',
+  'High-Yield Savings',
   // Investment/Retirement
-  'brokerage',
-  'traditional_ira',
-  'roth_ira',
-  '401k',
-  '529_plan',
+  'Brokerage Account',
+  'Traditional IRA',
+  'Roth IRA',
+  '401(k) / 403(b)',
+  '529 Savings Plan',
   // Other
-  'trust_account',
-  'business_checking',
-  'business_savings'
+  'Trust Account',
+  'Business Checking',
+  'Business Savings'
 ]);
 export const transactionTypeEnum = pgEnum('transaction_type', ['transfer', 'buy', 'sell', 'payment', 'withdrawal']);
 export const transactionStatusEnum = pgEnum('transaction_status', ['completed', 'pending', 'failed']);
