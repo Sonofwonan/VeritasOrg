@@ -102,16 +102,18 @@ export async function registerRoutes(
 
   app.post(api.accounts.create.path, requireAuth, async (req, res) => {
     try {
-      console.log('Account creation request body:', req.body);
+      console.log('Account creation request body:', JSON.stringify(req.body, null, 2));
       const input = api.accounts.create.input.parse(req.body);
       const account = await storage.createAccount({ ...input, userId: (req.user as User).id });
       res.status(201).json(account);
     } catch (err) {
       console.error('Account creation error:', err);
       if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
+        const message = err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        return res.status(400).json({ message: `Validation Error: ${message}` });
       }
-      res.status(400).json({ message: "Invalid input" });
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      res.status(400).json({ message: `Database Error: ${errorMessage}` });
     }
   });
 

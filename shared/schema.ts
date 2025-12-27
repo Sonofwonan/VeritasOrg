@@ -129,6 +129,7 @@ export const insertUserSchema = createInsertSchema(users, {
 }).omit({ id: true, createdAt: true });
 export const insertAccountSchema = createInsertSchema(accounts, {
   userId: z.number().optional(),
+  balance: z.string().min(1, "Initial deposit is required"),
 }).omit({ id: true, createdAt: true });
 export const insertPayeeSchema = createInsertSchema(payees).omit({ id: true, createdAt: true });
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true });

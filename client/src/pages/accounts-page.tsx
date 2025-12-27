@@ -67,10 +67,11 @@ export default function AccountsPage() {
           description: "Your new account is ready to use.",
         });
       },
-      onError: () => {
+      onError: (error: any) => {
+        const detail = error.response?.data?.message || error.message || "Failed to create account.";
         toast({
-          title: "Error",
-          description: "Failed to create account.",
+          title: "Error Creating Account",
+          description: detail,
           variant: "destructive",
         });
       }
