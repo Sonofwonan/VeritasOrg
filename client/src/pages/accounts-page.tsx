@@ -54,9 +54,12 @@ export default function AccountsPage() {
   const handleCreate = () => {
     if (!user) return;
     
+    // Clean account type of any extra whitespace
+    const cleanedAccountType = newAccount.accountType.trim() as AccountType;
+
     createAccount.mutate({
       userId: user.id,
-      accountType: newAccount.accountType,
+      accountType: cleanedAccountType,
       balance: newAccount.balance,
       isDemo: false,
     }, {
