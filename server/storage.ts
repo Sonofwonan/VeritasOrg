@@ -53,12 +53,16 @@ export class DatabaseStorage implements IStorage {
 
   async createAccount(insertAccount: InsertAccount): Promise<Account> {
     const [account] = await db.insert(accounts).values({
-      ...insertAccount,
-      accountType: (insertAccount.accountType as string).trim() as any,
       userId: insertAccount.userId!,
+      accountType: insertAccount.accountType,
       balance: insertAccount.balance || "0",
+      isDemo: insertAccount.isDemo ?? false,
     }).returning();
     return account;
+  }
+
+  async deleteAccount(id: number, userId: number): Promise<void> {
+    await db.delete(accounts).where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
   }
 
   async getInvestments(accountId: number): Promise<Investment[]> {

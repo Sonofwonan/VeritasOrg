@@ -117,12 +117,14 @@ export async function registerRoutes(
     }
   });
 
-  app.get(api.accounts.get.path, requireAuth, async (req, res) => {
-    const account = await storage.getAccount(Number(req.params.id));
-    if (!account || account.userId !== (req.user as User).id) {
-      return res.status(404).json({ message: "Account not found" });
+  app.delete(`${api.accounts.get.path}`, requireAuth, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      await storage.deleteAccount(id, (req.user as User).id);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete account" });
     }
-    res.json(account);
   });
 
   // Transaction Routes

@@ -1,4 +1,4 @@
-import { useAccounts, useCreateAccount } from "@/hooks/use-finances";
+import { useAccounts, useCreateAccount, useDeleteAccount } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Plus, Wallet, CreditCard, ArrowRight, Briefcase, Eye, EyeOff } from "lucide-react";
@@ -41,6 +41,7 @@ import { useAuth } from "@/hooks/use-auth";
 export default function AccountsPage() {
   const { data: accounts, isLoading } = useAccounts();
   const createAccount = useCreateAccount();
+  const deleteAccount = useDeleteAccount();
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -214,15 +215,19 @@ export default function AccountsPage() {
                 Details
                 <ArrowRight className="w-4 h-4" />
               </Button>
-              {['checking', 'savings', 'money_market'].includes(account.accountType) && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  title="Order Debit Card"
-                >
-                  <CreditCard className="w-4 h-4" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => {
+                  if (confirm("Are you sure you want to delete this account? This action cannot be undone.")) {
+                    deleteAccount.mutate(account.id);
+                  }
+                }}
+                disabled={deleteAccount.isPending}
+              >
+                <Plus className="w-4 h-4 rotate-45" />
+              </Button>
             </CardFooter>
           </Card>
         ))}
