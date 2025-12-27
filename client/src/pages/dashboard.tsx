@@ -92,6 +92,7 @@ export default function DashboardPage() {
             trendValue="8.4%"
             description="Total returns"
             className="hover-elevate"
+            data-testid="text-portfolio-gain"
           />
         </div>
 
@@ -225,7 +226,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-primary">${(Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="font-bold text-primary" data-testid={`text-investment-value-${inv.id}`}>${(Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                       <p className="text-[10px] uppercase tracking-wider font-bold text-accent">Held</p>
                     </div>
                   </div>

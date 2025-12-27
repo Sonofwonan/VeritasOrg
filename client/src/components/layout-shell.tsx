@@ -101,7 +101,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">{user?.name}</p>
+                <p className="text-sm font-semibold truncate" data-testid="text-username">{user?.name}</p>
                 <p className="text-xs text-muted-foreground truncate opacity-70">Premium Plan</p>
               </div>
               <Button 
