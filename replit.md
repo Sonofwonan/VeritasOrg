@@ -29,50 +29,51 @@ A professional wealth management platform with authentication, portfolio managem
 - All interactive elements have descriptive data-testid attributes
 - Examples: `button-get-started`, `button-sign-in`, `button-cta-start`
 
-## Live Deployment Issue: 401 on /api/user
+## Database Configuration - CRITICAL
 
-### Root Cause
-Session configuration not properly set on Render backend. When frontend (Vercel) makes requests to backend (Render) from different domains, the session cookie isn't being recognized.
+### Session Pooler Connection Required
+Your Supabase database MUST use the **Session Pooler** connection string, not Transaction Pooler.
 
-### Fix Required - Set Environment Variables on Render
+**Why?** The Transaction Pooler does not support PREPARE statements that Drizzle ORM requires. Only Session Pooler works.
+
+### Get the Session Pooler Connection String
+
+1. Go to **Supabase Dashboard > Your Project > Settings > Database**
+2. In the "Method" dropdown, select **Session pooler** (not Transaction pooler)
+3. Copy the connection string shown
+4. Should contain: `pooler.supabase.com:5432` and `pool_mode=session`
+
+### Set Environment Variables on Render
 
 Go to your **Render Dashboard > Your Backend Service > Environment**
 
 Add or update these variables:
 
-```
-SESSION_SECRET=<strong-random-string-min-32-chars>
-CLIENT_URL=https://yourdomain.vercel.app
-DATABASE_URL=<your-supabase-connection>
-```
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | Your Session Pooler connection string from Supabase |
+| `SESSION_SECRET` | Strong random string (min 32 chars) - generate new |
+| `CLIENT_URL` | `https://veritaswealth.vercel.app` |
 
-**CRITICAL**: Do NOT set `NODE_ENV` as an environment variable on Render. The build script automatically sets `NODE_ENV=production` during the build phase. Having it as an env var causes conflicts.
-
-**Example SESSION_SECRET** (generate your own):
+**Example SESSION_SECRET**:
 ```
 a7k9mxq2w8j3h5f6g1b4c9d2e7k3n8p1
 ```
 
-### Why This Fixes the 401 Error
+**CRITICAL**: Do NOT set `NODE_ENV` as an environment variable on Render. The build script automatically sets `NODE_ENV=production`.
 
-1. **SESSION_SECRET**: Signs session cookies so they can't be tampered with
-2. **CLIENT_URL**: Tells CORS which frontend domain can access the API
-3. **DATABASE_URL**: Supabase PostgreSQL connection where sessions are stored
-4. **NODE_ENV**: Automatically set to `production` by the build script (do not add manually!)
+### Why Session Pooler Works
 
-Sessions use `connect-pg-simple` middleware which stores session data in the PostgreSQL `session` table. The flow:
-1. User logs in on frontend
-2. Backend sets session cookie (via Passport)
-3. Frontend stores cookie and includes it in future requests (`credentials: "include"`)
-4. Backend validates session against PostgreSQL
-5. Request succeeds
+- **Transaction Pooler**: No PREPARE statement support (breaks Drizzle)
+- **Session Pooler**: Full PostgreSQL support (works with Drizzle)
+- **IPv4 Compatible**: Yes, works perfectly on Render and Vercel
 
 ### After Setting Variables
 
-1. Restart your Render backend service
-2. Clear browser cache/cookies on your live site
-3. Log in again
-4. `/api/user` should now return 200 instead of 401
+1. Save changes in Render - service auto-restarts
+2. Clear browser cookies
+3. Test signup - users will now appear in Supabase database
+4. Verify: Run `SELECT * FROM users ORDER BY id DESC LIMIT 1;` in Supabase
 
 ## Architecture
 
