@@ -14,7 +14,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const fullUrl = url.startsWith('http') ? url : (url.startsWith('/api') ? API_BASE.replace('/api', '') + url : API_BASE + url);
+  const fullUrl = url.startsWith('http') ? url : (url.startsWith('/api') ? API_BASE + url : API_BASE + url);
   const res = await fetch(fullUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -34,7 +34,7 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
     const cleanUrl = url.startsWith('/') ? url : '/' + url;
-    const fullUrl = cleanUrl.startsWith('http') ? cleanUrl : (cleanUrl.startsWith('/api') ? API_BASE.replace('/api', '') + cleanUrl : API_BASE + cleanUrl);
+    const fullUrl = cleanUrl.startsWith('http') ? cleanUrl : (cleanUrl.startsWith('/api') ? API_BASE + cleanUrl : API_BASE + cleanUrl);
     const res = await fetch(fullUrl, {
       credentials: "include",
     });
