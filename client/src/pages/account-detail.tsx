@@ -8,23 +8,9 @@ import { useParams } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
-type AccountType = 'checking' | 'savings' | 'money_market' | 'cd' | 'high_yield_savings' | 'brokerage' | 'traditional_ira' | 'roth_ira' | '401k' | '529_plan' | 'trust_account' | 'business_checking' | 'business_savings';
+type AccountType = 'Checking Account' | 'Savings Account' | 'Money Market Account' | 'Certificate of Deposit (CCD)' | 'High-Yield Savings' | 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' | '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account' | 'Business Checking' | 'Business Savings';
 
-const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
-  checking: 'Checking Account',
-  savings: 'Savings Account',
-  money_market: 'Money Market Account',
-  cd: 'Certificate of Deposit',
-  high_yield_savings: 'High-Yield Savings',
-  brokerage: 'Brokerage Account',
-  traditional_ira: 'Traditional IRA',
-  roth_ira: 'Roth IRA',
-  '401k': '401(k) / 403(b)',
-  '529_plan': '529 Savings Plan',
-  trust_account: 'Trust Account',
-  business_checking: 'Business Checking',
-  business_savings: 'Business Savings',
-};
+const INVESTMENT_ACCOUNT_TYPES = ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan'];
 
 export default function AccountDetailPage() {
   const params = useParams();
@@ -61,7 +47,7 @@ export default function AccountDetailPage() {
   }
 
   const accountBalance = Number(account.balance);
-  const isInvestment = ['brokerage', 'traditional_ira', 'roth_ira', '401k', '529_plan'].includes(account.accountType);
+  const isInvestment = INVESTMENT_ACCOUNT_TYPES.includes(account.accountType as AccountType);
 
   // Generate mock transaction history for demo
   const mockTransactions = [
@@ -117,7 +103,7 @@ export default function AccountDetailPage() {
         
         <div className="space-y-2">
           <h2 className="text-3xl font-bold font-display">
-            {ACCOUNT_TYPE_LABELS[account.accountType] || account.accountType}
+            {account.accountType}
           </h2>
           <p className="text-muted-foreground">Account ID: {account.id}</p>
         </div>
@@ -156,7 +142,7 @@ export default function AccountDetailPage() {
           <CardContent className="space-y-4 text-sm">
             <div>
               <p className="text-muted-foreground">Type</p>
-              <p className="font-semibold">{ACCOUNT_TYPE_LABELS[account.accountType] || account.accountType}</p>
+              <p className="font-semibold">{account.accountType}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Created</p>

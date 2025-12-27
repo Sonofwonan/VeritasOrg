@@ -5,23 +5,10 @@ import { Plus, Wallet, CreditCard, ArrowRight, Briefcase, Eye, EyeOff } from "lu
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 
-type AccountType = 'checking' | 'savings' | 'money_market' | 'cd' | 'high_yield_savings' | 'brokerage' | 'traditional_ira' | 'roth_ira' | '401k' | '529_plan' | 'trust_account' | 'business_checking' | 'business_savings';
+type AccountType = 'Checking Account' | 'Savings Account' | 'Money Market Account' | 'Certificate of Deposit (CCD)' | 'High-Yield Savings' | 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' | '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account' | 'Business Checking' | 'Business Savings';
 
-const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
-  checking: 'Checking Account',
-  savings: 'Savings Account',
-  money_market: 'Money Market Account',
-  cd: 'Certificate of Deposit',
-  high_yield_savings: 'High-Yield Savings',
-  brokerage: 'Brokerage Account',
-  traditional_ira: 'Traditional IRA',
-  roth_ira: 'Roth IRA',
-  '401k': '401(k) / 403(b)',
-  '529_plan': '529 Savings Plan',
-  trust_account: 'Trust Account',
-  business_checking: 'Business Checking',
-  business_savings: 'Business Savings',
-};
+const INVESTMENT_ACCOUNT_TYPES = ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan'];
+const BUSINESS_ACCOUNT_TYPES = ['Trust Account', 'Business Checking', 'Business Savings'];
 import {
   Dialog,
   DialogContent,
@@ -48,19 +35,16 @@ export default function AccountsPage() {
   const [isOpen, setIsOpen] = useState(false);
   
   const [newAccount, setNewAccount] = useState<{accountType: AccountType, balance: string}>({
-    accountType: "checking",
+    accountType: "Checking Account",
     balance: "5000",
   });
 
   const handleCreate = () => {
     if (!user) return;
-    
-    // Clean account type of any extra whitespace or quotes
-    const cleanedAccountType = newAccount.accountType.replace(/['"]+/g, '').trim() as AccountType;
 
     createAccount.mutate({
       userId: user.id,
-      accountType: cleanedAccountType,
+      accountType: newAccount.accountType,
       balance: newAccount.balance,
       isDemo: false,
     }, {
@@ -117,25 +101,25 @@ export default function AccountsPage() {
                   <SelectContent>
                     <div className="px-2 py-1.5">
                       <p className="text-xs font-semibold text-muted-foreground mb-2">Deposit Accounts</p>
-                      <SelectItem value="checking">Checking Account</SelectItem>
-                      <SelectItem value="savings">Savings Account</SelectItem>
-                      <SelectItem value="money_market">Money Market Account</SelectItem>
-                      <SelectItem value="cd">Certificate of Deposit (CD)</SelectItem>
-                      <SelectItem value="high_yield_savings">High-Yield Savings</SelectItem>
+                      <SelectItem value="Checking Account">Checking Account</SelectItem>
+                      <SelectItem value="Savings Account">Savings Account</SelectItem>
+                      <SelectItem value="Money Market Account">Money Market Account</SelectItem>
+                      <SelectItem value="Certificate of Deposit (CCD)">Certificate of Deposit (CCD)</SelectItem>
+                      <SelectItem value="High-Yield Savings">High-Yield Savings</SelectItem>
                     </div>
                     <div className="px-2 py-1.5">
                       <p className="text-xs font-semibold text-muted-foreground mb-2">Investment & Retirement</p>
-                      <SelectItem value="brokerage">Brokerage Account</SelectItem>
-                      <SelectItem value="traditional_ira">Traditional IRA</SelectItem>
-                      <SelectItem value="roth_ira">Roth IRA</SelectItem>
-                      <SelectItem value="401k">401(k) / 403(b)</SelectItem>
-                      <SelectItem value="529_plan">529 Savings Plan</SelectItem>
+                      <SelectItem value="Brokerage Account">Brokerage Account</SelectItem>
+                      <SelectItem value="Traditional IRA">Traditional IRA</SelectItem>
+                      <SelectItem value="Roth IRA">Roth IRA</SelectItem>
+                      <SelectItem value="401(k) / 403(b)">401(k) / 403(b)</SelectItem>
+                      <SelectItem value="529 Savings Plan">529 Savings Plan</SelectItem>
                     </div>
                     <div className="px-2 py-1.5">
                       <p className="text-xs font-semibold text-muted-foreground mb-2">Other Accounts</p>
-                      <SelectItem value="trust_account">Trust Account</SelectItem>
-                      <SelectItem value="business_checking">Business Checking</SelectItem>
-                      <SelectItem value="business_savings">Business Savings</SelectItem>
+                      <SelectItem value="Trust Account">Trust Account</SelectItem>
+                      <SelectItem value="Business Checking">Business Checking</SelectItem>
+                      <SelectItem value="Business Savings">Business Savings</SelectItem>
                     </div>
                   </SelectContent>
                 </Select>
@@ -166,9 +150,9 @@ export default function AccountsPage() {
           <Card key={account.id} className="group relative overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5">
             {/* Background decoration */}
             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-              {['brokerage', 'traditional_ira', 'roth_ira', '401k', '529_plan'].includes(account.accountType) ? (
+              {INVESTMENT_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? (
                 <CreditCard className="w-24 h-24" />
-              ) : ['trust_account', 'business_checking', 'business_savings'].includes(account.accountType) ? (
+              ) : BUSINESS_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? (
                 <Briefcase className="w-24 h-24" />
               ) : (
                 <Wallet className="w-24 h-24" />
@@ -179,11 +163,11 @@ export default function AccountsPage() {
               <div className="flex justify-between items-start mb-2">
                 <div className={`
                   p-3 rounded-xl 
-                  ${['brokerage', 'traditional_ira', 'roth_ira', '401k', '529_plan'].includes(account.accountType) ? 'bg-purple-100 text-purple-600' : ['trust_account', 'business_checking', 'business_savings'].includes(account.accountType) ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}
+                  ${INVESTMENT_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? 'bg-purple-100 text-purple-600' : BUSINESS_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}
                 `}>
-                  {['brokerage', 'traditional_ira', 'roth_ira', '401k', '529_plan'].includes(account.accountType) ? (
+                  {INVESTMENT_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? (
                     <CreditCard className="w-6 h-6" />
-                  ) : ['trust_account', 'business_checking', 'business_savings'].includes(account.accountType) ? (
+                  ) : BUSINESS_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? (
                     <Briefcase className="w-6 h-6" />
                   ) : (
                     <Wallet className="w-6 h-6" />
@@ -191,7 +175,7 @@ export default function AccountsPage() {
                 </div>
               </div>
               <CardTitle className="text-xl">
-                {ACCOUNT_TYPE_LABELS[account.accountType] || account.accountType}
+                {account.accountType}
               </CardTitle>
               <CardDescription>ID: ****{account.id}</CardDescription>
             </CardHeader>

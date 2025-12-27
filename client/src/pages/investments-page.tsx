@@ -80,7 +80,7 @@ export default function InvestmentsPage() {
   const { data: etfQuote } = useMarketQuote(selectedETF);
 
   const investmentAccounts = accounts?.filter(a => 
-    ['brokerage', 'traditional_ira', 'roth_ira', '401k', '529_plan'].includes(a.accountType)
+    ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan'].includes(a.accountType)
   ) || [];
 
   const handleBuy = () => {
