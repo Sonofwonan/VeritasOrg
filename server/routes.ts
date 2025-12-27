@@ -39,6 +39,20 @@ export async function registerRoutes(
       const hashedPassword = await hashPassword(input.password);
       const user = await storage.createUser({ ...input, password: hashedPassword });
       
+      // Auto-create a default checking account for new users
+      try {
+        await storage.createAccount({
+          userId: user.id,
+          accountType: 'Checking Account',
+          balance: '0',
+          isDemo: false,
+        });
+        console.log('Created default account for user:', user.id);
+      } catch (accountErr) {
+        console.error('Failed to create default account:', accountErr);
+        // Don't fail registration if account creation fails
+      }
+      
       req.login(user, (err) => {
         if (err) {
           console.error('Registration login error:', err);

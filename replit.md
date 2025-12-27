@@ -167,23 +167,48 @@ The `sameSite: "none"` in production allows cookies to be sent cross-site (Verce
 4. Verify `/api/user` returns 200 (not 401)
 5. Check dashboard loads with user data
 
-## Troubleshooting
+## Complete Troubleshooting Checklist
 
-### 401 on /api/user after login
-- Check SESSION_SECRET is set on Render
-- Verify NODE_ENV=production
-- Check Supabase connection working (test in Render logs)
-- Restart Render backend after env changes
+### Problem: Signups work but users don't appear in database
 
-### Session not persisting
-- Check browser cookies are being set (dev tools > Application > Cookies)
-- Verify `secure` and `sameSite` cookie settings
-- Check PostgreSQL session table exists: `SELECT * FROM "session";`
+**Step 1: Verify Render Environment Variables**
+1. Go to Render Dashboard > Your backend service > Environment
+2. Check these are set and correct:
+   - `DATABASE_URL` = Session Pooler string (contains `pooler.supabase.com:5432`)
+   - `SESSION_SECRET` = Strong random string (min 32 chars)
+   - `CLIENT_URL` = `https://veritaswealth.vercel.app`
+3. If DATABASE_URL still has old connection string, update it
+4. Click Save - Render auto-restarts
 
-### Login fails
-- Check email/password are correct
-- Verify user was registered in auth signup flow
-- Check backend logs for authentication errors
+**Step 2: Test the connection directly**
+1. Check Render logs after restarting
+2. Look for: `[express] serving on port 5000`
+3. Try signing up with a new email
+4. Check Render logs for any database errors
+
+**Step 3: Verify data in Supabase**
+1. Go to Supabase Dashboard > Your Project > SQL Editor
+2. Run: `SELECT * FROM users ORDER BY created_at DESC LIMIT 1;`
+3. You should see your new signup
+4. Run: `SELECT * FROM accounts WHERE user_id = <id>;`
+5. You should see the auto-created checking account
+
+### Problem: 401 error on login/dashboard
+- Verify `SESSION_SECRET` is set and same across sessions
+- Clear browser cookies and try again
+- Restart Render backend after changing env vars
+- Check session table exists: `SELECT * FROM "session";`
+
+### Problem: "column does not exist" errors
+- Run the SQL migrations (paste full migration SQL into Supabase)
+- Tables needed: `users`, `accounts`, `investments`, `transactions`, `payees`
+- Enums needed: `account_type`, `transaction_type`, `transaction_status`
+- After creating, restart Render backend
+
+### Problem: User created but no account
+- The system now auto-creates a default Checking Account
+- If still missing, signup may have failed silently
+- Check Render logs for "Created default account" or errors
 
 ## User Preferences
 - Professional design for wealth management/investment platform
