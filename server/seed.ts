@@ -23,14 +23,14 @@ async function run() {
     // Create accounts
     const cashAccount = await storage.createAccount({
       userId: user.id,
-      accountType: "cash",
+      accountType: "Checking Account",
       balance: "10000",
       isDemo: true
     });
     
     const investmentAccount = await storage.createAccount({
       userId: user.id,
-      accountType: "investment",
+      accountType: "Brokerage Account",
       balance: "5000",
       isDemo: true
     });
