@@ -1,4 +1,5 @@
 import { useAccounts, useInvestments } from "@/hooks/use-finances";
+import { useLocation } from "wouter";
 import { LayoutShell } from "@/components/layout-shell";
 import { StatCard } from "@/components/stat-card";
 import { DollarSign, TrendingUp, Wallet, ArrowUpRight, PieChart as PieChartIcon } from "lucide-react";
@@ -31,6 +32,7 @@ export default function DashboardPage() {
   const { data: investments, isLoading: investmentsLoading } = useInvestments();
 
   const totalBalance = accounts?.reduce((sum, acc) => sum + Number(acc.balance), 0) || 0;
+  const [location, setLocation] = useLocation();
   
   // Calculate simplistic total investment value
   const investmentValue = investments?.reduce((sum, inv) => {
@@ -84,7 +86,7 @@ export default function DashboardPage() {
           />
           <StatCard 
             title="Portfolio Gain" 
-            value="+$12,450" 
+            value={`$${(investmentValue * 0.084).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
             icon={TrendingUp}
             trend="up"
             trendValue="8.4%"
@@ -211,25 +213,28 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between group">
+                {investments?.slice(0, 3).map((inv) => (
+                  <div key={inv.id} className="flex items-center justify-between group">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
                         <TrendingUp className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="font-semibold">Stock Purchase: AAPL</p>
-                        <p className="text-xs text-muted-foreground">Dec {20+i}, 2025 • Investment Account</p>
+                        <p className="font-semibold">Investment: {inv.symbol}</p>
+                        <p className="text-xs text-muted-foreground">{inv.shares} shares @ ${inv.currentPrice || inv.purchasePrice}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-destructive">-$1,250.00</p>
-                      <p className="text-[10px] uppercase tracking-wider font-bold text-accent">Completed</p>
+                      <p className="font-bold text-primary">${(Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="text-[10px] uppercase tracking-wider font-bold text-accent">Held</p>
                     </div>
                   </div>
                 ))}
+                {(!investments || investments.length === 0) && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No recent investment activity</p>
+                )}
               </div>
-              <Button variant="ghost" className="w-full mt-6 text-primary hover:bg-primary/5">View All Activity</Button>
+              <Button variant="ghost" className="w-full mt-6 text-primary hover:bg-primary/5" onClick={() => setLocation('/investments')}>View All Investments</Button>
             </CardContent>
           </Card>
 
