@@ -52,9 +52,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAccount(insertAccount: InsertAccount): Promise<Account> {
+    // Ensure accountType is a clean string without extra quotes or spaces
+    const cleanAccountType = String(insertAccount.accountType).replace(/['"]+/g, '').trim();
+    
     const [account] = await db.insert(accounts).values({
       userId: insertAccount.userId!,
-      accountType: insertAccount.accountType,
+      accountType: cleanAccountType as any,
       balance: insertAccount.balance || "0",
       isDemo: insertAccount.isDemo ?? false,
     }).returning();

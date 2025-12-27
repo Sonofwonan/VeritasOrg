@@ -55,8 +55,8 @@ export default function AccountsPage() {
   const handleCreate = () => {
     if (!user) return;
     
-    // Clean account type of any extra whitespace
-    const cleanedAccountType = newAccount.accountType.trim() as AccountType;
+    // Clean account type of any extra whitespace or quotes
+    const cleanedAccountType = newAccount.accountType.replace(/['"]+/g, '').trim() as AccountType;
 
     createAccount.mutate({
       userId: user.id,
