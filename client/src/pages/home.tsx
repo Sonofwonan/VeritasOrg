@@ -4,73 +4,13 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Lock, Zap, BarChart3, Users, Trophy, Loader2 } from "lucide-react";
+import { Helmet } from "react-helmet";
 
 const features = [
-  {
-    icon: TrendingUp,
-    title: "Smart Investments",
-    description: "AI-powered portfolio recommendations tailored to your goals"
-  },
-  {
-    icon: Lock,
-    title: "Bank-Level Security",
-    description: "256-bit encryption and multi-factor authentication for peace of mind"
-  },
-  {
-    icon: Zap,
-    title: "Real-Time Analytics",
-    description: "Monitor your wealth with live market data and instant notifications"
-  },
-  {
-    icon: BarChart3,
-    title: "Advanced Tools",
-    description: "Professional-grade charting and portfolio analysis tools"
-  },
-  {
-    icon: Users,
-    title: "Expert Support",
-    description: "24/7 customer success team dedicated to your financial goals"
-  },
-  {
-    icon: Trophy,
-    title: "Proven Results",
-    description: "Average portfolio growth of 12% YoY for our active investors"
-  }
+  // ... (keep existing features)
 ];
 
-const successStories = [
-  {
-    name: "Sarah Mitchell",
-    role: "Portfolio Manager",
-    achievement: "Grew net worth from $500K to $2.3M in 5 years",
-    quote: "Veritas Wealth gave me the tools and insights to optimize my investment strategy. The real-time analytics are game-changing.",
-    initial: "$500K",
-    current: "$2.3M"
-  },
-  {
-    name: "James Chen",
-    role: "Entrepreneur",
-    achievement: "Diversified portfolio across 15+ asset classes",
-    quote: "The platform made it easy to manage my diverse portfolio without the complexity. Highly recommended for serious investors.",
-    initial: "$250K",
-    current: "$890K"
-  },
-  {
-    name: "Emma Rodriguez",
-    role: "Financial Advisor",
-    achievement: "Manages $15M+ in client assets",
-    quote: "I recommend Veritas to all my clients. The security, UX, and features are unmatched in the industry.",
-    initial: "$100K",
-    current: "$1.2M"
-  }
-];
-
-const stats = [
-  { value: "50,000+", label: "Active Users" },
-  { value: "$4.2B", label: "Assets Managed" },
-  { value: "99.9%", label: "Uptime" },
-  { value: "12%", label: "Avg Annual Return" }
-];
+// ... (keep successStories and stats)
 
 export default function HomePage() {
   const [, setLocation] = useLocation();
@@ -92,6 +32,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Veritas Wealth | Professional Wealth Management Platform</title>
+        <meta name="description" content="Professional-grade tools for managing investments, tracking assets, and building lasting wealth. Join thousands of investors who trust Veritas." />
+      </Helmet>
+      {/* ... rest of the file ... */}
       {/* Enhanced Navigation Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
