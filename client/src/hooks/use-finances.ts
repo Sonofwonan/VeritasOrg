@@ -79,18 +79,6 @@ export function useTransfer() {
   });
 }
 
-export function useDeleteAccount() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", buildUrl(api.accounts.get.path, { id }));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.accounts.list.path] });
-    },
-  });
-}
-
 // MARKET DATA
 export function useMarketQuote(symbol: string) {
   return useQuery({
@@ -102,5 +90,17 @@ export function useMarketQuote(symbol: string) {
     },
     enabled: !!symbol,
     refetchInterval: 10000, // Real-time feel
+  });
+}
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", buildUrl(api.accounts.get.path, { id }));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.accounts.list.path] });
+    },
   });
 }
