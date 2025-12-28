@@ -2,11 +2,13 @@ import { useAccounts, useInvestments } from "@/hooks/use-finances";
 import { useLocation } from "wouter";
 import { LayoutShell } from "@/components/layout-shell";
 import { StatCard } from "@/components/stat-card";
+import { MetallicCard } from "@/components/metallic-card";
 import { DollarSign, TrendingUp, Wallet, ArrowUpRight, PieChart as PieChartIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 
 // Mock data for chart - in real app, fetch historical data
 const CHART_DATA = [
@@ -28,6 +30,7 @@ const ALLOCATION_DATA = [
 ];
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { data: investments, isLoading: investmentsLoading } = useInvestments();
 
@@ -50,13 +53,27 @@ export default function DashboardPage() {
     );
   }
 
+  const primaryAccount = accounts?.[0];
+
   return (
     <LayoutShell>
       <div className="flex flex-col gap-8">
         {/* Page Header */}
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight">Wealth Overview</h1>
-          <p className="text-muted-foreground text-lg">Your financial health at a glance.</p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-3xl font-bold tracking-tight">Wealth Overview</h1>
+            <p className="text-muted-foreground text-lg">Your financial health at a glance.</p>
+          </div>
+          
+          {/* Metallic Card Section */}
+          <div className="w-full max-w-md">
+            <MetallicCard 
+              userName={user?.name || "Premium Member"}
+              balance={totalBalance}
+              accountType={primaryAccount?.accountType || "Investment"}
+              lastFour={String(primaryAccount?.id || "8888").padStart(4, '0')}
+            />
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
