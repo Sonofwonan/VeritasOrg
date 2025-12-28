@@ -43,7 +43,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAccounts(userId: number): Promise<Account[]> {
-    return await db.select().from(accounts).where(eq(accounts.userId, userId));
+    try {
+      return await db.select().from(accounts).where(eq(accounts.userId, userId));
+    } catch (err) {
+      console.error('Error fetching accounts for user:', userId, err);
+      throw err;
+    }
   }
 
   async getAccount(id: number): Promise<Account | undefined> {
