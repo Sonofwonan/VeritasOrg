@@ -1,0 +1,50 @@
+2025-12-28T18:03:56.535065425Z   hint: undefined,
+2025-12-28T18:03:56.535069215Z   position: '25',
+2025-12-28T18:03:56.535073606Z   internalPosition: undefined,
+2025-12-28T18:03:56.535077446Z   internalQuery: undefined,
+2025-12-28T18:03:56.535081246Z   where: undefined,
+2025-12-28T18:03:56.535085086Z   schema: undefined,
+2025-12-28T18:03:56.535089047Z   table: undefined,
+2025-12-28T18:03:56.535092987Z   column: undefined,
+2025-12-28T18:03:56.535096757Z   dataType: undefined,
+2025-12-28T18:03:56.535100548Z   constraint: undefined,
+2025-12-28T18:03:56.535104578Z   file: 'parse_relation.c',
+2025-12-28T18:03:56.535108438Z   line: '3716',
+2025-12-28T18:03:56.535112418Z   routine: 'errorMissingColumn'
+2025-12-28T18:03:56.535116139Z }
+2025-12-28T18:03:56.535455286Z node:internal/process/promises:394
+2025-12-28T18:03:56.535464397Z     triggerUncaughtException(err, true /* fromPromise */);
+2025-12-28T18:03:56.535468567Z     ^
+2025-12-28T18:03:56.535472247Z 
+2025-12-28T18:03:56.535476047Z error: column "account_type" does not exist
+2025-12-28T18:03:56.535479688Z     at /opt/render/project/src/dist/index.cjs:64:13326
+2025-12-28T18:03:56.535484678Z     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-28T18:03:56.535488648Z     at async /opt/render/project/src/dist/index.cjs:76:31383
+2025-12-28T18:03:56.535493919Z     at async Hf.getAccounts (/opt/render/project/src/dist/index.cjs:76:102859)
+2025-12-28T18:03:56.535547233Z     at async /opt/render/project/src/dist/index.cjs:76:111503 {
+2025-12-28T18:03:56.535551543Z   length: 112,
+2025-12-28T18:03:56.535556744Z   severity: 'ERROR',
+2025-12-28T18:03:56.535560614Z   code: '42703',
+2025-12-28T18:03:56.535564564Z   detail: undefined,
+2025-12-28T18:03:56.535568395Z   hint: undefined,
+2025-12-28T18:03:56.535572155Z   position: '25',
+2025-12-28T18:03:56.535577065Z   internalPosition: undefined,
+2025-12-28T18:03:56.535580986Z   internalQuery: undefined,
+2025-12-28T18:03:56.535584756Z   where: undefined,
+2025-12-28T18:03:56.535588616Z   schema: undefined,
+2025-12-28T18:03:56.535599887Z   table: undefined,
+2025-12-28T18:03:56.535602417Z   column: undefined,
+2025-12-28T18:03:56.535604848Z   dataType: undefined,
+2025-12-28T18:03:56.535607058Z   constraint: undefined,
+2025-12-28T18:03:56.535609408Z   file: 'parse_relation.c',
+2025-12-28T18:03:56.535611668Z   line: '3716',
+2025-12-28T18:03:56.535613818Z   routine: 'errorMissingColumn'
+2025-12-28T18:03:56.535616218Z }
+2025-12-28T18:03:56.535618279Z 
+2025-12-28T18:03:56.535620439Z Node.js v22.16.0
+2025-12-28T18:04:15.666147023Z ==> Running 'npm run start'
+2025-12-28T18:04:16.686140281Z 
+2025-12-28T18:04:16.686178584Z > veritas-wealth@1.0.0 start
+2025-12-28T18:04:16.686184605Z > NODE_ENV=production node dist/index.cjs
+2025-12-28T18:04:16.686187825Z 
+2025-12-28T18:04:17.98417995Z 6:04:17 PM [express] serving on port 10000
