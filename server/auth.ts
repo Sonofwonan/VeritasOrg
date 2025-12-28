@@ -38,6 +38,7 @@ export function setupAuth(app: Express) {
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       httpOnly: true,
       path: "/",
+      domain: process.env.COOKIE_DOMAIN || undefined,
     },
   };
 
