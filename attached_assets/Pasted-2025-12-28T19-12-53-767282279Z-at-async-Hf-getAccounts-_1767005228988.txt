@@ -1,0 +1,50 @@
+2025-12-28T19:12:53.767282279Z     at async Hf.getAccounts (/opt/render/project/src/dist/index.cjs:76:102859)
+2025-12-28T19:12:53.767287179Z     at async /opt/render/project/src/dist/index.cjs:76:110248 {
+2025-12-28T19:12:53.767291779Z   length: 112,
+2025-12-28T19:12:53.767297249Z   severity: 'ERROR',
+2025-12-28T19:12:53.767301429Z   code: '42703',
+2025-12-28T19:12:53.767305919Z   detail: undefined,
+2025-12-28T19:12:53.767309929Z   hint: undefined,
+2025-12-28T19:12:53.767312989Z   position: '25',
+2025-12-28T19:12:53.767316369Z   internalPosition: undefined,
+2025-12-28T19:12:53.767319199Z   internalQuery: undefined,
+2025-12-28T19:12:53.767322069Z   where: undefined,
+2025-12-28T19:12:53.76732482Z   schema: undefined,
+2025-12-28T19:12:53.767327629Z   table: undefined,
+2025-12-28T19:12:53.76733061Z   column: undefined,
+2025-12-28T19:12:53.76733336Z   dataType: undefined,
+2025-12-28T19:12:53.76733614Z   constraint: undefined,
+2025-12-28T19:12:53.7673389Z   file: 'parse_relation.c',
+2025-12-28T19:12:53.76734192Z   line: '3716',
+2025-12-28T19:12:53.76734471Z   routine: 'errorMissingColumn'
+2025-12-28T19:12:53.76734748Z }
+2025-12-28T19:12:53.767510224Z node:internal/process/promises:394
+2025-12-28T19:12:53.767522024Z     triggerUncaughtException(err, true /* fromPromise */);
+2025-12-28T19:12:53.767526585Z     ^
+2025-12-28T19:12:53.767530554Z 
+2025-12-28T19:12:53.767534465Z error: column "account_type" does not exist
+2025-12-28T19:12:53.767538375Z     at /opt/render/project/src/dist/index.cjs:64:13326
+2025-12-28T19:12:53.767542515Z     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-28T19:12:53.767546295Z     at async /opt/render/project/src/dist/index.cjs:76:31383
+2025-12-28T19:12:53.767550755Z     at async Hf.getAccounts (/opt/render/project/src/dist/index.cjs:76:102859)
+2025-12-28T19:12:53.767554805Z     at async /opt/render/project/src/dist/index.cjs:76:110248 {
+2025-12-28T19:12:53.767579326Z   length: 112,
+2025-12-28T19:12:53.767584046Z   severity: 'ERROR',
+2025-12-28T19:12:53.767588376Z   code: '42703',
+2025-12-28T19:12:53.767592486Z   detail: undefined,
+2025-12-28T19:12:53.767596876Z   hint: undefined,
+2025-12-28T19:12:53.767601246Z   position: '25',
+2025-12-28T19:12:53.767606236Z   internalPosition: undefined,
+2025-12-28T19:12:53.767610636Z   internalQuery: undefined,
+2025-12-28T19:12:53.767614867Z   where: undefined,
+2025-12-28T19:12:53.767618867Z   schema: undefined,
+2025-12-28T19:12:53.767622877Z   table: undefined,
+2025-12-28T19:12:53.767626937Z   column: undefined,
+2025-12-28T19:12:53.767631587Z   dataType: undefined,
+2025-12-28T19:12:53.767635827Z   constraint: undefined,
+2025-12-28T19:12:53.767640397Z   file: 'parse_relation.c',
+2025-12-28T19:12:53.767644897Z   line: '3716',
+2025-12-28T19:12:53.767648917Z   routine: 'errorMissingColumn'
+2025-12-28T19:12:53.767669118Z }
+2025-12-28T19:12:53.767671708Z 
+2025-12-28T19:12:53.767674488Z Node.js v22.16.0

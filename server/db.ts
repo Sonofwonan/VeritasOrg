@@ -12,5 +12,13 @@ if (!connectionString) {
   );
 }
 
-export const pool = new Pool({ connectionString });
+// Log connection string info (masking credentials) for debugging
+const maskedUrl = connectionString.replace(/:\/\/.*@/, "://****:****@");
+console.log(`[db] Connecting to database: ${maskedUrl}`);
+
+export const pool = new Pool({ 
+  connectionString,
+  ssl: { rejectUnauthorized: false } // Required for Supabase/Render in some cases
+});
+
 export const db = drizzle(pool, { schema });
