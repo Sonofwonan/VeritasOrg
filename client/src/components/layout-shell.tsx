@@ -9,10 +9,20 @@ import {
   LogOut,
   TrendingUp,
   Settings,
-  ChevronRight
+  ChevronRight,
+  Search,
+  Command
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -29,6 +39,7 @@ import {
   SidebarInset
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useState, useEffect } from "react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -43,6 +54,23 @@ const navItems = [
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredItems = navItems.filter(item => 
+    item.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   const style = {
     "--sidebar-width": "18rem",
@@ -63,6 +91,62 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
 
           <SidebarContent>
+            <div className="px-4 py-4">
+              <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start text-muted-foreground font-normal bg-muted/50 border-border/50 h-9 px-3 hover:bg-muted transition-colors"
+                  >
+                    <Search className="mr-2 h-4 w-4" />
+                    <span>Search...</span>
+                    <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                      <span className="text-xs">⌘</span>K
+                    </kbd>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px] p-0 gap-0 overflow-hidden">
+                  <DialogHeader className="p-4 border-b border-border/50">
+                    <div className="flex items-center bg-muted/50 rounded-lg px-3 h-10 border border-border/50">
+                      <Search className="h-4 w-4 text-muted-foreground mr-2" />
+                      <Input 
+                        placeholder="Search features..." 
+                        className="border-0 bg-transparent focus-visible:ring-0 px-0 h-full"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                  </DialogHeader>
+                  <div className="max-h-[300px] overflow-y-auto p-2">
+                    {filteredItems.length > 0 ? (
+                      <div className="space-y-1">
+                        {filteredItems.map((item) => (
+                          <Button
+                            key={item.href}
+                            variant="ghost"
+                            className="w-full justify-start gap-3 h-10 px-3 hover:bg-primary/5 hover:text-primary transition-all group"
+                            onClick={() => {
+                              setLocation(item.href);
+                              setSearchOpen(false);
+                              setSearchQuery("");
+                            }}
+                          >
+                            <item.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <span className="text-sm font-medium">{item.label}</span>
+                            <ChevronRight className="ml-auto w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity" />
+                          </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-6 text-center">
+                        <p className="text-sm text-muted-foreground">No results found for "{searchQuery}"</p>
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
             <SidebarGroup>
               <SidebarGroupLabel className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
                 Menu
