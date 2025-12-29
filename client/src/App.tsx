@@ -41,6 +41,8 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
   return <Component {...rest} />;
 }
 
+import SettingsPage from "@/pages/settings-page";
+
 function Router() {
   return (
     <Switch>
@@ -68,6 +70,9 @@ function Router() {
       </Route>
       <Route path="/education">
         {() => <ProtectedRoute component={EducationPage} />}
+      </Route>
+      <Route path="/settings">
+        {() => <ProtectedRoute component={SettingsPage} />}
       </Route>
 
       <Route component={NotFound} />
