@@ -35,7 +35,7 @@ export const users = pgTable("users", {
 export const accounts = pgTable("accounts", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
-  accountType: accountTypeEnum("account_type").notNull(),
+  accountType: text("account_type").notNull(),
   balance: numeric("balance").notNull().default("0"),
   isDemo: boolean("is_demo").default(true),
   createdAt: timestamp("created_at").defaultNow(),
