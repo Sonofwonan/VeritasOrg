@@ -1,9 +1,10 @@
 import { db } from "./db";
 import { eq, sql, and } from "drizzle-orm";
 import {
-  users, accounts, transactions, investments,
+  users, accounts, transactions, investments, payees,
   type User, type InsertUser, type Account, type InsertAccount,
-  type Transaction, type InsertTransaction, type Investment, type InsertInvestment
+  type Transaction, type InsertTransaction, type Investment, type InsertInvestment,
+  type Payee, type InsertPayee
 } from "@shared/schema";
 
 export interface IStorage {
@@ -24,9 +25,28 @@ export interface IStorage {
   transferFunds(fromAccountId: number, toAccountId: number, amount: string): Promise<Transaction>;
   buyAsset(accountId: number, symbol: string, amount: string, price: number): Promise<Investment>;
   sellAsset(accountId: number, symbol: string, shares: string, price: number): Promise<Investment>;
+  // Payees
+  getPayees(userId: number): Promise<Payee[]>;
+  createPayee(payee: InsertPayee): Promise<Payee>;
+  deletePayee(id: number, userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
+  // ... existing methods ...
+
+  async getPayees(userId: number): Promise<Payee[]> {
+    return await db.select().from(payees).where(eq(payees.userId, userId));
+  }
+
+  async createPayee(insertPayee: InsertPayee): Promise<Payee> {
+    const [payee] = await db.insert(payees).values(insertPayee).returning();
+    return payee;
+  }
+
+  async deletePayee(id: number, userId: number): Promise<void> {
+    await db.delete(payees).where(and(eq(payees.id, id), eq(payees.userId, userId)));
+  }
+
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
@@ -61,7 +81,7 @@ export class DatabaseStorage implements IStorage {
       userId: insertAccount.userId!,
       accountType: insertAccount.accountType || insertAccount.account_type,
       balance: insertAccount.balance || "0",
-      isDemo: insertAccount.isDemo ?? false,
+      isDemo: insertAccount.isDemo ?? true,
     }).returning();
     return account;
   }

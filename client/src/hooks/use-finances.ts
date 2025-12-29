@@ -93,11 +93,48 @@ export function useMarketQuote(symbol: string) {
   });
 }
 
-export function useDeleteAccount() {
+// PAYEES
+export function usePayees() {
+  return useQuery<any[]>({
+    queryKey: ['/api/payees'],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/payees");
+      return res.json();
+    },
+  });
+}
+
+export function useCreatePayee() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/payees", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/payees'] });
+    },
+  });
+}
+
+export function useDeletePayee() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", buildUrl(api.accounts.get.path, { id }));
+      await apiRequest("DELETE", `/api/payees/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/payees'] });
+    },
+  });
+}
+
+export function usePayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/transactions/payment", data);
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.accounts.list.path] });

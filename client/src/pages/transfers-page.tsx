@@ -1,4 +1,4 @@
-import { useAccounts, useTransfer } from "@/hooks/use-finances";
+import { useAccounts, useTransfer, usePayees, useCreatePayee, useDeletePayee, usePayment } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 export default function TransfersPage() {
   const { data: accounts } = useAccounts();
+  const { data: savedPayees, isLoading: loadingPayees } = usePayees();
   const transferMutation = useTransfer();
+  const createPayeeMutation = useCreatePayee();
+  const deletePayeeMutation = useDeletePayee();
+  const paymentMutation = usePayment();
   const { toast } = useToast();
 
   // Internal Transfer State
@@ -22,19 +26,15 @@ export default function TransfersPage() {
   const [amount, setAmount] = useState("");
 
   // External Payment State
-  const [payeeAccount, setPayeeAccount] = useState("");
+  const [payeeId, setPayeeId] = useState("");
   const [payeeAmount, setPayeeAmount] = useState("");
+  const [fromAccountForPayee, setFromAccountForPayee] = useState("");
+  
+  // Payee Dialog State
   const [payeeName, setPayeeName] = useState("");
   const [payeeBankName, setPayeeBankName] = useState("");
   const [payeeAccountNumber, setPayeeAccountNumber] = useState("");
   const [payeeRoutingNumber, setPayeeRoutingNumber] = useState("");
-
-  // Saved Payees (mock data - in real app would come from database)
-  const [savedPayees, setSavedPayees] = useState<any[]>([
-    { id: 1, name: "Sarah's Consulting", bankName: "Chase", accountNumber: "****5678", routingNumber: "121000248" },
-    { id: 2, name: "Utility Company", bankName: "Bank of America", accountNumber: "****1234", routingNumber: "026009593" },
-  ]);
-
   const [isPayeeDialogOpen, setIsPayeeDialogOpen] = useState(false);
 
   const handleInternalTransfer = () => {
@@ -71,45 +71,43 @@ export default function TransfersPage() {
       return;
     }
 
-    const newPayee = {
-      id: Math.max(...savedPayees.map(p => p.id), 0) + 1,
+    createPayeeMutation.mutate({
       name: payeeName,
       bankName: payeeBankName,
-      accountNumber: `****${payeeAccountNumber.slice(-4)}`,
+      accountNumber: payeeAccountNumber,
       routingNumber: payeeRoutingNumber,
-    };
-
-    setSavedPayees([...savedPayees, newPayee]);
-    setIsPayeeDialogOpen(false);
-    setPayeeName("");
-    setPayeeBankName("");
-    setPayeeAccountNumber("");
-    setPayeeRoutingNumber("");
-    
-    toast({ title: "Payee Added", description: `${payeeName} has been saved.` });
+      type: "individual"
+    }, {
+      onSuccess: () => {
+        setIsPayeeDialogOpen(false);
+        setPayeeName("");
+        setPayeeBankName("");
+        setPayeeAccountNumber("");
+        setPayeeRoutingNumber("");
+        toast({ title: "Payee Added", description: `${payeeName} has been saved.` });
+      }
+    });
   };
 
   const handleExternalPayment = () => {
-    if (!payeeAccount || !payeeAmount) {
-      toast({ title: "Incomplete form", description: "Please select a payee and enter amount", variant: "destructive" });
+    if (!fromAccountForPayee || !payeeId || !payeeAmount) {
+      toast({ title: "Incomplete form", description: "Please select an account, payee and enter amount", variant: "destructive" });
       return;
     }
 
-    const selectedPayee = savedPayees.find(p => p.id === parseInt(payeeAccount));
-    if (!selectedPayee) {
-      toast({ title: "Invalid payee", description: "Please select a valid payee", variant: "destructive" });
-      return;
-    }
-
-    // In a real app, this would make an API call to create external payment
-    toast({ 
-      title: "Payment Scheduled", 
-      description: `$${payeeAmount} payment to ${selectedPayee.name} has been scheduled for processing.`,
-      variant: "default"
+    paymentMutation.mutate({
+      fromAccountId: parseInt(fromAccountForPayee),
+      payeeId: parseInt(payeeId),
+      amount: payeeAmount,
+      description: `Payment to ${savedPayees?.find((p: any) => p.id === parseInt(payeeId))?.name}`
+    }, {
+      onSuccess: () => {
+        toast({ title: "Payment Successful", description: `$${payeeAmount} has been sent.` });
+        setPayeeAmount("");
+        setPayeeId("");
+        setFromAccountForPayee("");
+      }
     });
-    
-    setPayeeAmount("");
-    setPayeeAccount("");
   };
 
   return (
@@ -151,7 +149,7 @@ export default function TransfersPage() {
                         <SelectValue placeholder="Select Source" />
                       </SelectTrigger>
                       <SelectContent>
-                        {accounts?.map(a => (
+                        {accounts?.map((a: any) => (
                           <SelectItem key={a.id} value={a.id.toString()}>
                             <div className="text-left">
                               <p className="font-medium">Account #{a.id}</p>
@@ -176,7 +174,7 @@ export default function TransfersPage() {
                         <SelectValue placeholder="Select Destination" />
                       </SelectTrigger>
                       <SelectContent>
-                        {accounts?.map(a => (
+                        {accounts?.map((a: any) => (
                           <SelectItem key={a.id} value={a.id.toString()}>
                             <div className="text-left">
                               <p className="font-medium">Account #{a.id}</p>
@@ -276,7 +274,9 @@ export default function TransfersPage() {
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button onClick={handleAddPayee}>Save Payee</Button>
+                        <Button onClick={handleAddPayee} disabled={createPayeeMutation.isPending}>
+                          {createPayeeMutation.isPending ? "Saving..." : "Save Payee"}
+                        </Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -285,12 +285,12 @@ export default function TransfersPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label>From Account</Label>
-                  <Select value={payeeAccount.split('-')[0] || ""} onValueChange={(val) => setPayeeAccount(val)}>
+                  <Select value={fromAccountForPayee} onValueChange={setFromAccountForPayee}>
                     <SelectTrigger className="h-14">
                       <SelectValue placeholder="Select Source Account" />
                     </SelectTrigger>
                     <SelectContent>
-                      {accounts?.map(a => (
+                      {accounts?.map((a: any) => (
                         <SelectItem key={a.id} value={a.id.toString()}>
                           <div className="text-left">
                             <p className="font-medium">Account #{a.id}</p>
@@ -304,16 +304,16 @@ export default function TransfersPage() {
 
                 <div className="space-y-2">
                   <Label>Payee</Label>
-                  <Select value={payeeAccount.split('-')[1] || ""} onValueChange={(val) => setPayeeAccount((payeeAccount.split('-')[0] || "") + "-" + val)}>
+                  <Select value={payeeId} onValueChange={setPayeeId}>
                     <SelectTrigger className="h-14">
                       <SelectValue placeholder="Select Payee" />
                     </SelectTrigger>
                     <SelectContent>
-                      {savedPayees.map(payee => (
+                      {savedPayees?.map((payee: any) => (
                         <SelectItem key={payee.id} value={payee.id.toString()}>
                           <div className="text-left">
                             <p className="font-medium">{payee.name}</p>
-                            <p className="text-xs text-muted-foreground">{payee.bankName} - {payee.accountNumber}</p>
+                            <p className="text-xs text-muted-foreground">{payee.bankName} - ****{payee.accountNumber?.slice(-4)}</p>
                           </div>
                         </SelectItem>
                       ))}
@@ -338,27 +338,43 @@ export default function TransfersPage() {
                 <Button 
                   className="w-full h-12 text-lg shadow-lg shadow-primary/25" 
                   onClick={handleExternalPayment}
+                  disabled={paymentMutation.isPending}
                 >
-                  Schedule Payment
+                  {paymentMutation.isPending ? "Processing..." : "Schedule Payment"}
                 </Button>
 
-                {savedPayees.length > 0 && (
+                {savedPayees && savedPayees.length > 0 && (
                   <div className="bg-muted/30 rounded-lg p-4 border border-border">
                     <h3 className="font-semibold mb-3 text-sm">Saved Payees</h3>
                     <div className="space-y-2">
-                      {savedPayees.map(payee => (
+                      {savedPayees.map((payee: any) => (
                         <div key={payee.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
                           <div>
                             <p className="font-medium text-sm">{payee.name}</p>
-                            <p className="text-xs text-muted-foreground">{payee.bankName} - {payee.accountNumber}</p>
+                            <p className="text-xs text-muted-foreground">{payee.bankName} - ****{payee.accountNumber?.slice(-4)}</p>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setPayeeAccount("account-" + payee.id)}
-                          >
-                            Select
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setPayeeId(payee.id.toString())}
+                            >
+                              Select
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => {
+                                if (window.confirm("Are you sure you want to delete this payee?")) {
+                                  deletePayeeMutation.mutate(payee.id);
+                                }
+                              }}
+                              disabled={deletePayeeMutation.isPending}
+                            >
+                              Delete
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>

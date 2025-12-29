@@ -2,9 +2,11 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { api, errorSchemas } from "@shared/routes";
+import { api, errorSchemas, insertPayeeSchema } from "@shared/routes";
 import { z } from "zod";
-import { type User } from "@shared/schema";
+import { type User, accounts, transactions } from "@shared/schema";
+import { db } from "./db";
+import { eq, sql } from "drizzle-orm";
 
 // Mock market data service
 const MOCK_SYMBOLS = {
@@ -214,7 +216,80 @@ export async function registerRoutes(
     }
   });
 
-  // Market Data
+  // Payee Routes
+  app.get('/api/payees', requireAuth, async (req, res) => {
+    const payeesList = await storage.getPayees((req.user as User).id);
+    res.json(payeesList);
+  });
+
+  app.post('/api/payees', requireAuth, async (req, res) => {
+    try {
+      const input = insertPayeeSchema.parse(req.body);
+      const payee = await storage.createPayee({ ...input, userId: (req.user as User).id });
+      res.status(201).json(payee);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      res.status(500).json({ message: "Failed to create payee" });
+    }
+  });
+
+  app.delete('/api/payees/:id', requireAuth, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      await storage.deletePayee(id, (req.user as User).id);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete payee" });
+    }
+  });
+
+  // External Payment Route
+  app.post('/api/transactions/payment', requireAuth, async (req, res) => {
+    try {
+      const { fromAccountId, payeeId, amount, description } = z.object({
+        fromAccountId: z.number(),
+        payeeId: z.number(),
+        amount: z.string(),
+        description: z.string().optional(),
+      }).parse(req.body);
+
+      // Verify ownership
+      const account = await storage.getAccount(fromAccountId);
+      if (!account || account.userId !== (req.user as User).id) {
+        return res.status(403).json({ message: "Unauthorized account" });
+      }
+
+      // Record external payment (deduct balance and record transaction)
+      const transaction = await db.transaction(async (tx) => {
+        const [acc] = await tx.select().from(accounts).where(eq(accounts.id, fromAccountId));
+        if (!acc || Number(acc.balance) < Number(amount)) {
+          throw new Error("Insufficient funds");
+        }
+
+        await tx.update(accounts)
+          .set({ balance: sql`${accounts.balance} - ${amount}` })
+          .where(eq(accounts.id, fromAccountId));
+
+        const [t] = await tx.insert(transactions).values({
+          fromAccountId,
+          payeeId,
+          amount,
+          description: description || `Payment to payee #${payeeId}`,
+          transactionType: 'payment',
+          status: 'completed',
+          isDemo: false,
+        }).returning();
+
+        return t;
+      });
+
+      res.status(201).json(transaction);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message || "Payment failed" });
+    }
+  });
   app.get(api.market.quote.path, (req, res) => {
     const symbol = req.params.symbol.toUpperCase();
     const price = getMockPrice(symbol);
