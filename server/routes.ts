@@ -39,6 +39,7 @@ export async function registerRoutes(
   // Auth Routes
   app.post(api.auth.register.path, async (req, res) => {
     try {
+      console.log('Registration request received:', JSON.stringify(req.body, (key, value) => key === 'password' ? '***' : value));
       const input = api.auth.register.input.parse(req.body);
       const existing = await storage.getUserByEmail(input.email);
       if (existing) {
@@ -83,12 +84,15 @@ export async function registerRoutes(
           res.status(201).json(user);
         });
       });
-    } catch (err) {
-      console.error('Registration error:', err instanceof Error ? err.stack || err.message : err);
+    } catch (err: any) {
+      console.error('Registration error details:', err instanceof Error ? err.stack || err.message : JSON.stringify(err));
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
       }
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ 
+        message: "Internal server error during registration",
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined 
+      });
     }
   });
 

@@ -27,7 +27,11 @@ async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    store: new PgSession({ pool, createTableIfMissing: true }),
+    store: new PgSession({ 
+      pool, 
+      createTableIfMissing: true, 
+      tableName: 'session'
+    }),
     secret: process.env.SESSION_SECRET || "default_secret",
     resave: true,
     saveUninitialized: true,
