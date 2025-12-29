@@ -57,16 +57,16 @@ export default function DashboardPage() {
 
   return (
     <LayoutShell>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4 md:gap-8">
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-bold tracking-tight">Wealth Overview</h1>
-            <p className="text-muted-foreground text-lg">Your financial health at a glance.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Wealth Overview</h1>
+            <p className="text-muted-foreground text-sm md:text-lg">Your financial health at a glance.</p>
           </div>
           
           {/* Metallic Card Section */}
-          <div className="w-full max-w-md">
+          <div className="w-full md:max-w-md">
             <MetallicCard 
               userName={user?.name || "Premium Member"}
               balance={totalBalance}
@@ -76,7 +76,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard 
             title="Cash Balance" 
             value={`$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
@@ -113,18 +113,18 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {/* Main Chart */}
           <Card className="lg:col-span-2 border-border/50 shadow-sm hover-elevate">
-            <CardHeader className="flex flex-row items-center justify-between gap-4">
+            <CardHeader className="flex flex-row items-center justify-between gap-4 p-4 md:p-6">
               <div>
-                <CardTitle>Net Worth Growth</CardTitle>
-                <CardDescription>Historical performance over the last 6 months</CardDescription>
+                <CardTitle className="text-lg md:text-xl">Net Worth Growth</CardTitle>
+                <CardDescription className="text-xs md:text-sm">Last 6 months</CardDescription>
               </div>
               <Button variant="outline" size="sm" className="hidden sm:flex">Download CSV</Button>
             </CardHeader>
-            <CardContent>
-              <div className="h-[350px] w-full mt-4">
+            <CardContent className="p-2 md:p-6 pt-0 md:pt-0">
+              <div className="h-[250px] md:h-[350px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={CHART_DATA}>
                     <defs>
@@ -175,15 +175,15 @@ export default function DashboardPage() {
 
           {/* Asset Allocation */}
           <Card className="border-border/50 shadow-sm hover-elevate">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                 <PieChartIcon className="w-5 h-5 text-primary" />
                 Asset Allocation
               </CardTitle>
-              <CardDescription>Current portfolio distribution</CardDescription>
+              <CardDescription className="text-xs md:text-sm">Portfolio distribution</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="h-[250px] w-full relative">
+            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+              <div className="h-[200px] md:h-[250px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -223,65 +223,65 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Transactions & Accounts */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           <Card className="border-border/50 shadow-sm hover-elevate">
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your latest financial movements</CardDescription>
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-lg md:text-xl">Recent Activity</CardTitle>
+              <CardDescription className="text-xs md:text-sm">Latest movements</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
+            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+              <div className="space-y-4">
                 {investments?.slice(0, 3).map((inv) => (
                   <div key={inv.id} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
-                        <TrendingUp className="w-5 h-5" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
+                        <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />
                       </div>
                       <div>
-                        <p className="font-semibold">Investment: {inv.symbol}</p>
-                        <p className="text-xs text-muted-foreground">{inv.shares} shares @ ${inv.currentPrice || inv.purchasePrice}</p>
+                        <p className="font-semibold text-sm">Investment: {inv.symbol}</p>
+                        <p className="text-[10px] md:text-xs text-muted-foreground">{inv.shares} shares @ ${inv.currentPrice || inv.purchasePrice}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-primary" data-testid={`text-investment-value-${inv.id}`}>${(Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                      <p className="text-[10px] uppercase tracking-wider font-bold text-accent">Held</p>
+                      <p className="font-bold text-sm md:text-base text-primary" data-testid={`text-investment-value-${inv.id}`}>${(Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-accent">Held</p>
                     </div>
                   </div>
                 ))}
                 {(!investments || investments.length === 0) && (
-                  <p className="text-sm text-muted-foreground text-center py-4">No recent investment activity</p>
+                  <p className="text-sm text-muted-foreground text-center py-2">No recent investment activity</p>
                 )}
               </div>
-              <Button variant="ghost" className="w-full mt-6 text-primary hover:bg-primary/5" onClick={() => setLocation('/investments')}>View All Investments</Button>
+              <Button variant="ghost" size="sm" className="w-full mt-4 text-primary hover:bg-primary/5" onClick={() => setLocation('/investments')}>View All Investments</Button>
             </CardContent>
           </Card>
 
           <Card className="border-border/50 shadow-sm hover-elevate">
-            <CardHeader>
-              <CardTitle>Connected Accounts</CardTitle>
-              <CardDescription>Managing {accounts?.length} active accounts</CardDescription>
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-lg md:text-xl">Connected Accounts</CardTitle>
+              <CardDescription className="text-xs md:text-sm">{accounts?.length} active accounts</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+              <div className="space-y-3">
                 {accounts?.slice(0, 4).map((account) => (
-                  <div key={account.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-accent/5 hover:bg-accent/10 transition-all cursor-pointer group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-                        <Wallet className="w-5 h-5" />
+                  <div key={account.id} className="flex items-center justify-between p-3 md:p-4 rounded-xl border border-border/50 bg-accent/5 hover:bg-accent/10 transition-all cursor-pointer group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                        <Wallet className="w-4 h-4 md:w-5 md:h-5" />
                       </div>
                       <div>
-                        <p className="font-semibold text-sm">Account #{account.id}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{account.accountType}</p>
+                        <p className="font-semibold text-xs md:text-sm">Account #{account.id}</p>
+                        <p className="text-[10px] md:text-xs text-muted-foreground capitalize">{account.accountType}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-base">${Number(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                      <p className="text-[10px] text-muted-foreground">Current Balance</p>
+                      <p className="font-bold text-sm md:text-base">${Number(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="text-[9px] md:text-[10px] text-muted-foreground">Balance</p>
                     </div>
                   </div>
                 ))}
               </div>
-              <Button variant="ghost" className="w-full mt-6 text-primary hover:bg-primary/5">Manage Accounts</Button>
+              <Button variant="ghost" size="sm" className="w-full mt-4 text-primary hover:bg-primary/5">Manage Accounts</Button>
             </CardContent>
           </Card>
         </div>
