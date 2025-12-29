@@ -26,6 +26,18 @@ export function useCreateAccount() {
   });
 }
 
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", api.accounts.get.path.replace(":id", id.toString()));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.accounts.list.path] });
+    },
+  });
+}
+
 // INVESTMENTS
 export function useInvestments() {
   return useQuery({
