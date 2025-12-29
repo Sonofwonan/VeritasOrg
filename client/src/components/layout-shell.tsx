@@ -37,6 +37,7 @@ const navItems = [
   { icon: ArrowRightLeft, label: "Transfers", href: "/transfers" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: GraduationCap, label: "Education", href: "/education" },
+  { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
@@ -133,7 +134,10 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 <Target className="w-4 h-4 text-primary" />
                 <span>Set Goal</span>
               </Button>
-              <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center cursor-pointer hover:bg-accent/80 transition-colors">
+              <div 
+                className="h-8 w-8 rounded-full bg-accent flex items-center justify-center cursor-pointer hover:bg-accent/80 transition-colors"
+                onClick={() => setLocation("/settings")}
+              >
                 <Settings className="w-4 h-4 text-accent-foreground" />
               </div>
             </div>
