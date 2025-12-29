@@ -113,6 +113,15 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/user", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.updateUser((req.user as User).id, req.body);
+      res.json(user);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message || "Failed to update profile" });
+    }
+  });
+
   // Middleware to protect routes
   const requireAuth = (req: any, res: any, next: any) => {
     if (req.isAuthenticated()) return next();

@@ -29,6 +29,12 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   password: text("password").notNull(),
+  phoneNumber: text("phone_number"),
+  avatarUrl: text("avatar_url"),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  marketingEmails: boolean("marketing_emails").default(true),
+  securityAlerts: boolean("security_alerts").default(true),
+  theme: text("theme").default("light"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
