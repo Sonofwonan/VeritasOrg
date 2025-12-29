@@ -30,6 +30,12 @@ export async function registerRoutes(
 ): Promise<Server> {
   const { hashPassword } = setupAuth(app);
 
+  // Middleware to protect routes
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (req.isAuthenticated()) return next();
+    res.status(401).send();
+  };
+
   // Auth Routes
   app.post(api.auth.register.path, async (req, res) => {
     try {
@@ -121,12 +127,6 @@ export async function registerRoutes(
       res.status(400).json({ message: err.message || "Failed to update profile" });
     }
   });
-
-  // Middleware to protect routes
-  const requireAuth = (req: any, res: any, next: any) => {
-    if (req.isAuthenticated()) return next();
-    res.status(401).send();
-  };
 
   // Account Routes
   app.get(api.accounts.list.path, requireAuth, async (req, res) => {
