@@ -177,6 +177,34 @@ export async function registerRoutes(
   app.post(api.transactions.transfer.path, requireAuth, async (req, res) => {
     try {
       const { fromAccountId, toAccountId, amount } = api.transactions.transfer.input.parse(req.body);
+      
+      // Handle special case for external deposit
+      if (fromAccountId === -1) {
+        // Verify ownership of toAccount
+        const toAccount = await storage.getAccount(toAccountId);
+        if (!toAccount || toAccount.userId !== (req.user as User).id) {
+          return res.status(403).json({ message: "Unauthorized destination account" });
+        }
+
+        const transaction = await db.transaction(async (tx) => {
+          await tx.update(accounts)
+            .set({ balance: sql`${accounts.balance} + ${amount}` })
+            .where(eq(accounts.id, toAccountId));
+
+          const [t] = await tx.insert(transactions).values({
+            toAccountId,
+            amount,
+            description: `External Deposit to Account #${toAccountId}`,
+            transactionType: 'transfer',
+            status: 'completed',
+            isDemo: false,
+          }).returning();
+
+          return t;
+        });
+        return res.status(201).json(transaction);
+      }
+
       // Verify ownership of fromAccount
       const fromAccount = await storage.getAccount(fromAccountId);
       if (!fromAccount || fromAccount.userId !== (req.user as User).id) {

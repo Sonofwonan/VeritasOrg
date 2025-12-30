@@ -1,7 +1,7 @@
-import { useAccounts, useCreateAccount, useDeleteAccount } from "@/hooks/use-finances";
+import { useAccounts, useCreateAccount, useDeleteAccount, useTransfer } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
-import { Plus, Wallet, CreditCard, ArrowRight, Briefcase, Eye, EyeOff } from "lucide-react";
+import { Plus, Wallet, CreditCard, ArrowRight, Briefcase, Eye, EyeOff, ArrowDownCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 
@@ -29,10 +29,14 @@ export default function AccountsPage() {
   const { data: accounts, isLoading } = useAccounts();
   const createAccount = useCreateAccount();
   const deleteAccount = useDeleteAccount();
+  const depositMutation = useTransfer(); // We can use the same transfer logic but from "external"
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isDepositOpen, setIsDepositOpen] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("");
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
   
   const [newAccount, setNewAccount] = useState<{accountType: AccountType, balance: string}>({
     accountType: "Checking Account",
@@ -60,6 +64,35 @@ export default function AccountsPage() {
         toast({
           title: "Error Creating Account",
           description: detail,
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
+  const handleDeposit = () => {
+    if (!selectedAccountId || !depositAmount) return;
+
+    // In a real app, this would be an external deposit. 
+    // For this demo/wealth management platform, we'll route it through a specialized deposit endpoint
+    // that adds funds to the selected account.
+    depositMutation.mutate({
+      fromAccountId: -1, // Special ID for external deposit
+      toAccountId: selectedAccountId,
+      amount: depositAmount
+    }, {
+      onSuccess: () => {
+        setIsDepositOpen(false);
+        setDepositAmount("");
+        toast({
+          title: "Deposit Successful",
+          description: `$${depositAmount} has been added to your account.`,
+        });
+      },
+      onError: (error: any) => {
+        toast({
+          title: "Deposit Failed",
+          description: error.message || "Failed to process deposit.",
           variant: "destructive",
         });
       }
@@ -205,6 +238,50 @@ export default function AccountsPage() {
                 Details
                 <ArrowRight className="w-3 h-3" />
               </Button>
+              <Dialog open={isDepositOpen && selectedAccountId === account.id} onOpenChange={(open) => {
+                setIsDepositOpen(open);
+                if (open) setSelectedAccountId(account.id);
+                else setSelectedAccountId(null);
+              }}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex-1 h-8 text-xs gap-1.5 text-primary hover:bg-primary/10 no-default-hover-elevate"
+                  >
+                    <ArrowDownCircle className="w-3 h-3" />
+                    Deposit
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Deposit Funds</DialogTitle>
+                    <DialogDescription>
+                      Add funds to your {account.accountType}.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label>Deposit Amount</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                        <Input 
+                          type="number" 
+                          value={depositAmount}
+                          onChange={(e) => setDepositAmount(e.target.value)}
+                          className="pl-7"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleDeposit} disabled={depositMutation.isPending}>
+                      {depositMutation.isPending ? "Processing..." : "Confirm Deposit"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardFooter>
           </Card>
         ))}
