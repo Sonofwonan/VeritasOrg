@@ -44,6 +44,7 @@ import { useState, useEffect } from "react";
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: Wallet, label: "Accounts", href: "/accounts" },
+  { icon: CreditCard, label: "Cards", href: "/cards" },
   { icon: TrendingUp, label: "Investments", href: "/investments" },
   { icon: ArrowRightLeft, label: "Transfers", href: "/transfers" },
   { icon: Target, label: "Goals", href: "/goals" },

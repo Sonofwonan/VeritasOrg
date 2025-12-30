@@ -64,16 +64,6 @@ export default function DashboardPage() {
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Wealth Overview</h1>
             <p className="text-muted-foreground text-sm md:text-lg">Your financial health at a glance.</p>
           </div>
-          
-          {/* Metallic Card Section */}
-          <div className="w-full md:max-w-md">
-            <MetallicCard 
-              userName={user?.name || "Premium Member"}
-              balance={totalBalance}
-              accountType={primaryAccount?.accountType || "Investment"}
-              lastFour={String(primaryAccount?.id || "8888").padStart(4, '0')}
-            />
-          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

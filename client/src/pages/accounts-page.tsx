@@ -193,24 +193,11 @@ export default function AccountsPage() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex-1 gap-2"
+                className="flex-1 gap-2 no-default-hover-elevate"
                 onClick={() => setLocation(`/accounts/${account.id}`)}
               >
                 Details
                 <ArrowRight className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => {
-                  if (confirm("Are you sure you want to delete this account? This action cannot be undone.")) {
-                    deleteAccount.mutate(account.id);
-                  }
-                }}
-                disabled={deleteAccount.isPending}
-              >
-                <Plus className="w-4 h-4 rotate-45" />
               </Button>
             </CardFooter>
           </Card>

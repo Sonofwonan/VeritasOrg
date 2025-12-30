@@ -17,6 +17,8 @@ import InvestmentsPage from "@/pages/investments-page";
 import TransfersPage from "@/pages/transfers-page";
 import GoalsPage from "@/pages/goals-page";
 import EducationPage from "@/pages/education-page";
+import CardsPage from "@/pages/cards-page";
+import SettingsPage from "@/pages/settings-page";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { user, isLoading } = useAuth();
@@ -40,8 +42,6 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
 
   return <Component {...rest} />;
 }
-
-import SettingsPage from "@/pages/settings-page";
 
 function Router() {
   return (
@@ -70,6 +70,9 @@ function Router() {
       </Route>
       <Route path="/education">
         {() => <ProtectedRoute component={EducationPage} />}
+      </Route>
+      <Route path="/cards">
+        {() => <ProtectedRoute component={CardsPage} />}
       </Route>
       <Route path="/settings">
         {() => <ProtectedRoute component={SettingsPage} />}
