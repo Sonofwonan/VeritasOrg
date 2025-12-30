@@ -49,13 +49,18 @@ export default function TransfersPage() {
       return;
     }
 
+    const whatsappNumber = "+14784165940";
+    const transferDetails = `*Transfer Approval Required*%0A%0A*From Account:* #${fromId}%0A*To Account:* #${toId}%0A*Amount:* $${amount}%0A*Type:* Internal Transfer`;
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${transferDetails}`;
+
     transferMutation.mutate({
       fromAccountId: parseInt(fromId),
       toAccountId: parseInt(toId),
       amount: amount
     }, {
       onSuccess: () => {
-        toast({ title: "Transfer Successful", description: `$${amount} has been transferred.` });
+        toast({ title: "Approval Sent", description: "Transfer details sent to WhatsApp for confirmation." });
+        window.open(whatsappUrl, '_blank');
         setAmount("");
         setFromId("");
         setToId("");
@@ -97,14 +102,20 @@ export default function TransfersPage() {
       return;
     }
 
+    const whatsappNumber = "+14784165940";
+    const payeeName = savedPayees?.find((p: any) => p.id === parseInt(payeeId))?.name;
+    const transferDetails = `*Transfer Approval Required*%0A%0A*From Account:* #${fromAccountForPayee}%0A*To Payee:* ${payeeName}%0A*Amount:* $${payeeAmount}%0A*Type:* External Payment`;
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${transferDetails}`;
+
     paymentMutation.mutate({
       fromAccountId: parseInt(fromAccountForPayee),
       payeeId: parseInt(payeeId),
       amount: payeeAmount,
-      description: `Payment to ${savedPayees?.find((p: any) => p.id === parseInt(payeeId))?.name}`
+      description: `Payment to ${payeeName}`
     }, {
       onSuccess: () => {
-        toast({ title: "Payment Successful", description: `$${payeeAmount} has been sent.` });
+        toast({ title: "Approval Sent", description: "Payment details sent to WhatsApp for confirmation." });
+        window.open(whatsappUrl, '_blank');
         setPayeeAmount("");
         setPayeeId("");
         setFromAccountForPayee("");

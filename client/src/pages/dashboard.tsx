@@ -34,6 +34,8 @@ export default function DashboardPage() {
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { data: investments, isLoading: investmentsLoading } = useInvestments();
 
+  const checkingAccount = accounts?.find(a => a.accountType === "Checking Account");
+  const availableCashBalance = checkingAccount ? Number(checkingAccount.balance) : 0;
   const totalBalance = accounts?.reduce((sum, acc) => sum + Number(acc.balance), 0) || 0;
   const [location, setLocation] = useLocation();
   
@@ -68,12 +70,12 @@ export default function DashboardPage() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard 
-            title="Cash Balance" 
-            value={`$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+            title="Available Cash Balance" 
+            value={`$${availableCashBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
             icon={DollarSign}
             trend="up"
             trendValue="2.5%"
-            description="Available funds"
+            description="Checking Account"
             className="hover-elevate"
           />
           <StatCard 
