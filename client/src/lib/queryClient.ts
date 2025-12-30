@@ -4,8 +4,24 @@ const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const text = await res.text();
+    let errorMessage = res.statusText;
+    
+    // Try to parse JSON error response
+    try {
+      const json = JSON.parse(text);
+      errorMessage = json.message || json.error || res.statusText;
+    } catch {
+      // If not JSON, use status text instead of raw HTML
+      // Check if response looks like HTML
+      if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+        errorMessage = `Server error (${res.status})`;
+      } else {
+        errorMessage = text || res.statusText;
+      }
+    }
+    
+    throw new Error(`${res.status}: ${errorMessage}`);
   }
 }
 
