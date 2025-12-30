@@ -41,10 +41,21 @@ export async function registerRoutes(
     try {
       console.log('Registration request received:', JSON.stringify(req.body, (key, value) => key === 'password' ? '***' : value));
       const input = api.auth.register.input.parse(req.body);
-      const existing = await storage.getUserByEmail(input.email);
-      if (existing) {
-        return res.status(400).json({ message: "Email already exists" });
+      
+      // Check for database connectivity first
+      try {
+        const existing = await storage.getUserByEmail(input.email);
+        if (existing) {
+          return res.status(400).json({ message: "Email already exists" });
+        }
+      } catch (dbErr: any) {
+        console.error('Database connection error during user lookup:', dbErr);
+        return res.status(503).json({ 
+          message: "Database connection failed. Please ensure the database is properly initialized.",
+          isDatabaseError: true
+        });
       }
+      
       const hashedPassword = await hashPassword(input.password);
       const user = await storage.createUser({ ...input, password: hashedPassword });
       
@@ -59,7 +70,7 @@ export async function registerRoutes(
           isDemo: false,
         });
         console.log('Created default account for user:', user.id);
-      } catch (accountErr) {
+      } catch (accountErr: any) {
         console.error('Failed to create default account:', accountErr);
         // Don't fail registration if account creation fails
       }
@@ -96,6 +107,17 @@ export async function registerRoutes(
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
       }
+      
+      // Check if it's a database error
+      const errorMessage = err?.message || "Unknown error";
+      if (errorMessage.includes('relation') || errorMessage.includes('table') || errorMessage.includes('does not exist')) {
+        return res.status(503).json({ 
+          message: "Database tables not found. Please run database migrations.",
+          isDatabaseError: true,
+          error: process.env.NODE_ENV === 'development' ? errorMessage : undefined 
+        });
+      }
+      
       res.status(500).json({ 
         message: "Internal server error during registration",
         details: err.message || "Unknown error",
