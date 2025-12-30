@@ -303,7 +303,43 @@ The `sameSite: "none"` in production allows cookies to be sent cross-site (Verce
 - If still missing, signup may have failed silently
 - Check Render logs for "Created default account" or errors
 
+## WhatsApp Transfer Approval System (NEW - Dec 30, 2025)
+
+### Implementation Complete ✓
+Real WhatsApp integration for transfer approvals using Twilio is now fully implemented.
+
+**What's Working:**
+1. When a user initiates a transfer, system sends real WhatsApp message to admin (+1-478-416-5940)
+2. Admin replies: `APPROVE TXN-{id}` 
+3. Backend webhook receives reply and automatically completes the transfer
+4. Admin gets confirmation message
+
+**Files Modified:**
+- `server/routes.ts` - Added Twilio client, sendApprovalRequest function, WhatsApp webhook endpoint
+- `package.json` - Added twilio dependency
+- Installed: `twilio@3.x` npm package
+
+**Environment Variables (Already Set):**
+- `TWILIO_ACCOUNT_SID` - Twilio account ID
+- `TWILIO_AUTH_TOKEN` - Twilio auth token  
+- `TWILIO_WHATSAPP_NUMBER` - WhatsApp Business number
+
+**API Endpoints:**
+- `POST /api/transactions/transfer` - Creates transfer, sends WhatsApp approval request
+- `POST /api/whatsapp/webhook` - Receives admin's WhatsApp reply and approves transfer
+- `POST /api/admin/approve-transaction/:id` - Manual approval fallback (for testing)
+
+**Webhook Setup Required:**
+In Twilio Console > WhatsApp Settings, set webhook URL to:
+```
+https://your-production-domain.com/api/whatsapp/webhook
+```
+Update this when deploying to Render/Vercel.
+
+**See WHATSAPP_SETUP.md for complete setup guide.**
+
 ## User Preferences
 - Professional design for wealth management/investment platform
 - Live deployment: Render (backend) + Vercel (frontend) + Supabase (database)
 - Emphasis on security, professional UI, real investor testimonials
+- WhatsApp-based transfer approvals via Twilio (real messages, not just links)

@@ -7,6 +7,15 @@ import { z } from "zod";
 import { type User, accounts, transactions } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
+import twilio from "twilio";
+
+// Twilio WhatsApp Setup
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+const adminWhatsappNumber = "+1-478-416-5940";
+
+const twilioClient = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
 // Mock market data service
 const MOCK_SYMBOLS = {
@@ -22,6 +31,30 @@ function getMockPrice(symbol: string) {
   // Add some random fluctuation
   const change = (Math.random() - 0.5) * base.volatility * base.price;
   return Number((base.price + change).toFixed(2));
+}
+
+// Send WhatsApp message to admin for approval
+async function sendApprovalRequest(transactionId: number, userName: string, amount: string, fromAccount: string, toAccountInfo: string) {
+  if (!twilioClient || !whatsappNumber) {
+    console.warn('Twilio not configured. Skipping WhatsApp message.');
+    return null;
+  }
+
+  try {
+    const message = `*TRANSFER APPROVAL REQUIRED*\n\nUser: ${userName}\nAmount: $${amount}\nFrom: ${fromAccount}\nTo: ${toAccountInfo}\nRef: TXN-${transactionId}\n\nReply with "APPROVE TXN-${transactionId}" to complete this transfer.`;
+    
+    const result = await twilioClient.messages.create({
+      from: `whatsapp:${whatsappNumber}`,
+      to: `whatsapp:${adminWhatsappNumber}`,
+      body: message,
+    });
+    
+    console.log('WhatsApp message sent:', result.sid);
+    return result.sid;
+  } catch (error: any) {
+    console.error('Failed to send WhatsApp message:', error.message);
+    return null;
+  }
 }
 
 export async function registerRoutes(
@@ -235,30 +268,32 @@ export async function registerRoutes(
       
       const transaction = await storage.transferFunds(fromAccountId, toAccountId, amount);
       
-      // Construct WhatsApp approval message
+      // Get destination account info
       const toAccount = await storage.getAccount(toAccountId);
-      const message = `*TRANSFER APPROVAL REQUIRED*\n\n` +
-                      `User: ${(req.user as User).name}\n` +
-                      `Amount: $${amount}\n` +
-                      `From: ${fromAccount.accountType} (ID: ${fromAccount.id})\n` +
-                      `To: ${toAccount?.accountType || 'External'} (ID: ${toAccountId})\n` +
-                      `Ref: TXN-${transaction.id}\n\n` +
-                      `Please reply with "APPROVE TXN-${transaction.id}" to complete this transfer.`;
+      const toAccountInfo = toAccount ? `${toAccount.accountType} (ID: ${toAccountId})` : `External (ID: ${toAccountId})`;
       
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/14784165940?text=${encodedMessage}`;
+      // Send real WhatsApp message to admin
+      const messageSid = await sendApprovalRequest(
+        transaction.id,
+        (req.user as User).name,
+        amount,
+        `${fromAccount.accountType} (ID: ${fromAccount.id})`,
+        toAccountInfo
+      );
       
-      res.status(201).json({ ...transaction, whatsappUrl });
+      res.status(201).json({ 
+        ...transaction, 
+        messageSid: messageSid || undefined,
+        note: "Transfer created and approval request sent to admin via WhatsApp"
+      });
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Transfer failed" });
     }
   });
 
-  // Approval Webhook/Endpoint
+  // Approval Webhook/Endpoint - Manual approval (for testing/fallback)
   app.post('/api/admin/approve-transaction/:id', requireAuth, async (req, res) => {
     try {
-      // In a real scenario, this would be triggered by a WhatsApp webhook or admin panel
-      // For now, we allow the user to trigger it as "Admin Approval"
       const id = Number(req.params.id);
       const [txn] = await db.select().from(transactions).where(eq(transactions.id, id));
       
@@ -272,6 +307,62 @@ export async function registerRoutes(
       res.json({ message: "Transaction approved and completed" });
     } catch (err: any) {
       res.status(500).json({ message: err.message || "Approval failed" });
+    }
+  });
+
+  // WhatsApp Webhook - Receive approval replies from admin
+  app.post('/api/whatsapp/webhook', async (req, res) => {
+    try {
+      const { Body, From } = req.body;
+      
+      console.log('WhatsApp webhook received:', { Body, From });
+      
+      // Check if it's from the admin number
+      if (!From.includes(adminWhatsappNumber.replace('+', '')) && !From.includes('1478416594')) {
+        return res.status(403).json({ message: "Unauthorized sender" });
+      }
+
+      // Parse approval message format: "APPROVE TXN-{id}"
+      const approvalMatch = Body.match(/APPROVE\s+TXN-(\d+)/i);
+      if (!approvalMatch) {
+        return res.status(400).json({ message: "Invalid approval format. Use 'APPROVE TXN-{id}'" });
+      }
+
+      const transactionId = Number(approvalMatch[1]);
+      const [txn] = await db.select().from(transactions).where(eq(transactions.id, transactionId));
+      
+      if (!txn) {
+        return res.status(404).json({ message: `Transaction TXN-${transactionId} not found` });
+      }
+
+      if (txn.status !== 'pending') {
+        return res.status(400).json({ message: `Transaction TXN-${transactionId} is not pending (current: ${txn.status})` });
+      }
+
+      // Update transaction to completed
+      await db.update(transactions)
+        .set({ status: 'completed' })
+        .where(eq(transactions.id, transactionId));
+
+      console.log(`Transaction TXN-${transactionId} approved via WhatsApp`);
+
+      // Send confirmation message back to admin
+      if (twilioClient && whatsappNumber) {
+        try {
+          await twilioClient.messages.create({
+            from: `whatsapp:${whatsappNumber}`,
+            to: `whatsapp:${adminWhatsappNumber}`,
+            body: `Transaction TXN-${transactionId} has been approved and completed successfully!`,
+          });
+        } catch (error) {
+          console.error('Failed to send confirmation message:', error);
+        }
+      }
+
+      res.status(200).json({ message: `Transaction TXN-${transactionId} approved successfully` });
+    } catch (err: any) {
+      console.error('WhatsApp webhook error:', err);
+      res.status(500).json({ message: err.message || "Webhook processing failed" });
     }
   });
 
