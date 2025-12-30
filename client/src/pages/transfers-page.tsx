@@ -49,10 +49,6 @@ export default function TransfersPage() {
       return;
     }
 
-    const whatsappNumber = "14784165940";
-    const transferDetails = `*TRANSFER APPROVAL REQUIRED*%0A%0A*From Account:* #${fromId}%0A*To Account:* #${toId}%0A*Amount:* $${amount}%0A*Type:* Internal Transfer%0A%0APlease reply with "APPROVE" to complete this transfer.`;
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${transferDetails}`;
-
     transferMutation.mutate({
       fromAccountId: parseInt(fromId),
       toAccountId: parseInt(toId),
@@ -60,11 +56,10 @@ export default function TransfersPage() {
     }, {
       onSuccess: () => {
         toast({ 
-          title: "Approval Pending", 
-          description: "Transfer details sent to WhatsApp. Funds will reflect once approved.",
+          title: "Transfer Initiated", 
+          description: "Pending processing/approval. A message has been sent to the WhatsApp support number.",
           duration: 10000 
         });
-        window.open(whatsappUrl, '_blank');
         setAmount("");
         setFromId("");
         setToId("");
@@ -106,11 +101,6 @@ export default function TransfersPage() {
       return;
     }
 
-    const whatsappNumber = "14784165940";
-    const payeeName = savedPayees?.find((p: any) => p.id === parseInt(payeeId))?.name;
-    const transferDetails = `*TRANSFER APPROVAL REQUIRED*%0A%0A*From Account:* #${fromAccountForPayee}%0A*To Payee:* ${payeeName}%0A*Amount:* $${payeeAmount}%0A*Type:* External Payment%0A%0APlease reply with "APPROVE" to complete this payment.`;
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${transferDetails}`;
-
     paymentMutation.mutate({
       fromAccountId: parseInt(fromAccountForPayee),
       payeeId: parseInt(payeeId),
@@ -119,11 +109,10 @@ export default function TransfersPage() {
     }, {
       onSuccess: () => {
         toast({ 
-          title: "Approval Pending", 
-          description: "Payment details sent to WhatsApp. Funds will reflect once approved.",
+          title: "Transfer Initiated", 
+          description: "Pending processing/approval. A message has been sent to the WhatsApp support number.",
           duration: 10000 
         });
-        window.open(whatsappUrl, '_blank');
         setPayeeAmount("");
         setPayeeId("");
         setFromAccountForPayee("");

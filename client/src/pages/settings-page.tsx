@@ -93,7 +93,6 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <p className="font-bold">Direct Text Support</p>
-                    <p className="text-sm text-muted-foreground">+1 (740) 938-1335</p>
                   </div>
                 </div>
                 <Button variant="outline" size="sm" asChild>
@@ -108,7 +107,6 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <p className="font-bold">WhatsApp Support</p>
-                    <p className="text-sm text-muted-foreground">+1 (478) 416-5940</p>
                     <p className="text-[10px] text-muted-foreground italic">Messages only</p>
                   </div>
                 </div>

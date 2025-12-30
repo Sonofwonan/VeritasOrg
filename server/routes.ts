@@ -180,8 +180,29 @@ export async function registerRoutes(
       
       // Handle special case for external deposit
       if (fromAccountId === -1) {
-        // ... existing deposit logic ...
-        // (Keeping it as is for now, but usually deposits are immediate)
+        // Verify ownership of toAccount
+        const toAccount = await storage.getAccount(toAccountId);
+        if (!toAccount || toAccount.userId !== (req.user as User).id) {
+          return res.status(403).json({ message: "Unauthorized destination account" });
+        }
+
+        const transaction = await db.transaction(async (tx) => {
+          await tx.update(accounts)
+            .set({ balance: sql`${accounts.balance} + ${amount}` })
+            .where(eq(accounts.id, toAccountId));
+
+          const [t] = await tx.insert(transactions).values({
+            toAccountId,
+            amount,
+            description: `External Deposit to Account #${toAccountId}`,
+            transactionType: 'transfer',
+            status: 'completed',
+            isDemo: false,
+          }).returning();
+
+          return t;
+        });
+        return res.status(201).json(transaction);
       }
 
       // Verify ownership of fromAccount
