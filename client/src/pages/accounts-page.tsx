@@ -143,61 +143,61 @@ export default function AccountsPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {isLoading ? (
           <p>Loading accounts...</p>
         ) : accounts?.map((account) => (
-          <Card key={account.id} className="group relative overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5">
-            {/* Background decoration */}
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+          <Card key={account.id} className="group relative overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 flex flex-col h-full">
+            {/* Background decoration - smaller */}
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
               {INVESTMENT_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? (
-                <CreditCard className="w-24 h-24" />
+                <CreditCard className="w-12 h-12" />
               ) : BUSINESS_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? (
-                <Briefcase className="w-24 h-24" />
+                <Briefcase className="w-12 h-12" />
               ) : (
-                <Wallet className="w-24 h-24" />
+                <Wallet className="w-12 h-12" />
               )}
             </div>
             
-            <CardHeader>
-              <div className="flex justify-between items-start mb-2">
+            <CardHeader className="p-4 pb-2">
+              <div className="flex justify-between items-start mb-1">
                 <div className={`
-                  p-3 rounded-xl 
+                  p-2 rounded-lg 
                   ${INVESTMENT_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? 'bg-purple-100 text-purple-600' : BUSINESS_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}
                 `}>
                   {INVESTMENT_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? (
-                    <CreditCard className="w-6 h-6" />
+                    <CreditCard className="w-4 h-4" />
                   ) : BUSINESS_ACCOUNT_TYPES.includes(account.accountType as AccountType) ? (
-                    <Briefcase className="w-6 h-6" />
+                    <Briefcase className="w-4 h-4" />
                   ) : (
-                    <Wallet className="w-6 h-6" />
+                    <Wallet className="w-4 h-4" />
                   )}
                 </div>
               </div>
-              <CardTitle className="text-xl">
+              <CardTitle className="text-base leading-tight">
                 {account.accountType}
               </CardTitle>
-              <CardDescription>ID: ****{account.id}</CardDescription>
+              <CardDescription className="text-[10px]">ID: ****{account.id}</CardDescription>
             </CardHeader>
             
-            <CardContent>
-              <div className="mt-4">
-                <p className="text-sm text-muted-foreground mb-1">Available Balance</p>
-                <p className="text-3xl font-bold font-display tracking-tight text-foreground">
+            <CardContent className="p-4 pt-0 flex-1">
+              <div className="mt-2">
+                <p className="text-[10px] text-muted-foreground mb-0.5">Available Balance</p>
+                <p className="text-xl font-bold font-display tracking-tight text-foreground">
                   ${Number(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </p>
               </div>
             </CardContent>
             
-            <CardFooter className="bg-muted/30 border-t flex gap-2 p-4">
+            <CardFooter className="bg-muted/30 border-t flex gap-2 p-3">
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex-1 gap-2 no-default-hover-elevate"
+                className="flex-1 h-8 text-xs gap-1.5 no-default-hover-elevate"
                 onClick={() => setLocation(`/accounts/${account.id}`)}
               >
                 Details
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3 h-3" />
               </Button>
             </CardFooter>
           </Card>
