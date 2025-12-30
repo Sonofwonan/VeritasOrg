@@ -1,4 +1,4 @@
-import { useAccounts, useTransfer, usePayees, useCreatePayee, useDeletePayee, usePayment } from "@/hooks/use-finances";
+import { useAccounts, useTransfer, usePayees, useCreatePayee, useDeletePayee, usePayment, useDeleteAccount } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, ArrowRightLeft, Plus } from "lucide-react";
+import { ArrowRight, ArrowRightLeft, Plus, Wallet } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -18,6 +18,7 @@ export default function TransfersPage() {
   const createPayeeMutation = useCreatePayee();
   const deletePayeeMutation = useDeletePayee();
   const paymentMutation = usePayment();
+  const deleteAccountMutation = useDeleteAccount();
   const { toast } = useToast();
 
   // Internal Transfer State
