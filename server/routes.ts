@@ -85,12 +85,20 @@ export async function registerRoutes(
         });
       });
     } catch (err: any) {
-      console.error('Registration error details:', err instanceof Error ? err.stack || err.message : JSON.stringify(err));
+      console.error('Registration ERROR:', err);
+      // Detailed logging for debugging
+      if (err instanceof Error) {
+        console.error('Error Name:', err.name);
+        console.error('Error Message:', err.message);
+        console.error('Error Stack:', err.stack);
+      }
+      
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
       }
       res.status(500).json({ 
         message: "Internal server error during registration",
+        details: err.message || "Unknown error",
         error: process.env.NODE_ENV === 'development' ? err.message : undefined 
       });
     }
