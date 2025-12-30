@@ -82,7 +82,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider style={style as React.CSSProperties}>
       <div className="flex h-screen w-full overflow-hidden bg-background">
-        <Sidebar className="border-r border-border/50">
+        <Sidebar className="border-r border-border/50 bg-background md:bg-sidebar-background">
           <SidebarHeader className="h-16 flex items-center px-6 border-b border-border/50">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
