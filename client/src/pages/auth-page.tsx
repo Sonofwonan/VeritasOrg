@@ -155,6 +155,7 @@ export default function AuthPage() {
                             <Input 
                               className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
                               placeholder="name@company.com" 
+                              autoComplete="username"
                               {...field} 
                             />
                           </FormControl>
@@ -174,6 +175,7 @@ export default function AuthPage() {
                           <FormControl>
                             <Input 
                               type="password" 
+                              autoComplete="current-password"
                               className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
                               {...field} 
                             />
@@ -213,6 +215,7 @@ export default function AuthPage() {
                             <Input 
                               className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
                               placeholder="Johnathan Doe" 
+                              autoComplete="name"
                               {...field} 
                             />
                           </FormControl>
@@ -230,6 +233,7 @@ export default function AuthPage() {
                             <Input 
                               className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
                               placeholder="john@company.com" 
+                              autoComplete="email"
                               {...field} 
                             />
                           </FormControl>
