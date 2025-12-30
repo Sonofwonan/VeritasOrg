@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { insertUserSchema } from "@shared/schema";
 import { useEffect, useState } from "react";
-import { Loader2, Shield, TrendingUp } from "lucide-react";
+import { Loader2, Shield, TrendingUp, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -29,6 +29,7 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [view, setView] = useState<"login" | "register">("register");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user) setLocation("/dashboard");
@@ -173,12 +174,27 @@ export default function AuthPage() {
                             <Button variant="ghost" className="px-0 h-auto text-xs text-primary font-bold hover:bg-transparent">Forgot password?</Button>
                           </div>
                           <FormControl>
-                            <Input 
-                              type="password" 
-                              autoComplete="current-password"
-                              className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
-                              {...field} 
-                            />
+                            <div className="relative">
+                              <Input 
+                                type={showPassword ? "text" : "password"} 
+                                autoComplete="current-password"
+                                className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary pr-10" 
+                                {...field} 
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-12 w-12 hover:bg-transparent"
+                                onClick={() => setShowPassword(!showPassword)}
+                              >
+                                {showPassword ? (
+                                  <EyeOff className="h-4 w-4 text-zinc-500" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-zinc-500" />
+                                )}
+                              </Button>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -248,13 +264,28 @@ export default function AuthPage() {
                         <FormItem>
                           <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Secure Password</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="••••••••"
-                              autoComplete="new-password"
-                              className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
-                              {...field} 
-                            />
+                            <div className="relative">
+                              <Input 
+                                type={showPassword ? "text" : "password"} 
+                                placeholder="••••••••"
+                                autoComplete="new-password"
+                                className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary pr-10" 
+                                {...field} 
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-12 w-12 hover:bg-transparent"
+                                onClick={() => setShowPassword(!showPassword)}
+                              >
+                                {showPassword ? (
+                                  <EyeOff className="h-4 w-4 text-zinc-500" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-zinc-500" />
+                                )}
+                              </Button>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
