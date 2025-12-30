@@ -177,7 +177,9 @@ export default function AccountsPage() {
               <CardTitle className="text-base leading-tight">
                 {account.accountType}
               </CardTitle>
-              <CardDescription className="text-[10px]">ID: ****{account.id}</CardDescription>
+              <CardDescription className="text-[10px]">
+                Card: •••• {((account.id * 1337) % 9000 + 1000)}
+              </CardDescription>
             </CardHeader>
             
             <CardContent className="p-4 pt-0 flex-1">

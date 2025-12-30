@@ -27,13 +27,24 @@ export default function CardsPage() {
               <CreditCard className="w-5 h-5 text-primary" />
               Active Cards
             </h2>
-            <div className="w-full max-w-md">
-              <MetallicCard 
-                userName={user?.name || "Premium Member"}
-                balance={totalBalance}
-                accountType={primaryAccount?.accountType || "Investment"}
-                lastFour={String(primaryAccount?.id || "8888").padStart(4, '0')}
-              />
+            <div className="w-full max-w-md space-y-4">
+              {accounts?.map((account) => (
+                <MetallicCard 
+                  key={account.id}
+                  userName={user?.name || "Premium Member"}
+                  balance={Number(account.balance)}
+                  accountType={account.accountType}
+                  lastFour={String((account.id * 1337) % 9000 + 1000)}
+                />
+              ))}
+              {(!accounts || accounts.length === 0) && (
+                <MetallicCard 
+                  userName={user?.name || "Premium Member"}
+                  balance={0}
+                  accountType="Premium Member"
+                  lastFour="8888"
+                />
+              )}
             </div>
             
             <Card className="max-w-md border-border/50">
