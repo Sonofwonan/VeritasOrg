@@ -125,9 +125,10 @@ export class DatabaseStorage implements IStorage {
         fromAccountId,
         toAccountId,
         amount,
+        description: `Transfer from Account #${fromAccountId} to Account #${toAccountId}`,
         transactionType: 'transfer',
         status: 'completed',
-        isDemo: true,
+        isDemo: false,
       }).returning();
 
       return transaction;
@@ -181,9 +182,10 @@ export class DatabaseStorage implements IStorage {
       await tx.insert(transactions).values({
         fromAccountId: accountId, // Used as source for 'buy'
         amount,
+        description: `Purchase of ${shares} shares of ${symbol}`,
         transactionType: 'buy',
         status: 'completed',
-        isDemo: true,
+        isDemo: false,
       });
 
       return investment;
@@ -225,9 +227,10 @@ export class DatabaseStorage implements IStorage {
       await tx.insert(transactions).values({
         toAccountId: accountId, // Used as destination for 'sell' proceeds
         amount,
+        description: `Sale of ${shares} shares of ${symbol}`,
         transactionType: 'sell',
         status: 'completed',
-        isDemo: true,
+        isDemo: false,
       });
 
       return investment;
