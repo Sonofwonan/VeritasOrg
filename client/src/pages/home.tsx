@@ -175,16 +175,20 @@ export default function HomePage() {
                 Sign In
               </Button>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12 border-t">
-              {stats.map((stat) => (
-                <div key={stat.label} className="space-y-2">
-                  <p className="text-3xl font-bold text-primary">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                </div>
-              ))}
-            </div>
+      {/* Statistics Dashboard */}
+      <div className="bg-zinc-950 border-y border-zinc-800">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center space-y-2">
+                <p className="text-4xl font-bold text-primary tracking-tight">{stat.value}</p>
+                <p className="text-sm font-medium text-zinc-500 uppercase tracking-widest">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
