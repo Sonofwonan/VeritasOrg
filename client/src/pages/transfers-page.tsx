@@ -358,6 +358,7 @@ export default function TransfersPage() {
                             <Button 
                               variant="ghost" 
                               size="sm"
+                              className="text-primary hover:bg-primary/10"
                               onClick={() => setPayeeId(payee.id.toString())}
                             >
                               Select
@@ -381,6 +382,50 @@ export default function TransfersPage() {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Account Management Section */}
+            <Card className="border-none shadow-xl shadow-primary/5">
+              <CardHeader>
+                <CardTitle className="text-lg md:text-xl">Account Management</CardTitle>
+                <CardDescription>View details and manage your connected accounts</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {accounts?.map((account: any) => (
+                  <div key={account.id} className="p-4 rounded-xl border border-border/50 bg-accent/5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <Wallet className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold">Account #{account.id}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{account.accountType}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="text-right">
+                          <p className="text-lg font-bold">${Number(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Current Balance</p>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-9 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this account? This action cannot be undone.")) {
+                              deleteAccountMutation.mutate(account.id);
+                            }
+                          }}
+                          disabled={deleteAccountMutation.isPending}
+                        >
+                          Close Account
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </TabsContent>

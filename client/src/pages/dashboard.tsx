@@ -274,14 +274,17 @@ export default function DashboardPage() {
                         <p className="text-[10px] md:text-xs text-muted-foreground capitalize">{account.accountType}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-sm md:text-base">${Number(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                      <p className="text-[9px] md:text-[10px] text-muted-foreground">Balance</p>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="font-bold text-sm md:text-base">${Number(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                        <p className="text-[9px] md:text-[10px] text-muted-foreground">Balance</p>
+                      </div>
+                      <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
                   </div>
                 ))}
               </div>
-              <Button variant="ghost" size="sm" className="w-full mt-4 text-primary hover:bg-primary/5">Manage Accounts</Button>
+              <Button variant="ghost" size="sm" className="w-full mt-4 text-primary hover:bg-primary/5" onClick={() => setLocation('/transfers')}>Manage Accounts</Button>
             </CardContent>
           </Card>
         </div>
