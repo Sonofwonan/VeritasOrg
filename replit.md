@@ -29,6 +29,99 @@ A professional wealth management platform with authentication, portfolio managem
 - All interactive elements have descriptive data-testid attributes
 - Examples: `button-get-started`, `button-sign-in`, `button-cta-start`
 
+## Complete Database Schema (SQL)
+
+Paste this into your Supabase SQL Editor. It includes all necessary enums and tables with safety checks.
+
+```sql
+-- 1. Create Enums
+DO $$ BEGIN
+    CREATE TYPE account_type AS ENUM (
+        'Checking Account', 'Savings Account', 'Money Market Account',
+        'Certificate of Deposit (CCD)', 'High-Yield Savings',
+        'Brokerage Account', 'Traditional IRA', 'Roth IRA',
+        '401(k) / 403(b)', '529 Savings Plan',
+        'Trust Account', 'Business Checking', 'Business Savings'
+    );
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE transaction_type AS ENUM ('transfer', 'buy', 'sell', 'payment', 'withdrawal');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE transaction_status AS ENUM ('completed', 'pending', 'failed');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+-- 2. Create Tables
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    password TEXT NOT NULL,
+    phone_number TEXT,
+    avatar_url TEXT,
+    two_factor_enabled BOOLEAN DEFAULT FALSE,
+    marketing_emails BOOLEAN DEFAULT TRUE,
+    security_alerts BOOLEAN DEFAULT TRUE,
+    theme TEXT DEFAULT 'light',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS accounts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    account_type TEXT NOT NULL,
+    balance NUMERIC NOT NULL DEFAULT '0',
+    is_demo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS payees (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL,
+    account_number TEXT,
+    routing_number TEXT,
+    bank_name TEXT,
+    type TEXT NOT NULL DEFAULT 'individual',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+    id SERIAL PRIMARY KEY,
+    from_account_id INTEGER REFERENCES accounts(id),
+    to_account_id INTEGER REFERENCES accounts(id),
+    payee_id INTEGER REFERENCES payees(id),
+    amount NUMERIC NOT NULL,
+    description TEXT,
+    transaction_type transaction_type NOT NULL,
+    status transaction_status NOT NULL DEFAULT 'completed',
+    is_demo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS investments (
+    id SERIAL PRIMARY KEY,
+    account_id INTEGER NOT NULL REFERENCES accounts(id),
+    symbol TEXT NOT NULL,
+    shares NUMERIC NOT NULL,
+    purchase_price NUMERIC NOT NULL,
+    current_price NUMERIC,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 3. Create Session Table (for Passport/Connect-PG-Simple)
+CREATE TABLE IF NOT EXISTS "session" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL,
+  CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+) WITH (OIDS=FALSE);
+
+CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+```
+
 ## Database Configuration - CRITICAL
 
 ### Session Pooler Connection Required
