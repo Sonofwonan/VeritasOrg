@@ -76,6 +76,7 @@ export default function TransfersPage() {
       bankName: payeeBankName,
       accountNumber: payeeAccountNumber,
       routingNumber: payeeRoutingNumber,
+      userId: 0, // Will be overridden by server
       type: "individual"
     }, {
       onSuccess: () => {

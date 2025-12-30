@@ -239,20 +239,29 @@ export async function registerRoutes(
 
   // Payee Routes
   app.get('/api/payees', requireAuth, async (req, res) => {
-    const payeesList = await storage.getPayees((req.user as User).id);
-    res.json(payeesList);
+    try {
+      const payeesList = await storage.getPayees((req.user as User).id);
+      res.json(payeesList);
+    } catch (err: any) {
+      console.error('Get payees error:', err);
+      res.status(500).json({ message: "Failed to fetch payees" });
+    }
   });
 
   app.post('/api/payees', requireAuth, async (req, res) => {
     try {
+      console.log('Payee creation request body:', JSON.stringify(req.body, null, 2));
       const input = insertPayeeSchema.parse(req.body);
       const payee = await storage.createPayee({ ...input, userId: (req.user as User).id });
       res.status(201).json(payee);
     } catch (err) {
+      console.error('Payee creation error:', err);
       if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
+        const message = err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        return res.status(400).json({ message: `Validation Error: ${message}` });
       }
-      res.status(500).json({ message: "Failed to create payee" });
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ message: `Failed to create payee: ${errorMessage}` });
     }
   });
 
