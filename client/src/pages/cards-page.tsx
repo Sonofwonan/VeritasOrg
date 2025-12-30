@@ -28,7 +28,7 @@ export default function CardsPage() {
               Active Cards
             </h2>
             <div className="w-full max-w-md space-y-4">
-              {accounts?.map((account) => (
+              {accounts?.filter(acc => acc.accountType === "Checking Account").map((account) => (
                 <MetallicCard 
                   key={account.id}
                   userName={user?.name || "Premium Member"}
@@ -37,6 +37,34 @@ export default function CardsPage() {
                   lastFour={String((account.id * 1337) % 9000 + 1000)}
                 />
               ))}
+              
+              {/* Virtual Cards Section */}
+              {accounts?.some(acc => acc.accountType !== "Checking Account") && (
+                <div className="pt-6 space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                    Virtual Card Options
+                  </h3>
+                  <div className="grid gap-3">
+                    {accounts?.filter(acc => acc.accountType !== "Checking Account").map((account) => (
+                      <Card key={`virtual-${account.id}`} className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-pointer group">
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                              <Plus className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{account.accountType}</p>
+                              <p className="text-[10px] text-muted-foreground">Enable Virtual Card</p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm" className="h-8 text-xs">Generate</Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {(!accounts || accounts.length === 0) && (
                 <MetallicCard 
                   userName={user?.name || "Premium Member"}

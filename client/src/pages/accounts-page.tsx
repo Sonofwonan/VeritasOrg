@@ -178,7 +178,11 @@ export default function AccountsPage() {
                 {account.accountType}
               </CardTitle>
               <CardDescription className="text-[10px]">
-                Card: •••• {((account.id * 1337) % 9000 + 1000)}
+                {account.accountType === "Checking Account" ? (
+                  `Card: •••• ${((account.id * 1337) % 9000 + 1000)}`
+                ) : (
+                  "Cardless Account"
+                )}
               </CardDescription>
             </CardHeader>
             
