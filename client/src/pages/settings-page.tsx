@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Shield, Bell, Palette, Save } from "lucide-react";
+import { User, Shield, Bell, Palette, Save, MessageSquare, Phone } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -56,7 +56,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
+        <TabsList className="grid w-full grid-cols-5 lg:w-[500px]">
           <TabsTrigger value="profile" className="gap-2">
             <User className="w-4 h-4" />
             Profile
@@ -73,7 +73,52 @@ export default function SettingsPage() {
             <Palette className="w-4 h-4" />
             Display
           </TabsTrigger>
+          <TabsTrigger value="support" className="gap-2">
+            <MessageSquare className="w-4 h-4" />
+            Support
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="support">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Support</CardTitle>
+              <CardDescription>Get help with your account or report an issue</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-accent/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold">Direct Text Support</p>
+                    <p className="text-sm text-muted-foreground">+1 (740) 938-1335</p>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <a href="sms:+17409381335">Send SMS</a>
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-accent/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-600">
+                    <Phone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold">WhatsApp Support</p>
+                    <p className="text-sm text-muted-foreground">+1 (478) 416-5940</p>
+                    <p className="text-[10px] text-muted-foreground italic">Messages only</p>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <a href="https://wa.me/14784165940" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="profile">
           <Card>
