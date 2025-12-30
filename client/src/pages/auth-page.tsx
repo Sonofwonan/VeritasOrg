@@ -246,6 +246,8 @@ export default function AuthPage() {
                           <FormControl>
                             <Input 
                               type="password" 
+                              placeholder="••••••••"
+                              autoComplete="new-password"
                               className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
                               {...field} 
                             />
