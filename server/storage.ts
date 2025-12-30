@@ -127,7 +127,7 @@ export class DatabaseStorage implements IStorage {
         amount,
         description: `Transfer from Account #${fromAccountId} to Account #${toAccountId}`,
         transactionType: 'transfer',
-        status: 'completed',
+        status: 'pending', // Default to pending for approval
         isDemo: false,
       }).returning();
 
