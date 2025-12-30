@@ -8,6 +8,7 @@ import {
   GraduationCap, 
   LogOut,
   TrendingUp,
+  CreditCard,
   Settings,
   ChevronRight,
   Search,
