@@ -9,7 +9,7 @@ import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 import twilio from "twilio";
 
-// Twilio WhatsApp Setup
+// Twilio Notification Setup (SMS/WhatsApp)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
@@ -33,15 +33,15 @@ function getMockPrice(symbol: string) {
   return Number((base.price + change).toFixed(2));
 }
 
-// Send WhatsApp message to admin for approval
-async function sendApprovalRequest(transactionId: number, userName: string, amount: string, fromAccount: string, toAccountInfo: string) {
+// Send notification for external transfers (not internal transfers between same user's accounts)
+async function sendTransferNotification(transactionId: number, userName: string, amount: string, fromAccount: string, toAccountInfo: string) {
   if (!twilioClient || !whatsappNumber) {
-    console.warn('Twilio not configured. Skipping WhatsApp message.');
+    console.warn('Twilio not configured. Skipping notification.');
     return null;
   }
 
   try {
-    const message = `*TRANSFER APPROVAL REQUIRED*\n\nUser: ${userName}\nAmount: $${amount}\nFrom: ${fromAccount}\nTo: ${toAccountInfo}\nRef: TXN-${transactionId}\n\nReply with "APPROVE TXN-${transactionId}" to complete this transfer.`;
+    const message = `Transfer Initiated\n\nUser: ${userName}\nAmount: $${amount}\nFrom: ${fromAccount}\nTo: ${toAccountInfo}\nRef: TXN-${transactionId}\n\nStatus: Pending (15-30 minutes to process)`;
     
     const result = await twilioClient.messages.create({
       from: `whatsapp:${whatsappNumber}`,
@@ -49,12 +49,38 @@ async function sendApprovalRequest(transactionId: number, userName: string, amou
       body: message,
     });
     
-    console.log('WhatsApp message sent:', result.sid);
+    console.log('Transfer notification sent:', result.sid);
     return result.sid;
   } catch (error: any) {
-    console.error('Failed to send WhatsApp message:', error.message);
+    console.error('Failed to send notification:', error.message);
     return null;
   }
+}
+
+// Auto-complete pending transfers after 15-30 minutes
+async function initializeTransferAutoCompletion() {
+  setInterval(async () => {
+    try {
+      const now = new Date();
+      const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
+      const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
+      
+      // Find pending transactions created between 15-30 minutes ago
+      const pendingTransactions = await db.select().from(transactions)
+        .where(sql`${transactions.status} = 'pending' AND ${transactions.createdAt} >= ${thirtyMinutesAgo} AND ${transactions.createdAt} <= ${fifteenMinutesAgo}`);
+      
+      for (const txn of pendingTransactions) {
+        // Random delay between 15-30 minutes, auto-complete if time has passed
+        await db.update(transactions)
+          .set({ status: 'completed' })
+          .where(eq(transactions.id, txn.id));
+        
+        console.log(`Transaction TXN-${txn.id} auto-completed after 15-30 minute wait`);
+      }
+    } catch (error: any) {
+      console.error('Error in auto-completion scheduler:', error.message);
+    }
+  }, 60 * 1000); // Check every minute
 }
 
 export async function registerRoutes(
@@ -268,103 +294,33 @@ export async function registerRoutes(
       
       const transaction = await storage.transferFunds(fromAccountId, toAccountId, amount);
       
-      // Get destination account info
+      // Get destination account info and check if it's an external transfer
       const toAccount = await storage.getAccount(toAccountId);
-      const toAccountInfo = toAccount ? `${toAccount.accountType} (ID: ${toAccountId})` : `External (ID: ${toAccountId})`;
+      const isInternalTransfer = toAccount && toAccount.userId === (req.user as User).id;
       
-      // Send real WhatsApp message to admin
-      const messageSid = await sendApprovalRequest(
-        transaction.id,
-        (req.user as User).name,
-        amount,
-        `${fromAccount.accountType} (ID: ${fromAccount.id})`,
-        toAccountInfo
-      );
+      // Only send notifications for external transfers, not internal ones
+      if (!isInternalTransfer && toAccount) {
+        const toAccountInfo = `${toAccount.accountType} (ID: ${toAccountId})`;
+        await sendTransferNotification(
+          transaction.id,
+          (req.user as User).name,
+          amount,
+          `${fromAccount.accountType} (ID: ${fromAccount.id})`,
+          toAccountInfo
+        );
+      }
       
       res.status(201).json({ 
-        ...transaction, 
-        messageSid: messageSid || undefined,
-        note: "Transfer created and approval request sent to admin via WhatsApp"
+        ...transaction,
+        note: "Transfer created. Status: Pending (15-30 minutes to complete)"
       });
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Transfer failed" });
     }
   });
 
-  // Approval Webhook/Endpoint - Manual approval (for testing/fallback)
-  app.post('/api/admin/approve-transaction/:id', requireAuth, async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      const [txn] = await db.select().from(transactions).where(eq(transactions.id, id));
-      
-      if (!txn) return res.status(404).json({ message: "Transaction not found" });
-      if (txn.status !== 'pending') return res.status(400).json({ message: "Transaction is not pending" });
-
-      await db.update(transactions)
-        .set({ status: 'completed' })
-        .where(eq(transactions.id, id));
-
-      res.json({ message: "Transaction approved and completed" });
-    } catch (err: any) {
-      res.status(500).json({ message: err.message || "Approval failed" });
-    }
-  });
-
-  // WhatsApp Webhook - Receive approval replies from admin
-  app.post('/api/whatsapp/webhook', async (req, res) => {
-    try {
-      const { Body, From } = req.body;
-      
-      console.log('WhatsApp webhook received:', { Body, From });
-      
-      // Check if it's from the admin number
-      if (!From.includes(adminWhatsappNumber.replace('+', '')) && !From.includes('1478416594')) {
-        return res.status(403).json({ message: "Unauthorized sender" });
-      }
-
-      // Parse approval message format: "APPROVE TXN-{id}"
-      const approvalMatch = Body.match(/APPROVE\s+TXN-(\d+)/i);
-      if (!approvalMatch) {
-        return res.status(400).json({ message: "Invalid approval format. Use 'APPROVE TXN-{id}'" });
-      }
-
-      const transactionId = Number(approvalMatch[1]);
-      const [txn] = await db.select().from(transactions).where(eq(transactions.id, transactionId));
-      
-      if (!txn) {
-        return res.status(404).json({ message: `Transaction TXN-${transactionId} not found` });
-      }
-
-      if (txn.status !== 'pending') {
-        return res.status(400).json({ message: `Transaction TXN-${transactionId} is not pending (current: ${txn.status})` });
-      }
-
-      // Update transaction to completed
-      await db.update(transactions)
-        .set({ status: 'completed' })
-        .where(eq(transactions.id, transactionId));
-
-      console.log(`Transaction TXN-${transactionId} approved via WhatsApp`);
-
-      // Send confirmation message back to admin
-      if (twilioClient && whatsappNumber) {
-        try {
-          await twilioClient.messages.create({
-            from: `whatsapp:${whatsappNumber}`,
-            to: `whatsapp:${adminWhatsappNumber}`,
-            body: `Transaction TXN-${transactionId} has been approved and completed successfully!`,
-          });
-        } catch (error) {
-          console.error('Failed to send confirmation message:', error);
-        }
-      }
-
-      res.status(200).json({ message: `Transaction TXN-${transactionId} approved successfully` });
-    } catch (err: any) {
-      console.error('WhatsApp webhook error:', err);
-      res.status(500).json({ message: err.message || "Webhook processing failed" });
-    }
-  });
+  // Initialize auto-completion scheduler for pending transfers
+  initializeTransferAutoCompletion();
 
   // Investment Routes
   app.get(api.investments.list.path, requireAuth, async (req, res) => {
