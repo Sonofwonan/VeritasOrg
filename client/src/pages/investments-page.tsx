@@ -273,7 +273,7 @@ export default function InvestmentsPage() {
                   </div>
                   
                   <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-                    <SelectTrigger className="bg-background">
+                    <SelectTrigger className="bg-background h-10">
                       <SelectValue placeholder="Select Stock" />
                     </SelectTrigger>
                     <SelectContent>
@@ -286,7 +286,7 @@ export default function InvestmentsPage() {
                   <div className="mb-4">
                     <Label className="text-xs mb-2 block">Source Account</Label>
                     <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue placeholder="Select Account" />
                       </SelectTrigger>
                       <SelectContent>
@@ -424,7 +424,7 @@ export default function InvestmentsPage() {
                   <div className="grid gap-2">
                     <Label>Stock Symbol</Label>
                     <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -475,7 +475,7 @@ export default function InvestmentsPage() {
                   <div className="grid gap-2">
                     <Label>Account</Label>
                     <Select value={optionAccount} onValueChange={setOptionAccount}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue placeholder="Select account" />
                       </SelectTrigger>
                       <SelectContent>
@@ -542,7 +542,7 @@ export default function InvestmentsPage() {
                   <div className="grid gap-2">
                     <Label>Stock Symbol</Label>
                     <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -554,7 +554,7 @@ export default function InvestmentsPage() {
                   <div className="grid gap-2">
                     <Label>Order Type</Label>
                     <Select value={orderType} onValueChange={setOrderType}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -606,7 +606,7 @@ export default function InvestmentsPage() {
                   <div className="grid gap-2">
                     <Label>Account</Label>
                     <Select value={orderAccount} onValueChange={setOrderAccount}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue placeholder="Select account" />
                       </SelectTrigger>
                       <SelectContent>
@@ -686,7 +686,7 @@ export default function InvestmentsPage() {
                   </div>
                   
                   <Select value={selectedETF} onValueChange={setSelectedETF}>
-                    <SelectTrigger className="bg-background">
+                    <SelectTrigger className="bg-background h-10">
                       <SelectValue placeholder="Select ETF" />
                     </SelectTrigger>
                     <SelectContent>
@@ -699,7 +699,7 @@ export default function InvestmentsPage() {
                   <div>
                     <Label className="text-xs mb-2 block">Account</Label>
                     <Select value={etfAccount} onValueChange={setEtfAccount}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue placeholder="Select Account" />
                       </SelectTrigger>
                       <SelectContent>
@@ -806,7 +806,7 @@ export default function InvestmentsPage() {
                   <div className="pt-4">
                     <Label className="text-base font-semibold mb-2 block">Choose Account</Label>
                     <Select value={roboAccount} onValueChange={setRoboAccount}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue placeholder="Select account" />
                       </SelectTrigger>
                       <SelectContent>
