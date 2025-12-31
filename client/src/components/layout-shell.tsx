@@ -229,8 +229,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 bg-muted/5 custom-scrollbar">
-            <div className="max-w-7xl mx-auto space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden p-2 md:p-3 bg-muted/5 custom-scrollbar">
+            <div className="max-w-7xl mx-auto space-y-2 md:space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {children}
             </div>
           </main>

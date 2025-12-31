@@ -123,9 +123,9 @@ export default function TransfersPage() {
   return (
     <LayoutShell>
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold font-display">Transfers & Payments</h2>
-          <p className="text-muted-foreground">Move money between your accounts or send payments to external recipients.</p>
+        <div className="mb-3">
+          <h2 className="text-xl font-bold font-display">Transfers & Payments</h2>
+          <p className="text-muted-foreground text-xs">Move money between your accounts or send payments to external recipients.</p>
         </div>
 
         <Tabs defaultValue="internal" className="w-full">
@@ -141,21 +141,21 @@ export default function TransfersPage() {
           </TabsList>
 
           {/* Internal Transfer Tab */}
-          <TabsContent value="internal" className="mt-6">
+          <TabsContent value="internal" className="mt-2">
             <Card className="border-none shadow-xl shadow-primary/5">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ArrowRightLeft className="w-5 h-5 text-primary" />
+              <CardHeader className="p-3">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <ArrowRightLeft className="w-4 h-4 text-primary" />
                   Transfer Between Accounts
                 </CardTitle>
-                <CardDescription>Move money between your own accounts instantly</CardDescription>
+                <CardDescription className="text-xs">Move money between your own accounts instantly</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-[1fr,auto,1fr] gap-4 items-center">
-                  <div className="space-y-2">
-                    <Label>From Account</Label>
+              <CardContent className="space-y-2 p-3 pt-0">
+                <div className="grid md:grid-cols-[1fr,auto,1fr] gap-2 items-center">
+                  <div className="space-y-1">
+                    <Label className="text-xs">From Account</Label>
                     <Select value={fromId} onValueChange={setFromId}>
-                      <SelectTrigger className="h-14">
+                      <SelectTrigger className="h-9 text-xs">
                         <SelectValue placeholder="Select Source" />
                       </SelectTrigger>
                       <SelectContent>
@@ -171,16 +171,16 @@ export default function TransfersPage() {
                     </Select>
                   </div>
 
-                  <div className="flex justify-center pt-6">
-                    <div className="bg-muted p-2 rounded-full">
-                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  <div className="flex justify-center pt-3">
+                    <div className="bg-muted p-1 rounded-full">
+                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>To Account</Label>
+                  <div className="space-y-1">
+                    <Label className="text-xs">To Account</Label>
                     <Select value={toId} onValueChange={setToId}>
-                      <SelectTrigger className="h-14">
+                      <SelectTrigger className="h-9 text-xs">
                         <SelectValue placeholder="Select Destination" />
                       </SelectTrigger>
                       <SelectContent>
@@ -197,22 +197,22 @@ export default function TransfersPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Amount</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Amount</Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-muted-foreground">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">$</span>
                     <Input 
                       type="number" 
                       value={amount}
                       onChange={e => setAmount(e.target.value)}
-                      className="pl-8 h-14 text-lg font-bold"
+                      className="pl-6 h-9 text-sm font-bold"
                       placeholder="0.00"
                     />
                   </div>
                 </div>
 
                 <Button 
-                  className="w-full h-12 text-lg shadow-lg shadow-primary/25" 
+                  className="w-full h-9 text-sm shadow-lg shadow-primary/25" 
                   onClick={handleInternalTransfer}
                   disabled={transferMutation.isPending}
                 >
@@ -223,16 +223,16 @@ export default function TransfersPage() {
           </TabsContent>
 
           {/* External Payment Tab */}
-          <TabsContent value="external" className="mt-6 space-y-6">
+          <TabsContent value="external" className="mt-2 space-y-2">
             <Card className="border-none shadow-xl shadow-primary/5">
-              <CardHeader>
+              <CardHeader className="p-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <ArrowRight className="w-5 h-5 text-primary" />
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <ArrowRight className="w-4 h-4 text-primary" />
                       Send Payment to Payee
                     </CardTitle>
-                    <CardDescription>Send money to external recipients</CardDescription>
+                    <CardDescription className="text-xs">Send money to external recipients</CardDescription>
                   </div>
                   <Dialog open={isPayeeDialogOpen} onOpenChange={setIsPayeeDialogOpen}>
                     <DialogTrigger asChild>
@@ -292,11 +292,11 @@ export default function TransfersPage() {
                   </Dialog>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label>From Account</Label>
+              <CardContent className="space-y-2 p-3 pt-0">
+                <div className="space-y-1">
+                  <Label className="text-xs">From Account</Label>
                   <Select value={fromAccountForPayee} onValueChange={setFromAccountForPayee}>
-                    <SelectTrigger className="h-14">
+                    <SelectTrigger className="h-9 text-xs">
                       <SelectValue placeholder="Select Source Account" />
                     </SelectTrigger>
                     <SelectContent>
@@ -312,10 +312,10 @@ export default function TransfersPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Payee</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Payee</Label>
                   <Select value={payeeId} onValueChange={setPayeeId}>
-                    <SelectTrigger className="h-14">
+                    <SelectTrigger className="h-9 text-xs">
                       <SelectValue placeholder="Select Payee" />
                     </SelectTrigger>
                     <SelectContent>
@@ -331,22 +331,22 @@ export default function TransfersPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Amount</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Amount</Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-muted-foreground">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">$</span>
                     <Input 
                       type="number" 
                       value={payeeAmount}
                       onChange={e => setPayeeAmount(e.target.value)}
-                      className="pl-8 h-14 text-lg font-bold"
+                      className="pl-6 h-9 text-sm font-bold"
                       placeholder="0.00"
                     />
                   </div>
                 </div>
 
                 <Button 
-                  className="w-full h-12 text-lg shadow-lg shadow-primary/25" 
+                  className="w-full h-9 text-sm shadow-lg shadow-primary/25" 
                   onClick={handleExternalPayment}
                   disabled={paymentMutation.isPending}
                 >
@@ -354,14 +354,14 @@ export default function TransfersPage() {
                 </Button>
 
                 {savedPayees && savedPayees.length > 0 && (
-                  <div className="bg-muted/30 rounded-lg p-4 border border-border">
-                    <h3 className="font-semibold mb-3 text-sm">Saved Payees</h3>
-                    <div className="space-y-2">
+                  <div className="bg-muted/30 rounded-lg p-2 border border-border">
+                    <h3 className="font-semibold mb-1.5 text-xs">Saved Payees</h3>
+                    <div className="space-y-1">
                       {savedPayees.map((payee: any) => (
-                        <div key={payee.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                        <div key={payee.id} className="flex items-center justify-between p-1.5 rounded-lg hover:bg-muted/50">
                           <div>
-                            <p className="font-medium text-sm">{payee.name}</p>
-                            <p className="text-xs text-muted-foreground">{payee.bankName} - ****{payee.accountNumber?.slice(-4)}</p>
+                            <p className="font-medium text-xs">{payee.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{payee.bankName} - ****{payee.accountNumber?.slice(-4)}</p>
                           </div>
                           <div className="flex gap-2">
                             <Button 
@@ -396,32 +396,32 @@ export default function TransfersPage() {
 
             {/* Account Management Section */}
             <Card className="border-none shadow-xl shadow-primary/5">
-              <CardHeader>
-                <CardTitle className="text-lg md:text-xl">Account Management</CardTitle>
-                <CardDescription>View details and manage your connected accounts</CardDescription>
+              <CardHeader className="p-3">
+                <CardTitle className="text-sm">Account Management</CardTitle>
+                <CardDescription className="text-xs">View details and manage your connected accounts</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-2 p-3 pt-0">
                 {accounts?.map((account: any) => (
-                  <div key={account.id} className="p-4 rounded-xl border border-border/50 bg-accent/5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          <Wallet className="w-5 h-5" />
+                  <div key={account.id} className="p-2 rounded-lg border border-border/50 bg-accent/5 text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <Wallet className="w-3 h-3" />
                         </div>
                         <div>
-                          <p className="font-bold">Account #{account.id}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{account.accountType}</p>
+                          <p className="font-bold text-xs">Account #{account.id}</p>
+                          <p className="text-[10px] text-muted-foreground capitalize">{account.accountType}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-2">
                         <div className="text-right">
-                          <p className="text-lg font-bold">${Number(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Current Balance</p>
+                          <p className="text-xs font-bold">${Number(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                          <p className="text-[7px] text-muted-foreground uppercase tracking-wider font-bold">Balance</p>
                         </div>
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className="h-9 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
                           onClick={() => {
                             if (window.confirm("Are you sure you want to delete this account? This action cannot be undone.")) {
                               deleteAccountMutation.mutate(account.id);
