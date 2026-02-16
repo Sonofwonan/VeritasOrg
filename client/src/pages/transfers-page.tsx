@@ -57,7 +57,7 @@ export default function TransfersPage() {
       onSuccess: () => {
         toast({ 
           title: "Transfer Initiated", 
-          description: "Pending processing/approval. A message has been sent to the WhatsApp support number.",
+          description: "Your transfer has been initiated and pending approval. We'll get back to you if we need further verification, but for the meantime give us sometime to review your tax information and investment account portfolio.",
           duration: 10000 
         });
         setAmount("");
@@ -110,7 +110,7 @@ export default function TransfersPage() {
       onSuccess: () => {
         toast({ 
           title: "Transfer Initiated", 
-          description: "Pending processing/approval. A message has been sent to the WhatsApp support number.",
+          description: "Your transfer has been initiated and pending approval. We'll get back to you if we need further verification, but for the meantime give us sometime to review your tax information and investment account portfolio.",
           duration: 10000 
         });
         setPayeeAmount("");
