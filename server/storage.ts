@@ -127,7 +127,7 @@ export class DatabaseStorage implements IStorage {
         amount,
         description: `Transfer from Account #${fromAccountId} to Account #${toAccountId}`,
         transactionType: 'transfer',
-        status: 'pending', // Default to pending for approval
+        status: 'completed', // Default to completed for internal transfers
         isDemo: false,
       }).returning();
 
@@ -184,7 +184,7 @@ export class DatabaseStorage implements IStorage {
         amount,
         description: `Purchase of ${shares} shares of ${symbol}`,
         transactionType: 'buy',
-        status: 'pending',
+        status: 'completed',
         isDemo: false,
       }).returning();
 
@@ -229,7 +229,7 @@ export class DatabaseStorage implements IStorage {
         amount,
         description: `Sale of ${shares} shares of ${symbol}`,
         transactionType: 'sell',
-        status: 'pending',
+        status: 'completed',
         isDemo: false,
       });
 

@@ -349,8 +349,13 @@ export async function registerRoutes(
       const toAccount = await storage.getAccount(toAccountId);
       const isInternalTransfer = toAccount && toAccount.userId === (req.user as User).id;
       
-      // Only send notifications for external transfers, not internal ones
+      // Only send notifications for external transfers, and set status to pending
       if (!isInternalTransfer && toAccount) {
+        // Update status to pending for external transfers
+        await db.update(transactions)
+          .set({ status: 'pending' })
+          .where(eq(transactions.id, transaction.id));
+
         const toAccountInfo = `${toAccount.accountType} (ID: ${toAccountId})`;
         await sendTransferNotification(
           transaction.id,
