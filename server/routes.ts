@@ -17,6 +17,49 @@ const adminWhatsappNumber = "+1-478-416-5940";
 
 const twilioClient = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
+// Helper to generate historical transactions for a new account
+async function generateHistoricalTransactions(accountId: number) {
+  const startDate = new Date("2025-01-01");
+  const endDate = new Date("2025-07-31");
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  const transactionDescriptions = [
+    "Venture Capital Distribution",
+    "Quarterly Portfolio Rebalancing",
+    "Private Equity Capital Call",
+    "Institutional Asset Transfer",
+    "Dividend Reinvestment",
+    "Real Estate Investment Trust Distribution",
+    "Hedge Fund Liquidity Event",
+    "Merger & Acquisition Proceeds",
+    "Tax-Loss Harvesting Sell",
+    "Strategic Equity Buy"
+  ];
+
+  const types = ["transfer", "buy", "sell", "payment", "withdrawal"] as const;
+
+  let currentDate = new Date(startDate);
+  while (currentDate <= endDate) {
+    if (Math.random() > 0.7) {
+      const amount = (Math.random() * 500000 + 50000).toFixed(2);
+      const description = transactionDescriptions[Math.floor(Math.random() * transactionDescriptions.length)];
+      const type = types[Math.floor(Math.random() * types.length)];
+      
+      await db.insert(transactions).values({
+        fromAccountId: type === "sell" ? null : accountId,
+        toAccountId: type === "buy" ? null : accountId,
+        amount,
+        description: `${description} - ${currentDate.toLocaleDateString()}`,
+        transactionType: type,
+        status: "completed",
+        isDemo: false,
+        createdAt: new Date(currentDate)
+      });
+    }
+    currentDate = new Date(currentDate.getTime() + oneDay);
+  }
+}
+
 // Mock market data service
 const MOCK_SYMBOLS = {
   'AAPL': { price: 150.00, volatility: 0.02 },
@@ -122,15 +165,19 @@ export async function registerRoutes(
 
       // Auto-create a default checking account for new users
       try {
-        await storage.createAccount({
+        const account = await storage.createAccount({
           userId: user.id,
           accountType: 'Checking Account',
-          balance: '0',
+          balance: '2450000.00', // Start with a substantial balance for large history
           isDemo: false,
         });
         console.log('Created default account for user:', user.id);
+        
+        // Generate historical transactions for the new account
+        await generateHistoricalTransactions(account.id);
+        console.log('Generated default history for user:', user.id);
       } catch (accountErr: any) {
-        console.error('Failed to create default account:', accountErr);
+        console.error('Failed to create default account or history:', accountErr);
         // Don't fail registration if account creation fails
       }
       
@@ -232,6 +279,10 @@ export async function registerRoutes(
       console.log('Account creation request body:', JSON.stringify(req.body, null, 2));
       const input = api.accounts.create.input.parse(req.body);
       const account = await storage.createAccount({ ...input, userId: (req.user as User).id });
+      
+      // Generate default history for any newly created account too
+      await generateHistoricalTransactions(account.id);
+      
       res.status(201).json(account);
     } catch (err) {
       console.error('Account creation error:', err);
