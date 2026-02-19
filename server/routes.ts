@@ -328,7 +328,7 @@ export async function registerRoutes(
             amount,
             description: `External Deposit to Account #${toAccountId}`,
             transactionType: 'transfer',
-            status: 'completed',
+            status: 'pending',
             isDemo: false,
           }).returning();
 
@@ -491,7 +491,7 @@ export async function registerRoutes(
           amount,
           description: description || `Payment to payee #${payeeId}`,
           transactionType: 'payment',
-          status: 'completed',
+          status: 'pending',
           isDemo: false,
         }).returning();
 

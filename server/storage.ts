@@ -178,15 +178,15 @@ export class DatabaseStorage implements IStorage {
         }).returning();
       }
 
-      // 5. Record transaction
-      await tx.insert(transactions).values({
+      // 3. Record transaction
+      const [transaction] = await tx.insert(transactions).values({
         fromAccountId: accountId, // Used as source for 'buy'
         amount,
         description: `Purchase of ${shares} shares of ${symbol}`,
         transactionType: 'buy',
-        status: 'completed',
+        status: 'pending',
         isDemo: false,
-      });
+      }).returning();
 
       return investment;
     });
@@ -229,7 +229,7 @@ export class DatabaseStorage implements IStorage {
         amount,
         description: `Sale of ${shares} shares of ${symbol}`,
         transactionType: 'sell',
-        status: 'completed',
+        status: 'pending',
         isDemo: false,
       });
 
