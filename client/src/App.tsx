@@ -19,6 +19,7 @@ import GoalsPage from "@/pages/goals-page";
 import EducationPage from "@/pages/education-page";
 import CardsPage from "@/pages/cards-page";
 import SettingsPage from "@/pages/settings-page";
+import CompanyPage from "@/pages/company-page";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { user, isLoading } = useAuth();
@@ -47,6 +48,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
+      <Route path="/company" component={CompanyPage} />
       <Route path="/auth" component={AuthPage} />
 
       {/* Protected Routes */}
