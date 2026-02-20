@@ -6,7 +6,7 @@ import { api, errorSchemas, insertPayeeSchema } from "@shared/routes";
 import { z } from "zod";
 import { type User, accounts, transactions } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, or, desc, sql } from "drizzle-orm";
 import twilio from "twilio";
 
 // Twilio Notification Setup (SMS/WhatsApp)
