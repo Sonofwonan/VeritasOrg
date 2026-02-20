@@ -78,6 +78,17 @@ export function useSellInvestment() {
 }
 
 // TRANSACTIONS
+export function useAccountTransactions(accountId: number) {
+  return useQuery<any[]>({
+    queryKey: ['/api/accounts', accountId, 'transactions'],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/accounts/${accountId}/transactions`);
+      return res.json();
+    },
+    enabled: !!accountId,
+  });
+}
+
 export function useTransfer() {
   const queryClient = useQueryClient();
   return useMutation({

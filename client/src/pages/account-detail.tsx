@@ -1,8 +1,8 @@
-import { useAccounts } from "@/hooks/use-finances";
+import { useAccounts, useAccountTransactions } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Download, TrendingUp, TrendingDown, Wallet, CreditCard, Briefcase } from "lucide-react";
+import { ArrowLeft, Download, TrendingUp, TrendingDown, Wallet, CreditCard, Briefcase, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 import { useParams } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,12 +15,13 @@ const INVESTMENT_ACCOUNT_TYPES = ['Brokerage Account', 'Traditional IRA', 'Roth 
 export default function AccountDetailPage() {
   const params = useParams();
   const [, setLocation] = useLocation();
-  const { data: accounts, isLoading } = useAccounts();
+  const { data: accounts, isLoading: accountsLoading } = useAccounts();
   
   const accountId = parseInt(params.id as string);
   const account = accounts?.find(a => a.id === accountId);
+  const { data: transactions, isLoading: transactionsLoading } = useAccountTransactions(accountId);
 
-  if (isLoading) {
+  if (accountsLoading || transactionsLoading) {
     return (
       <LayoutShell>
         <div className="mb-8">
@@ -47,47 +48,6 @@ export default function AccountDetailPage() {
   }
 
   const accountBalance = Number(account.balance);
-  const isInvestment = INVESTMENT_ACCOUNT_TYPES.includes(account.accountType as AccountType);
-
-  // Generate mock transaction history for demo
-  const mockTransactions = [
-    {
-      id: 1,
-      date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      type: 'transfer',
-      description: 'Transfer from Checking Account',
-      amount: 500,
-      direction: 'in' as const,
-      status: 'completed'
-    },
-    {
-      id: 2,
-      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      type: 'buy',
-      description: 'Stock Purchase - AAPL',
-      amount: 250,
-      direction: 'out' as const,
-      status: 'completed'
-    },
-    {
-      id: 3,
-      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      type: 'transfer',
-      description: 'Dividend Payment',
-      amount: 125,
-      direction: 'in' as const,
-      status: 'completed'
-    },
-    {
-      id: 4,
-      date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      type: 'sell',
-      description: 'Stock Sale - GOOGL',
-      amount: 1200,
-      direction: 'in' as const,
-      status: 'completed'
-    },
-  ];
 
   return (
     <LayoutShell>
@@ -170,43 +130,48 @@ export default function AccountDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-1">
-            {mockTransactions.length > 0 ? (
-              mockTransactions.map((transaction) => (
-                <div 
-                  key={transaction.id} 
-                  className="flex items-center justify-between p-4 rounded-lg hover:bg-muted/50 transition-colors border-b last:border-0"
-                >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className={`p-2 rounded-full ${
-                      transaction.direction === 'in' 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-red-100 text-red-600'
-                    }`}>
-                      {transaction.direction === 'in' ? (
-                        <TrendingUp className="w-5 h-5" />
-                      ) : (
-                        <TrendingDown className="w-5 h-5" />
-                      )}
+            {transactions && transactions.length > 0 ? (
+              transactions.map((transaction) => {
+                const isIncoming = transaction.toAccountId === accountId;
+                return (
+                  <div 
+                    key={transaction.id} 
+                    className="flex items-center justify-between p-4 rounded-lg hover:bg-muted/50 transition-colors border-b last:border-0"
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className={`p-2 rounded-full ${
+                        isIncoming 
+                          ? 'bg-green-100 text-green-600' 
+                          : 'bg-red-100 text-red-600'
+                      }`}>
+                        {transaction.status === 'pending' ? (
+                          <Clock className="w-5 h-5 animate-pulse" />
+                        ) : isIncoming ? (
+                          <TrendingUp className="w-5 h-5" />
+                        ) : (
+                          <TrendingDown className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{transaction.description}</p>
+                        <p className="text-sm text-muted-foreground">{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{transaction.description}</p>
-                      <p className="text-sm text-muted-foreground">{transaction.date}</p>
+                    <div className="text-right">
+                      <p className={`font-bold text-lg ${
+                        isIncoming 
+                          ? 'text-green-600' 
+                          : 'text-red-600'
+                      }`}>
+                        {isIncoming ? '+' : '-'}${Number(transaction.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </p>
+                      <Badge variant={transaction.status === 'completed' ? 'default' : 'secondary'} className="text-xs mt-1 capitalize">
+                        {transaction.status}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`font-bold text-lg ${
-                      transaction.direction === 'in' 
-                        ? 'text-green-600' 
-                        : 'text-red-600'
-                    }`}>
-                      {transaction.direction === 'in' ? '+' : '-'}${transaction.amount.toLocaleString()}
-                    </p>
-                    <Badge variant="outline" className="text-xs mt-1">
-                      {transaction.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">No transactions yet</p>
