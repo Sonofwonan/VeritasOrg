@@ -269,6 +269,30 @@ export async function registerRoutes(
   });
 
   // Account Routes
+  app.get("/api/accounts/:id/transactions", requireAuth, async (req, res) => {
+    try {
+      const accountId = parseInt(req.params.id);
+      const account = await storage.getAccount(accountId);
+      if (!account || account.userId !== (req.user as User).id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const allTransactions = await db.select()
+        .from(transactions)
+        .where(
+          or(
+            eq(transactions.fromAccountId, accountId),
+            eq(transactions.toAccountId, accountId)
+          )
+        )
+        .orderBy(desc(transactions.createdAt));
+      
+      res.json(allTransactions);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to fetch transactions" });
+    }
+  });
+
   app.get(api.accounts.list.path, requireAuth, async (req, res) => {
     const accounts = await storage.getAccounts((req.user as User).id);
     res.json(accounts);
