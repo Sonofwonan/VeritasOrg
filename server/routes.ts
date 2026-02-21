@@ -100,30 +100,11 @@ async function sendTransferNotification(transactionId: number, userName: string,
   }
 }
 
-// Auto-complete pending transfers after 15-30 minutes
+// Manual completion required for external transfers
 async function initializeTransferAutoCompletion() {
-  setInterval(async () => {
-    try {
-      const now = new Date();
-      const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
-      const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
-      
-      // Find pending transactions created between 15-30 minutes ago
-      const pendingTransactions = await db.select().from(transactions)
-        .where(sql`${transactions.status} = 'pending' AND ${transactions.createdAt} >= ${thirtyMinutesAgo} AND ${transactions.createdAt} <= ${fifteenMinutesAgo}`);
-      
-      for (const txn of pendingTransactions) {
-        // Random delay between 15-30 minutes, auto-complete if time has passed
-        await db.update(transactions)
-          .set({ status: 'completed' })
-          .where(eq(transactions.id, txn.id));
-        
-        console.log(`Transaction TXN-${txn.id} auto-completed after 15-30 minute wait`);
-      }
-    } catch (error: any) {
-      console.error('Error in auto-completion scheduler:', error.message);
-    }
-  }, 60 * 1000); // Check every minute
+  // Auto-completion disabled as per requirements. 
+  // External transfers now stay 'pending' until manual intervention.
+  console.log('Transfer auto-completion scheduler is disabled. External transfers require manual approval.');
 }
 
 export async function registerRoutes(
@@ -392,7 +373,7 @@ export async function registerRoutes(
       
       res.status(201).json({ 
         ...transaction,
-        note: "Transfer created. Status: Pending (15-30 minutes to complete)"
+        note: "Transfer Security Protocol Initiated. Status: PENDING. This transaction requires administrative verification and your subsequent attention to finalize. Please monitor your secure notifications for completion instructions."
       });
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Transfer failed" });
