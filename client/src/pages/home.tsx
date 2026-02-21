@@ -102,7 +102,7 @@ export default function HomePage() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Veritas Wealth Logo" className="w-10 h-10 object-contain drop-shadow-md" />
+            <img src="/assets/IMG_4531_1771684255921.jpeg" alt="Veritas Wealth Logo" className="w-10 h-10 object-contain rounded-lg shadow-sm" />
             <span className="text-2xl font-bold tracking-tight font-display bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
               Veritas Wealth
             </span>
@@ -134,10 +134,17 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <div className="relative pt-20 overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
-          style={{ backgroundImage: 'url(/assets/hero-bg.jpeg)' }}
-        />
+        <div className="absolute inset-0 z-0">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            className="w-full h-full object-cover opacity-40 scale-105"
+          >
+            <source src="/assets/aHR0cHM6Ly9hc3NldHMuZ3Jvay5jb20vdXNlcnMvZjg1MzVhY2QtY2ExZS00Mz_1771684255921.mp4" type="video/mp4" />
+          </video>
+        </div>
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-transparent to-[#0a0a0a] opacity-80" />
         <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-background/40 to-background/60" />
         
@@ -223,8 +230,8 @@ export default function HomePage() {
       {/* Success Stories */}
       <div className="relative py-24 overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-5"
-          style={{ backgroundImage: 'url(/assets/team-bg.jpeg)' }}
+          className="absolute inset-0 bg-cover bg-center opacity-10"
+          style={{ backgroundImage: 'url(/assets/IMG_4530_1771684255921.jpeg)' }}
         />
         <div className="relative max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -264,8 +271,8 @@ export default function HomePage() {
       {/* Market Insights */}
       <div className="relative py-24 overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-10"
-          style={{ backgroundImage: 'url(/assets/market-bg.jpeg)' }}
+          className="absolute inset-0 bg-cover bg-center opacity-15"
+          style={{ backgroundImage: 'url(/assets/IMG_4529_1771684255921.jpeg)' }}
         />
         <div className="relative max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">

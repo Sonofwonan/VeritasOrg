@@ -106,6 +106,17 @@ export default function CompanyPage() {
 
       {/* Interactive Hero Section */}
       <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            className="w-full h-full object-cover opacity-30"
+          >
+            <source src="/assets/aHR0cHM6Ly9hc3NldHMuZ3Jvay5jb20vdXNlcnMvZjg1MzVhY2QtY2ExZS00Mz_1771684255921.mp4" type="video/mp4" />
+          </video>
+        </div>
         <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_80%_20%,rgba(var(--primary-rgb),0.15),transparent_50%)]" />
         <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.1),transparent_50%)]" />
         
