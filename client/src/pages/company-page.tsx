@@ -107,15 +107,11 @@ export default function CompanyPage() {
       {/* Interactive Hero Section */}
       <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline
-            className="w-full h-full object-cover opacity-30"
-          >
-            <source src="/assets/aHR0cHM6Ly9hc3NldHMuZ3Jvay5jb20vdXNlcnMvZjg1MzVhY2QtY2ExZS00Mz_1771684255921.mp4" type="video/mp4" />
-          </video>
+          <img 
+            src="/assets/trading-floor.png" 
+            alt="Trading Floor"
+            className="w-full h-full object-cover opacity-20 scale-105"
+          />
         </div>
         <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_80%_20%,rgba(var(--primary-rgb),0.15),transparent_50%)]" />
         <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.1),transparent_50%)]" />
@@ -231,8 +227,11 @@ export default function CompanyPage() {
       </section>
 
       {/* Interactive Feature: Asset Distribution */}
-      <section id="portfolio" className="py-32 bg-white/[0.02] border-y border-white/5">
-        <div className="container mx-auto px-6">
+      <section id="portfolio" className="relative py-32 bg-white/[0.02] border-y border-white/5 overflow-hidden">
+        <div className="absolute inset-0 z-0 opacity-10">
+          <img src="/assets/executive-boardroom.png" alt="Boardroom" className="w-full h-full object-cover" />
+        </div>
+        <div className="container mx-auto px-6 relative z-10">
           <div className="grid lg:grid-cols-2 gap-20 items-center">
             <div className="space-y-8 text-center lg:text-left flex flex-col items-center lg:items-start">
               <div className="p-3 bg-primary/10 border border-primary/20 rounded-2xl w-fit">

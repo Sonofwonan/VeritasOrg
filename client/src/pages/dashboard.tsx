@@ -9,6 +9,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { motion } from "framer-motion";
 
 // Mock data for chart - in real app, fetch historical data
 const CHART_DATA = [
@@ -69,40 +70,48 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard 
-            title="Available Cash Balance" 
-            value={`$${availableCashBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-            icon={DollarSign}
-            trend="up"
-            trendValue="2.5%"
-            description="Checking Account"
-            className="hover-elevate"
-          />
-          <StatCard 
-            title="Investments" 
-            value={`$${investmentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-            icon={TrendingUp}
-            trend="up"
-            trendValue="12.3%"
-            description="Market value"
-            className="hover-elevate"
-          />
-          <StatCard 
-            title="Net Worth" 
-            value={`$${(totalBalance + investmentValue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-            icon={ArrowUpRight}
-            className="bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover-elevate no-default-hover-elevate"
-          />
-          <StatCard 
-            title="Portfolio Gain" 
-            value={`$${(investmentValue * 0.084).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-            icon={TrendingUp}
-            trend="up"
-            trendValue="8.4%"
-            description="Total returns"
-            className="hover-elevate"
-            data-testid="text-portfolio-gain"
-          />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <StatCard 
+              title="Available Cash Balance" 
+              value={`$${availableCashBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+              icon={DollarSign}
+              trend="up"
+              trendValue="2.5%"
+              description="Checking Account"
+              className="hover-elevate"
+            />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <StatCard 
+              title="Investments" 
+              value={`$${investmentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+              icon={TrendingUp}
+              trend="up"
+              trendValue="12.3%"
+              description="Market value"
+              className="hover-elevate"
+            />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <StatCard 
+              title="Net Worth" 
+              value={`$${(totalBalance + investmentValue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+              icon={ArrowUpRight}
+              className="bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover-elevate no-default-hover-elevate"
+            />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <StatCard 
+              title="Portfolio Gain" 
+              value={`$${(investmentValue * 0.084).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+              icon={TrendingUp}
+              trend="up"
+              trendValue="8.4%"
+              description="Total returns"
+              className="hover-elevate"
+              data-testid="text-portfolio-gain"
+            />
+          </motion.div>
         </div>
 
         <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">

@@ -272,7 +272,7 @@ export default function HomePage() {
       <div className="relative py-24 overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-15"
-          style={{ backgroundImage: 'url(/assets/IMG_4529_1771684255921.jpeg)' }}
+          style={{ backgroundImage: 'url(/assets/wealth-growth.png)' }}
         />
         <div className="relative max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
