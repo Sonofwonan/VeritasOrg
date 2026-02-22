@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -82,95 +83,50 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider style={style as React.CSSProperties}>
       <div className="flex h-screen w-full overflow-hidden bg-background">
-        <Sidebar className="border-r border-border/50 bg-background md:bg-sidebar-background">
-          <SidebarHeader className="h-16 flex items-center px-6 border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-primary-foreground" />
+        <Sidebar className="border-r border-border/50 bg-zinc-950 text-zinc-100">
+          <SidebarHeader className="h-20 flex items-center px-6 border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                <img src="/assets/IMG_4531_1771684255921.jpeg" alt="Logo" className="w-7 h-7 object-contain rounded-sm" />
               </div>
-              <span className="font-bold text-lg tracking-tight">Veritas Wealth</span>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg tracking-tight leading-none">Veritas</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-black mt-1">Wealth Management</span>
+              </div>
             </div>
           </SidebarHeader>
 
-          <SidebarContent>
-            <div className="px-4 py-4">
-              <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start text-muted-foreground font-normal bg-muted/50 border-border/50 h-9 px-3 hover:bg-muted transition-colors"
-                  >
-                    <Search className="mr-2 h-4 w-4" />
-                    <span>Search...</span>
-                    <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-                      <span className="text-xs">⌘</span>K
-                    </kbd>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px] p-0 gap-0 overflow-hidden">
-                  <DialogHeader className="p-4 border-b border-border/50">
-                    <div className="flex items-center bg-muted/50 rounded-lg px-3 h-10 border border-border/50">
-                      <Search className="h-4 w-4 text-muted-foreground mr-2" />
-                      <Input 
-                        placeholder="Search features..." 
-                        className="border-0 bg-transparent focus-visible:ring-0 px-0 h-full"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        autoFocus
-                      />
-                    </div>
-                  </DialogHeader>
-                  <div className="max-h-[300px] overflow-y-auto p-2">
-                    {filteredItems.length > 0 ? (
-                      <div className="space-y-1">
-                        {filteredItems.map((item) => (
-                          <Button
-                            key={item.href}
-                            variant="ghost"
-                            className="w-full justify-start gap-3 h-10 px-3 hover:bg-primary/5 hover:text-primary transition-all group"
-                            onClick={() => {
-                              setLocation(item.href);
-                              setSearchOpen(false);
-                              setSearchQuery("");
-                            }}
-                          >
-                            <item.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                            <span className="text-sm font-medium">{item.label}</span>
-                            <ChevronRight className="ml-auto w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity" />
-                          </Button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="py-6 text-center">
-                        <p className="text-sm text-muted-foreground">No results found for "{searchQuery}"</p>
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+          <SidebarContent className="px-3 pt-6">
             <SidebarGroup>
-              <SidebarGroupLabel className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                Menu
+              <SidebarGroupLabel className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
+                Navigation
               </SidebarGroupLabel>
-              <SidebarGroupContent className="px-3">
-                <SidebarMenu>
+              <SidebarGroupContent className="mt-2">
+                <SidebarMenu className="gap-1">
                   {navItems.map((item) => (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton 
                         isActive={location === item.href}
                         className={cn(
-                          "px-3 py-2 rounded-lg transition-all duration-200",
+                          "px-4 py-6 rounded-xl transition-all duration-300 group relative overflow-hidden",
                           location === item.href 
-                            ? "bg-primary/10 text-primary font-medium" 
-                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                            : "text-white/50 hover:bg-white/5 hover:text-white"
                         )}
                         onClick={() => setLocation(item.href)}
                       >
-                        <item.icon className={cn("w-5 h-5", location === item.href ? "text-primary" : "text-muted-foreground")} />
-                        <span className="ml-3">{item.label}</span>
-                        {location === item.href && (
-                          <ChevronRight className="ml-auto w-4 h-4 opacity-50" />
+                        <item.icon className={cn(
+                          "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
+                          location === item.href ? "text-white" : "text-white/40 group-hover:text-primary"
+                        )} />
+                        <span className="ml-4 font-bold tracking-tight">{item.label}</span>
+                        {location === item.href ? (
+                          <motion.div 
+                            layoutId="active-pill"
+                            className="absolute left-0 w-1 h-6 bg-white rounded-r-full"
+                          />
+                        ) : (
+                          <ChevronRight className="ml-auto w-4 h-4 opacity-0 group-hover:opacity-40 transition-all transform group-hover:translate-x-1" />
                         )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -180,21 +136,24 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="p-4 border-t border-border/50 bg-accent/5">
-            <div className="flex items-center gap-3 px-2 py-3 rounded-xl border border-border/50 bg-card shadow-sm">
-              <Avatar className="h-9 w-9 border-2 border-primary/20">
-                <AvatarFallback className="bg-primary/10 text-primary font-bold">
+          <SidebarFooter className="p-4 border-t border-white/5 bg-black/40">
+            <div className="flex items-center gap-3 px-3 py-4 rounded-2xl border border-white/5 bg-white/[0.03] backdrop-blur-md">
+              <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-inner">
+                <AvatarFallback className="bg-primary text-white font-black text-xs">
                   {user?.name?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate" data-testid="text-username">{user?.name}</p>
-                <p className="text-xs text-muted-foreground truncate opacity-70">Premium Plan</p>
+                <p className="text-sm font-bold text-white truncate" data-testid="text-username">{user?.name}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  <p className="text-[10px] text-white/40 uppercase tracking-widest font-black">Institutional</p>
+                </div>
               </div>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                className="h-9 w-9 text-white/40 hover:text-destructive hover:bg-destructive/10 transition-all rounded-xl"
                 onClick={() => logout.mutate()}
                 disabled={logout.isPending}
               >
@@ -205,26 +164,31 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         </Sidebar>
 
         <SidebarInset className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-          <header className="h-16 border-b border-border/50 bg-background/80 backdrop-blur-md flex items-center justify-between px-6 z-10">
-            <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover-elevate" />
-              <div className="h-4 w-[1px] bg-border/50 hidden md:block" />
-              <div className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <span>Wealth Management</span>
-                <ChevronRight className="w-4 h-4 opacity-30" />
-                <span className="text-foreground capitalize">{location.substring(1) || 'Dashboard'}</span>
+          <header className="h-20 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl flex items-center justify-between px-8 z-10">
+            <div className="flex items-center gap-6">
+              <SidebarTrigger className="hover:scale-110 transition-transform text-white/70 hover:text-white" />
+              <div className="h-6 w-[1px] bg-white/10 hidden md:block" />
+              <div className="hidden md:flex items-center gap-3 text-sm font-bold tracking-tight">
+                <span className="text-white/40 uppercase tracking-widest text-[10px]">Portal</span>
+                <ChevronRight className="w-4 h-4 text-white/20" />
+                <span className="text-white capitalize">{location.substring(1) || 'Dashboard'}</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="hidden sm:flex gap-2 border-primary/20 hover:bg-primary/5 transition-colors">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="hidden sm:flex gap-2 border-white/10 bg-white/5 text-white hover:bg-primary hover:border-primary transition-all rounded-xl font-bold"
+                onClick={() => setLocation("/goals")}
+              >
                 <Target className="w-4 h-4 text-primary" />
-                <span>Set Goal</span>
+                <span>Strategy</span>
               </Button>
               <div 
-                className="h-8 w-8 rounded-full bg-accent flex items-center justify-center cursor-pointer hover:bg-accent/80 transition-colors"
+                className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer hover:bg-primary hover:border-primary transition-all group"
                 onClick={() => setLocation("/settings")}
               >
-                <Settings className="w-4 h-4 text-accent-foreground" />
+                <Settings className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
               </div>
             </div>
           </header>
