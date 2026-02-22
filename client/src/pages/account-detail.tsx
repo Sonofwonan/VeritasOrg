@@ -105,10 +105,6 @@ export default function AccountDetailPage() {
               <p className="font-semibold">{account.accountType}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Created</p>
-              <p className="font-semibold">{new Date(account.createdAt!).toLocaleDateString()}</p>
-            </div>
-            <div>
               <p className="text-muted-foreground">Status</p>
               <Badge className="mt-1">Active</Badge>
             </div>

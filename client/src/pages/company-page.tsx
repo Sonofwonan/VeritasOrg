@@ -210,21 +210,21 @@ export default function CompanyPage() {
               title="Venture Capital"
               tag="Alpha"
               description="Seeding disruptive technologies in FinTech, AI, and Sustainable Energy."
-              onClick={() => {}}
+              onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             />
             <DivisionCard 
               icon={ShieldCheck}
               title="Risk & Security"
               tag="Core"
               description="Military-grade encryption and global risk assessment for cross-border enterprise."
-              onClick={() => {}}
+              onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             />
             <DivisionCard 
               icon={Globe}
               title="Infrastructure"
               tag="Global"
               description="Strategic real estate and logistics development in emerging economic corridors."
-              onClick={() => {}}
+              onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             />
           </div>
         </div>
@@ -247,7 +247,11 @@ export default function CompanyPage() {
                 <FeatureItem text="Real-time transparency for institutional partners" />
                 <FeatureItem text="Adaptive liquidity events for maximized returns" />
               </ul>
-              <Button size="lg" className="h-14 px-8 rounded-xl font-bold bg-white text-black hover:bg-primary hover:text-white transition-all mt-6">
+              <Button 
+                size="lg" 
+                className="h-14 px-8 rounded-xl font-bold bg-white text-black hover:bg-primary hover:text-white transition-all mt-6"
+                onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+              >
                 Request Portfolio Review
               </Button>
             </div>
@@ -280,28 +284,36 @@ export default function CompanyPage() {
           <div className="max-w-4xl mx-auto space-y-16">
             <h2 className="text-5xl md:text-8xl font-black font-display tracking-tighter">Connect with <br /><span className="text-primary italic">Veritas Corp.</span></h2>
             <div className="grid sm:grid-cols-3 gap-8">
-              <ContactMethod icon={Mail} label="Corporate Email" value="contact@veritasllc.com" />
-              <ContactMethod icon={PhoneCall} label="Global HQ" value="+1 (555) 012-3456" />
+              <ContactMethod icon={PhoneCall} label="WhatsApp Support" value="+1 (478) 416-5940" onClick={() => window.open('https://wa.me/14784165940', '_blank')} />
+              <ContactMethod icon={PhoneCall} label="Global HQ" value="+1 702-718-8852" />
               <ContactMethod icon={MapPin} label="Location" value="Manhattan, NY" />
             </div>
             <div className="pt-12">
-              <Card className="bg-primary text-primary-foreground border-none p-12 rounded-[50px] text-left relative overflow-hidden group shadow-[0_50px_100px_rgba(var(--primary-rgb),0.3)]">
-                <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-125 transition-transform duration-1000">
-                  <Zap className="w-80 h-80" />
-                </div>
+              <Card className="bg-zinc-900 border-white/10 p-12 rounded-[50px] text-left relative overflow-hidden group shadow-2xl">
                 <div className="relative z-10 max-w-2xl space-y-8">
-                  <h3 className="text-4xl md:text-5xl font-black tracking-tighter leading-tight">Ready for Institutional Excellence?</h3>
-                  <p className="text-primary-foreground/70 text-lg font-light leading-relaxed">
-                    Join the elite network of partners shaping the next generation of global industry. Access your exclusive wealth terminal now.
-                  </p>
-                  <Button 
-                    size="lg" 
-                    className="bg-white text-black hover:bg-black hover:text-white transition-all h-16 px-12 rounded-2xl text-xl font-black gap-3 shadow-2xl"
-                    onClick={() => window.open('https://veritaswealth.vercel.app', '_blank')}
-                  >
-                    Open Wealth Portal
-                    <ExternalLink className="w-6 h-6" />
-                  </Button>
+                  <h3 className="text-4xl md:text-5xl font-black tracking-tighter leading-tight text-white">Send a Message</h3>
+                  <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Message sent to support.'); }}>
+                    <input 
+                      type="email" 
+                      placeholder="Your Email" 
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white focus:outline-none focus:border-primary transition-colors"
+                      required
+                    />
+                    <textarea 
+                      placeholder="Your Message" 
+                      rows={4}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white focus:outline-none focus:border-primary transition-colors"
+                      required
+                    />
+                    <Button 
+                      type="submit"
+                      size="lg" 
+                      className="bg-primary text-white hover:bg-primary/90 transition-all h-16 px-12 rounded-2xl text-xl font-black gap-3 w-full shadow-2xl"
+                    >
+                      Send Message
+                      <ArrowRight className="w-6 h-6" />
+                    </Button>
+                  </form>
                 </div>
               </Card>
             </div>
@@ -422,10 +434,11 @@ function FeatureItem({ text }: { text: string }) {
   );
 }
 
-function ContactMethod({ icon: Icon, label, value }: { icon: any, label: string, value: string }) {
+function ContactMethod({ icon: Icon, label, value, onClick }: { icon: any, label: string, value: string, onClick?: () => void }) {
   return (
     <motion.div 
       whileHover={{ scale: 1.05 }}
+      onClick={onClick}
       className="p-10 rounded-[35px] bg-white/[0.02] border border-white/5 space-y-6 hover:border-primary/20 transition-all cursor-pointer group shadow-2xl"
     >
       <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mx-auto group-hover:bg-primary group-hover:text-white transition-all shadow-inner">
