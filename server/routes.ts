@@ -324,10 +324,9 @@ export async function registerRoutes(
         }
 
         const transaction = await db.transaction(async (tx) => {
-          await tx.update(accounts)
-            .set({ balance: sql`${accounts.balance} + ${amount}` })
-            .where(eq(accounts.id, toAccountId));
-
+          // Internal deposits now stay pending and DO NOT reflect on balance immediately
+          // as per user requirement: "make it pending permanently if user deposits into the accounts"
+          
           const [t] = await tx.insert(transactions).values({
             toAccountId,
             amount,

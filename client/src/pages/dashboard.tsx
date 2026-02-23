@@ -35,6 +35,13 @@ export default function DashboardPage() {
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { data: investments, isLoading: investmentsLoading } = useInvestments();
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
+
   const checkingAccount = accounts?.find(a => a.accountType === "Checking Account");
   const availableCashBalance = checkingAccount ? Number(checkingAccount.balance) : 0;
   const totalBalance = accounts?.reduce((sum, acc) => sum + Number(acc.balance), 0) || 0;
@@ -64,7 +71,9 @@ export default function DashboardPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div className="flex flex-col gap-0.5">
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight">Wealth Overview</h1>
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight">
+              {getGreeting()}, {user?.name}
+            </h1>
             <p className="text-muted-foreground text-xs md:text-sm">Your financial health at a glance.</p>
           </div>
         </div>
