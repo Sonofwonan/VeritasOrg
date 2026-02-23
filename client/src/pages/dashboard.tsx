@@ -1,15 +1,18 @@
-import { useAccounts, useInvestments } from "@/hooks/use-finances";
+import { useAccounts, useInvestments, useAccountTransactions } from "@/hooks/use-finances";
 import { useLocation } from "wouter";
 import { LayoutShell } from "@/components/layout-shell";
 import { StatCard } from "@/components/stat-card";
 import { MetallicCard } from "@/components/metallic-card";
-import { DollarSign, TrendingUp, Wallet, ArrowUpRight, PieChart as PieChartIcon } from "lucide-react";
+import { DollarSign, TrendingUp, Wallet, ArrowUpRight, PieChart as PieChartIcon, ArrowDownLeft, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 // Mock data for chart - in real app, fetch historical data
 const CHART_DATA = [
@@ -29,7 +32,6 @@ const ALLOCATION_DATA = [
   { name: 'Crypto', value: 10, color: '226 70% 45%' },
   { name: 'Real Estate', value: 5, color: '162 60% 35%' },
 ];
-
 export default function DashboardPage() {
   const { user } = useAuth();
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
@@ -43,11 +45,12 @@ export default function DashboardPage() {
   };
 
   const checkingAccount = accounts?.find(a => a.accountType === "Checking Account");
+  const { data: transactions, isLoading: transactionsLoading } = useAccountTransactions(checkingAccount?.id || 0);
+
   const availableCashBalance = checkingAccount ? Number(checkingAccount.balance) : 0;
   const totalBalance = accounts?.reduce((sum, acc) => sum + Number(acc.balance), 0) || 0;
   const [location, setLocation] = useLocation();
   
-  // Calculate simplistic total investment value
   const investmentValue = investments?.reduce((sum, inv) => {
     return sum + (Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice));
   }, 0) || 0;
@@ -234,35 +237,85 @@ export default function DashboardPage() {
 
         {/* Recent Transactions & Accounts */}
         <div className="grid gap-2 md:grid-cols-2">
-          <Card className="border-border/50 shadow-sm hover-elevate">
-            <CardHeader className="p-2 md:p-3">
-              <CardTitle className="text-sm md:text-base">Recent Activity</CardTitle>
-              <CardDescription className="text-[10px] md:text-xs">Latest movements</CardDescription>
+          <Card className="border-border/50 shadow-sm hover-elevate overflow-hidden">
+            <CardHeader className="p-3 md:p-4 border-b border-border/50 bg-muted/5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm md:text-base flex items-center gap-2">
+                    <ArrowDownLeft className="w-4 h-4 text-primary" />
+                    Transaction Ledger
+                  </CardTitle>
+                  <CardDescription className="text-[10px] md:text-xs">Ledger activity for Account #{checkingAccount?.id}</CardDescription>
+                </div>
+                <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-bold border-primary/20 text-primary">Live</Badge>
+              </div>
             </CardHeader>
-            <CardContent className="p-2 md:p-3 pt-0 md:pt-0">
-              <div className="space-y-2">
-                {investments?.slice(0, 3).map((inv) => (
-                  <div key={inv.id} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
-                        <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">Investment: {inv.symbol}</p>
-                        <p className="text-[10px] md:text-xs text-muted-foreground">{inv.shares} shares @ ${inv.currentPrice || inv.purchasePrice}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-sm md:text-base text-primary" data-testid={`text-investment-value-${inv.id}`}>${(Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                      <p className="text-[9px] md:text-[10px] uppercase tracking-wider font-bold text-accent">Held</p>
-                    </div>
+            <CardContent className="p-0">
+              <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+                {transactionsLoading ? (
+                  <div className="p-4 space-y-3">
+                    {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
                   </div>
-                ))}
-                {(!investments || investments.length === 0) && (
-                  <p className="text-sm text-muted-foreground text-center py-2">No recent investment activity</p>
+                ) : transactions && transactions.length > 0 ? (
+                  <div className="divide-y divide-border/50">
+                    {transactions.map((txn: any) => (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        key={txn.id} 
+                        className="flex items-center justify-between p-3 md:p-4 hover:bg-accent/5 transition-colors group cursor-default"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110",
+                            txn.status === 'pending' ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30" : "bg-primary/10 text-primary"
+                          )}>
+                            {txn.status === 'pending' ? <Clock className="w-4 h-4" /> : <ArrowDownLeft className="w-4 h-4" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-xs md:text-sm truncate pr-2">{txn.description}</p>
+                            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                              {format(new Date(txn.createdAt), 'MMM dd, yyyy')} • 
+                              <span className={cn(
+                                "capitalize font-medium",
+                                txn.status === 'pending' ? "text-amber-600" : "text-emerald-600"
+                              )}>
+                                {txn.status}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right flex flex-col items-end">
+                          <p className={cn(
+                            "font-black text-sm md:text-base",
+                            txn.status === 'pending' ? "text-muted-foreground" : "text-foreground"
+                          )}>
+                            {txn.toAccountId === (checkingAccount?.id ?? 0) ? '+' : '-'}${Number(txn.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </p>
+                          {txn.status === 'pending' && (
+                            <span className="text-[8px] uppercase tracking-tighter font-black text-amber-600/70">Awaiting Verification</span>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center">
+                    <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center mx-auto mb-3">
+                      <Clock className="w-6 h-6 text-muted-foreground/40" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">No transaction history available</p>
+                  </div>
                 )}
               </div>
-              <Button variant="ghost" size="sm" className="w-full mt-2 text-primary hover:bg-primary/5 text-xs h-7" onClick={() => setLocation('/investments')}>View All Investments</Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full border-t border-border/50 rounded-none text-primary hover:bg-primary/5 text-[10px] font-bold uppercase tracking-widest h-10" 
+                onClick={() => setLocation('/transfers')}
+              >
+                Full Audit Trail
+              </Button>
             </CardContent>
           </Card>
 
@@ -274,7 +327,7 @@ export default function DashboardPage() {
             <CardContent className="p-2 md:p-3 pt-0 md:pt-0">
               <div className="space-y-1.5">
                 {accounts?.slice(0, 4).map((account) => (
-                  <div key={account.id} className="flex items-center justify-between p-2 md:p-2 rounded-lg border border-border/50 bg-accent/5 hover:bg-accent/10 transition-all cursor-pointer group text-xs">
+                  <div key={account.id} className="flex items-center justify-between p-2 md:p-2 rounded-lg border border-border/50 bg-accent/5 hover:bg-accent/10 transition-all cursor-pointer group text-xs" onClick={() => setLocation(`/accounts/${account.id}`)}>
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
                         <Wallet className="w-3 h-3 md:w-4 md:h-4" />
