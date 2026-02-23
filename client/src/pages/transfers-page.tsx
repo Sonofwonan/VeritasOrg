@@ -225,6 +225,107 @@ export default function TransfersPage() {
           {/* External Payment Tab */}
           <TabsContent value="external" className="mt-2 space-y-2">
             <Card className="border-none shadow-xl shadow-primary/5">
+              <CardHeader className="p-4 bg-muted/5 border-b border-border/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Plus className="w-5 h-5 text-primary" />
+                      Link External Account (ACH)
+                    </CardTitle>
+                    <CardDescription className="text-xs">Securely connect your outside bank accounts for seamless wealth transfers</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <Plus className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm">Instant Verification</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-black">Powered by Plaid</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Connect over 12,000+ financial institutions instantly. Your credentials are never stored on our servers.
+                      </p>
+                      <Button className="w-full shadow-lg shadow-primary/20 font-bold h-11" onClick={() => {
+                        toast({
+                          title: "Establishing Secure Connection",
+                          description: "Initializing Plaid Link interface... Please wait.",
+                        });
+                      }}>
+                        Connect Bank Instantly
+                      </Button>
+                    </div>
+
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-border/50" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground font-bold tracking-widest">Or Link Manually</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="grid gap-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground">Account Holder Name</Label>
+                        <Input placeholder="John Doe" className="h-10 bg-muted/30 border-border/50" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="grid gap-1.5">
+                          <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground">Routing Number</Label>
+                          <Input placeholder="000000000" className="h-10 bg-muted/30 border-border/50" />
+                        </div>
+                        <div className="grid gap-1.5">
+                          <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground">Account Number</Label>
+                          <Input placeholder="000000000" type="password" className="h-10 bg-muted/30 border-border/50" />
+                        </div>
+                      </div>
+                      <Button variant="outline" className="w-full h-11 border-primary/20 hover:bg-primary/5 text-primary font-bold" onClick={() => {
+                        toast({
+                          title: "Manual Verification Initiated",
+                          description: "We will send two small micro-deposits to this account within 1-2 business days to verify ownership.",
+                        });
+                      }}>
+                        Link via Micro-Deposits
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Why link your account?</h4>
+                    <div className="space-y-4">
+                      {[
+                        { title: "Zero-Fee Transfers", desc: "Enjoy complimentary ACH transfers between your linked accounts and Veritas Wealth." },
+                        { title: "Automated Investing", desc: "Set up recurring deposits directly from your external bank to your portfolio." },
+                        { title: "Consolidated View", desc: "Monitor your entire net worth across multiple institutions in one dashboard." },
+                        { title: "Institutional Security", desc: "Multi-factor authentication and 256-bit encryption for every transfer." }
+                      ].map((item, i) => (
+                        <div key={i} className="flex gap-4">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                          <div>
+                            <p className="text-sm font-bold">{item.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-4 rounded-xl border border-border/50 bg-muted/5 mt-6">
+                      <p className="text-[10px] text-muted-foreground italic leading-relaxed">
+                        Linked accounts must be in the same name as your Veritas account. Business accounts may require additional documentation for verification.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-xl shadow-primary/5">
               <CardHeader className="p-3">
                 <div className="flex items-center justify-between">
                   <div>
