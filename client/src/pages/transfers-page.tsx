@@ -101,11 +101,14 @@ export default function TransfersPage() {
       return;
     }
 
+    const selectedPayee = savedPayees?.find((p: any) => p.id.toString() === payeeId);
+    const firstName = selectedPayee ? selectedPayee.name.split(' ')[0] : 'Payee';
+
     paymentMutation.mutate({
       fromAccountId: parseInt(fromAccountForPayee),
       payeeId: parseInt(payeeId),
       amount: payeeAmount,
-      description: `Payment to ${payeeName}`
+      description: `Payment to ${firstName}`
     }, {
       onSuccess: () => {
         toast({ 

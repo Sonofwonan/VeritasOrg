@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { api, errorSchemas, insertPayeeSchema } from "@shared/routes";
 import { z } from "zod";
-import { type User, accounts, transactions } from "@shared/schema";
+import { type User, accounts, transactions, payees } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, desc, sql } from "drizzle-orm";
 import twilio from "twilio";
@@ -490,6 +490,9 @@ export async function registerRoutes(
           throw new Error("Insufficient funds");
         }
 
+        const [payee] = await tx.select().from(payees).where(eq(payees.id, payeeId));
+        const payeeName = payee ? payee.name.split(' ')[0] : `Payee #${payeeId}`;
+
         await tx.update(accounts)
           .set({ balance: sql`${accounts.balance} - ${amount}` })
           .where(eq(accounts.id, fromAccountId));
@@ -498,7 +501,7 @@ export async function registerRoutes(
           fromAccountId,
           payeeId,
           amount,
-          description: description || `Payment to payee #${payeeId}`,
+          description: description || `Payment to ${payeeName}`,
           transactionType: 'payment',
           status: 'pending',
           isDemo: false,
