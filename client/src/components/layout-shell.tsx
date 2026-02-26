@@ -12,8 +12,11 @@ import {
   Settings,
   ChevronRight,
   Search,
-  Command
+  Command,
+  MessageSquare,
+  Phone
 } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,6 +100,32 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
 
           <SidebarContent className="px-3 pt-6">
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
+                Support
+              </SidebarGroupLabel>
+              <SidebarGroupContent className="mt-2 px-2">
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    className="flex-1 bg-white/5 hover:bg-green-600/20 text-white/70 hover:text-green-500 border border-white/5 transition-all rounded-xl h-12 flex flex-col items-center justify-center gap-1 group"
+                    onClick={() => window.open("https://wa.me/13522175015", "_blank")}
+                  >
+                    <SiWhatsapp className="w-4 h-4 transition-transform group-hover:scale-110" />
+                    <span className="text-[10px] font-bold uppercase tracking-tighter">WhatsApp</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="flex-1 bg-white/5 hover:bg-primary/20 text-white/70 hover:text-primary border border-white/5 transition-all rounded-xl h-12 flex flex-col items-center justify-center gap-1 group"
+                    onClick={() => window.open("sms:+17409381335", "_blank")}
+                  >
+                    <MessageSquare className="w-4 h-4 transition-transform group-hover:scale-110" />
+                    <span className="text-[10px] font-bold uppercase tracking-tighter">Direct SMS</span>
+                  </Button>
+                </div>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
             <SidebarGroup>
               <SidebarGroupLabel className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
                 Navigation
