@@ -109,7 +109,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                   <Button 
                     variant="ghost" 
                     className="flex-1 bg-white/5 hover:bg-green-600/20 text-white/70 hover:text-green-500 border border-white/5 transition-all rounded-xl h-12 flex flex-col items-center justify-center gap-1 group"
-                    onClick={() => window.open("https://wa.me/13522175015", "_blank")}
+                    onClick={() => window.open("https://wa.me/‎‪14784165940‬", "_blank")}
                   >
                     <SiWhatsapp className="w-4 h-4 transition-transform group-hover:scale-110" />
                     <span className="text-[10px] font-bold uppercase tracking-tighter">WhatsApp</span>
