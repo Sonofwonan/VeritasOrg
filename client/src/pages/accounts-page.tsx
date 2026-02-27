@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
+import { Plus, Wallet, CreditCard, ArrowRight, Briefcase, Eye, EyeOff, ArrowDownCircle, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAccounts, useCreateAccount, useDeleteAccount, useTransfer } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
-import { Plus, Wallet, CreditCard, ArrowRight, Briefcase, Eye, EyeOff, ArrowDownCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 
@@ -21,11 +22,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function AccountsPage() {
+  const [feedback, setFeedback] = useState<{title: string, message: string, type: 'success' | 'error'} | null>(null);
   const { data: accounts, isLoading } = useAccounts();
   const createAccount = useCreateAccount();
   const deleteAccount = useDeleteAccount();
@@ -52,12 +53,11 @@ export default function AccountsPage() {
       balance: newAccount.balance,
       isDemo: false,
     }, {
-      onSuccess: () => {
+      onSuccess: (data: any) => {
         setIsOpen(false);
-        toast({
-          title: "Account Created",
-          description: "Your new account is ready to use.",
-        });
+        // Using a dialog for banking-style feedback
+        const details = `Account: ${data.accountType}\nInitial Deposit: $${Number(data.balance).toLocaleString()}`;
+        setFeedback({ title: "Account Successfully Established", message: details, type: 'success' });
       },
       onError: (error: any) => {
         const detail = error.response?.data?.message || error.message || "Failed to create account.";
@@ -84,16 +84,17 @@ export default function AccountsPage() {
       onSuccess: () => {
         setIsDepositOpen(false);
         setDepositAmount("");
-        toast({
-          title: "Deposit Successful",
-          description: `$${depositAmount} has been added to your account.`,
+        setFeedback({ 
+          title: "Deposit Initiated", 
+          message: `Your deposit of $${Number(depositAmount).toLocaleString()} is being processed. Funds will be available after verification.`, 
+          type: 'success' 
         });
       },
       onError: (error: any) => {
-        toast({
-          title: "Deposit Failed",
-          description: error.message || "Failed to process deposit.",
-          variant: "destructive",
+        setFeedback({ 
+          title: "Deposit Failed", 
+          message: error.message || "We were unable to process your deposit at this time.", 
+          type: 'error' 
         });
       }
     });
@@ -102,6 +103,37 @@ export default function AccountsPage() {
   return (
     <LayoutShell>
       <div className="flex items-center justify-between mb-3">
+        {/* Banking Feedback Modal */}
+        <Dialog open={!!feedback} onOpenChange={(open) => !open && setFeedback(null)}>
+          <DialogContent className="sm:max-w-md border-primary/20 bg-zinc-950 text-white">
+            <DialogHeader className="flex flex-col items-center gap-4 py-4">
+              {feedback?.type === 'success' ? (
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/50">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center border border-destructive/50">
+                  <AlertCircle className="w-8 h-8 text-destructive" />
+                </div>
+              )}
+              <DialogTitle className="text-xl font-bold text-center tracking-tight">
+                {feedback?.title}
+              </DialogTitle>
+              <DialogDescription className="text-zinc-400 text-center whitespace-pre-wrap leading-relaxed">
+                {feedback?.message}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="sm:justify-center border-t border-white/5 pt-6">
+              <Button 
+                onClick={() => setFeedback(null)} 
+                className="w-full sm:w-32 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl h-11 transition-all"
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <div>
           <h2 className="text-xl font-bold font-display">Accounts</h2>
           <p className="text-muted-foreground text-xs">Manage your banking and investment accounts.</p>

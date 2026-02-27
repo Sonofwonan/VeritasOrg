@@ -38,14 +38,16 @@ export default function TransfersPage() {
   const [payeeRoutingNumber, setPayeeRoutingNumber] = useState("");
   const [isPayeeDialogOpen, setIsPayeeDialogOpen] = useState(false);
 
+  const [feedback, setFeedback] = useState<{title: string, message: string, type: 'success' | 'error'} | null>(null);
+
   const handleInternalTransfer = () => {
     if (!fromId || !toId || !amount) {
-      toast({ title: "Incomplete form", description: "Please fill all fields", variant: "destructive" });
+      setFeedback({ title: "Incomplete Form", message: "Please ensure all transfer fields are filled correctly.", type: 'error' });
       return;
     }
 
     if (fromId === toId) {
-      toast({ title: "Invalid selection", description: "Cannot transfer to the same account", variant: "destructive" });
+      setFeedback({ title: "Invalid Selection", message: "Source and destination accounts must be different.", type: 'error' });
       return;
     }
 
@@ -55,17 +57,17 @@ export default function TransfersPage() {
       amount: amount
     }, {
       onSuccess: () => {
-        toast({ 
+        setFeedback({ 
           title: "Transfer Initiated", 
-          description: "Your transfer has been initiated and pending approval. We'll get back to you if we need further verification, but for the meantime give us sometime to review your tax information and investment account portfolio.",
-          duration: 10000 
+          message: "Your internal transfer has been staged for processing. Please allow 15-30 minutes for institutional verification and final settlement.",
+          type: 'success' 
         });
         setAmount("");
         setFromId("");
         setToId("");
       },
       onError: (err) => {
-        toast({ title: "Transfer Failed", description: err.message, variant: "destructive" });
+        setFeedback({ title: "Transfer Failed", message: err.message || "Institutional verification failed. Please contact support.", type: 'error' });
       }
     });
   };
@@ -97,7 +99,7 @@ export default function TransfersPage() {
 
   const handleExternalPayment = () => {
     if (!fromAccountForPayee || !payeeId || !payeeAmount) {
-      toast({ title: "Incomplete form", description: "Please select an account, payee and enter amount", variant: "destructive" });
+      setFeedback({ title: "Incomplete Form", message: "Please select a source account and payee before scheduling.", type: 'error' });
       return;
     }
 
@@ -111,14 +113,17 @@ export default function TransfersPage() {
       description: `Payment to ${firstName}`
     }, {
       onSuccess: () => {
-        toast({ 
-          title: "Transfer Initiated", 
-          description: "Your transfer has been initiated and pending approval. We'll get back to you if we need further verification, but for the meantime give us sometime to review your tax information and investment account portfolio.",
-          duration: 10000 
+        setFeedback({ 
+          title: "Institutional Payment Scheduled", 
+          message: `Your payment to ${firstName} for $${Number(payeeAmount).toLocaleString()} has been initiated. This transaction is currently PENDING and will undergo standard security screening before final posting.`,
+          type: 'success' 
         });
         setPayeeAmount("");
         setPayeeId("");
         setFromAccountForPayee("");
+      },
+      onError: (err: any) => {
+        setFeedback({ title: "Payment Failed", message: err.message || "An error occurred while scheduling your payment.", type: 'error' });
       }
     });
   };
@@ -126,6 +131,37 @@ export default function TransfersPage() {
   return (
     <LayoutShell>
       <div className="max-w-4xl mx-auto">
+        {/* Banking Feedback Modal */}
+        <Dialog open={!!feedback} onOpenChange={(open) => !open && setFeedback(null)}>
+          <DialogContent className="sm:max-w-md border-primary/20 bg-zinc-950 text-white">
+            <DialogHeader className="flex flex-col items-center gap-4 py-4">
+              {feedback?.type === 'success' ? (
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/50">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center border border-destructive/50">
+                  <AlertCircle className="w-8 h-8 text-destructive" />
+                </div>
+              )}
+              <DialogTitle className="text-xl font-bold text-center tracking-tight">
+                {feedback?.title}
+              </DialogTitle>
+              <DialogDescription className="text-zinc-400 text-center whitespace-pre-wrap leading-relaxed">
+                {feedback?.message}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="sm:justify-center border-t border-white/5 pt-6">
+              <Button 
+                onClick={() => setFeedback(null)} 
+                className="w-full sm:w-32 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl h-11 transition-all"
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <div className="mb-3">
           <h2 className="text-xl font-bold font-display">Transfers & Payments</h2>
           <p className="text-muted-foreground text-xs">Move money between your accounts or send payments to external recipients.</p>
