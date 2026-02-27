@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, ArrowRightLeft, Plus, Wallet } from "lucide-react";
+import { ArrowRight, ArrowRightLeft, Plus, Wallet, CheckCircle2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function TransfersPage() {
-  const { data: accounts } = useAccounts();
+  const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: savedPayees, isLoading: loadingPayees } = usePayees();
   const transferMutation = useTransfer();
   const createPayeeMutation = useCreatePayee();
@@ -127,6 +127,16 @@ export default function TransfersPage() {
       }
     });
   };
+
+  if (loadingAccounts || loadingPayees) {
+    return (
+      <LayoutShell>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </LayoutShell>
+    );
+  }
 
   return (
     <LayoutShell>
