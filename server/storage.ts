@@ -115,9 +115,15 @@ export class DatabaseStorage implements IStorage {
         .set({ balance: sql`${accounts.balance} - ${amount}` })
         .where(eq(accounts.id, fromAccountId));
 
-      // 2. We DO NOT add to receiver immediately as per user requirement:
-      // "make it pending permanently if user deposits into the accounts"
-      // Internal transfers now stay pending and don't reflect in balance.
+      // 2. Add to receiver if it's an internal transfer (same user)
+      const [toAccount] = await tx.select().from(accounts).where(eq(accounts.id, toAccountId));
+      const status = (toAccount && toAccount.userId === fromAccount.userId) ? 'completed' : 'pending';
+
+      if (status === 'completed' && toAccount) {
+        await tx.update(accounts)
+          .set({ balance: sql`${accounts.balance} + ${amount}` })
+          .where(eq(accounts.id, toAccountId));
+      }
 
       // 3. Record transaction
       const [transaction] = await tx.insert(transactions).values({
@@ -126,7 +132,7 @@ export class DatabaseStorage implements IStorage {
         amount,
         description: `Transfer from Account #${fromAccountId} to Account #${toAccountId}`,
         transactionType: 'transfer',
-        status: 'pending', // Set to pending permanently
+        status: status,
         isDemo: false,
       }).returning();
 

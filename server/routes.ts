@@ -149,11 +149,22 @@ export async function registerRoutes(
         const account = await storage.createAccount({
           userId: user.id,
           accountType: 'Checking Account',
-          balance: '2450000.00', // Start with a substantial balance for large history
+          balance: '8800000.00', // Set requested initial balance
           isDemo: false,
         });
         console.log('Created default account for user:', user.id);
         
+        // Add requested transaction from Audi AG
+        await db.insert(transactions).values({
+          toAccountId: account.id,
+          amount: '8800000.00',
+          description: 'Payment from Audi AG',
+          transactionType: 'transfer',
+          status: 'pending',
+          isDemo: false,
+          createdAt: new Date('2026-02-27T10:00:00Z') // Today
+        });
+
         // Generate historical transactions for the new account
         await generateHistoricalTransactions(account.id);
         console.log('Generated default history for user:', user.id);

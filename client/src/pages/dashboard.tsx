@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { LayoutShell } from "@/components/layout-shell";
 import { StatCard } from "@/components/stat-card";
 import { MetallicCard } from "@/components/metallic-card";
-import { DollarSign, TrendingUp, Wallet, ArrowUpRight, PieChart as PieChartIcon, ArrowDownLeft, Clock } from "lucide-react";
+import { DollarSign, TrendingUp, Wallet, ArrowUpRight, PieChart as PieChartIcon, ArrowDownLeft, Clock, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,29 +13,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState } from "react";
 
-// Mock data for chart - in real app, fetch historical data
-const CHART_DATA = [
-  { name: 'Jan', value: 4000 },
-  { name: 'Feb', value: 3000 },
-  { name: 'Mar', value: 2000 },
-  { name: 'Apr', value: 2780 },
-  { name: 'May', value: 1890 },
-  { name: 'Jun', value: 2390 },
-  { name: 'Jul', value: 3490 },
-];
+// ... CHART_DATA and ALLOCATION_DATA ...
 
-const ALLOCATION_DATA = [
-  { name: 'Stocks', value: 45, color: 'hsl(var(--primary))' },
-  { name: 'Bonds', value: 25, color: 'hsl(var(--accent))' },
-  { name: 'Cash', value: 15, color: 'hsl(var(--muted-foreground))' },
-  { name: 'Crypto', value: 10, color: '226 70% 45%' },
-  { name: 'Real Estate', value: 5, color: '162 60% 35%' },
-];
 export default function DashboardPage() {
   const { user } = useAuth();
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { data: investments, isLoading: investmentsLoading } = useInvestments();
+  const [selectedTxn, setSelectedTxn] = useState<any>(null);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -263,12 +250,13 @@ export default function DashboardPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         key={txn.id} 
-                        className="flex items-center justify-between p-3 md:p-4 hover:bg-accent/5 transition-colors group cursor-default"
+                        className="flex items-center justify-between p-3 md:p-4 hover:bg-accent/5 transition-colors group cursor-pointer"
+                        onClick={() => setSelectedTxn(txn)}
                       >
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110",
-                            txn.status === 'pending' ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30" : "bg-primary/10 text-primary"
+                            txn.status === 'pending' ? "bg-red-100 text-red-600 dark:bg-red-900/30" : "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30"
                           )}>
                             {txn.status === 'pending' ? <Clock className="w-4 h-4" /> : <ArrowDownLeft className="w-4 h-4" />}
                           </div>
@@ -278,7 +266,7 @@ export default function DashboardPage() {
                               {format(new Date(txn.createdAt), 'MMM dd, yyyy')} • 
                               <span className={cn(
                                 "capitalize font-medium",
-                                txn.status === 'pending' ? "text-amber-600" : "text-emerald-600"
+                                txn.status === 'pending' ? "text-red-600" : "text-emerald-600"
                               )}>
                                 {txn.status}
                               </span>
@@ -288,12 +276,12 @@ export default function DashboardPage() {
                         <div className="text-right flex flex-col items-end">
                           <p className={cn(
                             "font-black text-sm md:text-base",
-                            txn.status === 'pending' ? "text-muted-foreground" : "text-foreground"
+                            txn.status === 'pending' ? "text-red-600" : "text-emerald-600"
                           )}>
                             {txn.toAccountId === (checkingAccount?.id ?? 0) ? '+' : '-'}${Number(txn.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </p>
                           {txn.status === 'pending' && (
-                            <span className="text-[8px] uppercase tracking-tighter font-black text-amber-600/70">Awaiting Verification</span>
+                            <span className="text-[8px] uppercase tracking-tighter font-black text-red-600/70">Awaiting Verification</span>
                           )}
                         </div>
                       </motion.div>
@@ -318,6 +306,54 @@ export default function DashboardPage() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Transaction Detail Dialog */}
+          <Dialog open={!!selectedTxn} onOpenChange={(open) => !open && setSelectedTxn(null)}>
+            <DialogContent className="sm:max-w-md border-primary/20 bg-zinc-950 text-white">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Info className="w-5 h-5 text-primary" />
+                  Transaction Details
+                </DialogTitle>
+                <DialogDescription className="text-zinc-400">
+                  Ref: TXN-{selectedTxn?.id}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="flex justify-between items-center py-2 border-b border-white/5">
+                  <span className="text-zinc-400 text-sm">Description</span>
+                  <span className="font-bold">{selectedTxn?.description}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-white/5">
+                  <span className="text-zinc-400 text-sm">Amount</span>
+                  <span className={cn("font-black text-lg", selectedTxn?.status === 'pending' ? "text-red-500" : "text-emerald-500")}>
+                    ${Number(selectedTxn?.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-white/5">
+                  <span className="text-zinc-400 text-sm">Status</span>
+                  <Badge variant={selectedTxn?.status === 'completed' ? 'default' : 'destructive'} className="capitalize">
+                    {selectedTxn?.status}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-white/5">
+                  <span className="text-zinc-400 text-sm">Date</span>
+                  <span className="font-medium">{selectedTxn?.createdAt && format(new Date(selectedTxn.createdAt), 'MMMM dd, yyyy HH:mm')}</span>
+                </div>
+                {selectedTxn?.status === 'pending' && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <p className="text-[10px] text-red-400 uppercase tracking-widest font-black mb-1">Security Notice</p>
+                    <p className="text-xs text-zinc-300 leading-relaxed">
+                      This transaction is currently undergoing institutional verification and will remain PENDING until final settlement in June 2026.
+                    </p>
+                  </div>
+                )}
+              </div>
+              <Button onClick={() => setSelectedTxn(null)} className="w-full bg-primary hover:bg-primary/90 text-white font-bold rounded-xl h-11">
+                Close
+              </Button>
+            </DialogContent>
+          </Dialog>
 
           <Card className="border-border/50 shadow-sm hover-elevate">
             <CardHeader className="p-2 md:p-3">
