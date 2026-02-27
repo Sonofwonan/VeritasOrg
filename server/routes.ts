@@ -283,7 +283,12 @@ export async function registerRoutes(
     try {
       console.log('Account creation request body:', JSON.stringify(req.body, null, 2));
       const input = api.accounts.create.input.parse(req.body);
-      const account = await storage.createAccount({ ...input, userId: (req.user as User).id });
+      const account = await storage.createAccount({
+        userId: (req.user as User).id,
+        accountType: input.accountType,
+        balance: input.balance,
+        isDemo: input.isDemo ?? false,
+      });
       
       // Generate default history for any newly created account too
       await generateHistoricalTransactions(account.id);

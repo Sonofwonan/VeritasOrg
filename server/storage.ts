@@ -88,9 +88,9 @@ export class DatabaseStorage implements IStorage {
 
   async createAccount(insertAccount: any): Promise<Account> {
     const [account] = await db.insert(accounts).values({
-      userId: insertAccount.userId!,
-      accountType: insertAccount.accountType || insertAccount.account_type,
-      balance: insertAccount.balance || "0",
+      userId: insertAccount.userId,
+      accountType: insertAccount.accountType,
+      balance: String(insertAccount.balance || "0"),
       isDemo: insertAccount.isDemo ?? true,
     }).returning();
     return account;
