@@ -16,7 +16,22 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState } from "react";
 
-// ... CHART_DATA and ALLOCATION_DATA ...
+// Mock data for the dashboard
+const CHART_DATA = [
+  { name: 'Jan', value: 4000 },
+  { name: 'Feb', value: 3000 },
+  { name: 'Mar', value: 2000 },
+  { name: 'Apr', value: 2780 },
+  { name: 'May', value: 1890 },
+  { name: 'Jun', value: 2390 },
+];
+
+const ALLOCATION_DATA = [
+  { name: 'Stocks', value: 45, color: 'hsl(var(--primary))' },
+  { name: 'Bonds', value: 25, color: 'hsl(215, 20%, 65%)' },
+  { name: 'Real Estate', value: 15, color: 'hsl(142, 70%, 45%)' },
+  { name: 'Cash', value: 15, color: 'hsl(30, 80%, 55%)' },
+];
 
 export default function DashboardPage() {
   const { user } = useAuth();
