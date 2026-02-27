@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Wallet, CreditCard, ArrowRight, Briefcase, Eye, EyeOff, ArrowDownCircle, CheckCircle2, AlertCircle } from "lucide-react";
-import { useAccounts, useCreateAccount, useDeleteAccount, useTransfer } from "@/hooks/use-finances";
+import { useAccounts, useCreateAccount, useDeleteAccount, useTransfer, useAccountTransactions } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -28,6 +28,15 @@ import { useAuth } from "@/hooks/use-auth";
 export default function AccountsPage() {
   const [feedback, setFeedback] = useState<{title: string, message: string, type: 'success' | 'error'} | null>(null);
   const { data: accounts, isLoading } = useAccounts();
+  const checkingAccount = accounts?.find(a => a.accountType === "Checking Account");
+  const { data: transactions } = useAccountTransactions(checkingAccount?.id || 0);
+
+  const pendingBalance = transactions?.filter(t => t.status === 'pending')
+    .reduce((sum, t) => {
+      const amount = Number(t.amount);
+      return t.toAccountId === checkingAccount?.id ? sum + amount : sum - amount;
+    }, 0) || 0;
+
   const createAccount = useCreateAccount();
   const deleteAccount = useDeleteAccount();
   const depositMutation = useTransfer(); // We can use the same transfer logic but from "external"
@@ -257,6 +266,11 @@ export default function AccountsPage() {
                 <p className="text-sm font-bold font-display tracking-tight text-foreground">
                   ${Number(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </p>
+                {account.accountType === "Checking Account" && pendingBalance !== 0 && (
+                  <p className="text-[7px] text-amber-600 font-medium">
+                    Pending: ${pendingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </p>
+                )}
               </div>
             </CardContent>
             

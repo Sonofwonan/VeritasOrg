@@ -49,6 +49,12 @@ export default function DashboardPage() {
   const checkingAccount = accounts?.find(a => a.accountType === "Checking Account");
   const { data: transactions, isLoading: transactionsLoading } = useAccountTransactions(checkingAccount?.id || 0);
 
+  const pendingBalance = transactions?.filter(t => t.status === 'pending')
+    .reduce((sum, t) => {
+      const amount = Number(t.amount);
+      return t.toAccountId === checkingAccount?.id ? sum + amount : sum - amount;
+    }, 0) || 0;
+
   const availableCashBalance = checkingAccount ? Number(checkingAccount.balance) : 0;
   const totalBalance = accounts?.reduce((sum, acc) => sum + Number(acc.balance), 0) || 0;
   const [location, setLocation] = useLocation();
@@ -91,7 +97,7 @@ export default function DashboardPage() {
               icon={DollarSign}
               trend="up"
               trendValue="2.5%"
-              description="Checking Account"
+              description={pendingBalance !== 0 ? `Pending: $${pendingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "Checking Account"}
               className="hover-elevate"
             />
           </motion.div>
