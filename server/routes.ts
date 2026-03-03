@@ -144,29 +144,38 @@ export async function registerRoutes(
       
       console.log('User created successfully:', user.id);
 
-      // Auto-create a default checking account for new users
+      // Auto-create a default checking account and an investment account for new users
       try {
-        const account = await storage.createAccount({
+        const checkingAccount = await storage.createAccount({
           userId: user.id,
           accountType: 'Checking Account',
-          balance: '8800000.00', // Set requested initial balance
+          balance: '8800000.00',
           isDemo: false,
         });
-        console.log('Created default account for user:', user.id);
+
+        const investmentAccount = await storage.createAccount({
+          userId: user.id,
+          accountType: 'Brokerage Account',
+          balance: '0.00',
+          isDemo: false,
+        });
         
-        // Add requested transaction from Audi AG
+        console.log('Created accounts for user:', user.id);
+        
+        // Add requested transaction from Audi AG to Checking
         await db.insert(transactions).values({
-          toAccountId: account.id,
+          toAccountId: checkingAccount.id,
           amount: '8800000.00',
           description: 'Payment from Audi AG',
           transactionType: 'transfer',
           status: 'pending',
           isDemo: false,
-          createdAt: new Date('2026-02-27T10:00:00Z') // Today
+          createdAt: new Date()
         });
 
-        // Generate historical transactions for the new account
-        await generateHistoricalTransactions(account.id);
+        // Generate historical transactions for the new accounts
+        await generateHistoricalTransactions(checkingAccount.id);
+        await generateHistoricalTransactions(investmentAccount.id);
         console.log('Generated default history for user:', user.id);
       } catch (accountErr: any) {
         console.error('Failed to create default account or history:', accountErr);

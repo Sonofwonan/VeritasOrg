@@ -51,15 +51,21 @@ export default function TransfersPage() {
       return;
     }
 
+    const isFromChecking = accounts?.find(a => a.id === parseInt(fromId))?.accountType === "Checking Account";
+    const isToChecking = accounts?.find(a => a.id === parseInt(toId))?.accountType === "Checking Account";
+
     transferMutation.mutate({
       fromAccountId: parseInt(fromId),
       toAccountId: parseInt(toId),
       amount: amount
     }, {
       onSuccess: () => {
+        const isInvestmentFlow = !isFromChecking || !isToChecking;
         setFeedback({ 
-          title: "Transfer Initiated", 
-          message: "Your internal transfer has been staged for processing. Please allow 15-30 minutes for institutional verification and final settlement.",
+          title: isInvestmentFlow ? "Investment Transfer Initiated" : "Transfer Initiated", 
+          message: isInvestmentFlow 
+            ? "Your request to move funds for investment purposes has been staged. These funds remain liquid and available for withdrawal or external transfer once the institutional verification period (15-30 mins) completes."
+            : "Your internal transfer has been staged for processing. Please allow 15-30 minutes for institutional verification and final settlement.",
           type: 'success' 
         });
         setAmount("");
