@@ -452,12 +452,12 @@ export default function TransfersPage() {
                 <div className="space-y-1">
                   <Label className="text-xs">From Account</Label>
                   <Select value={fromAccountForPayee} onValueChange={setFromAccountForPayee}>
-                    <SelectTrigger className="h-9 text-xs">
+                    <SelectTrigger className="h-9 text-xs" data-testid="select-from-account">
                       <SelectValue placeholder="Select Source Account" />
                     </SelectTrigger>
                     <SelectContent>
                       {accounts?.map((a: any) => (
-                        <SelectItem key={a.id} value={a.id.toString()}>
+                        <SelectItem key={a.id} value={a.id.toString()} data-testid={`select-item-account-${a.id}`}>
                           <div className="text-left">
                             <p className="font-medium">Account #{a.id}</p>
                             <p className="text-xs text-muted-foreground">${Number(a.balance).toFixed(2)}</p>
@@ -471,12 +471,12 @@ export default function TransfersPage() {
                 <div className="space-y-1">
                   <Label className="text-xs">Payee</Label>
                   <Select value={payeeId} onValueChange={setPayeeId}>
-                    <SelectTrigger className="h-9 text-xs">
+                    <SelectTrigger className="h-9 text-xs" data-testid="select-payee">
                       <SelectValue placeholder="Select Payee" />
                     </SelectTrigger>
                     <SelectContent>
                       {savedPayees?.map((payee: any) => (
-                        <SelectItem key={payee.id} value={payee.id.toString()}>
+                        <SelectItem key={payee.id} value={payee.id.toString()} data-testid={`select-item-payee-${payee.id}`}>
                           <div className="text-left">
                             <p className="font-medium">{payee.name}</p>
                             <p className="text-xs text-muted-foreground">{payee.bankName} - ****{payee.accountNumber?.slice(-4)}</p>
@@ -524,7 +524,11 @@ export default function TransfersPage() {
                               variant="ghost" 
                               size="sm"
                               className="text-primary hover:bg-primary/10"
-                              onClick={() => setPayeeId(payee.id.toString())}
+                              onClick={() => {
+                                setPayeeId(payee.id.toString());
+                                // Also ensure the tab is correct or user is scrolled to the form
+                                toast({ title: "Payee Selected", description: `${payee.name} selected for payment.` });
+                              }}
                             >
                               Select
                             </Button>
