@@ -83,7 +83,7 @@ export default function DashboardPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div className="flex flex-col gap-0.5">
             <h1 className="text-xl md:text-2xl font-bold tracking-tight">
-              {getGreeting()}, {user?.name}
+              {getGreeting()}, {user?.name?.split(' ')[0]}
             </h1>
             <p className="text-muted-foreground text-xs md:text-sm">Your financial health at a glance.</p>
           </div>
