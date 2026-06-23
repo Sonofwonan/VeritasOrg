@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Users, ArrowLeftRight, Clock, TrendingUp, CheckCircle2,
   XCircle, ShieldCheck, LogOut, Wallet, Eye, EyeOff,
-  RefreshCw, DollarSign, Activity
+  RefreshCw, DollarSign, Activity, FileText, ChevronDown, ChevronUp
 } from "lucide-react";
 
 const SESSION_KEY = "vw_admin_key";
@@ -149,6 +149,89 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+// ─── Application Card ──────────────────────────────────────────────────────────
+function ApplicationCard({ app, onApprove, onReject, isPending }: {
+  app: any; onApprove: (id: number) => void; onReject: (id: number) => void; isPending: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const statusColors: Record<string, string> = {
+    pending: "bg-amber-400/10 text-amber-400 border-amber-400/20",
+    approved: "bg-emerald-400/10 text-emerald-400 border-emerald-400/20",
+    rejected: "bg-red-400/10 text-red-400 border-red-400/20",
+  };
+
+  return (
+    <div className="rounded-xl bg-slate-700/30 border border-slate-600/50 overflow-hidden" data-testid={`app-card-${app.id}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-white font-semibold">{app.fullName}</span>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${statusColors[app.status] || "bg-slate-400/10 text-slate-400 border-slate-400/20"}`}>
+              {app.status}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-3 mt-1 text-xs text-slate-400">
+            <span>{app.email}</span>
+            <span className="text-slate-600">•</span>
+            <span>{app.phone}</span>
+            <span className="text-slate-600">•</span>
+            <span>{new Date(app.createdAt).toLocaleDateString()}</span>
+          </div>
+          {app.notes && (
+            <p className="mt-1 text-xs text-slate-400 italic">Note: {app.notes}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button size="sm" variant="ghost" onClick={() => setExpanded(v => !v)} className="text-slate-400 hover:text-white gap-1">
+            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            Details
+          </Button>
+          {app.status === "pending" && (
+            <>
+              <Button size="sm" disabled={isPending} onClick={() => onApprove(app.id)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1" data-testid={`button-approve-app-${app.id}`}>
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Approve
+              </Button>
+              <Button size="sm" variant="outline" disabled={isPending} onClick={() => onReject(app.id)}
+                className="border-red-500/40 text-red-400 hover:bg-red-500/10 gap-1" data-testid={`button-reject-app-${app.id}`}>
+                <XCircle className="w-3.5 h-3.5" />
+                Reject
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="border-t border-slate-600/50 p-4 bg-slate-800/30">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3 text-xs">
+            {[
+              ["Date of Birth", app.dateOfBirth],
+              ["Nationality", app.nationality],
+              ["Address", app.address],
+              ["City", app.city],
+              ["Country", app.country],
+              ["Employment", app.employmentStatus],
+              ["Annual Income", app.annualIncome],
+              ["Inv. Experience", app.investmentExperience],
+              ["Risk Tolerance", app.riskTolerance],
+              ["Investment Goal", app.investmentGoal],
+              ["Initial Deposit", app.initialDeposit],
+              ["Source of Funds", app.sourceOfFunds],
+            ].map(([label, value]) => value && (
+              <div key={label}>
+                <span className="text-slate-500 uppercase tracking-wide">{label}</span>
+                <p className="text-slate-200 font-medium capitalize mt-0.5">{String(value).replace(/-/g, " ")}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: () => void }) {
   const { toast } = useToast();
@@ -201,6 +284,38 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
     onError: () => toast({ title: "Error", description: "Failed to reject transaction", variant: "destructive" }),
   });
 
+  const { data: allApplications = [], isLoading: appsLoading, refetch: refetchApps } = useQuery({
+    queryKey: ["/api/admin/applications"],
+    queryFn: () => adminGet("/api/admin/applications"),
+    refetchInterval: 30000,
+  });
+
+  const approveAppMutation = useMutation({
+    mutationFn: ({ id, notes }: { id: number; notes?: string }) =>
+      adminFetch(`/api/admin/applications/${id}/approve`, adminKey, {
+        method: "POST", body: JSON.stringify({ notes }),
+      }).then(r => r.json()),
+    onSuccess: (data) => {
+      toast({ title: "Application Approved ✓", description: `Client ID: ${data.userId} — ${data.userName}` });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message || "Failed to approve", variant: "destructive" }),
+  });
+
+  const rejectAppMutation = useMutation({
+    mutationFn: ({ id, notes }: { id: number; notes?: string }) =>
+      adminFetch(`/api/admin/applications/${id}/reject`, adminKey, {
+        method: "POST", body: JSON.stringify({ notes }),
+      }).then(r => r.json()),
+    onSuccess: () => {
+      toast({ title: "Application Rejected", description: "Applicant notified." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/applications"] });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to reject application", variant: "destructive" }),
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
@@ -242,10 +357,19 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="pending">
-          <TabsList className="bg-slate-800 border border-slate-700">
+        <Tabs defaultValue="applications">
+          <TabsList className="bg-slate-800 border border-slate-700 flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="applications" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
+              <FileText className="w-3.5 h-3.5 mr-1.5" />
+              Applications
+              {(allApplications as any[]).filter((a: any) => a.status === "pending").length > 0 && (
+                <span className="ml-2 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {(allApplications as any[]).filter((a: any) => a.status === "pending").length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="pending" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
-              Pending Approvals
+              Pending Txns
               {(pendingTxns as any[]).length > 0 && (
                 <span className="ml-2 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {(pendingTxns as any[]).length}
@@ -259,6 +383,46 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
               Users
             </TabsTrigger>
           </TabsList>
+
+          {/* ── Client Applications ── */}
+          <TabsContent value="applications" className="mt-4">
+            <Card className="bg-slate-800/40 border-slate-700">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white text-base flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" />
+                  Account Applications
+                  <Button size="sm" variant="ghost" onClick={() => refetchApps()} className="ml-auto text-slate-400 hover:text-white">
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {appsLoading ? (
+                  <div className="flex items-center justify-center py-12 text-slate-400">
+                    <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Loading…
+                  </div>
+                ) : (allApplications as any[]).length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400">No applications yet</p>
+                    <p className="text-slate-500 text-sm mt-1">New applications will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(allApplications as any[]).map((app: any) => (
+                      <ApplicationCard
+                        key={app.id}
+                        app={app}
+                        onApprove={(id) => approveAppMutation.mutate({ id })}
+                        onReject={(id) => rejectAppMutation.mutate({ id })}
+                        isPending={approveAppMutation.isPending || rejectAppMutation.isPending}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* ── Pending Approvals ── */}
           <TabsContent value="pending" className="mt-4">

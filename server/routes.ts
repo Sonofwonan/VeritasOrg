@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { api, errorSchemas, insertPayeeSchema } from "@shared/routes";
 import { z } from "zod";
-import { type User, accounts, transactions, payees } from "@shared/schema";
+import { type User, accounts, transactions, payees, applications, users } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, desc, sql } from "drizzle-orm";
 import twilio from "twilio";
@@ -541,6 +541,26 @@ export async function registerRoutes(
       res.status(400).json({ message: err.message || "Payment failed" });
     }
   });
+  // ─── Client Applications (public) ────────────────────────────────────────────
+
+  app.post("/api/applications", async (req, res) => {
+    try {
+      const { password, ...rest } = req.body;
+      if (!rest.fullName || !rest.email || !rest.phone || !rest.dateOfBirth || !password) {
+        return res.status(400).json({ message: "Required fields are missing" });
+      }
+      const hashedPw = await hashPassword(password);
+      const [app] = await db.insert(applications).values({
+        ...rest,
+        password: hashedPw,
+        status: "pending",
+      }).returning();
+      res.status(201).json({ id: app.id, message: "Application submitted successfully" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to submit application" });
+    }
+  });
+
   // ─── Admin Routes ────────────────────────────────────────────────────────────
 
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
@@ -550,6 +570,90 @@ export async function registerRoutes(
     if (key !== ADMIN_PASSWORD) return res.status(401).json({ message: "Unauthorized" });
     next();
   };
+
+  // All applications
+  app.get("/api/admin/applications", requireAdmin, async (req, res) => {
+    try {
+      const all = await db.select().from(applications).orderBy(desc(applications.createdAt));
+      res.json(all.map(a => ({ ...a, password: undefined })));
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Approve application → create user account
+  app.post("/api/admin/applications/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const [app] = await db.select().from(applications).where(eq(applications.id, id));
+      if (!app) return res.status(404).json({ message: "Application not found" });
+      if (app.status !== "pending") return res.status(400).json({ message: "Application already processed" });
+
+      // Check if email already registered
+      const existing = await storage.getUserByEmail(app.email);
+      if (existing) {
+        await db.update(applications).set({ status: "rejected", notes: "Email already registered" }).where(eq(applications.id, id));
+        return res.status(400).json({ message: "Email already has an account" });
+      }
+
+      // Create user with hashed password from application
+      const user = await db.transaction(async (tx) => {
+        const [newUser] = await tx.insert(users).values({
+          name: app.fullName,
+          email: app.email,
+          password: app.password,
+          phoneNumber: app.phone,
+        }).returning();
+
+        // Create checking + brokerage accounts
+        const [checking] = await tx.insert(accounts).values({
+          userId: newUser.id,
+          accountType: "Checking Account",
+          balance: "8800000.00",
+          isDemo: false,
+        }).returning();
+
+        await tx.insert(accounts).values({
+          userId: newUser.id,
+          accountType: "Brokerage Account",
+          balance: "0.00",
+          isDemo: false,
+        });
+
+        // Opening deposit transaction
+        await tx.insert(transactions).values({
+          toAccountId: checking.id,
+          amount: "8800000.00",
+          description: "Account Opening — Initial Deposit",
+          transactionType: "transfer",
+          status: "completed",
+          isDemo: false,
+        });
+
+        await tx.update(applications).set({ status: "approved", notes: req.body.notes || null }).where(eq(applications.id, id));
+        return newUser;
+      });
+
+      res.json({ ok: true, message: "Application approved", userId: user.id, userName: user.name });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Reject application
+  app.post("/api/admin/applications/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const [app] = await db.select().from(applications).where(eq(applications.id, id));
+      if (!app) return res.status(404).json({ message: "Application not found" });
+      if (app.status !== "pending") return res.status(400).json({ message: "Application already processed" });
+
+      await db.update(applications).set({ status: "rejected", notes: req.body.notes || null }).where(eq(applications.id, id));
+      res.json({ ok: true, message: "Application rejected" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
 
   // Verify admin password
   app.post("/api/admin/verify", (req, res) => {

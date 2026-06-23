@@ -128,6 +128,33 @@ export const investmentsRelations = relations(investments, ({ one }) => ({
   }),
 }));
 
+export const applications = pgTable("applications", {
+  id: serial("id").primaryKey(),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  dateOfBirth: text("date_of_birth").notNull(),
+  nationality: text("nationality"),
+  address: text("address"),
+  city: text("city"),
+  country: text("country"),
+  employmentStatus: text("employment_status"),
+  annualIncome: text("annual_income"),
+  investmentExperience: text("investment_experience"),
+  riskTolerance: text("risk_tolerance"),
+  investmentGoal: text("investment_goal"),
+  initialDeposit: text("initial_deposit"),
+  sourceOfFunds: text("source_of_funds"),
+  password: text("password").notNull(),
+  status: text("status").notNull().default("pending"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Application = typeof applications.$inferSelect;
+export const insertApplicationSchema = createInsertSchema(applications).omit({ id: true, createdAt: true, status: true, notes: true });
+export type InsertApplication = z.infer<typeof insertApplicationSchema>;
+
 export const insertUserSchema = createInsertSchema(users, {
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
