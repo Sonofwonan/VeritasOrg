@@ -8,7 +8,6 @@ import { Loader2, Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2 } from "lucid
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 
-// ── Schemas ─────────────────────────────────────────────────────────────────
 const loginSchema = z.object({
   userId: z.string().min(1, "Client ID is required").refine(v => !isNaN(parseInt(v, 10)), "Must be numeric"),
   password: z.string().min(1, "Password required"),
@@ -32,11 +31,10 @@ const appSchema = z.object({
   sourceOfFunds: z.string().min(1, "Required"),
   password: z.string().min(8, "Min 8 characters"),
   confirmPassword: z.string(),
-}).refine(d => d.password === d.confirmPassword, { message: "Passwords don't match", path: ["confirmPassword"] });
+}).refine(d => d.password === d.confirmPassword, { message: "Passwords do not match", path: ["confirmPassword"] });
 
 type AppData = z.infer<typeof appSchema>;
 
-// ── Shared input helpers ─────────────────────────────────────────────────────
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
@@ -67,14 +65,13 @@ function SelectInput({ reg, options }: { reg: any; options: { v: string; l: stri
       {...reg}
       className="vw-input text-foreground appearance-none cursor-pointer"
     >
-      <option value="">Select…</option>
+      <option value="">Select one</option>
       {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
     </select>
   );
 }
 
-// ── Application Form (4 steps) ───────────────────────────────────────────────
-const STEPS = ["Personal", "Address & Work", "Investment Profile", "Security"];
+const STEPS = ["About you", "Where you live", "How you invest", "Your password"];
 
 function ApplicationForm({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState(0);
@@ -113,7 +110,7 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
       return res.json();
     },
     onSuccess: () => setDone(true),
-    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Something went wrong", description: e.message, variant: "destructive" }),
   });
 
   const next = async () => {
@@ -128,9 +125,9 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
           <CheckCircle2 className="w-7 h-7 text-primary" />
         </div>
         <div className="space-y-2 max-w-sm mx-auto">
-          <h3 className="font-serif text-2xl">Application received</h3>
+          <h3 className="font-serif text-2xl">We have your application</h3>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Your application is under review. You'll receive your Client ID and onboarding details within 1–2 business days.
+            Someone from our team will review it and reach out within one to two business days with your Client ID and next steps.
           </p>
         </div>
         <button onClick={onBack} className="label-caps text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 mx-auto">
@@ -161,10 +158,10 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
 
       <form onSubmit={handleSubmit(data => mutation.mutate(data))} className="space-y-6">
 
-        {/* Step 0 — Personal Info */}
+        {/* Step 0 */}
         {step === 0 && (
           <div className="space-y-6">
-            <p className="font-serif text-xl">Tell us about yourself</p>
+            <p className="font-serif text-xl">Tell us a bit about yourself</p>
             <Field label="Full legal name" error={errors.fullName?.message}>
               <TextInput reg={register("fullName")} placeholder="As it appears on your ID" autoComplete="name" />
             </Field>
@@ -185,10 +182,10 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
           </div>
         )}
 
-        {/* Step 1 — Address & Employment */}
+        {/* Step 1 */}
         {step === 1 && (
           <div className="space-y-6">
-            <p className="font-serif text-xl">Address & employment</p>
+            <p className="font-serif text-xl">Where are you based?</p>
             <Field label="Street address" error={errors.address?.message}>
               <TextInput reg={register("address")} placeholder="123 Main Street" autoComplete="street-address" />
             </Field>
@@ -202,8 +199,8 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
             </div>
             <Field label="Employment status" error={errors.employmentStatus?.message}>
               <SelectInput reg={register("employmentStatus")} options={[
-                { v: "employed", l: "Employed — full time" },
-                { v: "self-employed", l: "Self-employed / business owner" },
+                { v: "employed", l: "Employed full time" },
+                { v: "self-employed", l: "Self employed or business owner" },
                 { v: "retired", l: "Retired" },
                 { v: "unemployed", l: "Not currently employed" },
                 { v: "student", l: "Student" },
@@ -211,62 +208,60 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
             </Field>
             <Field label="Annual income (USD)" error={errors.annualIncome?.message}>
               <SelectInput reg={register("annualIncome")} options={[
-                { v: "under-50k", l: "Under $50,000" },
-                { v: "50k-100k", l: "$50,000 – $100,000" },
-                { v: "100k-250k", l: "$100,000 – $250,000" },
-                { v: "250k-500k", l: "$250,000 – $500,000" },
-                { v: "500k-1m", l: "$500,000 – $1,000,000" },
-                { v: "over-1m", l: "Over $1,000,000" },
+                { v: "under-50m", l: "Under $50,000,000" },
+                { v: "50m-100m", l: "$50,000,000 to $100,000,000" },
+                { v: "100m-500m", l: "$100,000,000 to $500,000,000" },
+                { v: "500m-1b", l: "$500,000,000 to $1,000,000,000" },
+                { v: "over-1b", l: "Over $1,000,000,000" },
               ]} />
             </Field>
           </div>
         )}
 
-        {/* Step 2 — Investment Profile */}
+        {/* Step 2 */}
         {step === 2 && (
           <div className="space-y-6">
-            <p className="font-serif text-xl">Your investment profile</p>
+            <p className="font-serif text-xl">How do you like to invest?</p>
             <div className="grid grid-cols-2 gap-x-8 gap-y-6">
               <Field label="Investment experience" error={errors.investmentExperience?.message}>
                 <SelectInput reg={register("investmentExperience")} options={[
-                  { v: "none", l: "None — brand new to investing" },
-                  { v: "beginner", l: "Beginner — basic familiarity" },
-                  { v: "intermediate", l: "Intermediate — some history" },
-                  { v: "experienced", l: "Experienced — active management" },
-                  { v: "professional", l: "Professional — industry background" },
+                  { v: "none", l: "Brand new to investing" },
+                  { v: "beginner", l: "Basic familiarity" },
+                  { v: "intermediate", l: "Some portfolio experience" },
+                  { v: "experienced", l: "Actively managed portfolios" },
+                  { v: "professional", l: "Financial industry background" },
                 ]} />
               </Field>
               <Field label="Risk tolerance" error={errors.riskTolerance?.message}>
                 <SelectInput reg={register("riskTolerance")} options={[
-                  { v: "conservative", l: "Conservative — preserve capital" },
-                  { v: "moderate", l: "Moderate — balanced approach" },
-                  { v: "aggressive", l: "Aggressive — maximum growth" },
+                  { v: "conservative", l: "Conservative, preserve capital" },
+                  { v: "moderate", l: "Moderate, balanced approach" },
+                  { v: "aggressive", l: "Aggressive, maximum growth" },
                 ]} />
               </Field>
               <Field label="Primary investment goal" error={errors.investmentGoal?.message}>
                 <SelectInput reg={register("investmentGoal")} options={[
                   { v: "retirement", l: "Retirement planning" },
-                  { v: "growth", l: "Long-term capital growth" },
-                  { v: "income", l: "Income / dividends" },
+                  { v: "growth", l: "Long term capital growth" },
+                  { v: "income", l: "Income and dividends" },
                   { v: "preservation", l: "Capital preservation" },
                   { v: "education", l: "Education funding" },
-                  { v: "estate", l: "Estate / legacy planning" },
+                  { v: "estate", l: "Estate and legacy planning" },
                 ]} />
               </Field>
               <Field label="Anticipated initial deposit" error={errors.initialDeposit?.message}>
                 <SelectInput reg={register("initialDeposit")} options={[
-                  { v: "under-10k", l: "Under $10,000" },
-                  { v: "10k-50k", l: "$10,000 – $50,000" },
-                  { v: "50k-250k", l: "$50,000 – $250,000" },
-                  { v: "250k-1m", l: "$250,000 – $1,000,000" },
-                  { v: "over-1m", l: "Over $1,000,000" },
+                  { v: "500m-1b", l: "$500M to $1B" },
+                  { v: "1b-5b", l: "$1B to $5B" },
+                  { v: "5b-10b", l: "$5B to $10B" },
+                  { v: "over-10b", l: "Over $10B" },
                 ]} />
               </Field>
             </div>
             <Field label="Primary source of funds" error={errors.sourceOfFunds?.message}>
               <SelectInput reg={register("sourceOfFunds")} options={[
-                { v: "salary", l: "Employment / salary" },
-                { v: "business", l: "Business income" },
+                { v: "salary", l: "Employment or salary" },
+                { v: "business", l: "Business income or exit" },
                 { v: "inheritance", l: "Inheritance or gift" },
                 { v: "savings", l: "Personal savings" },
                 { v: "investment", l: "Investment returns" },
@@ -276,12 +271,12 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
           </div>
         )}
 
-        {/* Step 3 — Credentials */}
+        {/* Step 3 */}
         {step === 3 && (
           <div className="space-y-6">
-            <p className="font-serif text-xl">Create your login credentials</p>
-            <p className="text-muted-foreground text-sm leading-relaxed -mt-2">
-              These will be activated when your application is approved. Your Client ID will be assigned and sent separately.
+            <p className="font-serif text-xl">Choose a password for your account</p>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              This will be activated once your application is approved. Your Client ID will be assigned and sent to you separately.
             </p>
             <Field label="Password" error={errors.password?.message}>
               <div className="relative">
@@ -296,7 +291,7 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
               <TextInput reg={register("confirmPassword")} type="password" autoComplete="new-password" />
             </Field>
             <div className="pt-2 text-xs text-muted-foreground border-t border-border space-y-1.5 leading-relaxed">
-              <p>By submitting, you confirm that all information provided is accurate and complete, and that you are the beneficial owner of the funds to be invested. You agree to Veritas Wealth's Terms of Service and Privacy Policy.</p>
+              <p>By submitting this form you confirm that everything you have provided is accurate and that you are the beneficial owner of the assets to be invested. You agree to our Terms of Service and Privacy Policy.</p>
             </div>
           </div>
         )}
@@ -318,8 +313,7 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
               onClick={next}
               className="label-caps text-primary hover:text-primary/80 flex items-center gap-1.5 transition-colors"
             >
-              Continue
-              <ArrowRight className="w-3 h-3" />
+              Continue <ArrowRight className="w-3 h-3" />
             </button>
           ) : (
             <button
@@ -337,7 +331,6 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
   );
 }
 
-// ── Main Auth Page ────────────────────────────────────────────────────────────
 export default function AuthPage() {
   const { login, user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
@@ -348,7 +341,7 @@ export default function AuthPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: { userId: "", password: "" },
@@ -368,16 +361,15 @@ export default function AuthPage() {
 
   const onLogin = handleSubmit(data => {
     login.mutate({ userId: data.userId, password: data.password } as any, {
-      onError: () => toast({ title: "Login failed", description: "Invalid Client ID or password.", variant: "destructive" }),
+      onError: () => toast({ title: "Could not sign you in", description: "Please check your Client ID and password and try again.", variant: "destructive" }),
     });
   });
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
 
-      {/* ── Left panel — brand ──────────────────────────────────────────── */}
+      {/* Left panel */}
       <div className="hidden lg:flex lg:w-[42%] xl:w-[38%] shrink-0 flex-col justify-between p-12 xl:p-16 bg-primary text-primary-foreground relative overflow-hidden">
-        {/* Subtle texture overlay */}
         <div className="absolute inset-0 opacity-[0.04]"
           style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}
         />
@@ -396,17 +388,16 @@ export default function AuthPage() {
               <em>precision</em> and care.
             </h1>
             <p className="text-primary-foreground/60 text-sm leading-relaxed">
-              Institutional-grade portfolio management for ultra-high-net-worth individuals and families with $500M or more in investable assets.
+              We work with ultra high net worth individuals and families who have $500M or more to invest. Real people, real relationships, no templates.
             </p>
           </div>
         </div>
 
-        {/* Bottom stats */}
         <div className="relative z-10 pt-10 border-t border-primary-foreground/10 grid grid-cols-2 gap-6">
           {[
             { v: "$4.2B", l: "Assets managed" },
-            { v: "12.4%", l: "10-yr avg return" },
-            { v: "0.32%", l: "Avg all-in fee" },
+            { v: "12.4%", l: "10 yr avg return" },
+            { v: "0.32%", l: "Avg all in fee" },
             { v: "50K+", l: "Client accounts" },
           ].map(s => (
             <div key={s.l}>
@@ -417,7 +408,7 @@ export default function AuthPage() {
         </div>
       </div>
 
-      {/* ── Right panel — form ──────────────────────────────────────────── */}
+      {/* Right panel */}
       <div className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 py-16 overflow-y-auto">
         <div className="w-full max-w-md mx-auto">
 
@@ -481,7 +472,7 @@ export default function AuthPage() {
                 <p className="label-caps text-muted-foreground mb-3">Account application</p>
                 <h2 className="font-serif text-display-md">Apply for<br />membership.</h2>
                 <p className="text-muted-foreground text-sm mt-3 leading-relaxed">
-                  Complete all four sections. Your dedicated advisor will review and contact you within one business day.
+                  Fill in all four sections and your dedicated advisor will be in touch within one business day.
                 </p>
               </div>
               <ApplicationForm onBack={() => setView("login")} />

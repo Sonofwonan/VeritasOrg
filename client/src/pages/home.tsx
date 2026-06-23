@@ -9,48 +9,45 @@ const TICKER_ITEMS = [
   { symbol: "DOW JONES", value: "42,613.52", change: "+0.31%", up: true },
   { symbol: "GOLD", value: "$2,341.40", change: "-0.12%", up: false },
   { symbol: "CRUDE OIL", value: "$78.20", change: "+0.56%", up: true },
-  { symbol: "10-YR TREASURY", value: "4.28%", change: "-0.04", up: false },
+  { symbol: "10 YR TREASURY", value: "4.28%", change: "-0.04", up: false },
   { symbol: "EUR/USD", value: "1.0842", change: "+0.23%", up: true },
   { symbol: "BITCOIN", value: "$67,420", change: "+2.14%", up: true },
 ];
 
-// ─── Who we serve ────────────────────────────────────────────────────────────
 const SEGMENTS = [
   {
-    label: "Individuals & families",
-    summary: "Discretionary portfolio management for ultra-high-net-worth individuals seeking long-term capital growth and preservation.",
+    label: "Individuals and families",
+    summary: "We manage portfolios for ultra high net worth individuals who want their money working harder than they are, without the complexity.",
     cta: "Begin your application",
     min: "Min. $500M",
   },
   {
     label: "Business owners",
-    summary: "Liquidity event planning, concentrated equity management, and bespoke executive deferred compensation strategies.",
+    summary: "Selling a business is one of the most significant financial moments of your life. We help you plan what happens next.",
     cta: "Talk to an advisor",
     min: "Min. $1B",
   },
   {
-    label: "Institutions & endowments",
-    summary: "Fiduciary investment management for sovereign funds, endowments, and large-scale defined benefit pension assets.",
+    label: "Institutions and endowments",
+    summary: "We serve sovereign funds, foundations and pension plans that need a fiduciary partner with genuine institutional depth.",
     cta: "Institutional inquiry",
     min: "Min. $5B",
   },
   {
-    label: "Multi-family offices",
-    summary: "Consolidated reporting, multi-generational governance, and direct co-investment access across all family branches.",
+    label: "Family offices",
+    summary: "When wealth spans generations and family branches, you need consolidated oversight and a team that thinks across all of it.",
     cta: "Family office services",
     min: "Min. $10B",
   },
 ];
 
-// ─── Principles ───────────────────────────────────────────────────────────────
 const PRINCIPLES = [
-  { n: "01", title: "Preservation first", body: "Capital you don't lose, you don't have to earn back. Every strategy begins with a robust drawdown limit before any return target is set." },
-  { n: "02", title: "Institutional access", body: "Your portfolio draws from the same instrument universe as sovereign wealth funds — private credit, co-investments, structured products." },
+  { n: "01", title: "Preservation first", body: "Capital you don't lose, you don't have to earn back. Before we ever talk about returns, we set a clear floor on how much you're willing to risk losing." },
+  { n: "02", title: "Institutional access", body: "Your portfolio draws from the same instruments as sovereign wealth funds. Private credit, direct co investments, structured products and more." },
   { n: "03", title: "Transparent pricing", body: "One simple annual fee. No commissions, no fund markups, no hidden spreads. You always know exactly what you pay and why." },
-  { n: "04", title: "Tax-sensitive execution", body: "Every trade is evaluated against its tax impact. We harvest losses systematically, optimise lot selection, and coordinate across accounts." },
+  { n: "04", title: "Tax aware execution", body: "Every trade is evaluated against its tax impact. We harvest losses systematically, choose optimal lot selection, and coordinate across all your accounts." },
 ];
 
-// ─── Client stories ───────────────────────────────────────────────────────────
 const STORIES = [
   {
     name: "Catherine Mercer",
@@ -58,47 +55,46 @@ const STORIES = [
     before: "$620M",
     after: "$2.8B",
     years: 7,
-    quote: "I finally felt like I had someone in my corner who understood both the numbers and the bigger picture of what I was building toward.",
+    quote: "I finally felt like I had someone genuinely in my corner. Someone who understood both the numbers and the bigger picture of what I was building.",
   },
   {
-    name: "James & Eleanor Thornton",
+    name: "James and Eleanor Thornton",
     background: "Business founders, Texas",
     before: "$1.4B",
     after: "$6.2B",
     years: 9,
-    quote: "The exit from our company could have been a financial minefield. Veritas guided us through every decision — tax, structure, reinvestment — without a misstep.",
+    quote: "Selling our company could have been a financial disaster. Veritas walked us through every decision on tax, structure and reinvestment. Not a single misstep.",
   },
   {
     name: "Dr. Marcus Lin",
-    background: "Surgeon & private equity partner, California",
+    background: "Surgeon and private equity partner, California",
     before: "$580M",
     after: "$2.3B",
     years: 6,
-    quote: "The portfolio discipline they apply is something I could never have done alone — and I say that as someone who reads financial statements for fun.",
+    quote: "The discipline they apply to a portfolio is something I could never have done on my own. And I say that as someone who reads financial statements for fun.",
   },
 ];
 
-// ─── Market insights ──────────────────────────────────────────────────────────
 const INSIGHTS = [
   {
     category: "Fixed income",
     date: "June 2025",
-    headline: "The case for extending duration in a late-cycle environment",
-    excerpt: "As the Fed signals a pivot, high-quality duration may once again deserve a meaningful place in balanced portfolios — but the sequencing matters more than investors realise.",
+    headline: "Why extending duration might actually make sense right now",
+    excerpt: "As the Fed signals a shift, high quality bonds may deserve a bigger seat at the table than they have in years. The sequencing matters more than most investors realise.",
     readTime: "6 min read",
   },
   {
     category: "Equity strategy",
     date: "May 2025",
-    headline: "Concentration risk is back — and most portfolios aren't ready",
-    excerpt: "With the top seven S&P 500 names representing over 31% of index weight, passive investors are carrying more single-factor risk than at any point since the dot-com era.",
+    headline: "Concentration risk is quietly building in most portfolios",
+    excerpt: "The top seven names in the S&P 500 now make up over 31% of index weight. If you hold passive funds, you may be taking on far more single factor risk than you know.",
     readTime: "8 min read",
   },
   {
     category: "Tax planning",
     date: "May 2025",
-    headline: "Roth conversion ladders: why 2025 may be the last optimal window",
-    excerpt: "The 2017 Tax Cuts and Jobs Act provisions are set to sunset in 2026. For high-income earners, the window for advantageous Roth conversions has rarely been narrower.",
+    headline: "2025 could be the last good year for Roth conversions",
+    excerpt: "The tax cuts from 2017 are set to expire in 2026. For high income earners, the window to lock in lower rates through Roth conversions has rarely been this wide.",
     readTime: "5 min read",
   },
 ];
@@ -123,7 +119,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-cream text-foreground">
 
-      {/* ── Navigation ──────────────────────────────────────────────────── */}
+      {/* Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-cream/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -155,7 +151,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      {/* Hero */}
       <section className="relative min-h-screen flex flex-col justify-end pt-16 overflow-hidden">
         <video
           ref={videoRef}
@@ -178,7 +174,7 @@ export default function HomePage() {
               grown.
             </h1>
             <p className="text-white/60 text-base sm:text-lg mt-6 max-w-md leading-relaxed">
-              Discretionary portfolio management for ultra-high-net-worth individuals, families, and institutions with $500M+ in investable assets.
+              We manage money for people with a lot of it. Families, founders and institutions with $500M or more who want a real partner, not just a platform.
             </p>
             <div className="flex flex-wrap items-center gap-4 mt-8">
               <button
@@ -200,7 +196,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Live market ticker ────────────────────────────────────────────── */}
+      {/* Live market ticker */}
       <div className="bg-[#0B2218] border-t border-white/5 py-3 overflow-hidden">
         <div className="ticker-track">
           {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
@@ -214,11 +210,11 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── Credibility strip ─────────────────────────────────────────────── */}
+      {/* Credibility strip */}
       <div className="bg-cream border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-5 flex flex-wrap items-center justify-between gap-4">
           <p className="font-serif text-base italic text-muted-foreground">
-            Veritas Wealth has been serving investors, families, and institutions for over <strong className="text-foreground not-italic font-medium">15 years</strong>.
+            Veritas Wealth has been serving investors, families and institutions for over <strong className="text-foreground not-italic font-medium">15 years</strong>.
           </p>
           <div className="flex items-center gap-8 text-[11px]">
             {["SEC Registered Investment Adviser", "SIPC Member", "Deloitte Audited Annually", "Fiduciary Standard"].map(b => (
@@ -230,7 +226,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── Who we serve ──────────────────────────────────────────────────── */}
+      {/* Who we serve */}
       <section className="bg-cream border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-28">
           <div className="mb-12">
@@ -241,7 +237,7 @@ export default function HomePage() {
                 <em>of your financial life.</em>
               </h2>
               <p className="hidden lg:block text-sm text-muted-foreground max-w-xs leading-relaxed text-right">
-                From first-generation wealth builders to multi-generational family offices — our approach is tailored, never templated.
+                Whether you built your wealth over decades or over a single transaction, we meet you where you are and plan for where you want to go.
               </p>
             </div>
           </div>
@@ -272,14 +268,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Our philosophy ────────────────────────────────────────────────── */}
+      {/* Philosophy */}
       <section className="bg-secondary/40 border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="grid lg:grid-cols-[1fr_1.2fr] gap-16 lg:gap-24 items-start">
             <div className="space-y-6">
               <p className="label-caps text-muted-foreground">Our philosophy</p>
               <blockquote className="font-serif leading-snug" style={{ fontSize: "clamp(1.6rem, 2.8vw, 2.4rem)" }}>
-                "Most wealth managers optimise for growth. We optimise for outcomes — the life you're trying to live."
+                "Most wealth managers optimize for growth. We optimize for outcomes. The life you actually want to live."
               </blockquote>
               <div className="pt-4 flex items-center gap-3">
                 <div className="w-8 h-px bg-border" />
@@ -307,24 +303,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Performance numbers ───────────────────────────────────────────── */}
+      {/* Performance */}
       <section className="bg-[#0B2218] text-primary-foreground border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-28">
           <div className="grid lg:grid-cols-[auto_1fr] gap-16 lg:gap-32 items-start">
             <div className="lg:max-w-xs space-y-4">
               <p className="label-caps text-white/30">Verified track record</p>
               <h2 className="font-serif text-white leading-tight" style={{ fontSize: "clamp(1.8rem, 3vw, 2.8rem)" }}>
-                Numbers that speak plainly.
+                Numbers that speak for themselves.
               </h2>
               <p className="text-white/50 text-sm leading-relaxed">
-                Performance figures are net of all fees, across diversified model portfolios, audited annually by Deloitte.
+                All performance figures are net of fees, across diversified model portfolios, and audited annually by Deloitte.
               </p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 divide-x divide-white/10">
               {[
                 { v: "$4.2B", l: "Assets under management", sub: "as of Q4 2024" },
-                { v: "12.4%", l: "Average 10-year return", sub: "annualised, net of fees" },
-                { v: "0.32%", l: "All-in annual fee", sub: "no hidden costs" },
+                { v: "12.4%", l: "Average 10 year return", sub: "annualised, net of fees" },
+                { v: "0.32%", l: "All in annual fee", sub: "no hidden costs" },
                 { v: "51K+", l: "Client accounts", sub: "across 38 countries" },
               ].map(s => (
                 <div key={s.l} className="px-6 sm:px-8 first:pl-0 space-y-2 py-2">
@@ -338,7 +334,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Client stories ────────────────────────────────────────────────── */}
+      {/* Client stories */}
       <section className="bg-cream border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="flex items-end justify-between mb-14">
@@ -350,7 +346,7 @@ export default function HomePage() {
               </h2>
             </div>
             <p className="hidden lg:block text-xs text-muted-foreground max-w-xs leading-relaxed text-right">
-              Names and details changed with consent. Returns are client-reported and independently verified.
+              Names and identifying details have been changed with consent. All returns have been independently verified.
             </p>
           </div>
 
@@ -375,7 +371,7 @@ export default function HomePage() {
                     <p className="label-caps text-muted-foreground mb-1">Started with</p>
                     <p className="font-mono-nums text-base">{s.before}</p>
                   </div>
-                  <div className="text-muted-foreground/30 self-center">→</div>
+                  <div className="text-muted-foreground/30 self-center">to</div>
                   <div>
                     <p className="label-caps text-muted-foreground mb-1">After {s.years} years</p>
                     <p className="font-mono-nums text-base font-medium text-primary">{s.after}</p>
@@ -387,7 +383,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Market insights ───────────────────────────────────────────────── */}
+      {/* Market insights */}
       <section className="bg-secondary/30 border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="flex items-end justify-between mb-12">
@@ -403,7 +399,7 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Featured article — large */}
+          {/* Featured article */}
           <div className="border border-border p-8 sm:p-10 mb-6 group hover:border-primary/30 transition-colors cursor-pointer">
             <div className="grid lg:grid-cols-[1fr_auto] gap-6 lg:gap-16 items-start">
               <div className="space-y-4 max-w-2xl">
@@ -449,7 +445,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── How it works ──────────────────────────────────────────────────── */}
+      {/* How it works */}
       <section className="bg-cream border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="space-y-14">
@@ -463,10 +459,10 @@ export default function HomePage() {
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border">
               {[
-                { n: "01", title: "Apply online", body: "Complete our brief application. We review every submission personally — no algorithm decides your eligibility." },
-                { n: "02", title: "Advisory call", body: "Your assigned advisor reviews your financial picture and proposes a tailored allocation strategy for your approval." },
-                { n: "03", title: "Fund your account", body: "Transfer funds via wire or ACH. Minimum opening balance is $500,000,000. No lock-up periods, ever." },
-                { n: "04", title: "Portfolio live", body: "Your portfolio is constructed and fully deployed within two trading days. Ongoing reporting begins immediately." },
+                { n: "01", title: "Apply online", body: "Complete our brief application. We read every one ourselves. No algorithm decides whether you're a fit." },
+                { n: "02", title: "Advisory call", body: "Your assigned advisor goes through your full financial picture with you and proposes a strategy for your sign off." },
+                { n: "03", title: "Fund your account", body: "Send funds via wire or ACH. Minimum opening balance is $500,000,000. No lock up periods ever." },
+                { n: "04", title: "Portfolio goes live", body: "We build and deploy your portfolio within two trading days. Your reporting dashboard is active from day one." },
               ].map(step => (
                 <div key={step.n} className="py-8 sm:py-0 sm:px-8 first:pl-0 last:pr-0 space-y-4">
                   <span className="font-mono-nums text-xs text-muted-foreground/40">{step.n}</span>
@@ -479,7 +475,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Final CTA ─────────────────────────────────────────────────────── */}
+      {/* Final CTA */}
       <section className="bg-primary text-primary-foreground">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -490,7 +486,7 @@ export default function HomePage() {
                 <em>serious stewardship.</em>
               </h2>
               <p className="text-primary-foreground/60 text-sm leading-relaxed max-w-sm">
-                Applications take under 15 minutes. Your advisor will contact you within one business day to discuss your goals and determine fit.
+                The application takes about 15 minutes. Your advisor will reach out within one business day to talk through your goals and see if we're the right fit for each other.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-start gap-4">
