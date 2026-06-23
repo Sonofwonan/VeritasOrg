@@ -8,6 +8,7 @@ import { type User, accounts, transactions, payees } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, desc, sql } from "drizzle-orm";
 import twilio from "twilio";
+import passport from "passport";
 
 // Twilio Notification Setup (SMS/WhatsApp)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -242,7 +243,7 @@ export async function registerRoutes(
             return res.status(200).json(user);
         });
     };
-    return require("passport").authenticate("local", nextAuth)(req, res, next);
+    return passport.authenticate("local", nextAuth)(req, res, next);
   });
 
   app.post(api.auth.logout.path, (req, res) => {

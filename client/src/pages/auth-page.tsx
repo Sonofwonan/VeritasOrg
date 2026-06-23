@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 const loginSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email"),
+  userId: z.string().min(1, "Client ID is required").refine(v => !isNaN(parseInt(v, 10)), "Client ID must be a number"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -37,7 +37,7 @@ export default function AuthPage() {
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { userId: "", password: "" },
   });
 
   const registerForm = useForm<z.infer<typeof insertUserSchema>>({
@@ -130,7 +130,7 @@ export default function AuthPage() {
             </h2>
             <p className="text-zinc-500">
               {view === "login" 
-                ? "Enter your details to access your dashboard." 
+                ? "Enter your Client ID and password to access your dashboard." 
                 : "Join Veritas Wealth and start your journey today."}
             </p>
           </div>
@@ -148,15 +148,17 @@ export default function AuthPage() {
                   <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
                     <FormField
                       control={loginForm.control}
-                      name="email"
+                      name="userId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Email Address</FormLabel>
+                          <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Client ID</FormLabel>
                           <FormControl>
                             <Input 
                               className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-primary" 
-                              placeholder="name@company.com" 
+                              placeholder="e.g. 10042"
                               autoComplete="username"
+                              inputMode="numeric"
+                              data-testid="input-client-id"
                               {...field} 
                             />
                           </FormControl>

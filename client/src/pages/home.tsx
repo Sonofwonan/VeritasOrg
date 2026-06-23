@@ -140,47 +140,51 @@ export default function HomePage() {
             loop 
             muted 
             playsInline
-            className="w-full h-full object-cover opacity-40 scale-105"
+            className="w-full h-full object-cover scale-105"
+            style={{ opacity: 0.75 }}
           >
             <source src="/assets/aHR0cHM6Ly9hc3NldHMuZ3Jvay5jb20vdXNlcnMvZjg1MzVhY2QtY2ExZS00Mz_1771684255921.mp4" type="video/mp4" />
           </video>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-transparent to-[#0a0a0a] opacity-80" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-background/40 to-background/60" />
+        {/* Light vignette only at edges — keeps center video visible */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40" />
         
         <div className="relative max-w-7xl mx-auto px-6 py-32 sm:py-44">
           <div className="text-center space-y-8 max-w-4xl mx-auto">
-            <div className="space-y-4">
-              <h1 className="text-5xl sm:text-7xl font-bold tracking-tight">
-                Wealth Management
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-                  Made Simple
-                </span>
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Professional-grade tools for managing investments, tracking assets, and building lasting wealth. 
-                Join thousands of investors who trust Veritas.
-              </p>
-            </div>
+            {/* Glassy transparent card behind text */}
+            <div className="rounded-2xl px-8 py-10 backdrop-blur-sm bg-black/20 border border-white/10 shadow-2xl space-y-6">
+              <div className="space-y-4">
+                <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white drop-shadow-lg">
+                  Wealth Management
+                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+                    Made Simple
+                  </span>
+                </h1>
+                <p className="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed drop-shadow">
+                  Professional-grade tools for managing investments, tracking assets, and building lasting wealth. 
+                  Join thousands of investors who trust Veritas.
+                </p>
+              </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button 
-                onClick={() => setLocation('/auth')} 
-                size="lg"
-                className="px-8 h-12 text-base"
-                data-testid="button-get-started"
-              >
-                Get Started Free
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setLocation('/auth')} 
-                size="lg"
-                className="px-8 h-12 text-base"
-                data-testid="button-sign-in"
-              >
-                Sign In
-              </Button>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Button 
+                  onClick={() => setLocation('/auth')} 
+                  size="lg"
+                  className="px-8 h-12 text-base"
+                  data-testid="button-get-started"
+                >
+                  Get Started Free
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setLocation('/auth')} 
+                  size="lg"
+                  className="px-8 h-12 text-base border-white/40 text-white hover:bg-white/10 hover:text-white"
+                  data-testid="button-sign-in"
+                >
+                  Sign In
+                </Button>
+              </div>
             </div>
           </div>
         </div>
