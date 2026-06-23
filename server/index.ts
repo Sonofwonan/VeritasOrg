@@ -45,10 +45,12 @@ const corsOptions: cors.CorsOptions = {
     }
 
     // In production, allow specific domains
+    const replitDomains = (process.env.REPLIT_DOMAINS || "").split(",").map(d => `https://${d.trim()}`);
     const allowedOrigins = [
       process.env.CLIENT_URL,
       "https://veritaswealth.vercel.app",
-      "https://veritas-wealth.vercel.app"
+      "https://veritas-wealth.vercel.app",
+      ...replitDomains,
     ].filter(Boolean);
 
     if (allowedOrigins.includes(origin)) {
