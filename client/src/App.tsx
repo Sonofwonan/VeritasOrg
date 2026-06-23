@@ -20,6 +20,7 @@ import EducationPage from "@/pages/education-page";
 import CardsPage from "@/pages/cards-page";
 import SettingsPage from "@/pages/settings-page";
 import CompanyPage from "@/pages/company-page";
+import AdminPage from "@/pages/admin-page";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { user, isLoading } = useAuth();
@@ -80,6 +81,7 @@ function Router() {
         {() => <ProtectedRoute component={SettingsPage} />}
       </Route>
 
+      <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -540,6 +540,144 @@ export async function registerRoutes(
       res.status(400).json({ message: err.message || "Payment failed" });
     }
   });
+  // ─── Admin Routes ────────────────────────────────────────────────────────────
+
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+
+  const requireAdmin = (req: any, res: any, next: any) => {
+    const key = req.headers["x-admin-key"];
+    if (key !== ADMIN_PASSWORD) return res.status(401).json({ message: "Unauthorized" });
+    next();
+  };
+
+  // Verify admin password
+  app.post("/api/admin/verify", (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) return res.json({ ok: true });
+    res.status(401).json({ message: "Invalid password" });
+  });
+
+  // Platform stats
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
+    try {
+      const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+      const [txCount] = await db.select({ count: sql<number>`count(*)` }).from(transactions);
+      const [pendingCount] = await db.select({ count: sql<number>`count(*)` }).from(transactions).where(eq(transactions.status, "pending"));
+      const [totalVolume] = await db.select({ sum: sql<string>`coalesce(sum(amount), 0)` }).from(transactions).where(eq(transactions.status, "completed"));
+      const [totalAssets] = await db.select({ sum: sql<string>`coalesce(sum(balance), 0)` }).from(accounts);
+      res.json({
+        userCount: Number(userCount.count),
+        txCount: Number(txCount.count),
+        pendingCount: Number(pendingCount.count),
+        totalVolume: totalVolume.sum,
+        totalAssets: totalAssets.sum,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // All users with account summary
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+      const allUsers = await db.select().from(users).orderBy(desc(users.createdAt));
+      const result = await Promise.all(allUsers.map(async (u) => {
+        const accs = await db.select().from(accounts).where(eq(accounts.userId, u.id));
+        const totalBalance = accs.reduce((sum, a) => sum + Number(a.balance), 0);
+        return { ...u, password: undefined, accountCount: accs.length, totalBalance };
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // All transactions with user info
+  app.get("/api/admin/transactions", requireAdmin, async (req, res) => {
+    try {
+      const statusFilter = req.query.status as string | undefined;
+      const allTxns = await db.select().from(transactions).orderBy(desc(transactions.createdAt));
+      const filtered = statusFilter ? allTxns.filter(t => t.status === statusFilter) : allTxns;
+
+      // Enrich with user info via fromAccount
+      const enriched = await Promise.all(filtered.map(async (t) => {
+        let userName = "Unknown";
+        let userEmail = "";
+        if (t.fromAccountId) {
+          const [acc] = await db.select().from(accounts).where(eq(accounts.id, t.fromAccountId));
+          if (acc) {
+            const [u] = await db.select().from(users).where(eq(users.id, acc.userId));
+            if (u) { userName = u.name; userEmail = u.email; }
+          }
+        } else if (t.toAccountId) {
+          const [acc] = await db.select().from(accounts).where(eq(accounts.id, t.toAccountId));
+          if (acc) {
+            const [u] = await db.select().from(users).where(eq(users.id, acc.userId));
+            if (u) { userName = u.name; userEmail = u.email; }
+          }
+        }
+        return { ...t, userName, userEmail };
+      }));
+
+      res.json(enriched);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Approve a pending transaction
+  app.post("/api/admin/transactions/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const [txn] = await db.select().from(transactions).where(eq(transactions.id, id));
+      if (!txn) return res.status(404).json({ message: "Transaction not found" });
+      if (txn.status !== "pending") return res.status(400).json({ message: "Only pending transactions can be approved" });
+
+      await db.transaction(async (tx) => {
+        // Credit destination account if set
+        if (txn.toAccountId) {
+          await tx.update(accounts)
+            .set({ balance: sql`${accounts.balance} + ${txn.amount}` })
+            .where(eq(accounts.id, txn.toAccountId));
+        }
+        await tx.update(transactions)
+          .set({ status: "completed" })
+          .where(eq(transactions.id, id));
+      });
+
+      res.json({ ok: true, message: "Transaction approved" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Reject a pending transaction
+  app.post("/api/admin/transactions/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const [txn] = await db.select().from(transactions).where(eq(transactions.id, id));
+      if (!txn) return res.status(404).json({ message: "Transaction not found" });
+      if (txn.status !== "pending") return res.status(400).json({ message: "Only pending transactions can be rejected" });
+
+      await db.transaction(async (tx) => {
+        // Refund source account if balance was deducted
+        if (txn.fromAccountId) {
+          await tx.update(accounts)
+            .set({ balance: sql`${accounts.balance} + ${txn.amount}` })
+            .where(eq(accounts.id, txn.fromAccountId));
+        }
+        await tx.update(transactions)
+          .set({ status: "failed" })
+          .where(eq(transactions.id, id));
+      });
+
+      res.json({ ok: true, message: "Transaction rejected" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ─── Market Routes ────────────────────────────────────────────────────────────
   app.get(api.market.quote.path, (req, res) => {
     const symbol = req.params.symbol.toUpperCase();
     const price = getMockPrice(symbol);
