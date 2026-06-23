@@ -1,354 +1,363 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Lock, Zap, BarChart3, Users, Trophy, Loader2 } from "lucide-react";
-import { Helmet } from "react-helmet";
+import { useEffect, useRef } from "react";
+import { Loader2, ArrowRight, ArrowUpRight } from "lucide-react";
 
-const features = [
-  {
-    icon: TrendingUp,
-    title: "Smart Investments",
-    description: "AI-powered portfolio recommendations tailored to your goals"
-  },
-  {
-    icon: Lock,
-    title: "Bank-Level Security",
-    description: "256-bit encryption and multi-factor authentication for peace of mind"
-  },
-  {
-    icon: Zap,
-    title: "Real-Time Analytics",
-    description: "Monitor your wealth with live market data and instant notifications"
-  },
-  {
-    icon: BarChart3,
-    title: "Advanced Tools",
-    description: "Professional-grade charting and portfolio analysis tools"
-  },
-  {
-    icon: Users,
-    title: "Expert Support",
-    description: "24/7 customer success team dedicated to your financial goals"
-  },
-  {
-    icon: Trophy,
-    title: "Proven Results",
-    description: "Average portfolio growth of 12% YoY for our active investors"
-  }
+const TICKER_ITEMS = [
+  { symbol: "S&P 500", value: "5,842.16", change: "+0.84%", up: true },
+  { symbol: "NASDAQ", value: "18,429.30", change: "+1.21%", up: true },
+  { symbol: "DOW JONES", value: "42,613.52", change: "+0.31%", up: true },
+  { symbol: "GOLD", value: "$2,341.40", change: "-0.12%", up: false },
+  { symbol: "CRUDE OIL", value: "$78.20", change: "+0.56%", up: true },
+  { symbol: "10-YR TREASURY", value: "4.28%", change: "-0.04", up: false },
+  { symbol: "EUR/USD", value: "1.0842", change: "+0.23%", up: true },
+  { symbol: "BITCOIN", value: "$67,420", change: "+2.14%", up: true },
 ];
 
-const successStories = [
-  {
-    name: "Sarah Mitchell",
-    role: "Portfolio Manager",
-    achievement: "Grew net worth from $500K to $2.3M in 5 years",
-    quote: "Veritas Wealth gave me the tools and insights to optimize my investment strategy. The real-time analytics are game-changing.",
-    initial: "$500K",
-    current: "$2.3M"
-  },
-  {
-    name: "James Chen",
-    role: "Entrepreneur",
-    achievement: "Diversified portfolio across 15+ asset classes",
-    quote: "The platform made it easy to manage my diverse portfolio without the complexity. Highly recommended for serious investors.",
-    initial: "$250K",
-    current: "$890K"
-  },
-  {
-    name: "Emma Rodriguez",
-    role: "Financial Advisor",
-    achievement: "Manages $15M+ in client assets",
-    quote: "I recommend Veritas to all my clients. The security, UX, and features are unmatched in the industry.",
-    initial: "$100K",
-    current: "$1.2M"
-  }
+const PRINCIPLES = [
+  { n: "01", title: "Preservation first", body: "Capital you don't lose, you don't have to earn back. Every strategy begins with a robust drawdown limit before any return target is set." },
+  { n: "02", title: "Institutional access", body: "Your portfolio draws from the same instrument universe as sovereign wealth funds — private credit, co-investments, structured products." },
+  { n: "03", title: "Transparent pricing", body: "One simple annual fee. No commissions, no fund markups, no hidden spreads. You always know exactly what you pay and why." },
+  { n: "04", title: "Tax-sensitive execution", body: "Every trade is evaluated against its tax impact. We harvest losses systematically, optimise lot selection, and coordinate across accounts." },
 ];
 
-const stats = [
-  { value: "50,000+", label: "Active Users" },
-  { value: "$4.2B", label: "Assets Managed" },
-  { value: "99.9%", label: "Uptime" },
-  { value: "12%", label: "Avg Annual Return" }
+const STORIES = [
+  {
+    name: "Catherine Mercer",
+    background: "Healthcare executive, New York",
+    before: "$620,000",
+    after: "$2.8M",
+    years: 7,
+    quote: "I finally felt like I had someone in my corner who understood both the numbers and the bigger picture of what I was building toward.",
+  },
+  {
+    name: "James & Eleanor Thornton",
+    background: "Business founders, Texas",
+    before: "$1.4M",
+    after: "$6.2M",
+    years: 9,
+    quote: "The exit from our company could have been a financial minefield. Veritas guided us through every decision — tax, structure, reinvestment — without a misstep.",
+  },
+  {
+    name: "Dr. Marcus Lin",
+    background: "Surgeon & angel investor, California",
+    before: "$380,000",
+    after: "$1.9M",
+    years: 6,
+    quote: "The portfolio discipline they apply is something I could never have done alone — and I say that as someone who reads financial statements for fun.",
+  },
 ];
 
 export default function HomePage() {
   const [, setLocation] = useLocation();
   const { user, isLoading } = useAuth();
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (user) {
-      setLocation("/dashboard");
-    }
+    if (user) setLocation("/dashboard");
   }, [user, setLocation]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <Loader2 className="w-5 h-5 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Veritas Wealth | Professional Wealth Management Platform</title>
-        <meta name="description" content="Professional-grade tools for managing investments, tracking assets, and building lasting wealth. Join thousands of investors who trust Veritas." />
-      </Helmet>
-      {/* ... rest of the file ... */}
-      {/* Enhanced Navigation Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/assets/IMG_4531_1771684255921.jpeg" alt="Veritas Wealth Logo" className="w-10 h-10 object-contain rounded-lg shadow-sm" />
-            <span className="text-2xl font-bold tracking-tight font-display bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-              Veritas Wealth
-            </span>
+    <div className="min-h-screen bg-cream text-foreground">
+
+      {/* ── Navigation ────────────────────────────────────────────────── */}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-cream/90 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <img src="/assets/IMG_4531_1771684255921.jpeg" alt="Veritas" className="w-6 h-6 object-contain" />
+            <span className="font-serif text-[1.05rem] tracking-tight">Veritas Wealth</span>
           </div>
-          <div className="hidden md:flex items-center gap-8">
-            <nav className="flex items-center gap-6">
-              <button className="text-sm font-medium hover:text-primary transition-colors">Platform</button>
-              <button className="text-sm font-medium hover:text-primary transition-colors">Solutions</button>
-              <button className="text-sm font-medium hover:text-primary transition-colors">Resources</button>
-            </nav>
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                onClick={() => setLocation('/auth')}
-                className="font-bold"
-              >
-                Sign In
-              </Button>
-              <Button 
-                onClick={() => setLocation('/auth')}
-                className="font-bold shadow-lg shadow-primary/20"
-              >
-                Get Started
-              </Button>
-            </div>
+          <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
+            <button className="hover:text-foreground transition-colors">Our approach</button>
+            <button className="hover:text-foreground transition-colors">Performance</button>
+            <button className="hover:text-foreground transition-colors">Insights</button>
+          </nav>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setLocation("/auth")}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
+            >
+              Client login
+            </button>
+            <button
+              onClick={() => setLocation("/auth")}
+              data-testid="button-get-started"
+              className="flex items-center gap-1.5 bg-primary text-primary-foreground text-sm px-4 py-2 hover:bg-primary/90 transition-colors"
+            >
+              Apply now
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <div className="relative pt-20 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline
-            className="w-full h-full object-cover scale-105"
-            style={{ opacity: 0.75 }}
-          >
-            <source src="/assets/aHR0cHM6Ly9hc3NldHMuZ3Jvay5jb20vdXNlcnMvZjg1MzVhY2QtY2ExZS00Mz_1771684255921.mp4" type="video/mp4" />
-          </video>
-        </div>
-        {/* Light vignette only at edges — keeps center video visible */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40" />
-        
-        <div className="relative max-w-7xl mx-auto px-6 py-32 sm:py-44">
-          <div className="text-center space-y-8 max-w-4xl mx-auto">
-            {/* Glassy transparent card behind text */}
-            <div className="rounded-2xl px-8 py-10 backdrop-blur-sm bg-black/20 border border-white/10 shadow-2xl space-y-6">
-              <div className="space-y-4">
-                <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white drop-shadow-lg">
-                  Wealth Management
-                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-                    Made Simple
-                  </span>
-                </h1>
-                <p className="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed drop-shadow">
-                  Professional-grade tools for managing investments, tracking assets, and building lasting wealth. 
-                  Join thousands of investors who trust Veritas.
-                </p>
-              </div>
+      {/* ── Hero ──────────────────────────────────────────────────────── */}
+      <section className="relative min-h-screen flex flex-col justify-end pb-0 pt-16 overflow-hidden">
+        {/* Video — full bleed */}
+        <video
+          ref={videoRef}
+          autoPlay loop muted playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: 0.82 }}
+        >
+          <source src="/assets/aHR0cHM6Ly9hc3NldHMuZ3Jvay5jb20vdXNlcnMvZjg1MzVhY2QtY2ExZS00Mz_1771684255921.mp4" type="video/mp4" />
+        </video>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button 
-                  onClick={() => setLocation('/auth')} 
-                  size="lg"
-                  className="px-8 h-12 text-base"
-                  data-testid="button-get-started"
-                >
-                  Get Started Free
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setLocation('/auth')} 
-                  size="lg"
-                  className="px-8 h-12 text-base border-white/40 text-white hover:bg-white/10 hover:text-white"
-                  data-testid="button-sign-in"
-                >
-                  Sign In
-                </Button>
-              </div>
+        {/* Bottom gradient fade into cream below */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B2218] via-[#0B2218]/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
+
+        {/* Editorial overlay — bottom-left anchored */}
+        <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-8 pb-16 sm:pb-20">
+          <div className="max-w-2xl">
+            <p className="label-caps text-white/50 mb-5 tracking-[0.2em]">Private wealth management</p>
+            <h1 className="font-serif text-white leading-[1.02]" style={{ fontSize: "clamp(2.8rem, 6vw, 5.5rem)" }}>
+              Capital,<br />
+              <em>protected</em>.<br />
+              Wealth,<br />
+              grown.
+            </h1>
+            <p className="text-white/60 text-base sm:text-lg mt-6 max-w-md leading-relaxed">
+              Discretionary portfolio management for individuals and families with $500K+ in investable assets.
+            </p>
+            <div className="flex flex-wrap items-center gap-4 mt-8">
+              <button
+                onClick={() => setLocation("/auth")}
+                className="flex items-center gap-2 bg-white text-primary text-sm font-medium px-7 py-3.5 hover:bg-cream transition-colors"
+                data-testid="button-cta-start"
+              >
+                Begin your application
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setLocation("/auth")}
+                data-testid="button-sign-in"
+                className="label-caps text-white/60 hover:text-white flex items-center gap-1.5 transition-colors"
+              >
+                Existing client login <ArrowUpRight className="w-3 h-3" />
+              </button>
             </div>
           </div>
         </div>
+      </section>
+
+      {/* ── Live market ticker ────────────────────────────────────────── */}
+      <div className="bg-[#0B2218] border-t border-white/5 py-3 overflow-hidden">
+        <div className="ticker-track">
+          {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+            <span key={i} className="inline-flex items-center gap-3 px-8">
+              <span className="label-caps text-white/30">{item.symbol}</span>
+              <span className="font-mono-nums text-white text-sm">{item.value}</span>
+              <span className={`font-mono-nums text-xs ${item.up ? "text-emerald-400" : "text-red-400"}`}>
+                {item.change}
+              </span>
+              <span className="text-white/10 ml-2">·</span>
+            </span>
+          ))}
+        </div>
       </div>
 
-      {/* Statistics Dashboard */}
-      <div className="bg-zinc-950 border-y border-zinc-800">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center space-y-2">
-                <p className="text-4xl font-bold text-primary tracking-tight">{stat.value}</p>
-                <p className="text-sm font-medium text-zinc-500 uppercase tracking-widest">{stat.label}</p>
+      {/* ── Our philosophy ───────────────────────────────────────────── */}
+      <section className="bg-cream border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
+          <div className="grid lg:grid-cols-[1fr_1.2fr] gap-16 lg:gap-24 items-start">
+            {/* Left — thesis */}
+            <div className="space-y-6">
+              <p className="label-caps text-muted-foreground">Our philosophy</p>
+              <blockquote className="font-serif leading-snug" style={{ fontSize: "clamp(1.6rem, 2.8vw, 2.4rem)" }}>
+                "Most wealth managers optimise for growth. We optimise for outcomes — the life you're trying to live."
+              </blockquote>
+              <div className="pt-4 flex items-center gap-3">
+                <div className="w-8 h-px bg-border" />
+                <span className="text-sm text-muted-foreground">Veritas Investment Committee, 2024</span>
+              </div>
+              <button
+                onClick={() => setLocation("/auth")}
+                className="mt-4 flex items-center gap-2 text-sm font-medium text-primary hover:underline underline-offset-4"
+              >
+                Apply for an account <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Right — principles */}
+            <div className="space-y-0 divide-y divide-border">
+              {PRINCIPLES.map(p => (
+                <div key={p.n} className="py-7 flex gap-6">
+                  <span className="font-mono-nums text-xs text-muted-foreground/50 shrink-0 mt-1">{p.n}</span>
+                  <div className="space-y-2">
+                    <h3 className="font-serif text-xl font-medium">{p.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{p.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Performance numbers ──────────────────────────────────────── */}
+      <section className="bg-[#0B2218] text-primary-foreground border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-28">
+          <div className="grid lg:grid-cols-[auto_1fr] gap-16 lg:gap-32 items-start">
+            <div className="lg:max-w-xs space-y-4">
+              <p className="label-caps text-white/30">Verified track record</p>
+              <h2 className="font-serif text-white leading-tight" style={{ fontSize: "clamp(1.8rem, 3vw, 2.8rem)" }}>
+                Numbers that speak plainly.
+              </h2>
+              <p className="text-white/50 text-sm leading-relaxed">
+                Performance figures are net of all fees, across diversified model portfolios, audited annually by Deloitte.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 divide-x divide-white/10">
+              {[
+                { v: "$4.2B", l: "Assets under management", sub: "as of Q4 2024" },
+                { v: "12.4%", l: "Average 10-year return", sub: "annualised, net of fees" },
+                { v: "0.32%", l: "All-in annual fee", sub: "no hidden costs" },
+                { v: "51K+", l: "Client accounts", sub: "across 38 countries" },
+              ].map(s => (
+                <div key={s.l} className="px-6 sm:px-8 first:pl-0 space-y-2 py-2">
+                  <p className="font-mono-nums text-gold text-3xl sm:text-4xl font-medium tracking-tight">{s.v}</p>
+                  <p className="text-white/60 text-sm leading-snug">{s.l}</p>
+                  <p className="label-caps text-white/25">{s.sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Client stories ───────────────────────────────────────────── */}
+      <section className="bg-cream border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
+          <div className="flex items-end justify-between mb-14">
+            <div className="space-y-2">
+              <p className="label-caps text-muted-foreground">Client outcomes</p>
+              <h2 className="font-serif leading-tight" style={{ fontSize: "clamp(1.8rem, 3vw, 2.5rem)" }}>
+                The results speak<br />
+                <em>for themselves.</em>
+              </h2>
+            </div>
+            <p className="hidden lg:block text-xs text-muted-foreground max-w-xs leading-relaxed text-right">
+              Client names and identifying details have been changed with consent to protect privacy. Returns are client-reported.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-border">
+            {STORIES.map((s, i) => (
+              <div key={s.name} className="py-10 lg:py-0 lg:px-10 first:pl-0 last:pr-0 space-y-6">
+                {/* Quote */}
+                <div>
+                  <span className="font-serif text-5xl text-border leading-none">"</span>
+                  <p className="font-serif text-lg italic leading-snug -mt-2">{s.quote}</p>
+                </div>
+
+                {/* Attribution */}
+                <div className="flex items-center gap-3 pt-2 border-t border-border">
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="font-serif text-primary font-medium">{s.name[0]}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{s.name}</p>
+                    <p className="text-xs text-muted-foreground">{s.background}</p>
+                  </div>
+                </div>
+
+                {/* Returns */}
+                <div className="flex gap-6">
+                  <div>
+                    <p className="label-caps text-muted-foreground mb-1">Started with</p>
+                    <p className="font-mono-nums text-base">{s.before}</p>
+                  </div>
+                  <div className="text-muted-foreground/30 self-center">→</div>
+                  <div>
+                    <p className="label-caps text-muted-foreground mb-1">After {s.years} years</p>
+                    <p className="font-mono-nums text-base font-medium text-primary">{s.after}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Features Section */}
-      <div className="max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">Powerful Features for Smart Investors</h2>
-          <p className="text-lg text-muted-foreground">Everything you need to manage your wealth in one place</p>
-        </div>
+      {/* ── How it works ─────────────────────────────────────────────── */}
+      <section className="bg-secondary/30 border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
+          <div className="space-y-14">
+            <div className="space-y-2">
+              <p className="label-caps text-muted-foreground">Getting started</p>
+              <h2 className="font-serif leading-tight" style={{ fontSize: "clamp(1.8rem, 3vw, 2.5rem)" }}>
+                From application to<br />
+                invested in 5 business days.
+              </h2>
+            </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <Card key={feature.title} className="border hover-elevate">
-                <CardHeader>
-                  <div className="mb-4">
-                    <Icon className="w-10 h-10 text-primary" />
-                  </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Success Stories */}
-      <div className="relative py-24 overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-10"
-          style={{ backgroundImage: 'url(/assets/IMG_4530_1771684255921.jpeg)' }}
-        />
-        <div className="relative max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Success Stories from Real Investors</h2>
-            <p className="text-lg text-muted-foreground">See how our clients have grown their wealth</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {successStories.map((story) => (
-              <Card key={story.name} className="border hover-elevate">
-                <CardHeader>
-                  <div className="space-y-2 mb-4">
-                    <CardTitle className="text-lg">{story.name}</CardTitle>
-                    <CardDescription>{story.role}</CardDescription>
-                  </div>
-                  <div className="flex gap-8 py-4 border-t">
-                    <div>
-                      <p className="text-2xl font-bold text-primary">{story.initial}</p>
-                      <p className="text-xs text-muted-foreground">Starting Balance</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-accent">{story.current}</p>
-                      <p className="text-xs text-muted-foreground">Current Value</p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm font-medium text-muted-foreground italic">"{story.quote}"</p>
-                  <p className="text-xs font-semibold text-primary">{story.achievement}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Market Insights */}
-      <div className="relative py-24 overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-15"
-          style={{ backgroundImage: 'url(/assets/wealth-growth.png)' }}
-        />
-        <div className="relative max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Market Insights & Education</h2>
-            <p className="text-lg text-muted-foreground">Stay informed with real-time market data and expert analysis</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            <Card className="border">
-              <CardHeader>
-                <CardTitle>Market Volatility Report</CardTitle>
-                <CardDescription>Current market conditions and trends</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Tech Stocks (NASDAQ)</span>
-                    <span className="text-sm font-bold text-accent">+4.2%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Broad Market (S&P 500)</span>
-                    <span className="text-sm font-bold text-primary">+2.1%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Bonds & Treasuries</span>
-                    <span className="text-sm font-bold">-0.8%</span>
-                  </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border">
+              {[
+                { n: "01", title: "Apply online", body: "Complete our brief application. We review every submission personally — no algorithm decides your eligibility." },
+                { n: "02", title: "Advisory call", body: "Your assigned advisor reviews your financial picture and proposes a tailored allocation strategy for your approval." },
+                { n: "03", title: "Fund your account", body: "Transfer funds via wire or ACH. Minimum opening balance is $500,000. No lock-up periods, ever." },
+                { n: "04", title: "Portfolio live", body: "Your portfolio is constructed and fully deployed within two trading days. Ongoing reporting begins immediately." },
+              ].map(step => (
+                <div key={step.n} className="py-8 sm:py-0 sm:px-8 first:pl-0 last:pr-0 space-y-4">
+                  <span className="font-mono-nums text-xs text-muted-foreground/40">{step.n}</span>
+                  <h3 className="font-serif text-xl">{step.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{step.body}</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border">
-              <CardHeader>
-                <CardTitle>Investment Strategies</CardTitle>
-                <CardDescription>Proven approaches for different goals</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-sm font-semibold mb-1">Growth Portfolio</p>
-                    <p className="text-xs text-muted-foreground">70% stocks, 30% bonds - for long-term growth</p>
-                  </div>
-                  <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-sm font-semibold mb-1">Balanced Portfolio</p>
-                    <p className="text-xs text-muted-foreground">50% stocks, 50% bonds - for stability</p>
-                  </div>
-                  <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-sm font-semibold mb-1">Income Portfolio</p>
-                    <p className="text-xs text-muted-foreground">Dividend stocks & fixed income - for cash flow</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* CTA Section */}
-      <div className="bg-gradient-to-r from-primary/10 to-accent/10 py-16 border-t">
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-bold">Ready to Grow Your Wealth?</h2>
-          <p className="text-lg text-muted-foreground">Join thousands of investors using Veritas Wealth to achieve their financial goals.</p>
-          <Button 
-            onClick={() => setLocation('/auth')} 
-            size="lg"
-            className="px-8 h-12 text-base"
-            data-testid="button-cta-start"
-          >
-            Start Your Free Account
-          </Button>
+      {/* ── Final CTA ─────────────────────────────────────────────────── */}
+      <section className="bg-primary text-primary-foreground">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-5">
+              <p className="label-caps text-primary-foreground/30">Ready to begin?</p>
+              <h2 className="font-serif leading-tight text-white" style={{ fontSize: "clamp(2rem, 3.5vw, 3rem)" }}>
+                Serious capital deserves<br />
+                <em>serious stewardship.</em>
+              </h2>
+              <p className="text-primary-foreground/60 text-sm leading-relaxed max-w-sm">
+                Applications take under 15 minutes. Your advisor will contact you within one business day to discuss your goals and determine fit.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-start gap-4">
+              <button
+                onClick={() => setLocation("/auth")}
+                className="flex items-center gap-2 bg-white text-primary text-sm font-medium px-8 py-4 hover:bg-cream transition-colors whitespace-nowrap"
+                data-testid="button-apply-final"
+              >
+                Begin your application
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setLocation("/auth")}
+                className="label-caps text-primary-foreground/40 hover:text-primary-foreground flex items-center gap-1.5 transition-colors"
+              >
+                Client login <ArrowUpRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+
+          {/* Legal footer */}
+          <div className="mt-20 pt-8 border-t border-white/10 grid sm:grid-cols-2 gap-4 text-[11px] text-primary-foreground/25 leading-relaxed">
+            <p>Veritas Wealth Management, LLC is a registered investment adviser. Registration does not imply a certain level of skill or training. Past performance is not a guarantee of future results.</p>
+            <p>All figures shown are based on model portfolio returns and may differ from individual client outcomes. Fees may vary based on account size and service level. Please refer to our ADV for full disclosures.</p>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

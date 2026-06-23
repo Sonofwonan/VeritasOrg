@@ -3,121 +3,87 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
-} from "@/components/ui/form";
 import { useEffect, useState } from "react";
-import { Loader2, Shield, TrendingUp, Eye, EyeOff, CheckCircle2, ChevronRight, ChevronLeft, User, Briefcase, BarChart3, Lock } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 
-// ─── Schemas ────────────────────────────────────────────────────────────────
+// ── Schemas ─────────────────────────────────────────────────────────────────
 const loginSchema = z.object({
-  userId: z.string().min(1, "Client ID is required").refine(v => !isNaN(parseInt(v, 10)), "Client ID must be a number"),
-  password: z.string().min(1, "Password is required"),
+  userId: z.string().min(1, "Client ID is required").refine(v => !isNaN(parseInt(v, 10)), "Must be numeric"),
+  password: z.string().min(1, "Password required"),
 });
 
-const applicationSchema = z.object({
-  // Step 1 — Personal Info
-  fullName: z.string().min(2, "Full name is required"),
+const appSchema = z.object({
+  fullName: z.string().min(2, "Full name required"),
   email: z.string().email("Valid email required"),
-  phone: z.string().min(7, "Phone number is required"),
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  phone: z.string().min(7, "Phone required"),
+  dateOfBirth: z.string().min(1, "Date of birth required"),
   nationality: z.string().optional(),
-  // Step 2 — Address & Employment
   address: z.string().optional(),
   city: z.string().optional(),
-  country: z.string().min(1, "Country is required"),
-  employmentStatus: z.string().min(1, "Employment status is required"),
-  annualIncome: z.string().min(1, "Annual income range is required"),
-  // Step 3 — Investment Profile
-  investmentExperience: z.string().min(1, "Please select your experience level"),
-  riskTolerance: z.string().min(1, "Please select risk tolerance"),
-  investmentGoal: z.string().min(1, "Please select investment goal"),
-  initialDeposit: z.string().min(1, "Please indicate initial deposit"),
-  sourceOfFunds: z.string().min(1, "Source of funds is required"),
-  // Step 4 — Account Credentials
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  country: z.string().min(1, "Country required"),
+  employmentStatus: z.string().min(1, "Required"),
+  annualIncome: z.string().min(1, "Required"),
+  investmentExperience: z.string().min(1, "Required"),
+  riskTolerance: z.string().min(1, "Required"),
+  investmentGoal: z.string().min(1, "Required"),
+  initialDeposit: z.string().min(1, "Required"),
+  sourceOfFunds: z.string().min(1, "Required"),
+  password: z.string().min(8, "Min 8 characters"),
   confirmPassword: z.string(),
-}).refine(d => d.password === d.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+}).refine(d => d.password === d.confirmPassword, { message: "Passwords don't match", path: ["confirmPassword"] });
 
-type ApplicationData = z.infer<typeof applicationSchema>;
+type AppData = z.infer<typeof appSchema>;
 
-const STEPS = [
-  { id: 1, label: "Personal Info", icon: User },
-  { id: 2, label: "Background", icon: Briefcase },
-  { id: 3, label: "Investment Profile", icon: BarChart3 },
-  { id: 4, label: "Security", icon: Lock },
-];
+// ── Shared input helpers ─────────────────────────────────────────────────────
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="label-caps text-muted-foreground">{label}</label>
+      {children}
+      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+    </div>
+  );
+}
 
-// ─── Select field helper ────────────────────────────────────────────────────
-function SelectField({ label, name, options, form }: {
-  label: string; name: keyof ApplicationData; options: { value: string; label: string }[]; form: any;
+function TextInput({ reg, type = "text", placeholder, autoComplete }: {
+  reg: any; type?: string; placeholder?: string; autoComplete?: string;
 }) {
   return (
-    <FormField
-      control={form.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">{label}</FormLabel>
-          <FormControl>
-            <select
-              {...field}
-              className="w-full h-12 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">Select…</option>
-              {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
+    <input
+      {...reg}
+      type={type}
+      placeholder={placeholder}
+      autoComplete={autoComplete}
+      className="vw-input text-foreground"
     />
   );
 }
 
-function TextField({ label, name, form, placeholder, type = "text", inputMode }: {
-  label: string; name: keyof ApplicationData; form: any; placeholder?: string; type?: string; inputMode?: any;
-}) {
+function SelectInput({ reg, options }: { reg: any; options: { v: string; l: string }[] }) {
   return (
-    <FormField
-      control={form.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">{label}</FormLabel>
-          <FormControl>
-            <Input
-              type={type}
-              placeholder={placeholder}
-              inputMode={inputMode}
-              className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
-              {...field}
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <select
+      {...reg}
+      className="vw-input text-foreground appearance-none cursor-pointer"
+    >
+      <option value="">Select…</option>
+      {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+    </select>
   );
 }
 
-// ─── Application Form ─────────────────────────────────────────────────────
+// ── Application Form (4 steps) ───────────────────────────────────────────────
+const STEPS = ["Personal", "Address & Work", "Investment Profile", "Security"];
+
 function ApplicationForm({ onBack }: { onBack: () => void }) {
-  const [step, setStep] = useState(1);
-  const [submitted, setSubmitted] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [step, setStep] = useState(0);
+  const [done, setDone] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<ApplicationData>({
-    resolver: zodResolver(applicationSchema),
+  const form = useForm<AppData>({
+    resolver: zodResolver(appSchema),
     defaultValues: {
       fullName: "", email: "", phone: "", dateOfBirth: "", nationality: "",
       address: "", city: "", country: "", employmentStatus: "", annualIncome: "",
@@ -126,368 +92,401 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
     },
     mode: "onTouched",
   });
+  const { register, handleSubmit, trigger, formState: { errors } } = form;
 
-  const submitMutation = useMutation({
-    mutationFn: async (data: ApplicationData) => {
+  const stepFields: (keyof AppData)[][] = [
+    ["fullName", "email", "phone", "dateOfBirth", "nationality"],
+    ["address", "city", "country", "employmentStatus", "annualIncome"],
+    ["investmentExperience", "riskTolerance", "investmentGoal", "initialDeposit", "sourceOfFunds"],
+    ["password", "confirmPassword"],
+  ];
+
+  const mutation = useMutation({
+    mutationFn: async (data: AppData) => {
       const { confirmPassword, ...payload } = data;
       const res = await fetch("/api/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Submission failed");
-      }
+      if (!res.ok) throw new Error((await res.json()).message || "Submission failed");
       return res.json();
     },
-    onSuccess: () => setSubmitted(true),
-    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+    onSuccess: () => setDone(true),
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
-  const stepFields: Record<number, (keyof ApplicationData)[]> = {
-    1: ["fullName", "email", "phone", "dateOfBirth", "nationality"],
-    2: ["address", "city", "country", "employmentStatus", "annualIncome"],
-    3: ["investmentExperience", "riskTolerance", "investmentGoal", "initialDeposit", "sourceOfFunds"],
-    4: ["password", "confirmPassword"],
+  const next = async () => {
+    const ok = await trigger(stepFields[step]);
+    if (ok) setStep(s => s + 1);
   };
 
-  const handleNext = async () => {
-    const valid = await form.trigger(stepFields[step]);
-    if (valid) setStep(s => s + 1);
-  };
-
-  const handleSubmit = form.handleSubmit(data => submitMutation.mutate(data));
-
-  if (submitted) {
+  if (done) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="text-center space-y-6 py-8"
-      >
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-          <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+      <div className="text-center space-y-6 py-16">
+        <div className="inline-flex items-center justify-center w-14 h-14 border border-primary/30 bg-primary/5">
+          <CheckCircle2 className="w-7 h-7 text-primary" />
         </div>
-        <div className="space-y-2">
-          <h3 className="text-2xl font-bold">Application Submitted!</h3>
-          <p className="text-zinc-500 max-w-sm mx-auto">
-            Your account application has been sent to your advisor for review. You will be contacted within 1–2 business days with your Client ID once approved.
+        <div className="space-y-2 max-w-sm mx-auto">
+          <h3 className="font-serif text-2xl">Application received</h3>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Your application is under review. You'll receive your Client ID and onboarding details within 1–2 business days.
           </p>
         </div>
-        <Button variant="outline" onClick={onBack} className="mt-4">Back to Sign In</Button>
-      </motion.div>
+        <button onClick={onBack} className="label-caps text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 mx-auto">
+          <ArrowLeft className="w-3 h-3" /> Return to login
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Step indicator */}
-      <div className="flex items-center justify-between">
-        {STEPS.map((s, i) => {
-          const Icon = s.icon;
-          const active = s.id === step;
-          const done = s.id < step;
-          return (
-            <div key={s.id} className="flex items-center">
-              <div className={`flex flex-col items-center gap-1 ${i > 0 ? "ml-2" : ""}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors
-                  ${done ? "bg-emerald-500 text-white" : active ? "bg-primary text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400"}`}>
-                  {done ? <CheckCircle2 className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
-                </div>
-                <span className={`text-[10px] font-medium hidden sm:block ${active ? "text-primary" : "text-zinc-400"}`}>{s.label}</span>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div className={`h-px w-6 sm:w-10 mx-1 mt-[-10px] ${s.id < step ? "bg-emerald-500" : "bg-zinc-200 dark:bg-zinc-700"}`} />
-              )}
+      <div className="flex items-center gap-0">
+        {STEPS.map((s, i) => (
+          <div key={s} className="flex items-center flex-1 last:flex-none">
+            <div className={`flex items-center gap-2 ${i <= step ? "text-foreground" : "text-muted-foreground/40"}`}>
+              <span className={`font-mono-nums text-xs ${i < step ? "text-primary" : i === step ? "text-foreground" : "text-muted-foreground/30"}`}>
+                {i < step ? "✓" : `0${i + 1}`}
+              </span>
+              <span className="label-caps hidden sm:inline">{s}</span>
             </div>
-          );
-        })}
-      </div>
-
-      <Form {...form}>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <AnimatePresence mode="wait">
-            {step === 1 && (
-              <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Personal Information</p>
-                <TextField label="Full Legal Name" name="fullName" form={form} placeholder="As it appears on your ID" />
-                <div className="grid grid-cols-2 gap-3">
-                  <TextField label="Email Address" name="email" form={form} placeholder="you@example.com" type="email" />
-                  <TextField label="Phone Number" name="phone" form={form} placeholder="+1 555 000 0000" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <TextField label="Date of Birth" name="dateOfBirth" form={form} type="date" />
-                  <TextField label="Nationality" name="nationality" form={form} placeholder="e.g. American" />
-                </div>
-              </motion.div>
-            )}
-
-            {step === 2 && (
-              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Address & Employment</p>
-                <TextField label="Street Address" name="address" form={form} placeholder="123 Main Street" />
-                <div className="grid grid-cols-2 gap-3">
-                  <TextField label="City" name="city" form={form} placeholder="New York" />
-                  <TextField label="Country" name="country" form={form} placeholder="United States" />
-                </div>
-                <SelectField label="Employment Status" name="employmentStatus" form={form} options={[
-                  { value: "employed", label: "Employed (Full-time)" },
-                  { value: "self-employed", label: "Self-Employed / Business Owner" },
-                  { value: "retired", label: "Retired" },
-                  { value: "unemployed", label: "Not Currently Employed" },
-                  { value: "student", label: "Student" },
-                ]} />
-                <SelectField label="Annual Income (USD)" name="annualIncome" form={form} options={[
-                  { value: "under-50k", label: "Under $50,000" },
-                  { value: "50k-100k", label: "$50,000 – $100,000" },
-                  { value: "100k-250k", label: "$100,000 – $250,000" },
-                  { value: "250k-500k", label: "$250,000 – $500,000" },
-                  { value: "500k-1m", label: "$500,000 – $1,000,000" },
-                  { value: "over-1m", label: "Over $1,000,000" },
-                ]} />
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Investment Profile</p>
-                <SelectField label="Investment Experience" name="investmentExperience" form={form} options={[
-                  { value: "none", label: "No experience — new to investing" },
-                  { value: "beginner", label: "Beginner — basic knowledge" },
-                  { value: "intermediate", label: "Intermediate — some portfolio experience" },
-                  { value: "experienced", label: "Experienced — active portfolio management" },
-                  { value: "professional", label: "Professional — financial industry background" },
-                ]} />
-                <SelectField label="Risk Tolerance" name="riskTolerance" form={form} options={[
-                  { value: "conservative", label: "Conservative — preserve capital, low risk" },
-                  { value: "moderate", label: "Moderate — balanced growth and stability" },
-                  { value: "aggressive", label: "Aggressive — maximum growth, high risk" },
-                ]} />
-                <SelectField label="Primary Investment Goal" name="investmentGoal" form={form} options={[
-                  { value: "retirement", label: "Retirement Planning" },
-                  { value: "growth", label: "Long-term Capital Growth" },
-                  { value: "income", label: "Regular Income / Dividends" },
-                  { value: "preservation", label: "Capital Preservation" },
-                  { value: "education", label: "Education Funding" },
-                  { value: "estate", label: "Estate / Legacy Planning" },
-                ]} />
-                <div className="grid grid-cols-2 gap-3">
-                  <SelectField label="Initial Deposit (USD)" name="initialDeposit" form={form} options={[
-                    { value: "under-10k", label: "Under $10,000" },
-                    { value: "10k-50k", label: "$10,000 – $50,000" },
-                    { value: "50k-250k", label: "$50,000 – $250,000" },
-                    { value: "250k-1m", label: "$250,000 – $1,000,000" },
-                    { value: "over-1m", label: "Over $1,000,000" },
-                  ]} />
-                  <SelectField label="Source of Funds" name="sourceOfFunds" form={form} options={[
-                    { value: "salary", label: "Employment / Salary" },
-                    { value: "business", label: "Business Income" },
-                    { value: "inheritance", label: "Inheritance / Gift" },
-                    { value: "savings", label: "Personal Savings" },
-                    { value: "investment", label: "Investment Returns" },
-                    { value: "other", label: "Other" },
-                  ]} />
-                </div>
-              </motion.div>
-            )}
-
-            {step === 4 && (
-              <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Create Your Account Password</p>
-                <p className="text-xs text-zinc-400">This password will be used to access your account once your application is approved.</p>
-                <FormField control={form.control} name="password" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input type={showPassword ? "text" : "password"} placeholder="••••••••" autoComplete="new-password"
-                          className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 pr-10" {...field} />
-                        <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-12 w-12 hover:bg-transparent"
-                          onClick={() => setShowPassword(v => !v)}>
-                          {showPassword ? <EyeOff className="h-4 w-4 text-zinc-500" /> : <Eye className="h-4 w-4 text-zinc-500" />}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="confirmPassword" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" autoComplete="new-password"
-                        className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 p-4 text-xs text-zinc-500 space-y-1">
-                  <p className="font-semibold text-zinc-700 dark:text-zinc-300">By submitting this application you confirm:</p>
-                  <p>• All information provided is accurate and complete</p>
-                  <p>• You are the beneficial owner of the funds being invested</p>
-                  <p>• You have read and agree to Veritas Wealth's Terms of Service</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Navigation */}
-          <div className="flex items-center justify-between pt-2">
-            <Button type="button" variant="ghost" onClick={step === 1 ? onBack : () => setStep(s => s - 1)}
-              className="text-zinc-500">
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              {step === 1 ? "Back to Login" : "Previous"}
-            </Button>
-
-            {step < 4 ? (
-              <Button type="button" onClick={handleNext} className="gap-1">
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button type="submit" disabled={submitMutation.isPending} className="gap-2">
-                {submitMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                Submit Application
-              </Button>
+            {i < STEPS.length - 1 && (
+              <div className={`flex-1 h-px mx-3 ${i < step ? "bg-primary" : "bg-border"}`} />
             )}
           </div>
-        </form>
-      </Form>
+        ))}
+      </div>
+
+      <form onSubmit={handleSubmit(data => mutation.mutate(data))} className="space-y-6">
+
+        {/* Step 0 — Personal Info */}
+        {step === 0 && (
+          <div className="space-y-6">
+            <p className="font-serif text-xl">Tell us about yourself</p>
+            <Field label="Full legal name" error={errors.fullName?.message}>
+              <TextInput reg={register("fullName")} placeholder="As it appears on your ID" autoComplete="name" />
+            </Field>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+              <Field label="Email address" error={errors.email?.message}>
+                <TextInput reg={register("email")} type="email" placeholder="you@example.com" autoComplete="email" />
+              </Field>
+              <Field label="Phone number" error={errors.phone?.message}>
+                <TextInput reg={register("phone")} placeholder="+1 555 000 0000" />
+              </Field>
+              <Field label="Date of birth" error={errors.dateOfBirth?.message}>
+                <TextInput reg={register("dateOfBirth")} type="date" />
+              </Field>
+              <Field label="Nationality" error={errors.nationality?.message}>
+                <TextInput reg={register("nationality")} placeholder="e.g. American" />
+              </Field>
+            </div>
+          </div>
+        )}
+
+        {/* Step 1 — Address & Employment */}
+        {step === 1 && (
+          <div className="space-y-6">
+            <p className="font-serif text-xl">Address & employment</p>
+            <Field label="Street address" error={errors.address?.message}>
+              <TextInput reg={register("address")} placeholder="123 Main Street" autoComplete="street-address" />
+            </Field>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+              <Field label="City" error={errors.city?.message}>
+                <TextInput reg={register("city")} placeholder="New York" />
+              </Field>
+              <Field label="Country" error={errors.country?.message}>
+                <TextInput reg={register("country")} placeholder="United States" />
+              </Field>
+            </div>
+            <Field label="Employment status" error={errors.employmentStatus?.message}>
+              <SelectInput reg={register("employmentStatus")} options={[
+                { v: "employed", l: "Employed — full time" },
+                { v: "self-employed", l: "Self-employed / business owner" },
+                { v: "retired", l: "Retired" },
+                { v: "unemployed", l: "Not currently employed" },
+                { v: "student", l: "Student" },
+              ]} />
+            </Field>
+            <Field label="Annual income (USD)" error={errors.annualIncome?.message}>
+              <SelectInput reg={register("annualIncome")} options={[
+                { v: "under-50k", l: "Under $50,000" },
+                { v: "50k-100k", l: "$50,000 – $100,000" },
+                { v: "100k-250k", l: "$100,000 – $250,000" },
+                { v: "250k-500k", l: "$250,000 – $500,000" },
+                { v: "500k-1m", l: "$500,000 – $1,000,000" },
+                { v: "over-1m", l: "Over $1,000,000" },
+              ]} />
+            </Field>
+          </div>
+        )}
+
+        {/* Step 2 — Investment Profile */}
+        {step === 2 && (
+          <div className="space-y-6">
+            <p className="font-serif text-xl">Your investment profile</p>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+              <Field label="Investment experience" error={errors.investmentExperience?.message}>
+                <SelectInput reg={register("investmentExperience")} options={[
+                  { v: "none", l: "None — brand new to investing" },
+                  { v: "beginner", l: "Beginner — basic familiarity" },
+                  { v: "intermediate", l: "Intermediate — some history" },
+                  { v: "experienced", l: "Experienced — active management" },
+                  { v: "professional", l: "Professional — industry background" },
+                ]} />
+              </Field>
+              <Field label="Risk tolerance" error={errors.riskTolerance?.message}>
+                <SelectInput reg={register("riskTolerance")} options={[
+                  { v: "conservative", l: "Conservative — preserve capital" },
+                  { v: "moderate", l: "Moderate — balanced approach" },
+                  { v: "aggressive", l: "Aggressive — maximum growth" },
+                ]} />
+              </Field>
+              <Field label="Primary investment goal" error={errors.investmentGoal?.message}>
+                <SelectInput reg={register("investmentGoal")} options={[
+                  { v: "retirement", l: "Retirement planning" },
+                  { v: "growth", l: "Long-term capital growth" },
+                  { v: "income", l: "Income / dividends" },
+                  { v: "preservation", l: "Capital preservation" },
+                  { v: "education", l: "Education funding" },
+                  { v: "estate", l: "Estate / legacy planning" },
+                ]} />
+              </Field>
+              <Field label="Anticipated initial deposit" error={errors.initialDeposit?.message}>
+                <SelectInput reg={register("initialDeposit")} options={[
+                  { v: "under-10k", l: "Under $10,000" },
+                  { v: "10k-50k", l: "$10,000 – $50,000" },
+                  { v: "50k-250k", l: "$50,000 – $250,000" },
+                  { v: "250k-1m", l: "$250,000 – $1,000,000" },
+                  { v: "over-1m", l: "Over $1,000,000" },
+                ]} />
+              </Field>
+            </div>
+            <Field label="Primary source of funds" error={errors.sourceOfFunds?.message}>
+              <SelectInput reg={register("sourceOfFunds")} options={[
+                { v: "salary", l: "Employment / salary" },
+                { v: "business", l: "Business income" },
+                { v: "inheritance", l: "Inheritance or gift" },
+                { v: "savings", l: "Personal savings" },
+                { v: "investment", l: "Investment returns" },
+                { v: "other", l: "Other" },
+              ]} />
+            </Field>
+          </div>
+        )}
+
+        {/* Step 3 — Credentials */}
+        {step === 3 && (
+          <div className="space-y-6">
+            <p className="font-serif text-xl">Create your login credentials</p>
+            <p className="text-muted-foreground text-sm leading-relaxed -mt-2">
+              These will be activated when your application is approved. Your Client ID will be assigned and sent separately.
+            </p>
+            <Field label="Password" error={errors.password?.message}>
+              <div className="relative">
+                <TextInput reg={register("password")} type={showPw ? "text" : "password"} autoComplete="new-password" />
+                <button type="button" onClick={() => setShowPw(v => !v)}
+                  className="absolute right-0 bottom-2.5 text-muted-foreground hover:text-foreground">
+                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </Field>
+            <Field label="Confirm password" error={errors.confirmPassword?.message}>
+              <TextInput reg={register("confirmPassword")} type="password" autoComplete="new-password" />
+            </Field>
+            <div className="pt-2 text-xs text-muted-foreground border-t border-border space-y-1.5 leading-relaxed">
+              <p>By submitting, you confirm that all information provided is accurate and complete, and that you are the beneficial owner of the funds to be invested. You agree to Veritas Wealth's Terms of Service and Privacy Policy.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="flex items-center justify-between pt-2 border-t border-border">
+          <button
+            type="button"
+            onClick={step === 0 ? onBack : () => setStep(s => s - 1)}
+            className="label-caps text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            {step === 0 ? "Back to login" : "Previous"}
+          </button>
+
+          {step < 3 ? (
+            <button
+              type="button"
+              onClick={next}
+              className="label-caps text-primary hover:text-primary/80 flex items-center gap-1.5 transition-colors"
+            >
+              Continue
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={mutation.isPending}
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 text-sm hover:bg-primary/90 transition-colors disabled:opacity-60"
+            >
+              {mutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Submit application
+            </button>
+          )}
+        </div>
+      </form>
     </div>
   );
 }
 
-// ─── Main AuthPage ────────────────────────────────────────────────────────────
+// ── Main Auth Page ────────────────────────────────────────────────────────────
 export default function AuthPage() {
   const { login, user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [view, setView] = useState<"login" | "apply">("login");
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { userId: "", password: "" },
+  });
 
   useEffect(() => {
     if (user) setLocation("/dashboard");
   }, [user, setLocation]);
 
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { userId: "", password: "" },
-  });
-
-  const onLogin = (data: z.infer<typeof loginSchema>) => {
-    login.mutate({ userId: data.userId, password: data.password } as any, {
-      onError: (error) => {
-        toast({ title: "Login failed", description: error.message, variant: "destructive" });
-      },
-    });
-  };
-
   if (isLoading || user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <Loader2 className="w-5 h-5 animate-spin text-primary" />
       </div>
     );
   }
 
+  const onLogin = handleSubmit(data => {
+    login.mutate({ userId: data.userId, password: data.password } as any, {
+      onError: () => toast({ title: "Login failed", description: "Invalid Client ID or password.", variant: "destructive" }),
+    });
+  });
+
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-background">
-      {/* Visual Side */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-[#0a0a0a] text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-black/80" />
+    <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
+
+      {/* ── Left panel — brand ──────────────────────────────────────────── */}
+      <div className="hidden lg:flex lg:w-[42%] xl:w-[38%] shrink-0 flex-col justify-between p-12 xl:p-16 bg-primary text-primary-foreground relative overflow-hidden">
+        {/* Subtle texture overlay */}
+        <div className="absolute inset-0 opacity-[0.04]"
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}
+        />
+
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-12">
-            <img src="/assets/IMG_4531_1771684255921.jpeg" alt="Veritas Wealth Logo" className="w-10 h-10 object-contain rounded-lg" />
-            <span className="text-2xl font-bold tracking-tight">Veritas Wealth</span>
+          <div className="flex items-center gap-2.5 mb-16">
+            <img src="/assets/IMG_4531_1771684255921.jpeg" alt="" className="w-7 h-7 object-contain" />
+            <span className="font-serif text-lg font-medium">Veritas Wealth</span>
           </div>
-          <div className="space-y-6 max-w-lg">
-            <h1 className="text-6xl font-bold tracking-tight leading-[1.1]">
-              The future of <span className="text-primary">personal wealth.</span>
+
+          <div className="space-y-6 max-w-xs">
+            <p className="label-caps text-primary-foreground/40 tracking-widest">Private Wealth Management</p>
+            <h1 className="font-serif leading-tight" style={{ fontSize: "clamp(2rem, 3.5vw, 2.8rem)" }}>
+              Your wealth,<br />
+              managed with<br />
+              <em>precision</em> and care.
             </h1>
-            <p className="text-xl text-zinc-400 leading-relaxed">
-              Professional-grade wealth management built for the modern investor. Apply today to get started.
+            <p className="text-primary-foreground/60 text-sm leading-relaxed">
+              Institutional-grade portfolio management for individuals and families with $500K or more in investable assets.
             </p>
           </div>
         </div>
-        <div className="relative z-10 grid grid-cols-2 gap-8 pt-12 border-t border-zinc-800">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-primary"><Shield className="w-5 h-5" /><span className="font-semibold">Secure</span></div>
-            <p className="text-sm text-zinc-500">Bank-level encryption and multi-factor security as standard.</p>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-primary"><TrendingUp className="w-5 h-5" /><span className="font-semibold">Insightful</span></div>
-            <p className="text-sm text-zinc-500">Real-time market analytics and AI-powered portfolio insights.</p>
-          </div>
+
+        {/* Bottom stats */}
+        <div className="relative z-10 pt-10 border-t border-primary-foreground/10 grid grid-cols-2 gap-6">
+          {[
+            { v: "$4.2B", l: "Assets managed" },
+            { v: "12.4%", l: "10-yr avg return" },
+            { v: "0.32%", l: "Avg all-in fee" },
+            { v: "50K+", l: "Client accounts" },
+          ].map(s => (
+            <div key={s.l}>
+              <p className="font-mono-nums text-xl font-medium text-accent">{s.v}</p>
+              <p className="label-caps text-primary-foreground/40 mt-0.5">{s.l}</p>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Form Side */}
-      <div className="flex-1 flex flex-col justify-center p-6 sm:p-12 lg:p-16 bg-zinc-50 dark:bg-[#111] overflow-y-auto">
-        <div className="w-full max-w-lg mx-auto space-y-8">
-          <AnimatePresence mode="wait">
-            {view === "login" ? (
-              <motion.div key="login" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-bold tracking-tight">Welcome back</h2>
-                  <p className="text-zinc-500">Enter your Client ID and password to access your dashboard.</p>
-                </div>
+      {/* ── Right panel — form ──────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 py-16 overflow-y-auto">
+        <div className="w-full max-w-md mx-auto">
 
-                <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
-                    <FormField control={loginForm.control} name="userId" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Client ID</FormLabel>
-                        <FormControl>
-                          <Input className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
-                            placeholder="e.g. 10042" inputMode="numeric" data-testid="input-client-id" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={loginForm.control} name="password" render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between">
-                          <FormLabel className="text-xs uppercase tracking-wider font-bold text-zinc-500">Password</FormLabel>
-                        </div>
-                        <FormControl>
-                          <div className="relative">
-                            <Input type={showPassword ? "text" : "password"} autoComplete="current-password"
-                              className="h-12 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 pr-10" {...field} />
-                            <Button type="button" variant="ghost" size="icon"
-                              className="absolute right-0 top-0 h-12 w-12 hover:bg-transparent"
-                              onClick={() => setShowPassword(!showPassword)}>
-                              {showPassword ? <EyeOff className="h-4 w-4 text-zinc-500" /> : <Eye className="h-4 w-4 text-zinc-500" />}
-                            </Button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <Button type="submit" className="w-full h-12 text-base font-bold shadow-lg shadow-primary/20" disabled={login.isPending}>
-                      {login.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Sign in to Veritas"}
-                    </Button>
-                  </form>
-                </Form>
+          {view === "login" ? (
+            <div className="space-y-10">
+              <div>
+                <p className="label-caps text-muted-foreground mb-4">Secure client portal</p>
+                <h2 className="font-serif text-display-md">Welcome back.</h2>
+              </div>
 
-                <div className="pt-4 text-center space-y-3">
-                  <p className="text-sm text-zinc-500">Don't have an account?</p>
-                  <Button variant="outline" className="w-full h-12 font-bold" onClick={() => setView("apply")}
-                    data-testid="button-open-application">
-                    Open an Account Application
-                  </Button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div key="apply" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <div className="space-y-1 mb-6">
-                  <h2 className="text-2xl font-bold tracking-tight">Account Application</h2>
-                  <p className="text-zinc-500 text-sm">Complete all sections. Your advisor will review and contact you within 1–2 business days.</p>
-                </div>
-                <ApplicationForm onBack={() => setView("login")} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              <form onSubmit={onLogin} className="space-y-7">
+                <Field label="Client ID" error={errors.userId?.message}>
+                  <TextInput reg={register("userId")} placeholder="e.g. 10042" autoComplete="username" />
+                </Field>
+                <Field label="Password" error={errors.password?.message}>
+                  <div className="relative">
+                    <TextInput
+                      reg={register("password")}
+                      type={showPw ? "text" : "password"}
+                      autoComplete="current-password"
+                    />
+                    <button type="button" onClick={() => setShowPw(v => !v)}
+                      className="absolute right-0 bottom-2.5 text-muted-foreground hover:text-foreground transition-colors">
+                      {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </Field>
+
+                <button
+                  type="submit"
+                  disabled={login.isPending}
+                  data-testid="button-sign-in"
+                  className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3.5 text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-60"
+                >
+                  {login.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Sign in to Veritas
+                </button>
+              </form>
+
+              <div className="pt-2 border-t border-border space-y-4">
+                <p className="text-sm text-muted-foreground">Not yet a client?</p>
+                <button
+                  onClick={() => setView("apply")}
+                  data-testid="button-open-application"
+                  className="w-full flex items-center justify-between border border-border px-5 py-3.5 text-sm hover:border-primary hover:text-primary transition-colors group"
+                >
+                  <span>Open an investment account</span>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              <div>
+                <button
+                  onClick={() => setView("login")}
+                  className="label-caps text-muted-foreground hover:text-foreground flex items-center gap-1.5 mb-6 transition-colors"
+                >
+                  <ArrowLeft className="w-3 h-3" /> Back to login
+                </button>
+                <p className="label-caps text-muted-foreground mb-3">Account application</p>
+                <h2 className="font-serif text-display-md">Apply for<br />membership.</h2>
+                <p className="text-muted-foreground text-sm mt-3 leading-relaxed">
+                  Complete all four sections. Your dedicated advisor will review and contact you within one business day.
+                </p>
+              </div>
+              <ApplicationForm onBack={() => setView("login")} />
+            </div>
+          )}
         </div>
       </div>
     </div>

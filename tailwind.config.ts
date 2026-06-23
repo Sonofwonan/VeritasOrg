@@ -6,8 +6,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        display: ["Outfit", "sans-serif"],
+        sans: ["DM Sans", "sans-serif"],
+        display: ["Cormorant Garamond", "Georgia", "serif"],
+        serif: ["Cormorant Garamond", "Georgia", "serif"],
+        mono: ["DM Mono", "monospace"],
       },
       colors: {
         border: "hsl(var(--border) / <alpha-value>)",
@@ -43,11 +45,28 @@ export default {
           DEFAULT: "hsl(var(--card) / <alpha-value>)",
           foreground: "hsl(var(--card-foreground) / <alpha-value>)",
         },
+        ink: {
+          DEFAULT: "#0E1A12",
+          light: "#2D4A38",
+        },
+        gold: {
+          DEFAULT: "#B8832A",
+          light: "#D4A84B",
+        },
+        cream: {
+          DEFAULT: "#F6F1E8",
+          dark: "#ECE6D8",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 1px)",
+        sm: "calc(var(--radius))",
+      },
+      fontSize: {
+        "display-xl": ["clamp(3.5rem, 8vw, 7rem)", { lineHeight: "1.0", letterSpacing: "-0.03em" }],
+        "display-lg": ["clamp(2.5rem, 5vw, 4.5rem)", { lineHeight: "1.05", letterSpacing: "-0.025em" }],
+        "display-md": ["clamp(1.8rem, 3vw, 2.8rem)", { lineHeight: "1.1", letterSpacing: "-0.02em" }],
       },
       keyframes: {
         "accordion-down": {
