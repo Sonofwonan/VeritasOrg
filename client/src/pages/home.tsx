@@ -152,7 +152,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="relative min-h-screen flex flex-col justify-end pt-16 overflow-hidden">
+      <section className="relative min-h-[68vh] flex flex-col justify-end pt-16 overflow-hidden">
         <video
           ref={videoRef}
           autoPlay loop muted playsInline
@@ -164,19 +164,19 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#0B2218] via-[#0B2218]/10 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
 
-        <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-8 pb-16 sm:pb-20">
+        <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-8 pb-10 sm:pb-14">
           <div className="max-w-2xl">
-            <p className="label-caps text-white/50 mb-5 tracking-[0.2em]">Private wealth management since 1967</p>
+            <p className="label-caps text-white/50 mb-4 tracking-[0.2em]">Private wealth management since 1967</p>
             <h1 className="font-serif text-white leading-[1.02]" style={{ fontSize: "clamp(2.8rem, 6vw, 5.5rem)" }}>
               Capital,<br />
               <em>protected</em>.<br />
               Wealth,<br />
               grown.
             </h1>
-            <p className="text-white/60 text-base sm:text-lg mt-6 max-w-md leading-relaxed">
+            <p className="text-white/60 text-lg sm:text-xl mt-5 max-w-lg leading-relaxed">
               We manage money for people with a lot of it. Families, founders and institutions with $500M or more who want a real partner, not just a platform.
             </p>
-            <div className="flex flex-wrap items-center gap-4 mt-8">
+            <div className="flex flex-wrap items-center gap-4 mt-7">
               <button
                 onClick={() => setLocation("/auth")}
                 className="flex items-center gap-2 bg-white text-primary text-sm font-medium px-7 py-3.5 hover:bg-cream transition-colors"
@@ -236,7 +236,7 @@ export default function HomePage() {
                 One firm, every chapter<br />
                 <em>of your financial life.</em>
               </h2>
-              <p className="hidden lg:block text-sm text-muted-foreground max-w-xs leading-relaxed text-right">
+              <p className="hidden lg:block text-[15px] text-muted-foreground max-w-xs leading-relaxed text-right">
                 Whether you built your wealth over decades or over a single transaction, we meet you where you are and plan for where you want to go.
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function HomePage() {
                 <div className="space-y-3">
                   <span className="font-mono-nums text-[10px] text-muted-foreground group-hover:text-primary-foreground/40 transition-colors">0{i + 1}</span>
                   <h3 className="font-serif text-xl leading-snug">{seg.label}</h3>
-                  <p className="text-sm text-muted-foreground group-hover:text-primary-foreground/70 leading-relaxed transition-colors">{seg.summary}</p>
+                  <p className="text-[15px] text-muted-foreground group-hover:text-primary-foreground/70 leading-relaxed transition-colors">{seg.summary}</p>
                 </div>
                 <div className="pt-4 border-t border-border group-hover:border-primary-foreground/20 transition-colors space-y-2">
                   <button
@@ -294,7 +294,7 @@ export default function HomePage() {
                   <span className="font-mono-nums text-xs text-muted-foreground/50 shrink-0 mt-1">{p.n}</span>
                   <div className="space-y-2">
                     <h3 className="font-serif text-xl font-medium">{p.title}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{p.body}</p>
+                    <p className="text-muted-foreground text-[15px] leading-relaxed">{p.body}</p>
                   </div>
                 </div>
               ))}
@@ -312,7 +312,7 @@ export default function HomePage() {
               <h2 className="font-serif text-white leading-tight" style={{ fontSize: "clamp(1.8rem, 3vw, 2.8rem)" }}>
                 Numbers that speak for themselves.
               </h2>
-              <p className="text-white/50 text-sm leading-relaxed">
+              <p className="text-white/50 text-[15px] leading-relaxed">
                 All performance figures are net of fees, across diversified model portfolios, and audited annually by Deloitte.
               </p>
             </div>
@@ -355,7 +355,7 @@ export default function HomePage() {
               <div key={s.name} className="py-10 lg:py-0 lg:px-10 first:pl-0 last:pr-0 space-y-6">
                 <div>
                   <span className="font-serif text-5xl text-border leading-none">"</span>
-                  <p className="font-serif text-lg italic leading-snug -mt-2">{s.quote}</p>
+                  <p className="font-serif text-xl italic leading-snug -mt-2">{s.quote}</p>
                 </div>
                 <div className="flex items-center gap-3 pt-2 border-t border-border">
                   <div className="w-9 h-9 bg-primary/10 flex items-center justify-center shrink-0">
@@ -363,7 +363,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">{s.name}</p>
-                    <p className="text-xs text-muted-foreground">{s.background}</p>
+                    <p className="text-sm text-muted-foreground">{s.background}</p>
                   </div>
                 </div>
                 <div className="flex gap-6">
@@ -411,7 +411,7 @@ export default function HomePage() {
                 <h3 className="font-serif leading-snug" style={{ fontSize: "clamp(1.3rem, 2.2vw, 1.9rem)" }}>
                   {INSIGHTS[0].headline}
                 </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{INSIGHTS[0].excerpt}</p>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">{INSIGHTS[0].excerpt}</p>
               </div>
               <div className="flex lg:flex-col items-center lg:items-end justify-between lg:justify-start gap-4 lg:gap-6 shrink-0">
                 <span className="label-caps text-muted-foreground">{INSIGHTS[0].readTime}</span>
@@ -432,7 +432,7 @@ export default function HomePage() {
                   <span className="label-caps text-muted-foreground">{article.date}</span>
                 </div>
                 <h3 className="font-serif text-xl leading-snug group-hover:text-primary transition-colors">{article.headline}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">{article.excerpt}</p>
+                <p className="text-muted-foreground text-[15px] leading-relaxed line-clamp-3">{article.excerpt}</p>
                 <div className="flex items-center justify-between pt-2">
                   <span className="label-caps text-muted-foreground/60">{article.readTime}</span>
                   <span className="flex items-center gap-1 text-xs text-primary group-hover:underline underline-offset-4">
@@ -467,7 +467,7 @@ export default function HomePage() {
                 <div key={step.n} className="py-8 sm:py-0 sm:px-8 first:pl-0 last:pr-0 space-y-4">
                   <span className="font-mono-nums text-xs text-muted-foreground/40">{step.n}</span>
                   <h3 className="font-serif text-xl">{step.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{step.body}</p>
+                  <p className="text-muted-foreground text-[15px] leading-relaxed">{step.body}</p>
                 </div>
               ))}
             </div>
@@ -485,7 +485,7 @@ export default function HomePage() {
                 Serious capital deserves<br />
                 <em>serious stewardship.</em>
               </h2>
-              <p className="text-primary-foreground/60 text-sm leading-relaxed max-w-sm">
+              <p className="text-primary-foreground/60 text-[15px] leading-relaxed max-w-sm">
                 The application takes about 15 minutes. Your advisor will reach out within one business day to talk through your goals and see if we're the right fit for each other.
               </p>
             </div>
