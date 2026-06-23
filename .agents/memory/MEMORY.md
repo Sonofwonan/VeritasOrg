@@ -1,0 +1,1 @@
+- [Design Identity](design-identity.md) — Approved "Old Money, Digital Precision" visual system: Cormorant serif, forest green + cream + gold, near-zero radius, underline inputs, editorial layout.
