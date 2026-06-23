@@ -166,7 +166,7 @@ export default function HomePage() {
 
         <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-8 pb-16 sm:pb-20">
           <div className="max-w-2xl">
-            <p className="label-caps text-white/50 mb-5 tracking-[0.2em]">Private wealth management since 2009</p>
+            <p className="label-caps text-white/50 mb-5 tracking-[0.2em]">Private wealth management since 1967</p>
             <h1 className="font-serif text-white leading-[1.02]" style={{ fontSize: "clamp(2.8rem, 6vw, 5.5rem)" }}>
               Capital,<br />
               <em>protected</em>.<br />
@@ -214,7 +214,7 @@ export default function HomePage() {
       <div className="bg-cream border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-5 flex flex-wrap items-center justify-between gap-4">
           <p className="font-serif text-base italic text-muted-foreground">
-            Veritas Wealth has been serving investors, families and institutions for over <strong className="text-foreground not-italic font-medium">15 years</strong>.
+            Veritas Wealth has been serving investors, families and institutions for over <strong className="text-foreground not-italic font-medium">57 years</strong>.
           </p>
           <div className="flex items-center gap-8 text-[11px]">
             {["SEC Registered Investment Adviser", "SIPC Member", "Deloitte Audited Annually", "Fiduciary Standard"].map(b => (
