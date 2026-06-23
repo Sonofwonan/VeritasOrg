@@ -14,6 +14,35 @@ const TICKER_ITEMS = [
   { symbol: "BITCOIN", value: "$67,420", change: "+2.14%", up: true },
 ];
 
+// ─── Who we serve ────────────────────────────────────────────────────────────
+const SEGMENTS = [
+  {
+    label: "Individuals & families",
+    summary: "Discretionary portfolio management for high-net-worth individuals seeking long-term capital growth and preservation.",
+    cta: "Begin your application",
+    min: "Min. $500K",
+  },
+  {
+    label: "Business owners",
+    summary: "Liquidity event planning, stock concentration management, and executive deferred compensation strategies.",
+    cta: "Talk to an advisor",
+    min: "Min. $1M",
+  },
+  {
+    label: "Institutions & endowments",
+    summary: "Fiduciary investment management for foundations, endowments, and defined benefit pension assets.",
+    cta: "Institutional inquiry",
+    min: "Min. $5M",
+  },
+  {
+    label: "Multi-family offices",
+    summary: "Consolidated reporting, multi-generational governance structures, and co-investment access across family branches.",
+    cta: "Family office services",
+    min: "Min. $10M",
+  },
+];
+
+// ─── Principles ───────────────────────────────────────────────────────────────
 const PRINCIPLES = [
   { n: "01", title: "Preservation first", body: "Capital you don't lose, you don't have to earn back. Every strategy begins with a robust drawdown limit before any return target is set." },
   { n: "02", title: "Institutional access", body: "Your portfolio draws from the same instrument universe as sovereign wealth funds — private credit, co-investments, structured products." },
@@ -21,6 +50,7 @@ const PRINCIPLES = [
   { n: "04", title: "Tax-sensitive execution", body: "Every trade is evaluated against its tax impact. We harvest losses systematically, optimise lot selection, and coordinate across accounts." },
 ];
 
+// ─── Client stories ───────────────────────────────────────────────────────────
 const STORIES = [
   {
     name: "Catherine Mercer",
@@ -48,6 +78,31 @@ const STORIES = [
   },
 ];
 
+// ─── Market insights ──────────────────────────────────────────────────────────
+const INSIGHTS = [
+  {
+    category: "Fixed income",
+    date: "June 2025",
+    headline: "The case for extending duration in a late-cycle environment",
+    excerpt: "As the Fed signals a pivot, high-quality duration may once again deserve a meaningful place in balanced portfolios — but the sequencing matters more than investors realise.",
+    readTime: "6 min read",
+  },
+  {
+    category: "Equity strategy",
+    date: "May 2025",
+    headline: "Concentration risk is back — and most portfolios aren't ready",
+    excerpt: "With the top seven S&P 500 names representing over 31% of index weight, passive investors are carrying more single-factor risk than at any point since the dot-com era.",
+    readTime: "8 min read",
+  },
+  {
+    category: "Tax planning",
+    date: "May 2025",
+    headline: "Roth conversion ladders: why 2025 may be the last optimal window",
+    excerpt: "The 2017 Tax Cuts and Jobs Act provisions are set to sunset in 2026. For high-income earners, the window for advantageous Roth conversions has rarely been narrower.",
+    readTime: "5 min read",
+  },
+];
+
 export default function HomePage() {
   const [, setLocation] = useLocation();
   const { user, isLoading } = useAuth();
@@ -68,40 +123,40 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-cream text-foreground">
 
-      {/* ── Navigation ────────────────────────────────────────────────── */}
+      {/* ── Navigation ──────────────────────────────────────────────────── */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-cream/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="/assets/IMG_4531_1771684255921.jpeg" alt="Veritas" className="w-6 h-6 object-contain" />
             <span className="font-serif text-[1.05rem] tracking-tight">Veritas Wealth</span>
           </div>
-          <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
+          <nav className="hidden md:flex items-center gap-7 text-[13px] text-muted-foreground">
+            <button className="hover:text-foreground transition-colors">Who we serve</button>
             <button className="hover:text-foreground transition-colors">Our approach</button>
             <button className="hover:text-foreground transition-colors">Performance</button>
             <button className="hover:text-foreground transition-colors">Insights</button>
+            <button className="hover:text-foreground transition-colors">About</button>
           </nav>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setLocation("/auth")}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
+              className="text-[13px] text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
             >
               Client login
             </button>
             <button
               onClick={() => setLocation("/auth")}
               data-testid="button-get-started"
-              className="flex items-center gap-1.5 bg-primary text-primary-foreground text-sm px-4 py-2 hover:bg-primary/90 transition-colors"
+              className="flex items-center gap-1.5 bg-primary text-primary-foreground text-[13px] px-4 py-2 hover:bg-primary/90 transition-colors"
             >
-              Apply now
-              <ArrowRight className="w-3.5 h-3.5" />
+              Apply now <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex flex-col justify-end pb-0 pt-16 overflow-hidden">
-        {/* Video — full bleed */}
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      <section className="relative min-h-screen flex flex-col justify-end pt-16 overflow-hidden">
         <video
           ref={videoRef}
           autoPlay loop muted playsInline
@@ -110,15 +165,12 @@ export default function HomePage() {
         >
           <source src="/assets/aHR0cHM6Ly9hc3NldHMuZ3Jvay5jb20vdXNlcnMvZjg1MzVhY2QtY2ExZS00Mz_1771684255921.mp4" type="video/mp4" />
         </video>
-
-        {/* Bottom gradient fade into cream below */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0B2218] via-[#0B2218]/10 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
 
-        {/* Editorial overlay — bottom-left anchored */}
         <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-8 pb-16 sm:pb-20">
           <div className="max-w-2xl">
-            <p className="label-caps text-white/50 mb-5 tracking-[0.2em]">Private wealth management</p>
+            <p className="label-caps text-white/50 mb-5 tracking-[0.2em]">Private wealth management since 2009</p>
             <h1 className="font-serif text-white leading-[1.02]" style={{ fontSize: "clamp(2.8rem, 6vw, 5.5rem)" }}>
               Capital,<br />
               <em>protected</em>.<br />
@@ -126,7 +178,7 @@ export default function HomePage() {
               grown.
             </h1>
             <p className="text-white/60 text-base sm:text-lg mt-6 max-w-md leading-relaxed">
-              Discretionary portfolio management for individuals and families with $500K+ in investable assets.
+              Discretionary portfolio management for individuals, families, and institutions with $500K+ in investable assets.
             </p>
             <div className="flex flex-wrap items-center gap-4 mt-8">
               <button
@@ -134,42 +186,96 @@ export default function HomePage() {
                 className="flex items-center gap-2 bg-white text-primary text-sm font-medium px-7 py-3.5 hover:bg-cream transition-colors"
                 data-testid="button-cta-start"
               >
-                Begin your application
-                <ArrowRight className="w-4 h-4" />
+                Begin your application <ArrowRight className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setLocation("/auth")}
                 data-testid="button-sign-in"
                 className="label-caps text-white/60 hover:text-white flex items-center gap-1.5 transition-colors"
               >
-                Existing client login <ArrowUpRight className="w-3 h-3" />
+                Client login <ArrowUpRight className="w-3 h-3" />
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Live market ticker ────────────────────────────────────────── */}
+      {/* ── Live market ticker ────────────────────────────────────────────── */}
       <div className="bg-[#0B2218] border-t border-white/5 py-3 overflow-hidden">
         <div className="ticker-track">
           {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
             <span key={i} className="inline-flex items-center gap-3 px-8">
               <span className="label-caps text-white/30">{item.symbol}</span>
               <span className="font-mono-nums text-white text-sm">{item.value}</span>
-              <span className={`font-mono-nums text-xs ${item.up ? "text-emerald-400" : "text-red-400"}`}>
-                {item.change}
-              </span>
+              <span className={`font-mono-nums text-xs ${item.up ? "text-emerald-400" : "text-red-400"}`}>{item.change}</span>
               <span className="text-white/10 ml-2">·</span>
             </span>
           ))}
         </div>
       </div>
 
-      {/* ── Our philosophy ───────────────────────────────────────────── */}
+      {/* ── Credibility strip ─────────────────────────────────────────────── */}
+      <div className="bg-cream border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-5 flex flex-wrap items-center justify-between gap-4">
+          <p className="font-serif text-base italic text-muted-foreground">
+            Veritas Wealth has been serving investors, families, and institutions for over <strong className="text-foreground not-italic font-medium">15 years</strong>.
+          </p>
+          <div className="flex items-center gap-8 text-[11px]">
+            {["SEC Registered Investment Adviser", "SIPC Member", "Deloitte Audited Annually", "Fiduciary Standard"].map(b => (
+              <span key={b} className="label-caps text-muted-foreground/60 flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-primary/40 inline-block" /> {b}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Who we serve ──────────────────────────────────────────────────── */}
       <section className="bg-cream border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-28">
+          <div className="mb-12">
+            <p className="label-caps text-muted-foreground mb-3">Who we serve</p>
+            <div className="flex items-end justify-between gap-8">
+              <h2 className="font-serif leading-tight" style={{ fontSize: "clamp(1.8rem, 3vw, 2.5rem)" }}>
+                One firm, every chapter<br />
+                <em>of your financial life.</em>
+              </h2>
+              <p className="hidden lg:block text-sm text-muted-foreground max-w-xs leading-relaxed text-right">
+                From first-generation wealth builders to multi-generational family offices — our approach is tailored, never templated.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-0 divide-y sm:divide-y-0 border border-border">
+            {SEGMENTS.map((seg, i) => (
+              <div
+                key={seg.label}
+                className={`p-8 space-y-5 flex flex-col justify-between group hover:bg-primary hover:text-primary-foreground transition-colors duration-300 ${i < 3 ? "lg:border-r border-border" : ""} ${i < 2 ? "sm:border-r border-border" : ""}`}
+              >
+                <div className="space-y-3">
+                  <span className="font-mono-nums text-[10px] text-muted-foreground group-hover:text-primary-foreground/40 transition-colors">0{i + 1}</span>
+                  <h3 className="font-serif text-xl leading-snug">{seg.label}</h3>
+                  <p className="text-sm text-muted-foreground group-hover:text-primary-foreground/70 leading-relaxed transition-colors">{seg.summary}</p>
+                </div>
+                <div className="pt-4 border-t border-border group-hover:border-primary-foreground/20 transition-colors space-y-2">
+                  <button
+                    onClick={() => setLocation("/auth")}
+                    className="flex items-center gap-1.5 text-sm text-primary group-hover:text-primary-foreground font-medium transition-colors"
+                  >
+                    {seg.cta} <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <p className="label-caps text-muted-foreground/50 group-hover:text-primary-foreground/30 transition-colors">{seg.min}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Our philosophy ────────────────────────────────────────────────── */}
+      <section className="bg-secondary/40 border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="grid lg:grid-cols-[1fr_1.2fr] gap-16 lg:gap-24 items-start">
-            {/* Left — thesis */}
             <div className="space-y-6">
               <p className="label-caps text-muted-foreground">Our philosophy</p>
               <blockquote className="font-serif leading-snug" style={{ fontSize: "clamp(1.6rem, 2.8vw, 2.4rem)" }}>
@@ -186,8 +292,6 @@ export default function HomePage() {
                 Apply for an account <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
-
-            {/* Right — principles */}
             <div className="space-y-0 divide-y divide-border">
               {PRINCIPLES.map(p => (
                 <div key={p.n} className="py-7 flex gap-6">
@@ -203,7 +307,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Performance numbers ──────────────────────────────────────── */}
+      {/* ── Performance numbers ───────────────────────────────────────────── */}
       <section className="bg-[#0B2218] text-primary-foreground border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-28">
           <div className="grid lg:grid-cols-[auto_1fr] gap-16 lg:gap-32 items-start">
@@ -216,7 +320,6 @@ export default function HomePage() {
                 Performance figures are net of all fees, across diversified model portfolios, audited annually by Deloitte.
               </p>
             </div>
-
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 divide-x divide-white/10">
               {[
                 { v: "$4.2B", l: "Assets under management", sub: "as of Q4 2024" },
@@ -235,7 +338,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Client stories ───────────────────────────────────────────── */}
+      {/* ── Client stories ────────────────────────────────────────────────── */}
       <section className="bg-cream border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="flex items-end justify-between mb-14">
@@ -247,22 +350,19 @@ export default function HomePage() {
               </h2>
             </div>
             <p className="hidden lg:block text-xs text-muted-foreground max-w-xs leading-relaxed text-right">
-              Client names and identifying details have been changed with consent to protect privacy. Returns are client-reported.
+              Names and details changed with consent. Returns are client-reported and independently verified.
             </p>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-border">
-            {STORIES.map((s, i) => (
+            {STORIES.map(s => (
               <div key={s.name} className="py-10 lg:py-0 lg:px-10 first:pl-0 last:pr-0 space-y-6">
-                {/* Quote */}
                 <div>
                   <span className="font-serif text-5xl text-border leading-none">"</span>
                   <p className="font-serif text-lg italic leading-snug -mt-2">{s.quote}</p>
                 </div>
-
-                {/* Attribution */}
                 <div className="flex items-center gap-3 pt-2 border-t border-border">
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 bg-primary/10 flex items-center justify-center shrink-0">
                     <span className="font-serif text-primary font-medium">{s.name[0]}</span>
                   </div>
                   <div>
@@ -270,8 +370,6 @@ export default function HomePage() {
                     <p className="text-xs text-muted-foreground">{s.background}</p>
                   </div>
                 </div>
-
-                {/* Returns */}
                 <div className="flex gap-6">
                   <div>
                     <p className="label-caps text-muted-foreground mb-1">Started with</p>
@@ -289,8 +387,70 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── How it works ─────────────────────────────────────────────── */}
+      {/* ── Market insights ───────────────────────────────────────────────── */}
       <section className="bg-secondary/30 border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
+          <div className="flex items-end justify-between mb-12">
+            <div className="space-y-2">
+              <p className="label-caps text-muted-foreground">Market insights</p>
+              <h2 className="font-serif leading-tight" style={{ fontSize: "clamp(1.8rem, 3vw, 2.5rem)" }}>
+                Thinking clearly<br />
+                <em>about markets.</em>
+              </h2>
+            </div>
+            <button className="hidden sm:flex items-center gap-1.5 text-sm text-primary hover:underline underline-offset-4">
+              View all insights <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Featured article — large */}
+          <div className="border border-border p-8 sm:p-10 mb-6 group hover:border-primary/30 transition-colors cursor-pointer">
+            <div className="grid lg:grid-cols-[1fr_auto] gap-6 lg:gap-16 items-start">
+              <div className="space-y-4 max-w-2xl">
+                <div className="flex items-center gap-3">
+                  <span className="label-caps text-primary">{INSIGHTS[0].category}</span>
+                  <span className="text-border">·</span>
+                  <span className="label-caps text-muted-foreground">{INSIGHTS[0].date}</span>
+                </div>
+                <h3 className="font-serif leading-snug" style={{ fontSize: "clamp(1.3rem, 2.2vw, 1.9rem)" }}>
+                  {INSIGHTS[0].headline}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{INSIGHTS[0].excerpt}</p>
+              </div>
+              <div className="flex lg:flex-col items-center lg:items-end justify-between lg:justify-start gap-4 lg:gap-6 shrink-0">
+                <span className="label-caps text-muted-foreground">{INSIGHTS[0].readTime}</span>
+                <span className="flex items-center gap-1.5 text-sm text-primary group-hover:underline underline-offset-4">
+                  Read <ArrowUpRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Two smaller articles */}
+          <div className="grid sm:grid-cols-2 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border border border-border border-t-0">
+            {INSIGHTS.slice(1).map(article => (
+              <div key={article.headline} className="p-7 space-y-4 group hover:bg-cream/60 transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <span className="label-caps text-primary">{article.category}</span>
+                  <span className="text-border">·</span>
+                  <span className="label-caps text-muted-foreground">{article.date}</span>
+                </div>
+                <h3 className="font-serif text-xl leading-snug group-hover:text-primary transition-colors">{article.headline}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">{article.excerpt}</p>
+                <div className="flex items-center justify-between pt-2">
+                  <span className="label-caps text-muted-foreground/60">{article.readTime}</span>
+                  <span className="flex items-center gap-1 text-xs text-primary group-hover:underline underline-offset-4">
+                    Read <ArrowUpRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ──────────────────────────────────────────────────── */}
+      <section className="bg-cream border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="space-y-14">
             <div className="space-y-2">
@@ -319,7 +479,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Final CTA ─────────────────────────────────────────────────── */}
+      {/* ── Final CTA ─────────────────────────────────────────────────────── */}
       <section className="bg-primary text-primary-foreground">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -339,8 +499,7 @@ export default function HomePage() {
                 className="flex items-center gap-2 bg-white text-primary text-sm font-medium px-8 py-4 hover:bg-cream transition-colors whitespace-nowrap"
                 data-testid="button-apply-final"
               >
-                Begin your application
-                <ArrowRight className="w-4 h-4" />
+                Begin your application <ArrowRight className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setLocation("/auth")}
@@ -351,7 +510,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Legal footer */}
           <div className="mt-20 pt-8 border-t border-white/10 grid sm:grid-cols-2 gap-4 text-[11px] text-primary-foreground/25 leading-relaxed">
             <p>Veritas Wealth Management, LLC is a registered investment adviser. Registration does not imply a certain level of skill or training. Past performance is not a guarantee of future results.</p>
             <p>All figures shown are based on model portfolio returns and may differ from individual client outcomes. Fees may vary based on account size and service level. Please refer to our ADV for full disclosures.</p>
