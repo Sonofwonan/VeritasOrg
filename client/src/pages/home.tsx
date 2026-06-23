@@ -18,27 +18,27 @@ const TICKER_ITEMS = [
 const SEGMENTS = [
   {
     label: "Individuals & families",
-    summary: "Discretionary portfolio management for high-net-worth individuals seeking long-term capital growth and preservation.",
+    summary: "Discretionary portfolio management for ultra-high-net-worth individuals seeking long-term capital growth and preservation.",
     cta: "Begin your application",
-    min: "Min. $500K",
+    min: "Min. $500M",
   },
   {
     label: "Business owners",
-    summary: "Liquidity event planning, stock concentration management, and executive deferred compensation strategies.",
+    summary: "Liquidity event planning, concentrated equity management, and bespoke executive deferred compensation strategies.",
     cta: "Talk to an advisor",
-    min: "Min. $1M",
+    min: "Min. $1B",
   },
   {
     label: "Institutions & endowments",
-    summary: "Fiduciary investment management for foundations, endowments, and defined benefit pension assets.",
+    summary: "Fiduciary investment management for sovereign funds, endowments, and large-scale defined benefit pension assets.",
     cta: "Institutional inquiry",
-    min: "Min. $5M",
+    min: "Min. $5B",
   },
   {
     label: "Multi-family offices",
-    summary: "Consolidated reporting, multi-generational governance structures, and co-investment access across family branches.",
+    summary: "Consolidated reporting, multi-generational governance, and direct co-investment access across all family branches.",
     cta: "Family office services",
-    min: "Min. $10M",
+    min: "Min. $10B",
   },
 ];
 
@@ -55,24 +55,24 @@ const STORIES = [
   {
     name: "Catherine Mercer",
     background: "Healthcare executive, New York",
-    before: "$620,000",
-    after: "$2.8M",
+    before: "$620M",
+    after: "$2.8B",
     years: 7,
     quote: "I finally felt like I had someone in my corner who understood both the numbers and the bigger picture of what I was building toward.",
   },
   {
     name: "James & Eleanor Thornton",
     background: "Business founders, Texas",
-    before: "$1.4M",
-    after: "$6.2M",
+    before: "$1.4B",
+    after: "$6.2B",
     years: 9,
     quote: "The exit from our company could have been a financial minefield. Veritas guided us through every decision — tax, structure, reinvestment — without a misstep.",
   },
   {
     name: "Dr. Marcus Lin",
-    background: "Surgeon & angel investor, California",
-    before: "$380,000",
-    after: "$1.9M",
+    background: "Surgeon & private equity partner, California",
+    before: "$580M",
+    after: "$2.3B",
     years: 6,
     quote: "The portfolio discipline they apply is something I could never have done alone — and I say that as someone who reads financial statements for fun.",
   },
@@ -178,7 +178,7 @@ export default function HomePage() {
               grown.
             </h1>
             <p className="text-white/60 text-base sm:text-lg mt-6 max-w-md leading-relaxed">
-              Discretionary portfolio management for individuals, families, and institutions with $500K+ in investable assets.
+              Discretionary portfolio management for ultra-high-net-worth individuals, families, and institutions with $500M+ in investable assets.
             </p>
             <div className="flex flex-wrap items-center gap-4 mt-8">
               <button
@@ -465,7 +465,7 @@ export default function HomePage() {
               {[
                 { n: "01", title: "Apply online", body: "Complete our brief application. We review every submission personally — no algorithm decides your eligibility." },
                 { n: "02", title: "Advisory call", body: "Your assigned advisor reviews your financial picture and proposes a tailored allocation strategy for your approval." },
-                { n: "03", title: "Fund your account", body: "Transfer funds via wire or ACH. Minimum opening balance is $500,000. No lock-up periods, ever." },
+                { n: "03", title: "Fund your account", body: "Transfer funds via wire or ACH. Minimum opening balance is $500,000,000. No lock-up periods, ever." },
                 { n: "04", title: "Portfolio live", body: "Your portfolio is constructed and fully deployed within two trading days. Ongoing reporting begins immediately." },
               ].map(step => (
                 <div key={step.n} className="py-8 sm:py-0 sm:px-8 first:pl-0 last:pr-0 space-y-4">

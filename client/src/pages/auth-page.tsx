@@ -396,7 +396,7 @@ export default function AuthPage() {
               <em>precision</em> and care.
             </h1>
             <p className="text-primary-foreground/60 text-sm leading-relaxed">
-              Institutional-grade portfolio management for individuals and families with $500K or more in investable assets.
+              Institutional-grade portfolio management for ultra-high-net-worth individuals and families with $500M or more in investable assets.
             </p>
           </div>
         </div>
