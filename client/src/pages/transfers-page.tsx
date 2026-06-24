@@ -1,4 +1,4 @@
-import { useAccounts, useTransfer, usePayees, useCreatePayee, useDeletePayee, usePayment, useDeleteAccount } from "@/hooks/use-finances";
+import { useAccounts, usePayees, useCreatePayee, useDeletePayee, usePayment } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, ArrowRightLeft, Plus, Wallet, CheckCircle2, AlertCircle, Building2, Clock, XCircle } from "lucide-react";
+import { ArrowRight, Plus, CheckCircle2, AlertCircle, Building2, Clock, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -17,11 +17,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 export default function TransfersPage() {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: savedPayees, isLoading: loadingPayees } = usePayees();
-  const transferMutation = useTransfer();
   const createPayeeMutation = useCreatePayee();
   const deletePayeeMutation = useDeletePayee();
   const paymentMutation = usePayment();
-  const deleteAccountMutation = useDeleteAccount();
   const { toast } = useToast();
   const { user } = useAuth();
   const [showInstTransferModal, setShowInstTransferModal] = useState(false);
@@ -30,10 +28,6 @@ export default function TransfersPage() {
     queryKey: ["/api/institutional-transfers"],
   });
 
-  // Internal Transfer State
-  const [fromId, setFromId] = useState("");
-  const [toId, setToId] = useState("");
-  const [amount, setAmount] = useState("");
 
   // External Payment State
   const [payeeId, setPayeeId] = useState("");
@@ -48,44 +42,6 @@ export default function TransfersPage() {
   const [isPayeeDialogOpen, setIsPayeeDialogOpen] = useState(false);
 
   const [feedback, setFeedback] = useState<{title: string, message: string, type: 'success' | 'error'} | null>(null);
-
-  const handleInternalTransfer = () => {
-    if (!fromId || !toId || !amount) {
-      setFeedback({ title: "Incomplete Form", message: "Please ensure all transfer fields are filled correctly.", type: 'error' });
-      return;
-    }
-
-    if (fromId === toId) {
-      setFeedback({ title: "Invalid Selection", message: "Source and destination accounts must be different.", type: 'error' });
-      return;
-    }
-
-    const isFromChecking = accounts?.find(a => a.id === parseInt(fromId))?.accountType === "Checking Account";
-    const isToChecking = accounts?.find(a => a.id === parseInt(toId))?.accountType === "Checking Account";
-
-    transferMutation.mutate({
-      fromAccountId: parseInt(fromId),
-      toAccountId: parseInt(toId),
-      amount: amount
-    }, {
-      onSuccess: () => {
-        const isInvestmentFlow = !isFromChecking || !isToChecking;
-        setFeedback({ 
-          title: isInvestmentFlow ? "Investment Transfer Initiated" : "Transfer Initiated", 
-          message: isInvestmentFlow 
-            ? "Your request to move funds for investment purposes has been staged. These funds remain liquid and available for withdrawal or external transfer once the institutional verification period (15-30 mins) completes."
-            : "Your internal transfer has been staged for processing. Please allow 15-30 minutes for institutional verification and final settlement.",
-          type: 'success' 
-        });
-        setAmount("");
-        setFromId("");
-        setToId("");
-      },
-      onError: (err) => {
-        setFeedback({ title: "Transfer Failed", message: err.message || "Institutional verification failed. Please contact support.", type: 'error' });
-      }
-    });
-  };
 
   const handleAddPayee = () => {
     if (!payeeName || !payeeBankName || !payeeAccountNumber || !payeeRoutingNumber) {
@@ -189,106 +145,20 @@ export default function TransfersPage() {
 
         <div className="mb-3">
           <h2 className="text-xl font-bold font-display">Transfers & Payments</h2>
-          <p className="text-muted-foreground text-xs">Move money between your accounts or send payments to external recipients.</p>
+          <p className="text-muted-foreground text-xs">Initiate wire disbursements or institutional account transfers.</p>
         </div>
 
-        <Tabs defaultValue="internal" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="internal" className="gap-2">
-              <ArrowRightLeft className="w-4 h-4" />
-              Internal
-            </TabsTrigger>
+        <Tabs defaultValue="external" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="external" className="gap-2">
               <ArrowRight className="w-4 h-4" />
-              External
+              Wire Transfer
             </TabsTrigger>
             <TabsTrigger value="institutional" className="gap-2">
               <Building2 className="w-4 h-4" />
               Institution
             </TabsTrigger>
           </TabsList>
-
-          {/* Internal Transfer Tab */}
-          <TabsContent value="internal" className="mt-2">
-            <Card className="border-none shadow-xl shadow-primary/5">
-              <CardHeader className="p-3">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <ArrowRightLeft className="w-4 h-4 text-primary" />
-                  Transfer Between Accounts
-                </CardTitle>
-                <CardDescription className="text-xs">Move money between your own accounts instantly</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2 p-3 pt-0">
-                <div className="grid md:grid-cols-[1fr,auto,1fr] gap-2 items-center">
-                  <div className="space-y-1">
-                    <Label className="text-xs">From Account</Label>
-                    <Select value={fromId} onValueChange={setFromId}>
-                      <SelectTrigger className="h-9 text-xs">
-                        <SelectValue placeholder="Select Source" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {accounts?.map((a: any) => (
-                          <SelectItem key={a.id} value={a.id.toString()}>
-                            <div className="text-left">
-                              <p className="font-medium">Account #{a.id}</p>
-                              <p className="text-xs text-muted-foreground">${Number(a.balance).toFixed(2)}</p>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex justify-center pt-3">
-                    <div className="bg-muted p-1 rounded-full">
-                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-xs">To Account</Label>
-                    <Select value={toId} onValueChange={setToId}>
-                      <SelectTrigger className="h-9 text-xs">
-                        <SelectValue placeholder="Select Destination" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {accounts?.map((a: any) => (
-                          <SelectItem key={a.id} value={a.id.toString()}>
-                            <div className="text-left">
-                              <p className="font-medium">Account #{a.id}</p>
-                              <p className="text-xs text-muted-foreground">${Number(a.balance).toFixed(2)}</p>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs">Amount</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">$</span>
-                    <Input 
-                      type="number" 
-                      value={amount}
-                      onChange={e => setAmount(e.target.value)}
-                      className="pl-6 h-9 text-sm font-bold"
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-
-                <Button 
-                  className="w-full h-9 text-sm shadow-lg shadow-primary/25" 
-                  onClick={handleInternalTransfer}
-                  disabled={transferMutation.isPending}
-                >
-                  {transferMutation.isPending ? "Processing..." : "Transfer Funds"}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* External Payment Tab */}
           <TabsContent value="external" className="mt-2 space-y-2">
