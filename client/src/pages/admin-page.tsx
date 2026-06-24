@@ -392,17 +392,17 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
             <TabsTrigger value="applications" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
               <FileText className="w-3.5 h-3.5 mr-1.5" />
               Applications
-              {(allApplications as any[]).filter((a: any) => a.status === "pending").length > 0 && (
+              {Array.isArray(allApplications) && allApplications.filter((a: any) => a.status === "pending").length > 0 && (
                 <span className="ml-2 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {(allApplications as any[]).filter((a: any) => a.status === "pending").length}
+                  {allApplications.filter((a: any) => a.status === "pending").length}
                 </span>
               )}
             </TabsTrigger>
             <TabsTrigger value="pending" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
               Pending Txns
-              {(pendingTxns as any[]).length > 0 && (
+              {Array.isArray(pendingTxns) && pendingTxns.length > 0 && (
                 <span className="ml-2 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {(pendingTxns as any[]).length}
+                  {pendingTxns.length}
                 </span>
               )}
             </TabsTrigger>
@@ -440,7 +440,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                   <div className="flex items-center justify-center py-12 text-slate-400">
                     <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Loading…
                   </div>
-                ) : (allApplications as any[]).length === 0 ? (
+                ) : !Array.isArray(allApplications) || allApplications.length === 0 ? (
                   <div className="text-center py-12">
                     <FileText className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                     <p className="text-slate-400">No applications yet</p>
@@ -448,7 +448,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {(allApplications as any[]).map((app: any) => (
+                    {(Array.isArray(allApplications) ? allApplications : []).map((app: any) => (
                       <ApplicationCard
                         key={app.id}
                         app={app}
@@ -477,7 +477,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                   <div className="flex items-center justify-center py-12 text-slate-400">
                     <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Loading…
                   </div>
-                ) : (pendingTxns as any[]).length === 0 ? (
+                ) : !Array.isArray(pendingTxns) || pendingTxns.length === 0 ? (
                   <div className="text-center py-12">
                     <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3 opacity-60" />
                     <p className="text-slate-400">No pending transactions</p>
@@ -485,7 +485,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {(pendingTxns as any[]).map((txn: any) => (
+                    {(Array.isArray(pendingTxns) ? pendingTxns : []).map((txn: any) => (
                       <div
                         key={txn.id}
                         className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl bg-slate-700/30 border border-slate-600/50"
