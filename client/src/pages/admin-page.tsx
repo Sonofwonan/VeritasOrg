@@ -238,7 +238,11 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
   const queryClient = useQueryClient();
 
   const adminGet = useCallback((path: string) =>
-    adminFetch(path, adminKey).then(r => r.json()), [adminKey]);
+    adminFetch(path, adminKey).then(async r => {
+      const data = await r.json();
+      if (!r.ok) throw new Error(data?.message || "Request failed");
+      return data;
+    }), [adminKey]);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/admin/stats"],
@@ -411,9 +415,9 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
             <TabsTrigger value="inst-transfers" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
               <Building2 className="w-3.5 h-3.5 mr-1.5" />
               Inst. Transfers
-              {(instTransfers as any[]).filter((t: any) => t.status === "pending").length > 0 && (
+              {Array.isArray(instTransfers) && instTransfers.filter((t: any) => t.status === "pending").length > 0 && (
                 <span className="ml-2 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {(instTransfers as any[]).filter((t: any) => t.status === "pending").length}
+                  {instTransfers.filter((t: any) => t.status === "pending").length}
                 </span>
               )}
             </TabsTrigger>
@@ -660,7 +664,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                   <div className="flex items-center justify-center py-12 text-slate-400">
                     <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Loading…
                   </div>
-                ) : (instTransfers as any[]).length === 0 ? (
+                ) : !Array.isArray(instTransfers) || instTransfers.length === 0 ? (
                   <div className="text-center py-12">
                     <Building2 className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                     <p className="text-slate-400">No institutional transfer requests</p>
@@ -668,7 +672,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {(instTransfers as any[]).map((t: any) => (
+                    {(Array.isArray(instTransfers) ? instTransfers : []).map((t: any) => (
                       <div
                         key={t.id}
                         className="rounded-xl bg-slate-700/30 border border-slate-600/50 p-4"
