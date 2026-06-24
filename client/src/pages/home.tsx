@@ -125,7 +125,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="/assets/IMG_4531_1771684255921.jpeg" alt="Veritas" className="w-6 h-6 object-contain" />
-            <span className="font-serif text-[1.05rem] tracking-tight">Veritas Wealth</span>
+            <div className="flex flex-col leading-tight">
+              <span className="font-serif text-[1.05rem] tracking-tight">Veritas Wealth</span>
+              <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Private wealth management since 1967</span>
+            </div>
           </div>
           <nav className="hidden md:flex items-center gap-7 text-[13px] text-muted-foreground">
             <button className="hover:text-foreground transition-colors">Who we serve</button>
