@@ -293,153 +293,163 @@ export default function TransfersPage() {
           {/* External Payment Tab */}
           <TabsContent value="external" className="mt-2 space-y-2">
             <Card className="border-none shadow-xl shadow-primary/5">
-              <CardHeader className="p-3">
+              <CardHeader className="p-4 border-b border-border/40">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2 text-sm">
+                    <CardTitle className="flex items-center gap-2 text-base font-display">
                       <ArrowRight className="w-4 h-4 text-primary" />
-                      Send Payment to Payee
+                      Wire Disbursement
                     </CardTitle>
-                    <CardDescription className="text-xs">Send money to external recipients</CardDescription>
+                    <CardDescription className="text-xs mt-0.5">Initiate a wire transfer to a registered beneficiary</CardDescription>
                   </div>
                   <Dialog open={isPayeeDialogOpen} onOpenChange={setIsPayeeDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <Plus className="w-4 h-4" />
-                        Add Payee
+                      <Button variant="outline" size="sm" className="gap-2 text-xs">
+                        <Plus className="w-3.5 h-3.5" />
+                        Register Beneficiary
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Add New Payee</DialogTitle>
+                        <DialogTitle className="font-display">Register Beneficiary</DialogTitle>
                         <DialogDescription>
-                          Save a new external recipient for future payments
+                          Add a verified external counterparty for wire disbursements
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
                         <div className="grid gap-2">
-                          <Label>Payee Name</Label>
+                          <Label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Beneficiary Name</Label>
                           <Input 
-                            placeholder="e.g., Sarah's Consulting"
+                            placeholder="Legal entity or individual name"
                             value={payeeName}
                             onChange={(e) => setPayeeName(e.target.value)}
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label>Bank Name</Label>
+                          <Label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Receiving Institution</Label>
                           <Input 
-                            placeholder="e.g., Chase Bank"
+                            placeholder="e.g., Royal Bank of Canada"
                             value={payeeBankName}
                             onChange={(e) => setPayeeBankName(e.target.value)}
                           />
                         </div>
-                        <div className="grid gap-2">
-                          <Label>Account Number</Label>
-                          <Input 
-                            placeholder="Account number"
-                            type="password"
-                            value={payeeAccountNumber}
-                            onChange={(e) => setPayeeAccountNumber(e.target.value)}
-                          />
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="grid gap-2">
+                            <Label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Account / IBAN</Label>
+                            <Input 
+                              placeholder="Account number"
+                              type="password"
+                              value={payeeAccountNumber}
+                              onChange={(e) => setPayeeAccountNumber(e.target.value)}
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">SWIFT / BIC</Label>
+                            <Input 
+                              placeholder="e.g., ROYCCAT2"
+                              value={payeeRoutingNumber}
+                              onChange={(e) => setPayeeRoutingNumber(e.target.value)}
+                            />
+                          </div>
                         </div>
-                        <div className="grid gap-2">
-                          <Label>Routing Number</Label>
-                          <Input 
-                            placeholder="Routing number"
-                            value={payeeRoutingNumber}
-                            onChange={(e) => setPayeeRoutingNumber(e.target.value)}
-                          />
-                        </div>
+                        <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg p-3 leading-relaxed">
+                          Beneficiary details are verified against FINTRAC records before the first disbursement. Typical verification takes 1–2 business days.
+                        </p>
                       </div>
                       <DialogFooter>
                         <Button onClick={handleAddPayee} disabled={createPayeeMutation.isPending}>
-                          {createPayeeMutation.isPending ? "Saving..." : "Save Payee"}
+                          {createPayeeMutation.isPending ? "Registering..." : "Register Beneficiary"}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2 p-3 pt-0">
-                <div className="space-y-1">
-                  <Label className="text-xs">From Account</Label>
-                  <Select value={fromAccountForPayee} onValueChange={setFromAccountForPayee}>
-                    <SelectTrigger className="h-9 text-xs" data-testid="select-from-account">
-                      <SelectValue placeholder="Select Source Account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accounts?.map((a: any) => (
-                        <SelectItem key={a.id} value={a.id.toString()} data-testid={`select-item-account-${a.id}`}>
-                          <div className="text-left">
-                            <p className="font-medium">Account #{a.id}</p>
-                            <p className="text-xs text-muted-foreground">${Number(a.balance).toFixed(2)}</p>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <CardContent className="space-y-3 p-4">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Debit Account</Label>
+                    <Select value={fromAccountForPayee} onValueChange={setFromAccountForPayee}>
+                      <SelectTrigger className="h-10 text-sm" data-testid="select-from-account">
+                        <SelectValue placeholder="Select source account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accounts?.map((a: any) => (
+                          <SelectItem key={a.id} value={a.id.toString()} data-testid={`select-item-account-${a.id}`}>
+                            <div className="text-left">
+                              <p className="font-medium">{a.accountType}</p>
+                              <p className="text-xs text-muted-foreground">${Number(a.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Beneficiary</Label>
+                    <Select value={payeeId} onValueChange={setPayeeId}>
+                      <SelectTrigger className="h-10 text-sm" data-testid="select-payee">
+                        <SelectValue placeholder="Select registered beneficiary" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {savedPayees?.length === 0 && (
+                          <SelectItem value="__none__" disabled>No beneficiaries registered</SelectItem>
+                        )}
+                        {savedPayees?.map((payee: any) => (
+                          <SelectItem key={payee.id} value={payee.id.toString()} data-testid={`select-item-payee-${payee.id}`}>
+                            <div className="text-left">
+                              <p className="font-medium">{payee.name}</p>
+                              <p className="text-xs text-muted-foreground">{payee.bankName} · ****{payee.accountNumber?.slice(-4)}</p>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <Label className="text-xs">Payee</Label>
-                  <Select value={payeeId} onValueChange={setPayeeId}>
-                    <SelectTrigger className="h-9 text-xs" data-testid="select-payee">
-                      <SelectValue placeholder="Select Payee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {savedPayees?.map((payee: any) => (
-                        <SelectItem key={payee.id} value={payee.id.toString()} data-testid={`select-item-payee-${payee.id}`}>
-                          <div className="text-left">
-                            <p className="font-medium">{payee.name}</p>
-                            <p className="text-xs text-muted-foreground">{payee.bankName} - ****{payee.accountNumber?.slice(-4)}</p>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs">Amount</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Wire Amount (CAD)</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">$</span>
                     <Input 
                       type="number" 
                       value={payeeAmount}
                       onChange={e => setPayeeAmount(e.target.value)}
-                      className="pl-6 h-9 text-sm font-bold"
+                      className="pl-6 h-10 text-sm font-bold"
                       placeholder="0.00"
                     />
                   </div>
                 </div>
 
                 <Button 
-                  className="w-full h-9 text-sm shadow-lg shadow-primary/25" 
+                  className="w-full h-10 text-sm shadow-lg shadow-primary/20 font-semibold tracking-wide" 
                   onClick={handleExternalPayment}
                   disabled={paymentMutation.isPending}
+                  data-testid="button-initiate-wire"
                 >
-                  {paymentMutation.isPending ? "Processing..." : "Schedule Payment"}
+                  {paymentMutation.isPending ? "Submitting..." : "Initiate Wire Disbursement"}
                 </Button>
 
                 {savedPayees && savedPayees.length > 0 && (
-                  <div className="bg-muted/30 rounded-lg p-2 border border-border">
-                    <h3 className="font-semibold mb-1.5 text-xs">Saved Payees</h3>
-                    <div className="space-y-1">
+                  <div className="pt-2 border-t border-border/40">
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">Registered Beneficiaries</p>
+                    <div className="space-y-1.5">
                       {savedPayees.map((payee: any) => (
-                        <div key={payee.id} className="flex items-center justify-between p-1.5 rounded-lg hover:bg-muted/50">
+                        <div key={payee.id} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border/40 bg-muted/20 hover:bg-muted/40 transition-colors">
                           <div>
-                            <p className="font-medium text-xs">{payee.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{payee.bankName} - ****{payee.accountNumber?.slice(-4)}</p>
+                            <p className="font-medium text-sm">{payee.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{payee.bankName} · ****{payee.accountNumber?.slice(-4)}</p>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1.5">
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              className="text-primary hover:bg-primary/10"
+                              className="h-7 px-2 text-xs text-primary hover:bg-primary/10"
                               onClick={() => {
                                 setPayeeId(payee.id.toString());
-                                // Also ensure the tab is correct or user is scrolled to the form
-                                toast({ title: "Payee Selected", description: `${payee.name} selected for payment.` });
+                                toast({ title: "Beneficiary Selected", description: `${payee.name} set as wire recipient.` });
                               }}
                             >
                               Select
@@ -447,15 +457,15 @@ export default function TransfersPage() {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
                               onClick={() => {
-                                if (window.confirm("Are you sure you want to delete this payee?")) {
+                                if (window.confirm("Remove this beneficiary from your registered list?")) {
                                   deletePayeeMutation.mutate(payee.id);
                                 }
                               }}
                               disabled={deletePayeeMutation.isPending}
                             >
-                              Delete
+                              Remove
                             </Button>
                           </div>
                         </div>
@@ -463,50 +473,6 @@ export default function TransfersPage() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Account Management Section */}
-            <Card className="border-none shadow-xl shadow-primary/5">
-              <CardHeader className="p-3">
-                <CardTitle className="text-sm">Account Management</CardTitle>
-                <CardDescription className="text-xs">View details and manage your connected accounts</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2 p-3 pt-0">
-                {accounts?.map((account: any) => (
-                  <div key={account.id} className="p-2 rounded-lg border border-border/50 bg-accent/5 text-xs">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          <Wallet className="w-3 h-3" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-xs">Account #{account.id}</p>
-                          <p className="text-[10px] text-muted-foreground capitalize">{account.accountType}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
-                          <p className="text-xs font-bold">${Number(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                          <p className="text-[7px] text-muted-foreground uppercase tracking-wider font-bold">Balance</p>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
-                          onClick={() => {
-                            if (window.confirm("Are you sure you want to delete this account? This action cannot be undone.")) {
-                              deleteAccountMutation.mutate(account.id);
-                            }
-                          }}
-                          disabled={deleteAccountMutation.isPending}
-                        >
-                          Close Account
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </CardContent>
             </Card>
           </TabsContent>
