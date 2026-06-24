@@ -284,50 +284,6 @@ export default function AccountsPage() {
                 Details
                 <ArrowRight className="w-2 h-2" />
               </Button>
-              <Dialog open={isDepositOpen && selectedAccountId === account.id} onOpenChange={(open) => {
-                setIsDepositOpen(open);
-                if (open) setSelectedAccountId(account.id);
-                else setSelectedAccountId(null);
-              }}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="flex-1 h-7 text-xs gap-1 text-primary hover:bg-primary/10 no-default-hover-elevate"
-                  >
-                    <ArrowDownCircle className="w-2 h-2" />
-                    Deposit
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Deposit Funds</DialogTitle>
-                    <DialogDescription>
-                      Add funds to your {account.accountType}.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label>Deposit Amount</Label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                        <Input 
-                          type="number" 
-                          value={depositAmount}
-                          onChange={(e) => setDepositAmount(e.target.value)}
-                          className="pl-7"
-                          placeholder="0.00"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleDeposit} disabled={depositMutation.isPending}>
-                      {depositMutation.isPending ? "Processing..." : "Confirm Deposit"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
             </CardFooter>
           </Card>
         ))}
