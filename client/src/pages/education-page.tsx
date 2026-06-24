@@ -193,20 +193,10 @@ export default function EducationPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-lg">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <Award className="w-5 h-5 text-amber-600" />
-              <Badge variant="secondary">{ACHIEVEMENTS.filter(a => a.unlocked).length}</Badge>
-            </div>
-            <p className="text-3xl font-bold font-display">{ACHIEVEMENTS.filter(a => a.unlocked).length}</p>
-            <p className="text-sm text-muted-foreground">Achievements Unlocked</p>
-          </CardContent>
-        </Card>
       </div>
 
       <Tabs defaultValue="enrolled" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="enrolled" className="gap-2">
             <BookOpen className="w-4 h-4" />
             <span className="hidden sm:inline">My Courses</span>
@@ -214,10 +204,6 @@ export default function EducationPage() {
           <TabsTrigger value="available" className="gap-2">
             <Zap className="w-4 h-4" />
             <span className="hidden sm:inline">Explore</span>
-          </TabsTrigger>
-          <TabsTrigger value="achievements" className="gap-2">
-            <Award className="w-4 h-4" />
-            <span className="hidden sm:inline">Achievements</span>
           </TabsTrigger>
         </TabsList>
 
@@ -372,40 +358,6 @@ export default function EducationPage() {
           </div>
         </TabsContent>
 
-        {/* Achievements */}
-        <TabsContent value="achievements" className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            {ACHIEVEMENTS.map(achievement => (
-              <Card 
-                key={achievement.id} 
-                className={`border-none shadow-lg transition-all ${achievement.unlocked ? "" : "opacity-60"}`}
-              >
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <div className={`text-4xl p-3 rounded-lg ${achievement.unlocked ? "bg-amber-100 dark:bg-amber-950" : "bg-muted"}`}>
-                      {achievement.icon}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{achievement.title}</h3>
-                      <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                      {achievement.unlocked && (
-                        <Badge className="mt-2 gap-1" variant="secondary">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Unlocked
-                        </Badge>
-                      )}
-                      {!achievement.unlocked && (
-                        <Badge className="mt-2" variant="outline">
-                          Locked
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
       </Tabs>
     </LayoutShell>
   );
