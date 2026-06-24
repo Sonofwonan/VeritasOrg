@@ -167,11 +167,8 @@ export default function HomePage() {
         <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-8 pb-10 sm:pb-14">
           <div className="max-w-2xl">
             <p className="label-caps text-white/50 mb-4 tracking-[0.2em]">Private wealth management since 1967</p>
-            <h1 className="font-serif text-white leading-[1.02]" style={{ fontSize: "clamp(2.8rem, 6vw, 5.5rem)" }}>
-              Capital,<br />
-              <em>protected</em>.<br />
-              Wealth,<br />
-              grown.
+            <h1 className="font-serif text-white leading-[1.1]" style={{ fontSize: "clamp(2rem, 4vw, 3.8rem)" }}>
+              Capital, <em>protected</em>. Wealth, grown.
             </h1>
             <p className="text-white/60 text-lg sm:text-xl mt-5 max-w-lg leading-relaxed">
               We manage money for people with a lot of it. Families, founders and institutions with $500M or more who want a real partner, not just a platform.
