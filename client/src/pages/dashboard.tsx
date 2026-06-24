@@ -115,7 +115,7 @@ export default function DashboardPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <StatCard 
               title="Net Worth" 
-              value={`$${(totalBalance + investmentValue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
+              value={`$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
               icon={ArrowUpRight}
               className="bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover-elevate no-default-hover-elevate"
             />
