@@ -131,11 +131,26 @@ export default function HomePage() {
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-7 text-[13px] text-muted-foreground">
-            <button className="hover:text-foreground transition-colors">Who we serve</button>
-            <button className="hover:text-foreground transition-colors">Our approach</button>
-            <button className="hover:text-foreground transition-colors">Performance</button>
-            <button className="hover:text-foreground transition-colors">Insights</button>
-            <button className="hover:text-foreground transition-colors">About</button>
+            {[
+              { label: "Who we serve", id: "who-we-serve" },
+              { label: "Our approach", id: "our-approach" },
+              { label: "Performance",  id: "performance"  },
+              { label: "Insights",     id: "insights"     },
+            ].map(({ label, id }) => (
+              <button
+                key={id}
+                className="hover:text-foreground transition-colors"
+                onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              >
+                {label}
+              </button>
+            ))}
+            <button
+              className="hover:text-foreground transition-colors"
+              onClick={() => setLocation("/company")}
+            >
+              About
+            </button>
           </nav>
           <div className="flex items-center gap-4">
             <button
@@ -228,7 +243,7 @@ export default function HomePage() {
       </div>
 
       {/* Who we serve */}
-      <section className="bg-cream border-b border-border">
+      <section id="who-we-serve" className="bg-cream border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-28">
           <div className="mb-12">
             <p className="label-caps text-muted-foreground mb-3">Who we serve</p>
@@ -270,7 +285,7 @@ export default function HomePage() {
       </section>
 
       {/* Philosophy */}
-      <section className="bg-secondary/40 border-b border-border">
+      <section id="our-approach" className="bg-secondary/40 border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="grid lg:grid-cols-[1fr_1.2fr] gap-16 lg:gap-24 items-start">
             <div className="space-y-6">
@@ -305,7 +320,7 @@ export default function HomePage() {
       </section>
 
       {/* Performance */}
-      <section className="bg-[#0B2218] text-primary-foreground border-b border-white/5">
+      <section id="performance" className="bg-[#0B2218] text-primary-foreground border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-28">
           <div className="grid lg:grid-cols-[auto_1fr] gap-16 lg:gap-32 items-start">
             <div className="lg:max-w-xs space-y-4">
@@ -385,7 +400,7 @@ export default function HomePage() {
       </section>
 
       {/* Market insights */}
-      <section className="bg-secondary/30 border-b border-border">
+      <section id="insights" className="bg-secondary/30 border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="flex items-end justify-between mb-12">
             <div className="space-y-2">
