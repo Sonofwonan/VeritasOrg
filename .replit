@@ -48,3 +48,6 @@ stack = "FULLSTACK_JS"
 [userenv]
 
 [userenv.shared]
+
+[userenv.production]
+SUPABASE_DATABASE_URL = "postgresql://postgres.xbaotmosruxadxidlsll:j8bKEvm8EOOXnwP9@aws-1-us-east-2.pooler.supabase.com:5432/postgres"
