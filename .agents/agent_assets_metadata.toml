@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "hphU6GJUGJQz5pmmmjUcN"
+uri = "file://veritas_historical_seed.tar.gz"
+type = "unspecified"
+title = "Veritas Historical Data SQL (2015–2026)"
