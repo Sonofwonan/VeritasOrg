@@ -57,9 +57,12 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy({ usernameField: 'userId' }, async (userId, password, done) => {
       try {
-        const id = parseInt(userId, 10);
-        if (isNaN(id)) return done(null, false);
-        const user = await storage.getUser(id);
+        // Try alphanumeric client reference first, then fall back to numeric id
+        let user = await storage.getUserByClientRef(userId.trim());
+        if (!user) {
+          const id = parseInt(userId, 10);
+          if (!isNaN(id)) user = await storage.getUser(id);
+        }
         if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false);
         }

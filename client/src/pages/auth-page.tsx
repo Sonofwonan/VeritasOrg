@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 
 const loginSchema = z.object({
-  userId: z.string().min(1, "Client ID is required").refine(v => !isNaN(parseInt(v, 10)), "Must be numeric"),
+  userId: z.string().min(1, "Client Reference is required"),
   password: z.string().min(1, "Password required"),
 });
 
@@ -420,8 +420,8 @@ export default function AuthPage() {
               </div>
 
               <form onSubmit={onLogin} className="space-y-7">
-                <Field label="Client ID" error={errors.userId?.message}>
-                  <TextInput reg={register("userId")} placeholder="e.g. 10042" autoComplete="username" />
+                <Field label="Client Reference" error={errors.userId?.message}>
+                  <TextInput reg={register("userId")} placeholder="e.g. VW-440FR" autoComplete="username" />
                 </Field>
                 <Field label="Password" error={errors.password?.message}>
                   <div className="relative">

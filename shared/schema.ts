@@ -26,6 +26,7 @@ export const transactionStatusEnum = pgEnum('transaction_status', ['completed', 
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  clientRef: text("client_ref").unique(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   password: text("password").notNull(),
