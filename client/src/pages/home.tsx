@@ -4,13 +4,14 @@ import { useEffect, useRef } from "react";
 import { Loader2, ArrowRight, ArrowUpRight } from "lucide-react";
 
 const TICKER_ITEMS = [
+  { symbol: "S&P/TSX", value: "22,456.32", change: "+0.67%", up: true },
   { symbol: "S&P 500", value: "5,842.16", change: "+0.84%", up: true },
   { symbol: "NASDAQ", value: "18,429.30", change: "+1.21%", up: true },
-  { symbol: "DOW JONES", value: "42,613.52", change: "+0.31%", up: true },
+  { symbol: "CAD/USD", value: "0.7312", change: "-0.18%", up: false },
   { symbol: "GOLD", value: "$2,341.40", change: "-0.12%", up: false },
-  { symbol: "CRUDE OIL", value: "$78.20", change: "+0.56%", up: true },
-  { symbol: "10 YR TREASURY", value: "4.28%", change: "-0.04", up: false },
-  { symbol: "EUR/USD", value: "1.0842", change: "+0.23%", up: true },
+  { symbol: "WTI CRUDE", value: "$78.20", change: "+0.56%", up: true },
+  { symbol: "GOC 10 YR", value: "3.64%", change: "-0.03", up: false },
+  { symbol: "NATURAL GAS", value: "$2.84", change: "+1.42%", up: true },
   { symbol: "BITCOIN", value: "$67,420", change: "+2.14%", up: true },
 ];
 
@@ -51,7 +52,7 @@ const PRINCIPLES = [
 const STORIES = [
   {
     name: "Catherine Mercer",
-    background: "Healthcare executive, New York",
+    background: "Healthcare executive, Toronto, Ontario",
     before: "$620M",
     after: "$2.8B",
     years: 7,
@@ -59,7 +60,7 @@ const STORIES = [
   },
   {
     name: "James and Eleanor Thornton",
-    background: "Business founders, Texas",
+    background: "Energy sector founders, Calgary, Alberta",
     before: "$1.4B",
     after: "$6.2B",
     years: 9,
@@ -67,7 +68,7 @@ const STORIES = [
   },
   {
     name: "Dr. Marcus Lin",
-    background: "Surgeon and private equity partner, California",
+    background: "Surgeon and private equity partner, Vancouver, BC",
     before: "$580M",
     after: "$2.3B",
     years: 6,
@@ -77,24 +78,24 @@ const STORIES = [
 
 const INSIGHTS = [
   {
-    category: "Fixed income",
+    category: "Canadian fixed income",
     date: "June 2025",
-    headline: "Why extending duration might actually make sense right now",
-    excerpt: "As the Fed signals a shift, high quality bonds may deserve a bigger seat at the table than they have in years. The sequencing matters more than most investors realise.",
+    headline: "What the Bank of Canada's rate path means for your bond portfolio",
+    excerpt: "With the Bank of Canada cutting ahead of the Fed, Government of Canada bonds are behaving differently than their US counterparts. Duration extension may finally make sense for Canadian investors holding short.",
     readTime: "6 min read",
   },
   {
     category: "Equity strategy",
     date: "May 2025",
-    headline: "Concentration risk is quietly building in most portfolios",
-    excerpt: "The top seven names in the S&P 500 now make up over 31% of index weight. If you hold passive funds, you may be taking on far more single factor risk than you know.",
+    headline: "The TSX is cheap relative to history. Here is why that matters",
+    excerpt: "Canadian equities trade at a meaningful discount to US peers on almost every valuation metric. For investors willing to look past the energy and financials concentration, the opportunity set is broader than it looks.",
     readTime: "8 min read",
   },
   {
-    category: "Tax planning",
+    category: "Tax and estate",
     date: "May 2025",
-    headline: "2025 could be the last good year for Roth conversions",
-    excerpt: "The tax cuts from 2017 are set to expire in 2026. For high income earners, the window to lock in lower rates through Roth conversions has rarely been this wide.",
+    headline: "The 2025 capital gains inclusion rate change and what to do now",
+    excerpt: "Ottawa's proposed increase to the capital gains inclusion rate has prompted many high net worth Canadians to revisit their holding structures. We break down the scenarios and where planning still creates real value.",
     readTime: "5 min read",
   },
 ];
@@ -214,7 +215,7 @@ export default function HomePage() {
             Veritas Wealth has been serving investors, families and institutions for over <strong className="text-foreground not-italic font-medium">57 years</strong>.
           </p>
           <div className="flex items-center gap-8 text-[11px]">
-            {["SEC Registered Investment Adviser", "SIPC Member", "Deloitte Audited Annually", "Fiduciary Standard"].map(b => (
+            {["CIRO Registered Dealer", "CIPF Member", "Deloitte Canada Audited", "Fiduciary Standard"].map(b => (
               <span key={b} className="label-caps text-muted-foreground/60 flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-primary/40 inline-block" /> {b}
               </span>

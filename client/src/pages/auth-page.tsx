@@ -388,17 +388,17 @@ export default function AuthPage() {
               <em>precision</em> and care.
             </h1>
             <p className="text-primary-foreground/60 text-sm leading-relaxed">
-              We work with ultra high net worth individuals and families who have $500M or more to invest. Real people, real relationships, no templates.
+              We work with ultra high net worth Canadians who have $500M or more to invest. Real people, real relationships, no templates.
             </p>
           </div>
         </div>
 
         <div className="relative z-10 pt-10 border-t border-primary-foreground/10 grid grid-cols-2 gap-6">
           {[
-            { v: "$4.2B", l: "Assets managed" },
+            { v: "CAD $4.2B", l: "Assets managed" },
             { v: "12.4%", l: "10 yr avg return" },
             { v: "0.32%", l: "Avg all in fee" },
-            { v: "50K+", l: "Client accounts" },
+            { v: "50K+", l: "Canadian clients" },
           ].map(s => (
             <div key={s.l}>
               <p className="font-mono-nums text-xl font-medium text-accent">{s.v}</p>
