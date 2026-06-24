@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Users, ArrowLeftRight, Clock, TrendingUp, CheckCircle2,
   XCircle, ShieldCheck, LogOut, Wallet, Eye, EyeOff,
-  RefreshCw, DollarSign, Activity, FileText, ChevronDown, ChevronUp
+  RefreshCw, DollarSign, Activity, FileText, ChevronDown, ChevronUp, Building2
 } from "lucide-react";
 
 const SESSION_KEY = "vw_admin_key";
@@ -284,6 +284,32 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
     onError: () => toast({ title: "Error", description: "Failed to reject transaction", variant: "destructive" }),
   });
 
+  const { data: instTransfers = [], isLoading: instLoading } = useQuery({
+    queryKey: ["/api/admin/institutional-transfers"],
+    queryFn: () => adminGet("/api/admin/institutional-transfers"),
+    refetchInterval: 30000,
+  });
+
+  const approveInstMutation = useMutation({
+    mutationFn: (id: number) =>
+      adminFetch(`/api/admin/institutional-transfers/${id}/approve`, adminKey, { method: "POST" }).then(r => r.json()),
+    onSuccess: (data) => {
+      toast({ title: "Transfer Approved", description: data.message });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/institutional-transfers"] });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to approve transfer", variant: "destructive" }),
+  });
+
+  const rejectInstMutation = useMutation({
+    mutationFn: (id: number) =>
+      adminFetch(`/api/admin/institutional-transfers/${id}/reject`, adminKey, { method: "POST" }).then(r => r.json()),
+    onSuccess: () => {
+      toast({ title: "Transfer Rejected" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/institutional-transfers"] });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to reject transfer", variant: "destructive" }),
+  });
+
   const { data: allApplications = [], isLoading: appsLoading, refetch: refetchApps } = useQuery({
     queryKey: ["/api/admin/applications"],
     queryFn: () => adminGet("/api/admin/applications"),
@@ -381,6 +407,15 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
             </TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
               Users
+            </TabsTrigger>
+            <TabsTrigger value="inst-transfers" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
+              <Building2 className="w-3.5 h-3.5 mr-1.5" />
+              Inst. Transfers
+              {(instTransfers as any[]).filter((t: any) => t.status === "pending").length > 0 && (
+                <span className="ml-2 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {(instTransfers as any[]).filter((t: any) => t.status === "pending").length}
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -606,6 +641,98 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                     {(allUsers as any[]).length === 0 && (
                       <p className="text-center text-slate-400 py-8">No users yet</p>
                     )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          {/* ── Institutional Transfers ── */}
+          <TabsContent value="inst-transfers" className="mt-4">
+            <Card className="bg-slate-800/40 border-slate-700">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white text-base flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  Institutional Transfer Requests
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {instLoading ? (
+                  <div className="flex items-center justify-center py-12 text-slate-400">
+                    <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Loading…
+                  </div>
+                ) : (instTransfers as any[]).length === 0 ? (
+                  <div className="text-center py-12">
+                    <Building2 className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400">No institutional transfer requests</p>
+                    <p className="text-slate-500 text-sm mt-1">Requests from clients will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(instTransfers as any[]).map((t: any) => (
+                      <div
+                        key={t.id}
+                        className="rounded-xl bg-slate-700/30 border border-slate-600/50 p-4"
+                        data-testid={`inst-transfer-admin-${t.id}`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-white font-semibold">IT-{t.id}</span>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border capitalize
+                                ${t.status === "approved" ? "bg-emerald-400/10 text-emerald-400 border-emerald-400/20"
+                                : t.status === "rejected" ? "bg-red-400/10 text-red-400 border-red-400/20"
+                                : "bg-amber-400/10 text-amber-400 border-amber-400/20"}`}>
+                                {t.status}
+                              </span>
+                              <span className="text-xs text-slate-400 bg-slate-600/40 px-2 py-0.5 rounded-full capitalize">
+                                {t.transferType === "in-kind" ? "In-Kind" : "Cash"} · {t.transferScope}
+                              </span>
+                            </div>
+                            <p className="text-slate-200 font-medium text-sm mt-1">{t.institutionName}</p>
+                            <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-slate-400">
+                              <span>Client: <span className="text-slate-300 font-medium">{t.userName}</span></span>
+                              <span className="text-slate-600">·</span>
+                              <span>{t.userEmail}</span>
+                              <span className="text-slate-600">·</span>
+                              <span>Acct #{t.accountId} ({t.accountType})</span>
+                              <span className="text-slate-600">·</span>
+                              <span>{new Date(t.createdAt).toLocaleDateString("en-CA")}</span>
+                            </div>
+                            {t.partialAmount && (
+                              <p className="text-xs text-slate-400 mt-1">Partial amount: <span className="text-slate-200 font-medium">CAD ${Number(t.partialAmount).toLocaleString()}</span></p>
+                            )}
+                            {t.status === "approved" && t.estimatedCompletionDate && (
+                              <p className="text-xs text-emerald-400 mt-1">Est. completion: {new Date(t.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}</p>
+                            )}
+                          </div>
+                          {t.status === "pending" && (
+                            <div className="flex gap-2 shrink-0">
+                              <Button
+                                size="sm"
+                                onClick={() => approveInstMutation.mutate(t.id)}
+                                disabled={approveInstMutation.isPending || rejectInstMutation.isPending}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+                                data-testid={`button-approve-inst-${t.id}`}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => rejectInstMutation.mutate(t.id)}
+                                disabled={approveInstMutation.isPending || rejectInstMutation.isPending}
+                                className="border-red-500/40 text-red-400 hover:bg-red-500/10 gap-1"
+                                data-testid={`button-reject-inst-${t.id}`}
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                Reject
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>

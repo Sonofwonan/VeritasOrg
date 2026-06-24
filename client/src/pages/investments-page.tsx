@@ -9,8 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, TrendingUp, BookOpen, Zap, DollarSign, Settings, Zap as ZapIcon } from "lucide-react";
+import { ArrowUp, ArrowDown, TrendingUp, BookOpen, Zap, DollarSign, Settings, Zap as ZapIcon, Building2, Clock, CheckCircle2, XCircle, Plus } from "lucide-react";
+import { InstitutionalTransferModal } from "@/components/institutional-transfer-modal";
+import { useAuth } from "@/hooks/use-auth";
 
 const STOCKS = ["AAPL", "GOOGL", "TSLA", "AMZN", "MSFT"];
 const ETFS = ["SPY", "QQQ", "IVV", "VOO", "VTI"];
@@ -46,6 +49,12 @@ export default function InvestmentsPage() {
   const buyMutation = useBuyInvestment();
   const sellMutation = useSellInvestment();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [showTransferModal, setShowTransferModal] = useState(false);
+
+  const { data: institutionalTransfersList = [] } = useQuery<any[]>({
+    queryKey: ["/api/institutional-transfers"],
+  });
 
   // Stock Trading State
   const [selectedSymbol, setSelectedSymbol] = useState("AAPL");
@@ -246,6 +255,10 @@ export default function InvestmentsPage() {
           <TabsTrigger value="cash" className="gap-2 text-xs sm:text-sm">
             <DollarSign className="w-4 h-4" />
             <span className="hidden sm:inline">Cash</span>
+          </TabsTrigger>
+          <TabsTrigger value="transfer-out" className="gap-2 text-xs sm:text-sm" data-testid="tab-transfer-out">
+            <Building2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Transfer Out</span>
           </TabsTrigger>
         </TabsList>
 
@@ -988,7 +1001,119 @@ export default function InvestmentsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        {/* ── Institutional Transfer Out ── */}
+        <TabsContent value="transfer-out" className="space-y-6">
+          <Card className="border-none shadow-xl shadow-primary/5">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 font-display">
+                    <Building2 className="w-5 h-5 text-primary" />
+                    Transfer to Another Institution
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    Move your portfolio in-kind or as cash to any registered Canadian investment dealer.
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={() => setShowTransferModal(true)}
+                  className="gap-2 shrink-0"
+                  data-testid="button-new-institutional-transfer"
+                >
+                  <Plus className="w-4 h-4" />
+                  New Request
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-2 gap-4 mb-8">
+                <div className="rounded-xl border border-border/60 bg-muted/20 p-5 space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Cash Transfer</p>
+                  <p className="text-2xl font-bold font-display">12–18 weeks</p>
+                  <p className="text-sm text-muted-foreground">Securities liquidated, cash wired to receiving institution</p>
+                </div>
+                <div className="rounded-xl border border-border/60 bg-muted/20 p-5 space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">In-Kind Transfer</p>
+                  <p className="text-2xl font-bold font-display">12 weeks</p>
+                  <p className="text-sm text-muted-foreground">Securities re-registered as-is via CDS to receiving custodian</p>
+                </div>
+              </div>
+
+              {institutionalTransfersList.length === 0 ? (
+                <div className="text-center py-16 space-y-3">
+                  <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto">
+                    <Building2 className="w-7 h-7 text-muted-foreground" />
+                  </div>
+                  <p className="font-medium">No transfer requests yet</p>
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                    Submit a request to move your investments to another institution. Admin review required.
+                  </p>
+                  <Button variant="outline" onClick={() => setShowTransferModal(true)} data-testid="button-start-transfer-empty">
+                    Start a Transfer Request
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {institutionalTransfersList.map((t: any) => {
+                    const statusIcon = t.status === "approved"
+                      ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      : t.status === "rejected"
+                      ? <XCircle className="w-4 h-4 text-rose-500" />
+                      : <Clock className="w-4 h-4 text-amber-500" />;
+                    const statusColor = t.status === "approved"
+                      ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-800/40"
+                      : t.status === "rejected"
+                      ? "bg-rose-50 border-rose-200 dark:bg-rose-900/10 dark:border-rose-800/40"
+                      : "bg-amber-50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-800/40";
+                    return (
+                      <div key={t.id} className={`rounded-xl border p-4 ${statusColor}`} data-testid={`inst-transfer-row-${t.id}`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            {statusIcon}
+                            <div>
+                              <p className="font-semibold text-sm">{t.institutionName}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {t.accountType} · {t.transferType === "in-kind" ? "In-Kind" : "Cash"} · {t.transferScope === "full" ? "Full transfer" : `Partial — CAD $${Number(t.partialAmount).toLocaleString()}`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize
+                              ${t.status === "approved" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                              : t.status === "rejected" ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                              : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
+                              {t.status}
+                            </span>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(t.createdAt).toLocaleDateString("en-CA")}
+                            </p>
+                          </div>
+                        </div>
+                        {t.status === "approved" && t.estimatedCompletionDate && (
+                          <div className="mt-3 pt-3 border-t border-current/10 flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
+                            <Clock className="w-3.5 h-3.5" />
+                            Estimated completion: <strong>{new Date(t.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}</strong>
+                          </div>
+                        )}
+                        {t.adminNotes && (
+                          <p className="mt-2 text-xs text-muted-foreground italic">Note: {t.adminNotes}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      <InstitutionalTransferModal
+        open={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        accounts={accounts || []}
+        userId={user?.id || 0}
+      />
     </LayoutShell>
   );
 }

@@ -128,6 +128,28 @@ export const investmentsRelations = relations(investments, ({ one }) => ({
   }),
 }));
 
+export const institutionalTransfers = pgTable("institutional_transfers", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  accountId: integer("account_id").notNull(),
+  institutionName: text("institution_name").notNull(),
+  institutionAccountNumber: text("institution_account_number").notNull(),
+  accountType: text("account_type").notNull(),
+  transferType: text("transfer_type").notNull(), // "cash" | "in-kind"
+  transferScope: text("transfer_scope").notNull(), // "full" | "partial"
+  partialAmount: numeric("partial_amount"),
+  status: text("status").notNull().default("pending"), // pending | approved | rejected
+  estimatedCompletionDate: timestamp("estimated_completion_date"),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type InstitutionalTransfer = typeof institutionalTransfers.$inferSelect;
+export const insertInstitutionalTransferSchema = createInsertSchema(institutionalTransfers).omit({
+  id: true, createdAt: true, status: true, estimatedCompletionDate: true, adminNotes: true,
+});
+export type InsertInstitutionalTransfer = z.infer<typeof insertInstitutionalTransferSchema>;
+
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
   fullName: text("full_name").notNull(),

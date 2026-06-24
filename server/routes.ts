@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { api, errorSchemas, insertPayeeSchema } from "@shared/routes";
 import { z } from "zod";
-import { type User, accounts, transactions, payees, applications, users } from "@shared/schema";
+import { type User, accounts, transactions, payees, applications, users, institutionalTransfers } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, desc, sql } from "drizzle-orm";
 import twilio from "twilio";
@@ -777,6 +777,107 @@ export async function registerRoutes(
       });
 
       res.json({ ok: true, message: "Transaction rejected" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ─── Institutional Transfer Routes ────────────────────────────────────────────
+
+  // Client: submit a new institutional transfer request
+  app.post("/api/institutional-transfers", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    try {
+      const { institutionName, institutionAccountNumber, accountType, transferType, transferScope, partialAmount, accountId } = req.body;
+      if (!institutionName || !institutionAccountNumber || !accountType || !transferType || !transferScope || !accountId) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      const user = req.user as any;
+      const record = await storage.createInstitutionalTransfer({
+        userId: user.id,
+        accountId: parseInt(accountId),
+        institutionName,
+        institutionAccountNumber,
+        accountType,
+        transferType,
+        transferScope,
+        partialAmount: partialAmount ? String(partialAmount) : null,
+      });
+      res.json(record);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Client: list own institutional transfers
+  app.get("/api/institutional-transfers", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    try {
+      const user = req.user as any;
+      const records = await storage.getInstitutionalTransfers(user.id);
+      res.json(records);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: list all institutional transfers (enriched with user info)
+  app.get("/api/admin/institutional-transfers", requireAdmin, async (req, res) => {
+    try {
+      const records = await storage.getAllInstitutionalTransfers();
+      const enriched = await Promise.all(records.map(async (r) => {
+        const [user] = await db.select().from(users).where(eq(users.id, r.userId));
+        const [account] = await db.select().from(accounts).where(eq(accounts.id, r.accountId));
+        return {
+          ...r,
+          userName: user?.name || "Unknown",
+          userEmail: user?.email || "",
+          accountType2: account?.accountType || "",
+          accountBalance: account?.balance || "0",
+        };
+      }));
+      res.json(enriched);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: approve an institutional transfer
+  app.post("/api/admin/institutional-transfers/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const [record] = await db.select().from(institutionalTransfers).where(eq(institutionalTransfers.id, id));
+      if (!record) return res.status(404).json({ message: "Transfer not found" });
+      if (record.status !== "pending") return res.status(400).json({ message: "Transfer is not pending" });
+
+      // Calculate estimated completion date based on transfer type
+      const now = new Date();
+      let weeksToAdd: number;
+      if (record.transferType === "cash") {
+        weeksToAdd = 12 + Math.floor(Math.random() * 7); // 12-18 weeks
+      } else {
+        weeksToAdd = 12; // exactly 12 weeks for in-kind
+      }
+      const completionDate = new Date(now.getTime() + weeksToAdd * 7 * 24 * 60 * 60 * 1000);
+      const adminNotes = req.body.notes || "";
+
+      const updated = await storage.updateInstitutionalTransferStatus(id, "approved", completionDate, adminNotes);
+      res.json({ ok: true, message: `Transfer approved. Estimated completion: ${completionDate.toLocaleDateString("en-CA")}`, transfer: updated });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: reject an institutional transfer
+  app.post("/api/admin/institutional-transfers/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const [record] = await db.select().from(institutionalTransfers).where(eq(institutionalTransfers.id, id));
+      if (!record) return res.status(404).json({ message: "Transfer not found" });
+      if (record.status !== "pending") return res.status(400).json({ message: "Transfer is not pending" });
+      const adminNotes = req.body.notes || "";
+      const updated = await storage.updateInstitutionalTransferStatus(id, "rejected", undefined, adminNotes);
+      res.json({ ok: true, message: "Transfer rejected", transfer: updated });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

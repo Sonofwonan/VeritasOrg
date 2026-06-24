@@ -1,10 +1,11 @@
 import { db } from "./db";
 import { eq, sql, and } from "drizzle-orm";
 import {
-  users, accounts, transactions, investments, payees,
+  users, accounts, transactions, investments, payees, institutionalTransfers,
   type User, type InsertUser, type Account, type InsertAccount,
   type Transaction, type InsertTransaction, type Investment, type InsertInvestment,
-  type Payee, type InsertPayee
+  type Payee, type InsertPayee,
+  type InstitutionalTransfer, type InsertInstitutionalTransfer
 } from "@shared/schema";
 
 export interface IStorage {
@@ -30,6 +31,12 @@ export interface IStorage {
   getPayees(userId: number): Promise<Payee[]>;
   createPayee(payee: InsertPayee): Promise<Payee>;
   deletePayee(id: number, userId: number): Promise<void>;
+
+  // Institutional Transfers
+  createInstitutionalTransfer(data: InsertInstitutionalTransfer): Promise<InstitutionalTransfer>;
+  getInstitutionalTransfers(userId: number): Promise<InstitutionalTransfer[]>;
+  getAllInstitutionalTransfers(): Promise<InstitutionalTransfer[]>;
+  updateInstitutionalTransferStatus(id: number, status: string, estimatedCompletionDate?: Date, adminNotes?: string): Promise<InstitutionalTransfer>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -240,6 +247,35 @@ export class DatabaseStorage implements IStorage {
 
       return investment;
     });
+  }
+
+  async createInstitutionalTransfer(data: InsertInstitutionalTransfer): Promise<InstitutionalTransfer> {
+    const [record] = await db.insert(institutionalTransfers).values(data).returning();
+    return record;
+  }
+
+  async getInstitutionalTransfers(userId: number): Promise<InstitutionalTransfer[]> {
+    return await db.select().from(institutionalTransfers)
+      .where(eq(institutionalTransfers.userId, userId))
+      .orderBy(institutionalTransfers.createdAt);
+  }
+
+  async getAllInstitutionalTransfers(): Promise<InstitutionalTransfer[]> {
+    return await db.select().from(institutionalTransfers)
+      .orderBy(institutionalTransfers.createdAt);
+  }
+
+  async updateInstitutionalTransferStatus(
+    id: number, status: string, estimatedCompletionDate?: Date, adminNotes?: string
+  ): Promise<InstitutionalTransfer> {
+    const updates: any = { status };
+    if (estimatedCompletionDate) updates.estimatedCompletionDate = estimatedCompletionDate;
+    if (adminNotes !== undefined) updates.adminNotes = adminNotes;
+    const [record] = await db.update(institutionalTransfers)
+      .set(updates)
+      .where(eq(institutionalTransfers.id, id))
+      .returning();
+    return record;
   }
 }
 
