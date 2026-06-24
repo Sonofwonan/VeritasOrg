@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useInactivityLogout } from "@/hooks/use-inactivity-logout";
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -14,7 +15,8 @@ import {
   Search,
   Command,
   MessageSquare,
-  Phone
+  Phone,
+  ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { 
@@ -42,7 +46,7 @@ import {
   SidebarInset
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 
 const navItems = [
@@ -61,6 +65,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleAutoLogout = useCallback(() => {
+    logout.mutate();
+  }, [logout]);
+
+  const { showWarning, secondsLeft, dismiss } = useInactivityLogout(handleAutoLogout);
 
   const filteredItems = navItems.filter(item => 
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
@@ -220,6 +230,35 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           </main>
         </SidebarInset>
       </div>
+
+      {/* Inactivity warning dialog */}
+      <Dialog open={showWarning} onOpenChange={(open) => { if (!open) dismiss(); }}>
+        <DialogContent className="sm:max-w-sm border-amber-500/30 bg-zinc-950 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-400">
+              <ShieldAlert className="w-5 h-5" />
+              Session Expiring
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              For your security, you will be signed out due to inactivity.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center py-4 gap-2">
+            <div className="text-6xl font-bold font-display text-white tabular-nums">
+              {secondsLeft}
+            </div>
+            <p className="text-xs text-zinc-500 uppercase tracking-widest">seconds remaining</p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" className="border-white/10 text-white hover:bg-white/5" onClick={() => logout.mutate()}>
+              Sign out now
+            </Button>
+            <Button className="bg-primary hover:bg-primary/90" onClick={dismiss}>
+              I'm still here
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 }

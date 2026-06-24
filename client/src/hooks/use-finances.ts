@@ -10,6 +10,8 @@ export function useAccounts() {
       const res = await apiRequest("GET", api.accounts.list.path);
       return api.accounts.list.responses[200].parse(await res.json());
     },
+    refetchInterval: 30000,
+    refetchIntervalInBackground: true,
   });
 }
 
@@ -46,6 +48,8 @@ export function useInvestments() {
       const res = await apiRequest("GET", api.investments.list.path);
       return api.investments.list.responses[200].parse(await res.json());
     },
+    refetchInterval: 30000,
+    refetchIntervalInBackground: true,
   });
 }
 
