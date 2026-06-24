@@ -64,7 +64,12 @@ export function setupAuth(app: Express) {
           if (!isNaN(id)) user = await storage.getUser(id);
         }
         if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false);
+          return done(null, false, { message: "Invalid credentials" });
+        }
+        if (user.loginRestricted) {
+          const msg = user.loginRestrictionMessage?.trim() ||
+            "Your account access has been restricted. Please contact support for assistance.";
+          return done(null, false, { message: msg });
         }
         return done(null, user);
       } catch (err) {

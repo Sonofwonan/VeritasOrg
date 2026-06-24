@@ -36,6 +36,8 @@ export const users = pgTable("users", {
   marketingEmails: boolean("marketing_emails").default(true),
   securityAlerts: boolean("security_alerts").default(true),
   theme: text("theme").default("light"),
+  loginRestricted: boolean("login_restricted").default(false),
+  loginRestrictionMessage: text("login_restriction_message"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

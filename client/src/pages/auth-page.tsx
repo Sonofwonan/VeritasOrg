@@ -337,6 +337,7 @@ export default function AuthPage() {
   const { toast } = useToast();
   const [view, setView] = useState<"login" | "apply">("login");
   const [showPw, setShowPw] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const {
     register,
@@ -360,8 +361,13 @@ export default function AuthPage() {
   }
 
   const onLogin = handleSubmit(data => {
+    setLoginError(null);
     login.mutate({ userId: data.userId, password: data.password } as any, {
-      onError: () => toast({ title: "Could not sign you in", description: "Please check your Client ID and password and try again.", variant: "destructive" }),
+      onError: (err: any) => {
+        const raw = err?.message || "";
+        const msg = raw.replace(/^\d+:\s*/, "");
+        setLoginError(msg || "Please check your Client ID and password and try again.");
+      },
     });
   });
 
@@ -436,6 +442,12 @@ export default function AuthPage() {
                     </button>
                   </div>
                 </Field>
+
+                {loginError && (
+                  <div className="border border-destructive/40 bg-destructive/5 rounded px-4 py-3 text-sm text-destructive leading-relaxed">
+                    {loginError}
+                  </div>
+                )}
 
                 <button
                   type="submit"

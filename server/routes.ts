@@ -5,7 +5,7 @@ import { setupAuth } from "./auth";
 import { api, errorSchemas, insertPayeeSchema } from "@shared/routes";
 import { z } from "zod";
 import { type User, accounts, transactions, payees, applications, users, institutionalTransfers } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, or, desc, sql } from "drizzle-orm";
 import twilio from "twilio";
 import passport from "passport";
@@ -113,6 +113,15 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   const { hashPassword } = setupAuth(app);
+
+  // Ensure restriction columns exist (safe on every startup)
+  try {
+    await pool.query(`
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS login_restricted BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS login_restriction_message TEXT;
+    `);
+  } catch (_) { /* columns likely already exist */ }
 
   // Middleware to protect routes
   const requireAuth = (req: any, res: any, next: any) => {
@@ -237,7 +246,7 @@ export async function registerRoutes(
   app.post(api.auth.login.path, (req, res, next) => {
     const nextAuth = (err: any, user: any, info: any) => {
         if (err) return next(err);
-        if (!user) return res.status(401).json({ message: "Invalid credentials" });
+        if (!user) return res.status(401).json({ message: info?.message || "Invalid credentials" });
         req.logIn(user, (err) => {
             if (err) return next(err);
             return res.status(200).json(user);
@@ -692,6 +701,20 @@ export async function registerRoutes(
         return { ...u, password: undefined, accountCount: accs.length, totalBalance };
       }));
       res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Restrict / unrestrict a user login
+  app.post("/api/admin/users/:id/restrict", requireAdmin, async (req, res) => {
+    try {
+      const { restricted, message } = req.body as { restricted: boolean; message?: string };
+      const updated = await storage.updateUser(parseInt(req.params.id), {
+        loginRestricted: restricted,
+        loginRestrictionMessage: restricted ? (message || null) : null,
+      });
+      res.json({ success: true, loginRestricted: updated.loginRestricted });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

@@ -9,8 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Users, ArrowLeftRight, Clock, TrendingUp, CheckCircle2,
   XCircle, ShieldCheck, LogOut, Wallet, Eye, EyeOff,
-  RefreshCw, DollarSign, Activity, FileText, ChevronDown, ChevronUp, Building2
+  RefreshCw, DollarSign, Activity, FileText, ChevronDown, ChevronUp, Building2,
+  Lock, Unlock
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog as ShadDialog, DialogContent as ShadDialogContent, DialogHeader as ShadDialogHeader, DialogTitle as ShadDialogTitle, DialogFooter as ShadDialogFooter } from "@/components/ui/dialog";
 
 const SESSION_KEY = "vw_admin_key";
 
@@ -346,6 +349,21 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
     onError: () => toast({ title: "Error", description: "Failed to reject application", variant: "destructive" }),
   });
 
+  const restrictUserMutation = useMutation({
+    mutationFn: ({ id, restricted, message }: { id: number; restricted: boolean; message?: string }) =>
+      adminFetch(`/api/admin/users/${id}/restrict`, adminKey, {
+        method: "POST", body: JSON.stringify({ restricted, message }),
+      }).then(r => r.json()),
+    onSuccess: (_, vars) => {
+      toast({ title: vars.restricted ? "Access Restricted" : "Access Restored", description: vars.restricted ? "User can no longer sign in." : "User can now sign in again." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to update restriction.", variant: "destructive" }),
+  });
+
+  const [restrictDialog, setRestrictDialog] = useState<{ user: any } | null>(null);
+  const [restrictMsg, setRestrictMsg] = useState("");
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
@@ -600,6 +618,42 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
 
           {/* ── Users ── */}
           <TabsContent value="users" className="mt-4">
+            {/* Restrict dialog */}
+            <ShadDialog open={!!restrictDialog} onOpenChange={(o) => { if (!o) { setRestrictDialog(null); setRestrictMsg(""); } }}>
+              <ShadDialogContent className="bg-slate-800 border-slate-700 text-white">
+                <ShadDialogHeader>
+                  <ShadDialogTitle className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-red-400" />
+                    Restrict Login — {restrictDialog?.user?.name}
+                  </ShadDialogTitle>
+                </ShadDialogHeader>
+                <div className="space-y-3 py-2">
+                  <p className="text-slate-400 text-sm">This user will be blocked from signing in. Optionally add a message they will see when they attempt to log in.</p>
+                  <Textarea
+                    value={restrictMsg}
+                    onChange={e => setRestrictMsg(e.target.value)}
+                    placeholder="e.g. Your account has been suspended pending KYC review. Please contact your advisor at advisor@veritaswealth.ca."
+                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 min-h-[100px] resize-none"
+                  />
+                </div>
+                <ShadDialogFooter>
+                  <Button variant="ghost" className="text-slate-400 hover:text-white" onClick={() => { setRestrictDialog(null); setRestrictMsg(""); }}>Cancel</Button>
+                  <Button
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    disabled={restrictUserMutation.isPending}
+                    onClick={() => {
+                      restrictUserMutation.mutate({ id: restrictDialog!.user.id, restricted: true, message: restrictMsg || undefined }, {
+                        onSuccess: () => { setRestrictDialog(null); setRestrictMsg(""); }
+                      });
+                    }}
+                  >
+                    <Lock className="w-3.5 h-3.5 mr-1.5" />
+                    Restrict Access
+                  </Button>
+                </ShadDialogFooter>
+              </ShadDialogContent>
+            </ShadDialog>
+
             <Card className="bg-slate-800/40 border-slate-700">
               <CardHeader className="pb-3">
                 <CardTitle className="text-white text-base flex items-center gap-2">
@@ -613,35 +667,60 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                     <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Loading…
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wide">
-                          <th className="text-left py-3 pr-4 font-medium">ID</th>
-                          <th className="text-left py-3 pr-4 font-medium">Name</th>
-                          <th className="text-left py-3 pr-4 font-medium">Email</th>
-                          <th className="text-left py-3 pr-4 font-medium">Phone</th>
-                          <th className="text-right py-3 pr-4 font-medium">Accounts</th>
-                          <th className="text-right py-3 pr-4 font-medium">Total Balance</th>
-                          <th className="text-left py-3 font-medium">Joined</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-700/50">
-                        {(allUsers as any[]).map((u: any) => (
-                          <tr key={u.id} className="hover:bg-slate-700/20" data-testid={`user-row-${u.id}`}>
-                            <td className="py-3 pr-4 text-slate-400 font-mono text-xs">#{u.id}</td>
-                            <td className="py-3 pr-4 text-white font-medium">{u.name}</td>
-                            <td className="py-3 pr-4 text-slate-300">{u.email}</td>
-                            <td className="py-3 pr-4 text-slate-400">{u.phoneNumber || "—"}</td>
-                            <td className="py-3 pr-4 text-right text-slate-300">{u.accountCount}</td>
-                            <td className="py-3 pr-4 text-right font-semibold text-emerald-400">{fmt(u.totalBalance)}</td>
-                            <td className="py-3 text-slate-500 text-xs whitespace-nowrap">
-                              {new Date(u.createdAt).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="space-y-2">
+                    {(allUsers as any[]).map((u: any) => (
+                      <div key={u.id} className={`rounded-lg border p-4 ${u.loginRestricted ? "border-red-500/30 bg-red-500/5" : "border-slate-700 bg-slate-700/20"}`} data-testid={`user-row-${u.id}`}>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${u.loginRestricted ? "bg-red-500/20 text-red-400" : "bg-primary/20 text-primary"}`}>
+                              {u.name?.charAt(0)?.toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-white font-medium text-sm">{u.name}</span>
+                                <span className="text-slate-500 font-mono text-xs">#{u.id}</span>
+                                {u.loginRestricted && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-500/20 text-red-400 border border-red-500/20">
+                                    <Lock className="w-2.5 h-2.5" /> RESTRICTED
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-slate-400 text-xs mt-0.5">{u.email}</p>
+                              {u.loginRestricted && u.loginRestrictionMessage && (
+                                <p className="text-red-400/70 text-xs mt-1 italic">"{u.loginRestrictionMessage}"</p>
+                              )}
+                              <div className="flex gap-4 mt-1.5 text-xs text-slate-500">
+                                <span>{u.accountCount} account{u.accountCount !== 1 ? "s" : ""}</span>
+                                <span className="text-emerald-400 font-medium">{fmt(u.totalBalance)}</span>
+                                <span>{new Date(u.createdAt).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 shrink-0">
+                            {u.loginRestricted ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 text-xs h-8"
+                                disabled={restrictUserMutation.isPending}
+                                onClick={() => restrictUserMutation.mutate({ id: u.id, restricted: false })}
+                              >
+                                <Unlock className="w-3 h-3 mr-1" /> Restore Access
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 text-xs h-8"
+                                onClick={() => { setRestrictDialog({ user: u }); setRestrictMsg(""); }}
+                              >
+                                <Lock className="w-3 h-3 mr-1" /> Restrict
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                     {(allUsers as any[]).length === 0 && (
                       <p className="text-center text-slate-400 py-8">No users yet</p>
                     )}
