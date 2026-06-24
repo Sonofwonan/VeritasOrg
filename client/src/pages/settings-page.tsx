@@ -92,26 +92,12 @@ export default function SettingsPage() {
                     <MessageSquare className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-bold">Direct Text Support</p>
+                    <p className="font-bold">Email Support</p>
+                    <p className="text-[10px] text-muted-foreground italic">Response within 24 hours</p>
                   </div>
                 </div>
                 <Button variant="outline" size="sm" asChild>
-                  <a href="sms:+17409381335">Send SMS</a>
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-accent/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-600">
-                    <Phone className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="font-bold">WhatsApp Support</p>
-                    <p className="text-[10px] text-muted-foreground italic">Messages only</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" asChild>
-                  <a href="https://wa.me/14784165940" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                  <a href="mailto:support@veritaswealth.ca">Email Us</a>
                 </Button>
               </div>
             </CardContent>

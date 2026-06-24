@@ -283,7 +283,7 @@ export default function CompanyPage() {
           <div className="max-w-4xl mx-auto space-y-16">
             <h2 className="text-5xl md:text-8xl font-black font-display tracking-tighter">Connect with <br /><span className="text-primary italic">Veritas Corp.</span></h2>
             <div className="grid sm:grid-cols-3 gap-8">
-              <ContactMethod icon={PhoneCall} label="WhatsApp Support" value="+1 (478) 416-5940" onClick={() => window.open('https://wa.me/14784165940', '_blank')} />
+              <ContactMethod icon={PhoneCall} label="Client Services" value="+1 (702) 718-8852" />
               <ContactMethod icon={PhoneCall} label="Global HQ" value="+1 702-718-8852" />
               <ContactMethod icon={MapPin} label="Location" value="Manhattan, NY" />
             </div>

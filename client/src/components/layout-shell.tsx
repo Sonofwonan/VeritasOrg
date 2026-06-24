@@ -16,7 +16,6 @@ import {
   MessageSquare,
   Phone
 } from "lucide-react";
-import { SiWhatsapp } from "react-icons/si";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,19 +107,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 <div className="flex gap-2">
                   <Button 
                     variant="ghost" 
-                    className="flex-1 bg-white/5 hover:bg-green-600/20 text-white/70 hover:text-green-500 border border-white/5 transition-all rounded-xl h-12 flex flex-col items-center justify-center gap-1 group"
-                    onClick={() => window.open("https://wa.me/14784165940", "_blank")}
-                  >
-                    <SiWhatsapp className="w-4 h-4 transition-transform group-hover:scale-110" />
-                    <span className="text-[10px] font-bold uppercase tracking-tighter">WhatsApp</span>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
                     className="flex-1 bg-white/5 hover:bg-primary/20 text-white/70 hover:text-primary border border-white/5 transition-all rounded-xl h-12 flex flex-col items-center justify-center gap-1 group"
-                    onClick={() => window.open("sms:+17409381335", "_blank")}
+                    onClick={() => window.open("mailto:support@veritaswealth.ca", "_blank")}
                   >
                     <MessageSquare className="w-4 h-4 transition-transform group-hover:scale-110" />
-                    <span className="text-[10px] font-bold uppercase tracking-tighter">Direct SMS</span>
+                    <span className="text-[10px] font-bold uppercase tracking-tighter">Email Us</span>
                   </Button>
                 </div>
               </SidebarGroupContent>
