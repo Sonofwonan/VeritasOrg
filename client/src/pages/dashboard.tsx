@@ -251,7 +251,7 @@ export default function DashboardPage() {
             { label: "Submitted", done: stage >= 0 },
             { label: "Under Review", done: stage >= 1 },
             { label: isCash ? "Liquidating" : "Processing", done: stage >= 2 },
-            { label: "Complete", done: false },
+            { label: "Transfer Out", done: false },
           ];
 
           return (

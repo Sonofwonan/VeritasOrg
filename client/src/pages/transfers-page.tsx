@@ -87,7 +87,7 @@ export default function TransfersPage() {
                   const isRejected = t.status === "rejected";
                   const isCash = t.transferType === "cash";
 
-                  const LABELS: Record<string, string> = { pending: "Pending", under_review: "Under Review", liquidating: "Liquidating", approved: "Liquidating", completed: "Completed", rejected: "Rejected" };
+                  const LABELS: Record<string, string> = { pending: "Pending", under_review: "Under Review", liquidating: "Liquidating", approved: "Liquidating", completed: "Transfer Out — Completed", rejected: "Rejected" };
                   const statusDot = stage === 3 ? "bg-emerald-500" : isRejected ? "bg-rose-500" : stage === 2 ? "bg-orange-400 animate-pulse" : "bg-amber-400 animate-pulse";
                   const cardBorder = stage === 3
                     ? "border-emerald-200 dark:border-emerald-800/40"
@@ -104,7 +104,7 @@ export default function TransfersPage() {
                     { label: "Submitted", done: stage >= 0 },
                     { label: "Under Review", done: stage >= 1 },
                     { label: isCash ? "Liquidating" : "Processing", done: stage >= 2 },
-                    { label: "Completed", done: stage >= 3 },
+                    { label: "Transfer Out", done: stage >= 3 },
                   ];
                   const stepColor = stage === 3 ? "bg-emerald-400" : stage === 2 ? "bg-orange-400" : "bg-amber-400";
                   const stepTextColor = stage === 3 ? "text-emerald-600 dark:text-emerald-400" : stage === 2 ? "text-orange-600 dark:text-orange-400" : "text-amber-600 dark:text-amber-400";
