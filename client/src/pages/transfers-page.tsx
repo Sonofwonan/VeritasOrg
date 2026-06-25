@@ -148,14 +148,20 @@ export default function TransfersPage() {
                           </div>
                         )}
 
-                        {isApproved && t.estimatedCompletionDate && (
-                          <p className="text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                            <Clock className="w-3 h-3" />
-                            Est. completion: <strong>{new Date(t.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}</strong>
-                          </p>
+                        {t.estimatedCompletionDate && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
+                            <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Estimated Completion</p>
+                              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">{new Date(t.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}</p>
+                            </div>
+                          </div>
                         )}
                         {t.adminNotes && (
-                          <p className="text-xs text-muted-foreground border-t border-border/40 pt-2 italic">Advisor note: {t.adminNotes}</p>
+                          <div className="border-t border-border/40 pt-2">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">Advisor Note</p>
+                            <p className="text-xs text-foreground/70">{t.adminNotes}</p>
+                          </div>
                         )}
                       </div>
                     </div>
