@@ -449,8 +449,8 @@ export default function DashboardPage() {
                     Your portfolio is well-diversified within your target risk band. Your advisor recommends reviewing fixed-income allocation given current rate environment.
                   </p>
                   <button className="mt-2 text-[10px] label-caps text-primary hover:underline flex items-center gap-1"
-                    onClick={() => setLocation('/goals')}>
-                    View Strategy <ChevronRight className="w-3 h-3" />
+                    onClick={() => setLocation('/investments')}>
+                    View Investments <ChevronRight className="w-3 h-3" />
                   </button>
                 </div>
               </div>

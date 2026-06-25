@@ -5,7 +5,6 @@ import {
   LayoutDashboard, 
   Wallet, 
   ArrowRightLeft, 
-  Target, 
   GraduationCap, 
   LogOut,
   TrendingUp,
@@ -54,7 +53,6 @@ const navItems = [
   { icon: Wallet, label: "Accounts", href: "/accounts" },
   { icon: TrendingUp, label: "Investments", href: "/investments" },
   { icon: ArrowRightLeft, label: "Transfers", href: "/transfers" },
-  { icon: Target, label: "Goals", href: "/goals" },
   { icon: GraduationCap, label: "Education", href: "/education" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
@@ -204,15 +202,6 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="hidden sm:flex gap-2 border-white/10 bg-white/5 text-white hover:bg-primary hover:border-primary transition-all rounded-xl font-bold"
-                onClick={() => setLocation("/goals")}
-              >
-                <Target className="w-4 h-4 text-primary" />
-                <span>Strategy</span>
-              </Button>
               <div 
                 className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer hover:bg-primary hover:border-primary transition-all group"
                 onClick={() => setLocation("/settings")}
