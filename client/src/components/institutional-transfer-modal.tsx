@@ -4,13 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Search, ArrowRight, Building2, CheckCircle2, X, Layers, CreditCard } from "lucide-react";
+import { Search, ArrowRight, Building2, CheckCircle2, X } from "lucide-react";
 import type { Account } from "@shared/schema";
 
-// ─── Canadian Institution Registry ──────────────────────────────────────────
 const INSTITUTIONS = [
   { name: "RBC Dominion Securities", short: "RBC", color: "#003168" },
   { name: "TD Wealth Management", short: "TD", color: "#54B848" },
@@ -35,10 +33,6 @@ const INSTITUTIONS = [
   { name: "Credential Financial", short: "CRD", color: "#005B8E" },
 ];
 
-const ACCOUNT_TYPES = ["RRSP", "TFSA", "RRIF", "Non-Registered", "Corporate", "RESP", "LIRA"];
-
-type TransferMode = "single" | "full-portfolio";
-
 function InstitutionAvatar({ inst, size = "md" }: { inst: typeof INSTITUTIONS[0]; size?: "sm" | "md" }) {
   const sz = size === "sm" ? "w-8 h-8 text-[10px]" : "w-11 h-11 text-xs";
   return (
@@ -48,49 +42,6 @@ function InstitutionAvatar({ inst, size = "md" }: { inst: typeof INSTITUTIONS[0]
   );
 }
 
-// ─── Step 1: Mode Selection ───────────────────────────────────────────────────
-function ModePicker({ onSelect }: { onSelect: (mode: TransferMode) => void }) {
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">Choose how you'd like to transfer your assets.</p>
-      <button
-        onClick={() => onSelect("full-portfolio")}
-        className="w-full text-left p-4 rounded-xl border-2 border-primary/20 hover:border-primary bg-primary/3 hover:bg-primary/5 transition-all group"
-        data-testid="mode-full-portfolio"
-      >
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-            <Layers className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="font-semibold text-sm">Full Portfolio Transfer</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Move <strong>all accounts and investments</strong> to a new institution in one request. Recommended for full consolidation.</p>
-          </div>
-          <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors mt-3 shrink-0" />
-        </div>
-      </button>
-
-      <button
-        onClick={() => onSelect("single")}
-        className="w-full text-left p-4 rounded-xl border border-border hover:border-primary/40 hover:bg-accent/5 transition-all group"
-        data-testid="mode-single-account"
-      >
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0 group-hover:bg-accent/10 transition-colors">
-            <CreditCard className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-          <div>
-            <p className="font-semibold text-sm">Single Account Transfer</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Transfer one specific account to another institution.</p>
-          </div>
-          <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors mt-3 shrink-0" />
-        </div>
-      </button>
-    </div>
-  );
-}
-
-// ─── Step 2: Institution Picker ───────────────────────────────────────────────
 function InstitutionPicker({ onSelect }: { onSelect: (inst: typeof INSTITUTIONS[0]) => void }) {
   const [search, setSearch] = useState("");
   const filtered = INSTITUTIONS.filter(i =>
@@ -131,8 +82,7 @@ function InstitutionPicker({ onSelect }: { onSelect: (inst: typeof INSTITUTIONS[
   );
 }
 
-// ─── Full Portfolio Transfer Form ─────────────────────────────────────────────
-function FullPortfolioForm({
+function TransferForm({
   institution,
   accounts,
   onBack,
@@ -145,7 +95,7 @@ function FullPortfolioForm({
   onSubmit: (data: any) => void;
   isPending: boolean;
 }) {
-  const [accountNumber, setAccountNumber] = useState("");
+  const [portfolioId, setPortfolioId] = useState("");
   const [transferType, setTransferType] = useState<"cash" | "in-kind">("in-kind");
 
   const totalValue = useMemo(() =>
@@ -158,10 +108,6 @@ function FullPortfolioForm({
     accountType: a.accountType,
     balance: Number(a.balance),
   }));
-
-  const canSubmit = accountNumber.trim().length > 0;
-
-  const weeks = transferType === "cash" ? "12–18 weeks" : "10–14 weeks";
 
   return (
     <div className="space-y-5">
@@ -199,13 +145,13 @@ function FullPortfolioForm({
         </div>
       </div>
 
-      {/* Receiving account number */}
+      {/* Portfolio ID */}
       <div className="space-y-1.5">
         <Label className="text-xs">Your Portfolio ID at {institution.short}</Label>
         <Input
           placeholder="e.g. 123-456789"
-          value={accountNumber}
-          onChange={e => setAccountNumber(e.target.value)}
+          value={portfolioId}
+          onChange={e => setPortfolioId(e.target.value)}
           data-testid="input-institution-account-number"
         />
         <p className="text-xs text-muted-foreground">Your Portfolio ID at {institution.name} that will receive the assets.</p>
@@ -235,10 +181,10 @@ function FullPortfolioForm({
 
       <Button
         className="w-full"
-        disabled={!canSubmit || isPending}
+        disabled={!portfolioId.trim() || isPending}
         onClick={() => onSubmit({
           institutionName: institution.name,
-          institutionAccountNumber: accountNumber,
+          institutionAccountNumber: portfolioId,
           accountType: "Full Portfolio",
           transferType,
           transferScope: "full-portfolio",
@@ -247,166 +193,13 @@ function FullPortfolioForm({
         })}
         data-testid="button-submit-institutional-transfer"
       >
-        {isPending ? "Submitting…" : `Submit Full Portfolio Transfer — CAD $${totalValue.toLocaleString("en-CA", { maximumFractionDigits: 0 })}`}
-      </Button>
-    </div>
-  );
-}
-
-// ─── Single Account Transfer Form ─────────────────────────────────────────────
-function SingleAccountForm({
-  institution,
-  accounts,
-  onBack,
-  onSubmit,
-  isPending,
-}: {
-  institution: typeof INSTITUTIONS[0];
-  accounts: Account[];
-  onBack: () => void;
-  onSubmit: (data: any) => void;
-  isPending: boolean;
-}) {
-  const [accountNumber, setAccountNumber] = useState("");
-  const [accountType, setAccountType] = useState("");
-  const [transferType, setTransferType] = useState<"cash" | "in-kind">("in-kind");
-  const [transferScope, setTransferScope] = useState<"full" | "partial">("full");
-  const [partialAmount, setPartialAmount] = useState("");
-  const [sourceAccount, setSourceAccount] = useState("");
-
-  const weeks = transferType === "cash" ? "12–18 weeks" : "12 weeks minimum";
-  const canSubmit = accountNumber && accountType && sourceAccount &&
-    (transferScope === "full" || (transferScope === "partial" && partialAmount));
-
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/5 border border-accent/20">
-        <InstitutionAvatar inst={institution} />
-        <div>
-          <p className="font-semibold text-sm">{institution.name}</p>
-          <button onClick={onBack} className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 mt-0.5">
-            <X className="w-3 h-3" /> Change institution
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label className="text-xs">Your Portfolio ID at {institution.short}</Label>
-          <Input
-            placeholder="e.g. 123-456789"
-            value={accountNumber}
-            onChange={e => setAccountNumber(e.target.value)}
-            data-testid="input-institution-account-number"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Account Type</Label>
-          <Select value={accountType} onValueChange={setAccountType}>
-            <SelectTrigger data-testid="select-account-type">
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              {ACCOUNT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="text-xs">Veritas Account to Transfer</Label>
-        <Select value={sourceAccount} onValueChange={setSourceAccount}>
-          <SelectTrigger data-testid="select-source-account">
-            <SelectValue placeholder="Select account" />
-          </SelectTrigger>
-          <SelectContent>
-            {accounts.map(a => (
-              <SelectItem key={a.id} value={a.id.toString()}>
-                {a.accountType} — CAD ${Number(a.balance).toLocaleString("en-CA", { maximumFractionDigits: 0 })}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Transfer Method</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {(["in-kind", "cash"] as const).map(type => (
-            <button
-              key={type}
-              onClick={() => setTransferType(type)}
-              className={`p-3 rounded-xl border text-left transition-all ${transferType === type
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-border hover:border-primary/40"}`}
-              data-testid={`transfer-type-${type}`}
-            >
-              <p className="font-semibold text-sm">{type === "in-kind" ? "In-Kind" : "Cash"}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {type === "in-kind" ? "Securities transferred as-is" : "Liquidate, then wire cash"}
-              </p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Transfer Scope</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {(["full", "partial"] as const).map(scope => (
-            <button
-              key={scope}
-              onClick={() => setTransferScope(scope)}
-              className={`p-3 rounded-xl border text-left transition-all ${transferScope === scope
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-border hover:border-primary/40"}`}
-              data-testid={`transfer-scope-${scope}`}
-            >
-              <p className="font-semibold text-sm capitalize">{scope}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {scope === "full" ? "Entire account balance" : "Specify an amount"}
-              </p>
-            </button>
-          ))}
-        </div>
-        {transferScope === "partial" && (
-          <div className="relative mt-2">
-            <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">CAD $</span>
-            <Input
-              type="number"
-              placeholder="0.00"
-              className="pl-14"
-              value={partialAmount}
-              onChange={e => setPartialAmount(e.target.value)}
-              data-testid="input-partial-amount"
-            />
-          </div>
-        )}
-      </div>
-
-      <Button
-        className="w-full"
-        disabled={!canSubmit || isPending}
-        onClick={() => onSubmit({
-          institutionName: institution.name,
-          institutionAccountNumber: accountNumber,
-          accountType,
-          transferType,
-          transferScope,
-          partialAmount: transferScope === "partial" ? partialAmount : undefined,
-          accountId: parseInt(sourceAccount),
-        })}
-        data-testid="button-submit-institutional-transfer"
-      >
-        {isPending ? "Submitting…" : "Submit Transfer Request"}
+        {isPending ? "Submitting…" : `Submit Transfer — CAD $${totalValue.toLocaleString("en-CA", { maximumFractionDigits: 0 })}`}
       </Button>
     </div>
   );
 }
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
-type Step = "mode" | "pick-institution" | "form" | "done";
-
 export function InstitutionalTransferModal({
   open,
   onClose,
@@ -418,8 +211,7 @@ export function InstitutionalTransferModal({
   accounts: Account[];
   userId: number;
 }) {
-  const [step, setStep] = useState<Step>("mode");
-  const [mode, setMode] = useState<TransferMode>("single");
+  const [step, setStep] = useState<"pick" | "form" | "done">("pick");
   const [selectedInst, setSelectedInst] = useState<typeof INSTITUTIONS[0] | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -437,17 +229,9 @@ export function InstitutionalTransferModal({
   });
 
   const handleClose = () => {
-    setStep("mode");
-    setMode("single");
+    setStep("pick");
     setSelectedInst(null);
     onClose();
-  };
-
-  const stepTitle = () => {
-    if (step === "mode") return "Institutional Transfer";
-    if (step === "pick-institution") return mode === "full-portfolio" ? "Select Receiving Institution" : "Select Receiving Institution";
-    if (step === "form") return mode === "full-portfolio" ? "Full Portfolio Transfer" : "Transfer Details";
-    return "Request Submitted";
   };
 
   return (
@@ -456,53 +240,21 @@ export function InstitutionalTransferModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-display">
             <Building2 className="w-5 h-5 text-primary" />
-            {stepTitle()}
+            {step === "pick" ? "Select Receiving Institution" :
+             step === "form" ? "Full Portfolio Transfer" :
+             "Request Submitted"}
           </DialogTitle>
         </DialogHeader>
 
-        {/* Back button for sub-steps */}
-        {(step === "pick-institution" || (step === "form" && !selectedInst)) && (
-          <button
-            onClick={() => { setStep("mode"); setSelectedInst(null); }}
-            className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 -mt-1"
-          >
-            ← Back
-          </button>
+        {step === "pick" && (
+          <InstitutionPicker onSelect={inst => { setSelectedInst(inst); setStep("form"); }} />
         )}
 
-        {step === "mode" && (
-          <ModePicker
-            onSelect={m => {
-              setMode(m);
-              setStep("pick-institution");
-            }}
-          />
-        )}
-
-        {step === "pick-institution" && (
-          <InstitutionPicker
-            onSelect={inst => {
-              setSelectedInst(inst);
-              setStep("form");
-            }}
-          />
-        )}
-
-        {step === "form" && selectedInst && mode === "full-portfolio" && (
-          <FullPortfolioForm
+        {step === "form" && selectedInst && (
+          <TransferForm
             institution={selectedInst}
             accounts={accounts}
-            onBack={() => setStep("pick-institution")}
-            onSubmit={data => mutation.mutate(data)}
-            isPending={mutation.isPending}
-          />
-        )}
-
-        {step === "form" && selectedInst && mode === "single" && (
-          <SingleAccountForm
-            institution={selectedInst}
-            accounts={accounts}
-            onBack={() => setStep("pick-institution")}
+            onBack={() => setStep("pick")}
             onSubmit={data => mutation.mutate(data)}
             isPending={mutation.isPending}
           />
@@ -514,14 +266,9 @@ export function InstitutionalTransferModal({
               <CheckCircle2 className="w-8 h-8 text-emerald-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">
-                {mode === "full-portfolio" ? "Full Portfolio Transfer Submitted" : "Transfer Request Received"}
-              </h3>
+              <h3 className="font-semibold text-lg">Transfer Request Submitted</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                {mode === "full-portfolio"
-                  ? <>Your complete portfolio transfer to <strong>{selectedInst?.name}</strong> is now pending admin review. All {accounts.length} accounts are included in this request.</>
-                  : <>Your institutional transfer to <strong>{selectedInst?.name}</strong> is under review. You'll see the status and estimated completion date once approved.</>
-                }
+                Your full portfolio transfer to <strong>{selectedInst?.name}</strong> is now pending admin review. All {accounts.length} accounts are included in this request.
               </p>
             </div>
             <Button className="w-full" onClick={handleClose} data-testid="button-done-institutional-transfer">
