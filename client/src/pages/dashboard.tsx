@@ -247,7 +247,7 @@ export default function DashboardPage() {
             ? <>Your request is being reviewed by our advisory team. Transfer to <strong className={strongColor}>{activeTransfer.institutionName}</strong> will proceed once the advisory review is complete.</>
             : stage === 2
             ? <>Your holdings are being liquidated {isCash ? "and converted to cash" : "for re-registration"}. Proceeds will be transmitted to <strong className={strongColor}>{activeTransfer.institutionName}</strong> upon settlement.</>
-            : <>Your liquidated portfolio is being electronically transmitted to <strong className={strongColor}>{activeTransfer.institutionName}</strong>. Settlement is pending confirmation from the receiving custodian.</>;
+            : <>Your liquidated portfolio is being transmitted to <strong className={strongColor}>{activeTransfer.institutionName}</strong>. Settlement is pending confirmation from the receiving custodian.</>;
 
           const steps = [
             { label: "Submitted", done: stage >= 0 },

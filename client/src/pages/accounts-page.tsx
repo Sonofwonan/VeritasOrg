@@ -288,7 +288,7 @@ export default function AccountsPage() {
             </p>
             <p className="text-white/40 text-xs leading-relaxed">
               {isTransmitting
-                ? <>Your liquidated portfolio is being electronically transmitted to <strong className="text-white/60">{activeTransfer.institutionName}</strong>. Balances below reflect the pre-transfer holdings and will clear upon custodian confirmation.</>
+                ? <>Your liquidated portfolio is being transmitted to <strong className="text-white/60">{activeTransfer.institutionName}</strong>. Balances below reflect the pre-transfer holdings and will clear upon custodian confirmation.</>
                 : isLocked
                 ? <>Holdings are being liquidated for transfer. All accounts are read-only. Your portfolio is in transit to <strong className="text-white/60">{activeTransfer.institutionName}</strong>.</>
                 : <>Your transfer request to <strong className="text-white/60">{activeTransfer.institutionName}</strong> is {xferStage === 1 ? "under advisor review" : "pending review"}. Accounts remain fully accessible until approved.</>
