@@ -997,7 +997,7 @@ export async function registerRoutes(
         adminNotes?: string;
       };
 
-      const validStatuses = ["pending", "under_review", "liquidating", "completed", "rejected", "approved"];
+      const validStatuses = ["pending", "under_review", "liquidating", "transfer_out", "completed", "rejected", "approved"];
       if (status && !validStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
       }

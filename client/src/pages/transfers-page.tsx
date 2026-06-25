@@ -82,32 +82,44 @@ export default function TransfersPage() {
                   const stage = t.status === "pending" ? 0
                     : t.status === "under_review" ? 1
                     : (t.status === "liquidating" || t.status === "approved") ? 2
-                    : t.status === "completed" ? 3
+                    : t.status === "transfer_out" ? 3
+                    : t.status === "completed" ? 4
                     : -1; // rejected
                   const isRejected = t.status === "rejected";
                   const isCash = t.transferType === "cash";
 
-                  const LABELS: Record<string, string> = { pending: "Pending", under_review: "Under Review", liquidating: "Liquidating", approved: "Liquidating", completed: "Transfer Out — Completed", rejected: "Rejected" };
-                  const statusDot = stage === 3 ? "bg-emerald-500" : isRejected ? "bg-rose-500" : stage === 2 ? "bg-orange-400 animate-pulse" : "bg-amber-400 animate-pulse";
-                  const cardBorder = stage === 3
+                  const LABELS: Record<string, string> = {
+                    pending: "Pending",
+                    under_review: "Under Review",
+                    liquidating: "Liquidating",
+                    approved: "Liquidating",
+                    transfer_out: "Portfolio Transmission",
+                    completed: "Transfer Complete",
+                    rejected: "Rejected",
+                  };
+                  const statusDot = stage === 4 ? "bg-emerald-500" : isRejected ? "bg-rose-500" : stage === 3 ? "bg-violet-400 animate-pulse" : stage === 2 ? "bg-orange-400 animate-pulse" : "bg-amber-400 animate-pulse";
+                  const cardBorder = stage === 4
                     ? "border-emerald-200 dark:border-emerald-800/40"
                     : isRejected
                     ? "border-rose-200 dark:border-rose-800/40"
+                    : stage === 3
+                    ? "border-violet-200 dark:border-violet-800/30"
                     : stage === 2
                     ? "border-orange-200 dark:border-orange-800/30"
                     : "border-amber-200 dark:border-amber-800/30";
-                  const statusTextColor = stage === 3 ? "text-emerald-700 dark:text-emerald-400" : isRejected ? "text-rose-700 dark:text-rose-400" : stage === 2 ? "text-orange-700 dark:text-orange-400" : "text-amber-700 dark:text-amber-400";
-                  const statusBg = stage === 3 ? "bg-emerald-50 dark:bg-emerald-900/10" : isRejected ? "bg-rose-50 dark:bg-rose-900/10" : stage === 2 ? "bg-orange-50 dark:bg-orange-900/10" : "bg-amber-50 dark:bg-amber-900/10";
+                  const statusTextColor = stage === 4 ? "text-emerald-700 dark:text-emerald-400" : isRejected ? "text-rose-700 dark:text-rose-400" : stage === 3 ? "text-violet-700 dark:text-violet-400" : stage === 2 ? "text-orange-700 dark:text-orange-400" : "text-amber-700 dark:text-amber-400";
+                  const statusBg = stage === 4 ? "bg-emerald-50 dark:bg-emerald-900/10" : isRejected ? "bg-rose-50 dark:bg-rose-900/10" : stage === 3 ? "bg-violet-50 dark:bg-violet-900/10" : stage === 2 ? "bg-orange-50 dark:bg-orange-900/10" : "bg-amber-50 dark:bg-amber-900/10";
 
-                  // 4-step progress: Submitted → Under Review → Liquidating/Processing → Completed
+                  // 5-step progress tracker
                   const steps = [
                     { label: "Submitted", done: stage >= 0 },
                     { label: "Under Review", done: stage >= 1 },
-                    { label: isCash ? "Liquidating" : "Processing", done: stage >= 2 },
+                    { label: "Liquidating", done: stage >= 2 },
                     { label: "Transfer Out", done: stage >= 3 },
+                    { label: "Complete", done: stage >= 4 },
                   ];
-                  const stepColor = stage === 3 ? "bg-emerald-400" : stage === 2 ? "bg-orange-400" : "bg-amber-400";
-                  const stepTextColor = stage === 3 ? "text-emerald-600 dark:text-emerald-400" : stage === 2 ? "text-orange-600 dark:text-orange-400" : "text-amber-600 dark:text-amber-400";
+                  const stepColor = stage === 4 ? "bg-emerald-400" : stage === 3 ? "bg-violet-400" : stage === 2 ? "bg-orange-400" : "bg-amber-400";
+                  const stepTextColor = stage === 4 ? "text-emerald-600 dark:text-emerald-400" : stage === 3 ? "text-violet-600 dark:text-violet-400" : stage === 2 ? "text-orange-600 dark:text-orange-400" : "text-amber-600 dark:text-amber-400";
 
                   return (
                     <div key={t.id} className={`rounded-xl border ${cardBorder} overflow-hidden`} data-testid={`inst-transfer-${t.id}`}>
@@ -150,7 +162,7 @@ export default function TransfersPage() {
                         </div>
 
                         {!isRejected && (
-                          <div className="grid grid-cols-4 gap-1 pt-1">
+                          <div className="grid grid-cols-5 gap-1 pt-1">
                             {steps.map((step, i) => (
                               <div key={i} className="flex flex-col items-center gap-1">
                                 <div className={`w-full h-1 rounded-full ${step.done ? stepColor : "bg-muted"}`} />

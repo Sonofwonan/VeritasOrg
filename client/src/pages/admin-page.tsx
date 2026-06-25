@@ -823,10 +823,11 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                             <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Status Stage</p>
                             <div className="grid grid-cols-2 gap-2">
                               {[
-                                { value: "pending", label: "Pending", desc: "Awaiting review", color: "border-amber-500/40 text-amber-400" },
-                                { value: "under_review", label: "Under Review", desc: "Advisor reviewing", color: "border-blue-500/40 text-blue-400" },
-                                { value: "liquidating", label: "Liquidating", desc: "Portfolio being moved", color: "border-orange-500/40 text-orange-400" },
-                                { value: "completed", label: "Transfer Out — Completed", desc: "Funds transferred out", color: "border-emerald-500/40 text-emerald-400" },
+                                { value: "pending", label: "Pending", desc: "Awaiting advisor review", color: "border-amber-500/40 text-amber-400" },
+                                { value: "under_review", label: "Under Review", desc: "Advisor actively reviewing", color: "border-blue-500/40 text-blue-400" },
+                                { value: "liquidating", label: "Liquidating", desc: "Investments being liquidated", color: "border-orange-500/40 text-orange-400" },
+                                { value: "transfer_out", label: "Transfer Out", desc: "Portfolio transmitting to institution", color: "border-violet-500/40 text-violet-400" },
+                                { value: "completed", label: "Completed", desc: "Confirmed by receiving institution", color: "border-emerald-500/40 text-emerald-400" },
                                 { value: "rejected", label: "Rejected", desc: "Request declined", color: "border-red-500/40 text-red-400" },
                               ].map(opt => (
                                 <button
@@ -904,7 +905,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                           rejected: "bg-red-400/10 text-red-400 border-red-400/20",
                         };
                         const statusLabel: Record<string, string> = {
-                          pending: "Pending", under_review: "Under Review", approved: "Liquidating", liquidating: "Liquidating", completed: "Transfer Out — Completed", rejected: "Rejected",
+                          pending: "Pending", under_review: "Under Review", approved: "Liquidating", liquidating: "Liquidating", transfer_out: "Transfer Out", completed: "Completed", rejected: "Rejected",
                         };
                         return (
                           <div key={t.id} className="rounded-xl bg-slate-700/30 border border-slate-600/50 p-4" data-testid={`inst-transfer-admin-${t.id}`}>

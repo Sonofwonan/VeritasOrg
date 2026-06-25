@@ -208,50 +208,53 @@ export default function DashboardPage() {
           const stage = activeTransfer.status === "pending" ? 0
             : activeTransfer.status === "under_review" ? 1
             : (activeTransfer.status === "liquidating" || activeTransfer.status === "approved") ? 2
+            : activeTransfer.status === "transfer_out" ? 3
             : 0;
           const isCash = activeTransfer.transferType === "cash";
 
-          // Stage visual tokens
-          const isLiquidating = stage === 2;
-          const bannerBg = isLiquidating ? "bg-amber-50 border-amber-300" : "bg-[#0B2218] border-[#163830]";
-          const iconBg = isLiquidating ? "bg-amber-200" : "bg-white/10";
-          const iconEl = isLiquidating
-            ? <Lock className="w-4 h-4 text-amber-700" />
+          // Per-stage visual tokens — dark green for stages 0-1, amber for 2, violet for 3
+          const onDark = stage <= 1; // white-text dark-bg states
+          const bannerBg = stage === 3 ? "bg-violet-50 border-violet-300" : stage === 2 ? "bg-amber-50 border-amber-300" : "bg-[#0B2218] border-[#163830]";
+          const iconBg = stage === 3 ? "bg-violet-200" : stage === 2 ? "bg-amber-200" : "bg-white/10";
+          const iconEl = stage >= 2
+            ? <Lock className={`w-4 h-4 ${stage === 3 ? "text-violet-700" : "text-amber-700"}`} />
             : <Building2 className="w-4 h-4 text-white/80" />;
-          const titleColor = isLiquidating ? "text-amber-800" : "text-white";
-          const badgeStyle = isLiquidating
-            ? "border-amber-400 text-amber-700 bg-amber-100"
-            : "border-white/20 text-white/60 bg-white/5";
-          const badgeLabel = stage === 0 ? "Pending Review" : stage === 1 ? "Under Review" : isCash ? "Liquidating" : "Processing";
-          const bodyColor = isLiquidating ? "text-amber-800/80" : "text-white/60";
-          const strongColor = isLiquidating ? "text-amber-900" : "text-white/90";
-          const dotDone = isLiquidating ? "bg-amber-500" : "bg-emerald-400";
-          const dotPending = isLiquidating ? "bg-amber-200" : "bg-white/20";
-          const labelDone = isLiquidating ? "text-amber-700" : "text-emerald-400";
-          const labelPending = isLiquidating ? "text-amber-300/60" : "text-white/30";
-          const lineDone = isLiquidating ? "bg-amber-300" : "bg-emerald-400/50";
-          const linePending = isLiquidating ? "bg-amber-200/40" : "bg-white/15";
-          const completionBg = isLiquidating ? "bg-amber-100 border border-amber-300" : "bg-white/10 border border-white/15";
-          const clockColor = isLiquidating ? "text-amber-600" : "text-emerald-400";
-          const completionLabel = isLiquidating ? "text-amber-700" : "text-white/50";
-          const completionValue = isLiquidating ? "text-amber-900" : "text-white";
-          const viewColor = isLiquidating ? "text-amber-600 hover:text-amber-900" : "text-white/40 hover:text-white/80";
+          const titleColor = stage === 3 ? "text-violet-900" : stage === 2 ? "text-amber-800" : "text-white";
+          const badgeStyle = stage === 3 ? "border-violet-400 text-violet-700 bg-violet-100" : stage === 2 ? "border-amber-400 text-amber-700 bg-amber-100" : "border-white/20 text-white/60 bg-white/5";
+          const badgeLabel = stage === 0 ? "Pending Review" : stage === 1 ? "Under Review" : stage === 2 ? (isCash ? "Liquidating" : "Processing") : "Portfolio Transmission";
+          const bodyColor = stage === 3 ? "text-violet-800/80" : stage === 2 ? "text-amber-800/80" : "text-white/60";
+          const strongColor = stage === 3 ? "text-violet-900" : stage === 2 ? "text-amber-900" : "text-white/90";
+          const dotActive = stage === 3 ? "bg-violet-500" : stage === 2 ? "bg-amber-500" : "bg-emerald-400";
+          const dotInactive = onDark ? "bg-white/20" : stage === 3 ? "bg-violet-200" : "bg-amber-200";
+          const labelActive = stage === 3 ? "text-violet-700" : stage === 2 ? "text-amber-700" : "text-emerald-400";
+          const labelInactive = onDark ? "text-white/30" : stage === 3 ? "text-violet-300/60" : "text-amber-300/60";
+          const lineActive = stage === 3 ? "bg-violet-300" : stage === 2 ? "bg-amber-300" : "bg-emerald-400/50";
+          const lineInactive = onDark ? "bg-white/15" : stage === 3 ? "bg-violet-200/40" : "bg-amber-200/40";
+          const completionBg = stage === 3 ? "bg-violet-100 border border-violet-300" : stage === 2 ? "bg-amber-100 border border-amber-300" : "bg-white/10 border border-white/15";
+          const clockColor = stage === 3 ? "text-violet-600" : stage === 2 ? "text-amber-600" : "text-emerald-400";
+          const completionLabel = stage === 3 ? "text-violet-700" : stage === 2 ? "text-amber-700" : "text-white/50";
+          const completionValue = stage === 3 ? "text-violet-900" : stage === 2 ? "text-amber-900" : "text-white";
+          const viewColor = stage === 3 ? "text-violet-600 hover:text-violet-900" : stage === 2 ? "text-amber-600 hover:text-amber-900" : "text-white/40 hover:text-white/80";
 
           const titleText = stage === 0 ? "Portfolio Transfer — Pending Review"
             : stage === 1 ? "Portfolio Transfer — Under Advisor Review"
-            : isCash ? "Portfolio Liquidating for Transfer" : "Portfolio Transfer in Progress";
+            : stage === 2 ? (isCash ? "Portfolio Liquidation in Progress" : "Portfolio Re-Registration in Progress")
+            : "Portfolio Transmission to Receiving Institution";
 
           const bodyText = stage === 0
             ? <>Your transfer request to <strong className={strongColor}>{activeTransfer.institutionName}</strong> has been submitted. An advisor will review it shortly.</>
             : stage === 1
-            ? <>Your request is being reviewed by our advisory team. Transfer to <strong className={strongColor}>{activeTransfer.institutionName}</strong> will be confirmed once approved.</>
-            : <>Your full portfolio {isCash ? "is being liquidated and wired" : "is being re-registered in-kind"} to <strong className={strongColor}>{activeTransfer.institutionName}</strong>. Balances are locked until the transfer completes.</>;
+            ? <>Your request is being reviewed by our advisory team. Transfer to <strong className={strongColor}>{activeTransfer.institutionName}</strong> will proceed once the advisory review is complete.</>
+            : stage === 2
+            ? <>Your holdings are being liquidated {isCash ? "and converted to cash" : "for re-registration"}. Proceeds will be transmitted to <strong className={strongColor}>{activeTransfer.institutionName}</strong> upon settlement.</>
+            : <>Your liquidated portfolio is being electronically transmitted to <strong className={strongColor}>{activeTransfer.institutionName}</strong>. Settlement is pending confirmation from the receiving custodian.</>;
 
           const steps = [
             { label: "Submitted", done: stage >= 0 },
             { label: "Under Review", done: stage >= 1 },
-            { label: isCash ? "Liquidating" : "Processing", done: stage >= 2 },
-            { label: "Transfer Out", done: false },
+            { label: "Liquidating", done: stage >= 2 },
+            { label: "Transfer Out", done: stage >= 3 },
+            { label: "Complete", done: false },
           ];
 
           return (
@@ -273,11 +276,11 @@ export default function DashboardPage() {
                     {steps.map((step, i) => (
                       <div key={i} className="flex items-center">
                         <div className="flex flex-col items-center gap-1">
-                          <div className={cn("w-2 h-2 rounded-full", step.done ? dotDone : dotPending)} />
-                          <span className={cn("text-[9px] font-semibold uppercase tracking-wide whitespace-nowrap", step.done ? labelDone : labelPending)}>{step.label}</span>
+                          <div className={cn("w-2 h-2 rounded-full", step.done ? dotActive : dotInactive)} />
+                          <span className={cn("text-[9px] font-semibold uppercase tracking-wide whitespace-nowrap", step.done ? labelActive : labelInactive)}>{step.label}</span>
                         </div>
                         {i < steps.length - 1 && (
-                          <div className={cn("w-8 h-px mb-3.5 mx-1", step.done ? lineDone : linePending)} />
+                          <div className={cn("w-8 h-px mb-3.5 mx-1", step.done ? lineActive : lineInactive)} />
                         )}
                       </div>
                     ))}
