@@ -97,6 +97,8 @@ function TransferForm({
 }) {
   const [portfolioId, setPortfolioId] = useState("");
   const [transferType, setTransferType] = useState<"cash" | "in-kind">("in-kind");
+  const [holderType, setHolderType] = useState<"own" | "other">("own");
+  const [holderName, setHolderName] = useState("");
 
   const totalValue = useMemo(() =>
     accounts.reduce((sum, a) => sum + Number(a.balance), 0),
@@ -157,6 +159,40 @@ function TransferForm({
         <p className="text-xs text-muted-foreground">Your Portfolio ID at {institution.name} that will receive the assets.</p>
       </div>
 
+      {/* Account holder */}
+      <div className="space-y-2">
+        <Label className="text-xs">Account Holder at Receiving Institution</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {(["own", "other"] as const).map(type => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setHolderType(type)}
+              className={`p-3 rounded-xl border text-left transition-all ${holderType === type
+                ? "border-primary bg-primary/5 text-primary"
+                : "border-border hover:border-primary/40"}`}
+              data-testid={`holder-type-${type}`}
+            >
+              <p className="font-semibold text-sm">{type === "own" ? "My Own Name" : "Another Person"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {type === "own" ? "Account registered in my name" : "Account in a third party's name"}
+              </p>
+            </button>
+          ))}
+        </div>
+        {holderType === "other" && (
+          <div className="space-y-1">
+            <Input
+              placeholder="Full legal name of account holder"
+              value={holderName}
+              onChange={e => setHolderName(e.target.value)}
+              data-testid="input-holder-name"
+            />
+            <p className="text-xs text-muted-foreground">Enter the full legal name as it appears on the receiving account.</p>
+          </div>
+        )}
+      </div>
+
       {/* Transfer method */}
       <div className="space-y-2">
         <Label className="text-xs">Transfer Method</Label>
@@ -181,7 +217,7 @@ function TransferForm({
 
       <Button
         className="w-full"
-        disabled={!portfolioId.trim() || isPending}
+        disabled={!portfolioId.trim() || (holderType === "other" && !holderName.trim()) || isPending}
         onClick={() => onSubmit({
           institutionName: institution.name,
           institutionAccountNumber: portfolioId,
@@ -190,6 +226,8 @@ function TransferForm({
           transferScope: "full-portfolio",
           partialAmount: totalValue.toFixed(2),
           portfolioSnapshot,
+          accountHolderType: holderType,
+          accountHolderName: holderType === "own" ? null : holderName.trim(),
         })}
         data-testid="button-submit-institutional-transfer"
       >

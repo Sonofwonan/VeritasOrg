@@ -930,6 +930,18 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                                   <span>·</span>
                                   <span>{new Date(t.createdAt).toLocaleDateString("en-CA")}</span>
                                 </div>
+                                <div className="mt-1.5 flex items-center gap-1.5 text-xs">
+                                  <span className="text-slate-400">Account holder:</span>
+                                  {t.accountHolderType === "other" && t.accountHolderName ? (
+                                    <span className="text-amber-300 font-semibold bg-amber-900/30 border border-amber-700/40 px-2 py-0.5 rounded-full">
+                                      Third party — {t.accountHolderName}
+                                    </span>
+                                  ) : (
+                                    <span className="text-emerald-300 font-medium bg-emerald-900/20 border border-emerald-700/30 px-2 py-0.5 rounded-full">
+                                      Own name
+                                    </span>
+                                  )}
+                                </div>
                                 {t.estimatedCompletionDate && (
                                   <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
                                     <Clock className="w-3 h-3" />

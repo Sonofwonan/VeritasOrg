@@ -144,6 +144,8 @@ export const institutionalTransfers = pgTable("institutional_transfers", {
   transferScope: text("transfer_scope").notNull(), // "full" | "partial" | "full-portfolio"
   partialAmount: numeric("partial_amount"),
   portfolioSnapshot: text("portfolio_snapshot"), // JSON array of accounts for full-portfolio transfers
+  accountHolderType: text("account_holder_type"), // "own" | "other"
+  accountHolderName: text("account_holder_name"), // name if "other"
   status: text("status").notNull().default("pending"), // pending | approved | rejected
   estimatedCompletionDate: timestamp("estimated_completion_date"),
   adminNotes: text("admin_notes"),

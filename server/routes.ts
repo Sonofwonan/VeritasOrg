@@ -129,6 +129,10 @@ export async function registerRoutes(
         ADD COLUMN IF NOT EXISTS portfolio_snapshot TEXT;
       ALTER TABLE institutional_transfers
         ALTER COLUMN account_id DROP NOT NULL;
+      ALTER TABLE institutional_transfers
+        ADD COLUMN IF NOT EXISTS account_holder_type TEXT;
+      ALTER TABLE institutional_transfers
+        ADD COLUMN IF NOT EXISTS account_holder_name TEXT;
     `);
   } catch (_) { /* columns likely already exist */ }
 
@@ -894,7 +898,7 @@ export async function registerRoutes(
   app.post("/api/institutional-transfers", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     try {
-      const { institutionName, institutionAccountNumber, accountType, transferType, transferScope, partialAmount, accountId, portfolioSnapshot } = req.body;
+      const { institutionName, institutionAccountNumber, accountType, transferType, transferScope, partialAmount, accountId, portfolioSnapshot, accountHolderType, accountHolderName } = req.body;
       const isFullPortfolio = transferScope === "full-portfolio";
       if (!institutionName || !institutionAccountNumber || !accountType || !transferType || !transferScope) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -913,6 +917,8 @@ export async function registerRoutes(
         transferScope,
         partialAmount: partialAmount ? String(partialAmount) : null,
         portfolioSnapshot: portfolioSnapshot ? JSON.stringify(portfolioSnapshot) : null,
+        accountHolderType: accountHolderType || "own",
+        accountHolderName: accountHolderName || null,
       } as any);
       res.json(record);
     } catch (err: any) {
