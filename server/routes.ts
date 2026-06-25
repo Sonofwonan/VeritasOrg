@@ -865,42 +865,61 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: approve an institutional transfer
+  // Admin: approve an institutional transfer (legacy, kept for compatibility)
   app.post("/api/admin/institutional-transfers/:id/approve", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const [record] = await db.select().from(institutionalTransfers).where(eq(institutionalTransfers.id, id));
       if (!record) return res.status(404).json({ message: "Transfer not found" });
-      if (record.status !== "pending") return res.status(400).json({ message: "Transfer is not pending" });
-
-      // Calculate estimated completion date based on transfer type
       const now = new Date();
-      let weeksToAdd: number;
-      if (record.transferType === "cash") {
-        weeksToAdd = 12 + Math.floor(Math.random() * 7); // 12-18 weeks
-      } else {
-        weeksToAdd = 12; // exactly 12 weeks for in-kind
-      }
+      const weeksToAdd = record.transferType === "cash" ? 15 : 12;
       const completionDate = new Date(now.getTime() + weeksToAdd * 7 * 24 * 60 * 60 * 1000);
-      const adminNotes = req.body.notes || "";
-
-      const updated = await storage.updateInstitutionalTransferStatus(id, "approved", completionDate, adminNotes);
-      res.json({ ok: true, message: `Transfer approved. Estimated completion: ${completionDate.toLocaleDateString("en-CA")}`, transfer: updated });
+      const updated = await storage.updateInstitutionalTransferStatus(id, "approved", completionDate, req.body.notes || "");
+      res.json({ ok: true, message: `Transfer approved.`, transfer: updated });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
   });
 
-  // Admin: reject an institutional transfer
+  // Admin: reject an institutional transfer (legacy, kept for compatibility)
   app.post("/api/admin/institutional-transfers/:id/reject", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const [record] = await db.select().from(institutionalTransfers).where(eq(institutionalTransfers.id, id));
       if (!record) return res.status(404).json({ message: "Transfer not found" });
-      if (record.status !== "pending") return res.status(400).json({ message: "Transfer is not pending" });
-      const adminNotes = req.body.notes || "";
-      const updated = await storage.updateInstitutionalTransferStatus(id, "rejected", undefined, adminNotes);
+      const updated = await storage.updateInstitutionalTransferStatus(id, "rejected", undefined, req.body.notes || "");
       res.json({ ok: true, message: "Transfer rejected", transfer: updated });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: full monitor update — set status, completion date, notes freely
+  app.patch("/api/admin/institutional-transfers/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const [record] = await db.select().from(institutionalTransfers).where(eq(institutionalTransfers.id, id));
+      if (!record) return res.status(404).json({ message: "Transfer not found" });
+
+      const { status, estimatedCompletionDate, adminNotes } = req.body as {
+        status?: string;
+        estimatedCompletionDate?: string | null;
+        adminNotes?: string;
+      };
+
+      const validStatuses = ["pending", "under_review", "approved", "rejected"];
+      if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const completionDate = estimatedCompletionDate ? new Date(estimatedCompletionDate) : undefined;
+      const updated = await storage.updateInstitutionalTransferStatus(
+        id,
+        status || record.status,
+        completionDate,
+        adminNotes !== undefined ? adminNotes : record.adminNotes || ""
+      );
+      res.json({ ok: true, transfer: updated });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

@@ -297,25 +297,21 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
     refetchInterval: 30000,
   });
 
-  const approveInstMutation = useMutation({
-    mutationFn: (id: number) =>
-      adminFetch(`/api/admin/institutional-transfers/${id}/approve`, adminKey, { method: "POST" }).then(r => r.json()),
-    onSuccess: (data) => {
-      toast({ title: "Transfer Approved", description: data.message });
+  const updateInstMonitorMutation = useMutation({
+    mutationFn: ({ id, status, estimatedCompletionDate, adminNotes }: { id: number; status: string; estimatedCompletionDate?: string; adminNotes?: string }) =>
+      adminFetch(`/api/admin/institutional-transfers/${id}`, adminKey, {
+        method: "PATCH",
+        body: JSON.stringify({ status, estimatedCompletionDate: estimatedCompletionDate || null, adminNotes }),
+      }).then(r => r.json()),
+    onSuccess: () => {
+      toast({ title: "Monitor Updated", description: "Client's transfer status has been updated." });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/institutional-transfers"] });
     },
-    onError: () => toast({ title: "Error", description: "Failed to approve transfer", variant: "destructive" }),
+    onError: () => toast({ title: "Error", description: "Failed to update transfer monitor.", variant: "destructive" }),
   });
 
-  const rejectInstMutation = useMutation({
-    mutationFn: (id: number) =>
-      adminFetch(`/api/admin/institutional-transfers/${id}/reject`, adminKey, { method: "POST" }).then(r => r.json()),
-    onSuccess: () => {
-      toast({ title: "Transfer Rejected" });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/institutional-transfers"] });
-    },
-    onError: () => toast({ title: "Error", description: "Failed to reject transfer", variant: "destructive" }),
-  });
+  const [monitorDialog, setMonitorDialog] = useState<{ transfer: any } | null>(null);
+  const [monitorForm, setMonitorForm] = useState({ status: "pending", estimatedCompletionDate: "", adminNotes: "" });
 
   const { data: allApplications = [], isLoading: appsLoading, refetch: refetchApps } = useQuery({
     queryKey: ["/api/admin/applications"],
@@ -750,73 +746,161 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                     <p className="text-slate-500 text-sm mt-1">Requests from clients will appear here</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {(Array.isArray(instTransfers) ? instTransfers : []).map((t: any) => (
-                      <div
-                        key={t.id}
-                        className="rounded-xl bg-slate-700/30 border border-slate-600/50 p-4"
-                        data-testid={`inst-transfer-admin-${t.id}`}
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-white font-semibold">IT-{t.id}</span>
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border capitalize
-                                ${t.status === "approved" ? "bg-emerald-400/10 text-emerald-400 border-emerald-400/20"
-                                : t.status === "rejected" ? "bg-red-400/10 text-red-400 border-red-400/20"
-                                : "bg-amber-400/10 text-amber-400 border-amber-400/20"}`}>
-                                {t.status}
-                              </span>
-                              <span className="text-xs text-slate-400 bg-slate-600/40 px-2 py-0.5 rounded-full capitalize">
-                                {t.transferType === "in-kind" ? "In-Kind" : "Cash"} · {t.transferScope}
-                              </span>
+                  <>
+                    {/* Monitor Update Dialog */}
+                    <ShadDialog open={!!monitorDialog} onOpenChange={(o) => { if (!o) setMonitorDialog(null); }}>
+                      <ShadDialogContent className="bg-slate-800 border-slate-700 text-white max-w-lg">
+                        <ShadDialogHeader>
+                          <ShadDialogTitle className="flex items-center gap-2 text-white">
+                            <Activity className="w-4 h-4 text-primary" />
+                            Update Transfer Monitor — IT-{monitorDialog?.transfer?.id}
+                          </ShadDialogTitle>
+                          <p className="text-slate-400 text-xs mt-1">
+                            {monitorDialog?.transfer?.institutionName} · {monitorDialog?.transfer?.userName}
+                          </p>
+                        </ShadDialogHeader>
+
+                        <div className="space-y-5 py-2">
+                          {/* Status picker */}
+                          <div className="space-y-2">
+                            <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Status Stage</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {[
+                                { value: "pending", label: "Pending", desc: "Awaiting review", color: "border-amber-500/40 text-amber-400" },
+                                { value: "under_review", label: "Under Review", desc: "Being processed", color: "border-blue-500/40 text-blue-400" },
+                                { value: "approved", label: "Approved", desc: "Transfer confirmed", color: "border-emerald-500/40 text-emerald-400" },
+                                { value: "rejected", label: "Rejected", desc: "Request declined", color: "border-red-500/40 text-red-400" },
+                              ].map(opt => (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => setMonitorForm(f => ({ ...f, status: opt.value }))}
+                                  className={`text-left rounded-lg border p-3 transition-all ${monitorForm.status === opt.value ? `${opt.color} bg-white/5` : "border-slate-600 text-slate-400 hover:border-slate-500"}`}
+                                >
+                                  <p className="text-sm font-semibold">{opt.label}</p>
+                                  <p className="text-xs opacity-70 mt-0.5">{opt.desc}</p>
+                                </button>
+                              ))}
                             </div>
-                            <p className="text-slate-200 font-medium text-sm mt-1">{t.institutionName}</p>
-                            <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-slate-400">
-                              <span>Client: <span className="text-slate-300 font-medium">{t.userName}</span></span>
-                              <span className="text-slate-600">·</span>
-                              <span>{t.userEmail}</span>
-                              <span className="text-slate-600">·</span>
-                              <span>Acct #{t.accountId} ({t.accountType})</span>
-                              <span className="text-slate-600">·</span>
-                              <span>{new Date(t.createdAt).toLocaleDateString("en-CA")}</span>
-                            </div>
-                            {t.partialAmount && (
-                              <p className="text-xs text-slate-400 mt-1">Partial amount: <span className="text-slate-200 font-medium">CAD ${Number(t.partialAmount).toLocaleString()}</span></p>
-                            )}
-                            {t.status === "approved" && t.estimatedCompletionDate && (
-                              <p className="text-xs text-emerald-400 mt-1">Est. completion: {new Date(t.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}</p>
-                            )}
                           </div>
-                          {t.status === "pending" && (
-                            <div className="flex gap-2 shrink-0">
-                              <Button
-                                size="sm"
-                                onClick={() => approveInstMutation.mutate(t.id)}
-                                disabled={approveInstMutation.isPending || rejectInstMutation.isPending}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
-                                data-testid={`button-approve-inst-${t.id}`}
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                Approve
-                              </Button>
+
+                          {/* Estimated completion date */}
+                          {(monitorForm.status === "approved" || monitorForm.status === "under_review") && (
+                            <div className="space-y-1.5">
+                              <label className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Estimated Completion Date</label>
+                              <input
+                                type="date"
+                                value={monitorForm.estimatedCompletionDate}
+                                onChange={e => setMonitorForm(f => ({ ...f, estimatedCompletionDate: e.target.value }))}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary"
+                              />
+                              <p className="text-xs text-slate-500">Shown to client on the Live Transfer Monitor</p>
+                            </div>
+                          )}
+
+                          {/* Advisor note */}
+                          <div className="space-y-1.5">
+                            <label className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Advisor Note <span className="normal-case text-slate-500">(optional)</span></label>
+                            <Textarea
+                              value={monitorForm.adminNotes}
+                              onChange={e => setMonitorForm(f => ({ ...f, adminNotes: e.target.value }))}
+                              placeholder="e.g. CDS re-registration initiated. DTC transfer underway. Contact your advisor for questions."
+                              className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 resize-none min-h-[80px]"
+                            />
+                            <p className="text-xs text-slate-500">Displayed as an advisor note on the client's monitor</p>
+                          </div>
+                        </div>
+
+                        <ShadDialogFooter>
+                          <Button variant="ghost" className="text-slate-400 hover:text-white" onClick={() => setMonitorDialog(null)}>Cancel</Button>
+                          <Button
+                            className="bg-primary hover:bg-primary/90 text-white"
+                            disabled={updateInstMonitorMutation.isPending}
+                            onClick={() => {
+                              updateInstMonitorMutation.mutate({
+                                id: monitorDialog!.transfer.id,
+                                status: monitorForm.status,
+                                estimatedCompletionDate: monitorForm.estimatedCompletionDate || undefined,
+                                adminNotes: monitorForm.adminNotes,
+                              }, { onSuccess: () => setMonitorDialog(null) });
+                            }}
+                          >
+                            <Activity className="w-3.5 h-3.5 mr-1.5" />
+                            Save Monitor Update
+                          </Button>
+                        </ShadDialogFooter>
+                      </ShadDialogContent>
+                    </ShadDialog>
+
+                    <div className="space-y-3">
+                      {(Array.isArray(instTransfers) ? instTransfers : []).map((t: any) => {
+                        const statusColors: Record<string, string> = {
+                          pending: "bg-amber-400/10 text-amber-400 border-amber-400/20",
+                          under_review: "bg-blue-400/10 text-blue-400 border-blue-400/20",
+                          approved: "bg-emerald-400/10 text-emerald-400 border-emerald-400/20",
+                          rejected: "bg-red-400/10 text-red-400 border-red-400/20",
+                        };
+                        const statusLabel: Record<string, string> = {
+                          pending: "Pending", under_review: "Under Review", approved: "Approved", rejected: "Rejected",
+                        };
+                        return (
+                          <div key={t.id} className="rounded-xl bg-slate-700/30 border border-slate-600/50 p-4" data-testid={`inst-transfer-admin-${t.id}`}>
+                            <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-white font-semibold font-mono text-sm">IT-{t.id}</span>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${statusColors[t.status] || statusColors.pending}`}>
+                                    {statusLabel[t.status] || t.status}
+                                  </span>
+                                  <span className="text-xs text-slate-400 bg-slate-600/40 px-2 py-0.5 rounded-full">
+                                    {t.transferType === "in-kind" ? "In-Kind" : "Cash"} · {t.transferScope === "full" ? "Full" : `Partial CAD $${Number(t.partialAmount).toLocaleString()}`}
+                                  </span>
+                                </div>
+                                <p className="text-slate-200 font-medium text-sm mt-1">{t.institutionName}</p>
+                                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-xs text-slate-400">
+                                  <span>Client: <span className="text-slate-300 font-medium">{t.userName}</span></span>
+                                  <span>·</span>
+                                  <span>{t.userEmail}</span>
+                                  <span>·</span>
+                                  <span>Acct #{t.accountId}</span>
+                                  <span>·</span>
+                                  <span>{new Date(t.createdAt).toLocaleDateString("en-CA")}</span>
+                                </div>
+                                {t.estimatedCompletionDate && (
+                                  <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    Est. completion: {new Date(t.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}
+                                  </p>
+                                )}
+                                {t.adminNotes && (
+                                  <p className="text-xs text-slate-500 mt-1 italic">Note: {t.adminNotes}</p>
+                                )}
+                              </div>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => rejectInstMutation.mutate(t.id)}
-                                disabled={approveInstMutation.isPending || rejectInstMutation.isPending}
-                                className="border-red-500/40 text-red-400 hover:bg-red-500/10 gap-1"
-                                data-testid={`button-reject-inst-${t.id}`}
+                                className="border-primary/40 text-primary hover:bg-primary/10 gap-1.5 shrink-0"
+                                data-testid={`button-update-monitor-${t.id}`}
+                                onClick={() => {
+                                  setMonitorForm({
+                                    status: t.status,
+                                    estimatedCompletionDate: t.estimatedCompletionDate
+                                      ? new Date(t.estimatedCompletionDate).toISOString().split("T")[0]
+                                      : "",
+                                    adminNotes: t.adminNotes || "",
+                                  });
+                                  setMonitorDialog({ transfer: t });
+                                }}
                               >
-                                <XCircle className="w-3.5 h-3.5" />
-                                Reject
+                                <Activity className="w-3.5 h-3.5" />
+                                Update Monitor
                               </Button>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
