@@ -2,9 +2,10 @@ import { useState } from "react";
 import {
   Plus, ArrowRight, ChevronRight, TrendingUp, TrendingDown,
   ShieldCheck, Landmark, Briefcase, PiggyBank, Eye, EyeOff,
-  CheckCircle2, AlertCircle, MoreHorizontal
+  CheckCircle2, AlertCircle, MoreHorizontal, Lock, Building2
 } from "lucide-react";
 import { useAccounts, useCreateAccount, useAccountTransactions } from "@/hooks/use-finances";
+import { useQuery } from "@tanstack/react-query";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -72,6 +73,11 @@ export default function AccountsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"] });
+  const activeTransfer = (instTransfers as any[]).find((t: any) =>
+    t.status === "pending" || t.status === "under_review" || t.status === "approved"
+  );
+  const isLocked = activeTransfer?.status === "approved";
 
   const [hideBalances, setHideBalances] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -229,6 +235,40 @@ export default function AccountsPage() {
         </div>
       </div>
 
+      {/* ── Transfer Lock Banner ──────────────────────────────────── */}
+      {activeTransfer && (
+        <div className={cn(
+          "rounded-sm border px-4 py-3 flex items-start gap-3 mt-2",
+          isLocked
+            ? "bg-amber-950/30 border-amber-500/20"
+            : "bg-primary/5 border-primary/15"
+        )}>
+          <div className={cn(
+            "w-8 h-8 rounded-sm flex items-center justify-center shrink-0 mt-0.5",
+            isLocked ? "bg-amber-500/15" : "bg-primary/15"
+          )}>
+            {isLocked
+              ? <Lock className="w-4 h-4 text-amber-400" />
+              : <Building2 className="w-4 h-4 text-primary/60" />
+            }
+          </div>
+          <div>
+            <p className={cn(
+              "text-xs font-bold uppercase tracking-widest mb-0.5",
+              isLocked ? "text-amber-400" : "text-white/50"
+            )}>
+              {isLocked ? "Accounts Locked — Transfer Approved" : "Transfer Pending Advisor Review"}
+            </p>
+            <p className="text-white/40 text-xs leading-relaxed">
+              {isLocked
+                ? <>All balances are read-only. Your portfolio is in transit to <strong className="text-white/60">{activeTransfer.institutionName}</strong>. Figures reflect your holdings at time of transfer.</>
+                : <>Your transfer request to <strong className="text-white/60">{activeTransfer.institutionName}</strong> is under review. Accounts remain accessible until approved.</>
+              }
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Account Groups ─────────────────────────────────────────── */}
       {isLoading ? (
         <div className="space-y-2 mt-2">
@@ -281,6 +321,16 @@ export default function AccountsPage() {
                               {isPending && (
                                 <span className="text-[9px] text-amber-600 font-bold uppercase tracking-wide bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-sm border border-amber-200 dark:border-amber-800/40">
                                   Pending: {fmt(Math.abs(pendingBalance))}
+                                </span>
+                              )}
+                              {isLocked && (
+                                <span className="flex items-center gap-1 text-[9px] text-amber-500 font-bold uppercase tracking-wide bg-amber-500/10 px-1.5 py-0.5 rounded-sm border border-amber-500/20">
+                                  <Lock className="w-2.5 h-2.5" /> In Transfer
+                                </span>
+                              )}
+                              {!isLocked && activeTransfer && (
+                                <span className="text-[9px] text-primary/60 font-bold uppercase tracking-wide bg-primary/5 px-1.5 py-0.5 rounded-sm border border-primary/15">
+                                  Transfer Pending
                                 </span>
                               )}
                             </div>

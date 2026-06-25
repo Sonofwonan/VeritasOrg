@@ -9,10 +9,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
 import {
   TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
   ArrowLeftRight, Clock, Info, ChevronRight, Landmark,
-  ShieldCheck, Briefcase, Activity, BarChart3
+  ShieldCheck, Briefcase, Activity, BarChart3, Building2, Lock
 } from "lucide-react";
 
 // ── Market index data (static realistic) ─────────────────────────────────────
@@ -65,6 +66,12 @@ export default function DashboardPage() {
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { data: investments, isLoading: investmentsLoading } = useInvestments();
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
+  const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"] });
+
+  // Active transfer = any that isn't rejected/completed
+  const activeTransfer = instTransfers.find((t: any) =>
+    t.status === "pending" || t.status === "under_review" || t.status === "approved"
+  );
 
   const checkingAccount = accounts?.find(a => a.accountType === 'Checking Account');
   const { data: transactions, isLoading: txnLoading } = useAccountTransactions(checkingAccount?.id || 0);
@@ -195,6 +202,101 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+
+        {/* ── Portfolio in Transit Banner ─────────────────────────────────── */}
+        {activeTransfer && (() => {
+          const isPending = activeTransfer.status === "pending" || activeTransfer.status === "under_review";
+          const isApproved = activeTransfer.status === "approved";
+          const isCash = activeTransfer.transferType === "cash";
+          return (
+            <div className={cn(
+              "border-t px-6 py-4 flex items-start justify-between gap-4",
+              isApproved
+                ? "bg-amber-950/40 border-amber-500/20"
+                : "bg-primary/5 border-primary/10"
+            )}>
+              <div className="flex items-start gap-3">
+                <div className={cn(
+                  "w-9 h-9 rounded-sm flex items-center justify-center shrink-0 mt-0.5",
+                  isApproved ? "bg-amber-500/15" : "bg-primary/15"
+                )}>
+                  {isApproved
+                    ? <Lock className="w-4 h-4 text-amber-400" />
+                    : <Building2 className="w-4 h-4 text-primary/70" />
+                  }
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className={cn(
+                      "text-xs font-bold uppercase tracking-widest",
+                      isApproved ? "text-amber-400" : "text-white/60"
+                    )}>
+                      {isApproved
+                        ? isCash ? "Portfolio Liquidating for Transfer" : "Portfolio Transfer in Progress"
+                        : "Portfolio Transfer — Pending Review"
+                      }
+                    </p>
+                    <span className={cn(
+                      "text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm border",
+                      isApproved
+                        ? "border-amber-500/30 text-amber-400 bg-amber-500/10"
+                        : "border-white/10 text-white/40 bg-white/5"
+                    )}>
+                      {isPending ? "Under Review" : "Approved"}
+                    </span>
+                  </div>
+                  <p className="text-white/50 text-xs leading-relaxed">
+                    {isApproved
+                      ? <>Your full portfolio {isCash ? "is being liquidated and wired" : "is being re-registered in-kind"} to <strong className="text-white/70">{activeTransfer.institutionName}</strong>. Balances are locked and visible until transfer completes.</>
+                      : <>Transfer request to <strong className="text-white/70">{activeTransfer.institutionName}</strong> is awaiting advisor review. Your accounts remain active in the meantime.</>
+                    }
+                  </p>
+                  {/* Progress steps */}
+                  <div className="flex items-center gap-0 mt-3">
+                    {[
+                      { label: "Submitted", done: true },
+                      { label: "Under Review", done: isApproved },
+                      { label: isApproved && isCash ? "Liquidating" : "Processing", done: false },
+                      { label: "Complete", done: false },
+                    ].map((step, i, arr) => (
+                      <div key={i} className="flex items-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full",
+                            step.done
+                              ? isApproved ? "bg-amber-400" : "bg-primary"
+                              : "bg-white/15"
+                          )} />
+                          <span className={cn(
+                            "text-[9px] font-semibold uppercase tracking-wide whitespace-nowrap",
+                            step.done
+                              ? isApproved ? "text-amber-400" : "text-primary/70"
+                              : "text-white/20"
+                          )}>{step.label}</span>
+                        </div>
+                        {i < arr.length - 1 && (
+                          <div className={cn("w-10 h-px mb-3.5 mx-1", step.done ? isApproved ? "bg-amber-400/40" : "bg-primary/30" : "bg-white/10")} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {isApproved && activeTransfer.estimatedCompletionDate && (
+                    <p className="text-xs text-amber-400/70 flex items-center gap-1.5 mt-2">
+                      <Clock className="w-3 h-3" />
+                      Est. completion: <strong className="text-amber-400">{new Date(activeTransfer.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}</strong>
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setLocation("/transfers")}
+                className="text-[10px] uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors shrink-0 mt-1 flex items-center gap-1"
+              >
+                View <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+          );
+        })()}
 
         {/* ── Market Indices Bar ──────────────────────────────────────────── */}
         <div className="border border-border/60 rounded-sm overflow-hidden">
