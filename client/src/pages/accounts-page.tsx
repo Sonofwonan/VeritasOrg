@@ -73,7 +73,7 @@ export default function AccountsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"] });
+  const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"], refetchInterval: 15000 });
   const activeTransfer = (instTransfers as any[]).find((t: any) =>
     t.status === "pending" || t.status === "under_review" || t.status === "approved"
   );

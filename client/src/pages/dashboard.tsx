@@ -66,7 +66,7 @@ export default function DashboardPage() {
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { data: investments, isLoading: investmentsLoading } = useInvestments();
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
-  const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"] });
+  const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"], refetchInterval: 15000 });
 
   // Active transfer = any that isn't rejected/completed
   const activeTransfer = instTransfers.find((t: any) =>

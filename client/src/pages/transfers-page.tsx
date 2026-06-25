@@ -15,6 +15,7 @@ export default function TransfersPage() {
 
   const { data: institutionalTransfersList = [] } = useQuery<any[]>({
     queryKey: ["/api/institutional-transfers"],
+    refetchInterval: 15000,
   });
 
   if (loadingAccounts) {
