@@ -201,14 +201,14 @@ function FullPortfolioForm({
 
       {/* Receiving account number */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Your Account Number at {institution.short}</Label>
+        <Label className="text-xs">Your Portfolio ID at {institution.short}</Label>
         <Input
           placeholder="e.g. 123-456789"
           value={accountNumber}
           onChange={e => setAccountNumber(e.target.value)}
           data-testid="input-institution-account-number"
         />
-        <p className="text-xs text-muted-foreground">The account number at {institution.name} that will receive the assets.</p>
+        <p className="text-xs text-muted-foreground">Your Portfolio ID at {institution.name} that will receive the assets.</p>
       </div>
 
       {/* Transfer method */}
@@ -292,7 +292,7 @@ function SingleAccountForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label className="text-xs">Your Account Number at {institution.short}</Label>
+          <Label className="text-xs">Your Portfolio ID at {institution.short}</Label>
           <Input
             placeholder="e.g. 123-456789"
             value={accountNumber}
