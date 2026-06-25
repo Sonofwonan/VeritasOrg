@@ -190,15 +190,22 @@ export default function AccountsPage() {
             <div>
               <p className="label-caps text-white/40 mb-2">Total Portfolio Value</p>
               <div className="flex items-end gap-4">
-                <span className="font-serif text-5xl text-white tracking-tight" data-testid="text-total-balance">
-                  {fmt(totalBalance)}
+                <span className={`font-serif text-5xl tracking-tight ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
+                  {isTransmitting ? "$0.00" : fmt(totalBalance)}
                 </span>
-                <span className="text-emerald-400 text-sm font-mono mb-1.5 flex items-center gap-1">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  +8.4% YTD
-                </span>
+                {isTransmitting ? (
+                  <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
+                ) : (
+                  <span className="text-emerald-400 text-sm font-mono mb-1.5 flex items-center gap-1">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    +8.4% YTD
+                  </span>
+                )}
               </div>
-              <p className="text-white/30 text-xs mt-1.5 font-mono">CAD · As of {new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+              {isTransmitting
+                ? <p className="text-violet-300/60 text-xs mt-1.5 font-mono">Funds in transit to {activeTransfer?.institutionName}</p>
+                : <p className="text-white/30 text-xs mt-1.5 font-mono">CAD · As of {new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+              }
             </div>
             <div className="flex items-center gap-2 mt-1">
               <button
@@ -234,8 +241,15 @@ export default function AccountsPage() {
                 <Icon className="w-3.5 h-3.5 text-white/30" />
                 <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">{label}</span>
               </div>
-              <p className="font-mono text-xl text-amber-400 tracking-tight">{fmtShort(value)}</p>
-              <p className="text-white/25 text-[10px] mt-0.5">{sub}</p>
+              {isTransmitting ? (
+                <div>
+                  <p className="font-mono text-xl text-violet-300 tracking-tight">$0.00</p>
+                  <p className="font-mono text-[10px] text-white/20 line-through mt-0.5">{fmtShort(value)}</p>
+                </div>
+              ) : (
+                <p className="font-mono text-xl text-amber-400 tracking-tight">{fmtShort(value)}</p>
+              )}
+              <p className="text-white/25 text-[10px] mt-0.5">{isTransmitting ? "Clearing" : sub}</p>
             </div>
           ))}
         </div>
