@@ -134,6 +134,13 @@ export async function registerRoutes(
     res.status(401).send();
   };
 
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+  const requireAdmin = (req: any, res: any, next: any) => {
+    const key = req.headers["x-admin-key"];
+    if (key !== ADMIN_PASSWORD) return res.status(401).json({ message: "Unauthorized" });
+    next();
+  };
+
   // Auth Routes
   app.post(api.auth.register.path, async (req, res) => {
     try {
@@ -651,14 +658,6 @@ export async function registerRoutes(
   });
 
   // ─── Admin Routes ────────────────────────────────────────────────────────────
-
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-
-  const requireAdmin = (req: any, res: any, next: any) => {
-    const key = req.headers["x-admin-key"];
-    if (key !== ADMIN_PASSWORD) return res.status(401).json({ message: "Unauthorized" });
-    next();
-  };
 
   // All applications
   app.get("/api/admin/applications", requireAdmin, async (req, res) => {
