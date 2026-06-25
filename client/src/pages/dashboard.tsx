@@ -72,6 +72,7 @@ export default function DashboardPage() {
   const activeTransfer = instTransfers.find((t: any) =>
     ["pending", "under_review", "approved", "liquidating", "transfer_out"].includes(t.status)
   );
+  const isTransmitting = activeTransfer?.status === "transfer_out";
 
   const checkingAccount = accounts?.find(a => a.accountType === 'Checking Account');
   const { data: transactions, isLoading: txnLoading } = useAccountTransactions(checkingAccount?.id || 0);
@@ -157,16 +158,22 @@ export default function DashboardPage() {
               <div>
                 <p className="label-caps text-white/40 mb-1">{getGreeting()}, {user?.name?.split(' ')[0]} · Portfolio Overview</p>
                 <div className="flex items-end gap-4">
-                  <span className="font-serif text-5xl text-white tracking-tight" data-testid="text-net-worth">
-                    {fmtM(totalBalance)}
+                  <span className={`font-serif text-5xl tracking-tight ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-net-worth">
+                    {isTransmitting ? "$0.00" : fmtM(totalBalance)}
                   </span>
-                  <div className="flex items-center gap-1 text-emerald-400 text-sm font-mono mb-1.5">
-                    <TrendingUp className="w-3.5 h-3.5" />
-                    +{fmt(dayChange)} today
-                  </div>
+                  {isTransmitting ? (
+                    <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmtM(totalBalance)}</span>
+                  ) : (
+                    <div className="flex items-center gap-1 text-emerald-400 text-sm font-mono mb-1.5">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      +{fmt(dayChange)} today
+                    </div>
+                  )}
                 </div>
                 <p className="text-white/30 text-xs font-mono mt-1">
-                  Total Net Worth · CAD · {format(new Date(), 'MMMM d, yyyy')}
+                  {isTransmitting
+                    ? `Funds in transit to ${activeTransfer?.institutionName}`
+                    : `Total Net Worth · CAD · ${format(new Date(), 'MMMM d, yyyy')}`}
                 </p>
               </div>
               {/* Quick actions */}
@@ -195,8 +202,15 @@ export default function DashboardPage() {
                 <Icon className="w-4 h-4 text-white/20 shrink-0" />
                 <div>
                   <p className="label-caps text-white/30 mb-0.5">{label}</p>
-                  <p className="font-mono text-white font-semibold text-sm">{val}</p>
-                  <p className="text-white/25 text-[10px] mt-0.5">{sub}</p>
+                  {isTransmitting ? (
+                    <div>
+                      <p className="font-mono text-violet-300 font-semibold text-sm">$0.00</p>
+                      <p className="font-mono text-white/20 text-[10px] line-through">{val}</p>
+                    </div>
+                  ) : (
+                    <p className="font-mono text-white font-semibold text-sm">{val}</p>
+                  )}
+                  <p className="text-white/25 text-[10px] mt-0.5">{isTransmitting ? "Clearing" : sub}</p>
                 </div>
               </div>
             ))}
