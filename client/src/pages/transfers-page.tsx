@@ -79,26 +79,42 @@ export default function TransfersPage() {
             ) : (
               <div className="space-y-3">
                 {institutionalTransfersList.map((t: any) => {
-                  const isPending = t.status === "pending" || t.status === "under_review";
-                  const isApproved = t.status === "approved";
+                  const stage = t.status === "pending" ? 0
+                    : t.status === "under_review" ? 1
+                    : (t.status === "liquidating" || t.status === "approved") ? 2
+                    : t.status === "completed" ? 3
+                    : -1; // rejected
                   const isRejected = t.status === "rejected";
+                  const isCash = t.transferType === "cash";
 
-                  const statusLabel = isApproved ? "Approved" : isRejected ? "Rejected" : t.status === "under_review" ? "Under Review" : "Pending";
-                  const statusDot = isApproved ? "bg-emerald-500" : isRejected ? "bg-rose-500" : "bg-amber-400 animate-pulse";
-                  const cardBorder = isApproved
+                  const LABELS: Record<string, string> = { pending: "Pending", under_review: "Under Review", liquidating: "Liquidating", approved: "Liquidating", completed: "Completed", rejected: "Rejected" };
+                  const statusDot = stage === 3 ? "bg-emerald-500" : isRejected ? "bg-rose-500" : stage === 2 ? "bg-orange-400 animate-pulse" : "bg-amber-400 animate-pulse";
+                  const cardBorder = stage === 3
                     ? "border-emerald-200 dark:border-emerald-800/40"
                     : isRejected
                     ? "border-rose-200 dark:border-rose-800/40"
+                    : stage === 2
+                    ? "border-orange-200 dark:border-orange-800/30"
                     : "border-amber-200 dark:border-amber-800/30";
-                  const statusTextColor = isApproved ? "text-emerald-700 dark:text-emerald-400" : isRejected ? "text-rose-700 dark:text-rose-400" : "text-amber-700 dark:text-amber-400";
-                  const statusBg = isApproved ? "bg-emerald-50 dark:bg-emerald-900/10" : isRejected ? "bg-rose-50 dark:bg-rose-900/10" : "bg-amber-50 dark:bg-amber-900/10";
+                  const statusTextColor = stage === 3 ? "text-emerald-700 dark:text-emerald-400" : isRejected ? "text-rose-700 dark:text-rose-400" : stage === 2 ? "text-orange-700 dark:text-orange-400" : "text-amber-700 dark:text-amber-400";
+                  const statusBg = stage === 3 ? "bg-emerald-50 dark:bg-emerald-900/10" : isRejected ? "bg-rose-50 dark:bg-rose-900/10" : stage === 2 ? "bg-orange-50 dark:bg-orange-900/10" : "bg-amber-50 dark:bg-amber-900/10";
+
+                  // 4-step progress: Submitted → Under Review → Liquidating/Processing → Completed
+                  const steps = [
+                    { label: "Submitted", done: stage >= 0 },
+                    { label: "Under Review", done: stage >= 1 },
+                    { label: isCash ? "Liquidating" : "Processing", done: stage >= 2 },
+                    { label: "Completed", done: stage >= 3 },
+                  ];
+                  const stepColor = stage === 3 ? "bg-emerald-400" : stage === 2 ? "bg-orange-400" : "bg-amber-400";
+                  const stepTextColor = stage === 3 ? "text-emerald-600 dark:text-emerald-400" : stage === 2 ? "text-orange-600 dark:text-orange-400" : "text-amber-600 dark:text-amber-400";
 
                   return (
                     <div key={t.id} className={`rounded-xl border ${cardBorder} overflow-hidden`} data-testid={`inst-transfer-${t.id}`}>
                       <div className={`${statusBg} px-4 py-2 flex items-center justify-between border-b ${cardBorder}`}>
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${statusDot}`} />
-                          <span className={`text-xs font-semibold uppercase tracking-wide ${statusTextColor}`}>{statusLabel}</span>
+                          <span className={`text-xs font-semibold uppercase tracking-wide ${statusTextColor}`}>{LABELS[t.status] ?? t.status}</span>
                         </div>
                         <span className="text-xs text-muted-foreground">Submitted {new Date(t.createdAt).toLocaleDateString("en-CA")}</span>
                       </div>
@@ -111,7 +127,7 @@ export default function TransfersPage() {
                               <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">Full Portfolio</span>
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              All accounts · {t.transferType === "in-kind" ? "In-Kind Transfer" : "Cash Transfer"} · CAD ${Number(t.partialAmount).toLocaleString("en-CA", { maximumFractionDigits: 0 })} total
+                              All accounts · {isCash ? "Cash Transfer" : "In-Kind Transfer"} · CAD ${Number(t.partialAmount).toLocaleString("en-CA", { maximumFractionDigits: 0 })} total
                             </p>
                             {t.portfolioSnapshot && (() => {
                               try {
@@ -124,25 +140,21 @@ export default function TransfersPage() {
                               } catch { return null; }
                             })()}
                           </div>
-                          {isApproved ? (
+                          {stage === 3 ? (
                             <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                           ) : isRejected ? (
                             <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
                           ) : (
-                            <Clock className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                            <Clock className={`w-4 h-4 shrink-0 mt-0.5 ${stage === 2 ? "text-orange-500" : "text-amber-500"}`} />
                           )}
                         </div>
 
                         {!isRejected && (
-                          <div className="grid grid-cols-3 gap-1 pt-1">
-                            {[
-                              { label: "Submitted", done: true },
-                              { label: "Under Review", done: isApproved },
-                              { label: "Completed", done: false },
-                            ].map((step, i) => (
+                          <div className="grid grid-cols-4 gap-1 pt-1">
+                            {steps.map((step, i) => (
                               <div key={i} className="flex flex-col items-center gap-1">
-                                <div className={`w-full h-1 rounded-full ${step.done ? (isApproved ? "bg-emerald-400" : "bg-amber-400") : "bg-muted"}`} />
-                                <span className={`text-[10px] font-medium ${step.done ? (isApproved ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400") : "text-muted-foreground"}`}>{step.label}</span>
+                                <div className={`w-full h-1 rounded-full ${step.done ? stepColor : "bg-muted"}`} />
+                                <span className={`text-[10px] font-medium text-center leading-tight ${step.done ? stepTextColor : "text-muted-foreground"}`}>{step.label}</span>
                               </div>
                             ))}
                           </div>

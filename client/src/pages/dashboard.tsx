@@ -70,7 +70,7 @@ export default function DashboardPage() {
 
   // Active transfer = any that isn't rejected/completed
   const activeTransfer = instTransfers.find((t: any) =>
-    t.status === "pending" || t.status === "under_review" || t.status === "approved"
+    ["pending", "under_review", "approved", "liquidating"].includes(t.status)
   );
 
   const checkingAccount = accounts?.find(a => a.accountType === 'Checking Account');
@@ -205,95 +205,89 @@ export default function DashboardPage() {
 
         {/* ── Portfolio in Transit Banner ─────────────────────────────────── */}
         {activeTransfer && (() => {
-          const isApproved = activeTransfer.status === "approved";
+          const stage = activeTransfer.status === "pending" ? 0
+            : activeTransfer.status === "under_review" ? 1
+            : (activeTransfer.status === "liquidating" || activeTransfer.status === "approved") ? 2
+            : 0;
           const isCash = activeTransfer.transferType === "cash";
+
+          // Stage visual tokens
+          const isLiquidating = stage === 2;
+          const bannerBg = isLiquidating ? "bg-amber-50 border-amber-300" : "bg-[#0B2218] border-[#163830]";
+          const iconBg = isLiquidating ? "bg-amber-200" : "bg-white/10";
+          const iconEl = isLiquidating
+            ? <Lock className="w-4 h-4 text-amber-700" />
+            : <Building2 className="w-4 h-4 text-white/80" />;
+          const titleColor = isLiquidating ? "text-amber-800" : "text-white";
+          const badgeStyle = isLiquidating
+            ? "border-amber-400 text-amber-700 bg-amber-100"
+            : "border-white/20 text-white/60 bg-white/5";
+          const badgeLabel = stage === 0 ? "Pending Review" : stage === 1 ? "Under Review" : isCash ? "Liquidating" : "Processing";
+          const bodyColor = isLiquidating ? "text-amber-800/80" : "text-white/60";
+          const strongColor = isLiquidating ? "text-amber-900" : "text-white/90";
+          const dotDone = isLiquidating ? "bg-amber-500" : "bg-emerald-400";
+          const dotPending = isLiquidating ? "bg-amber-200" : "bg-white/20";
+          const labelDone = isLiquidating ? "text-amber-700" : "text-emerald-400";
+          const labelPending = isLiquidating ? "text-amber-300/60" : "text-white/30";
+          const lineDone = isLiquidating ? "bg-amber-300" : "bg-emerald-400/50";
+          const linePending = isLiquidating ? "bg-amber-200/40" : "bg-white/15";
+          const completionBg = isLiquidating ? "bg-amber-100 border border-amber-300" : "bg-white/10 border border-white/15";
+          const clockColor = isLiquidating ? "text-amber-600" : "text-emerald-400";
+          const completionLabel = isLiquidating ? "text-amber-700" : "text-white/50";
+          const completionValue = isLiquidating ? "text-amber-900" : "text-white";
+          const viewColor = isLiquidating ? "text-amber-600 hover:text-amber-900" : "text-white/40 hover:text-white/80";
+
+          const titleText = stage === 0 ? "Portfolio Transfer — Pending Review"
+            : stage === 1 ? "Portfolio Transfer — Under Advisor Review"
+            : isCash ? "Portfolio Liquidating for Transfer" : "Portfolio Transfer in Progress";
+
+          const bodyText = stage === 0
+            ? <>Your transfer request to <strong className={strongColor}>{activeTransfer.institutionName}</strong> has been submitted. An advisor will review it shortly.</>
+            : stage === 1
+            ? <>Your request is being reviewed by our advisory team. Transfer to <strong className={strongColor}>{activeTransfer.institutionName}</strong> will be confirmed once approved.</>
+            : <>Your full portfolio {isCash ? "is being liquidated and wired" : "is being re-registered in-kind"} to <strong className={strongColor}>{activeTransfer.institutionName}</strong>. Balances are locked until the transfer completes.</>;
+
           const steps = [
-            { label: "Submitted", done: true },
-            { label: "Under Review", done: isApproved },
-            { label: isCash ? "Liquidating" : "Processing", done: false },
+            { label: "Submitted", done: stage >= 0 },
+            { label: "Under Review", done: stage >= 1 },
+            { label: isCash ? "Liquidating" : "Processing", done: stage >= 2 },
             { label: "Complete", done: false },
           ];
+
           return (
-            <div className={cn(
-              "rounded-sm border px-5 py-4 flex items-start justify-between gap-4",
-              isApproved
-                ? "bg-amber-50 border-amber-300"
-                : "bg-[#0B2218] border-[#163830]"
-            )}>
+            <div className={cn("rounded-sm border px-5 py-4 flex items-start justify-between gap-4", bannerBg)}>
               <div className="flex items-start gap-3 flex-1">
-                <div className={cn(
-                  "w-9 h-9 rounded-sm flex items-center justify-center shrink-0 mt-0.5",
-                  isApproved ? "bg-amber-200" : "bg-white/10"
-                )}>
-                  {isApproved
-                    ? <Lock className="w-4 h-4 text-amber-700" />
-                    : <Building2 className="w-4 h-4 text-white/80" />
-                  }
+                <div className={cn("w-9 h-9 rounded-sm flex items-center justify-center shrink-0 mt-0.5", iconBg)}>
+                  {iconEl}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <p className={cn(
-                      "text-xs font-bold uppercase tracking-widest",
-                      isApproved ? "text-amber-800" : "text-white"
-                    )}>
-                      {isApproved
-                        ? isCash ? "Portfolio Liquidating for Transfer" : "Portfolio Transfer in Progress"
-                        : "Portfolio Transfer — Pending Review"
-                      }
-                    </p>
-                    <span className={cn(
-                      "text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm border",
-                      isApproved
-                        ? "border-amber-400 text-amber-700 bg-amber-100"
-                        : "border-white/20 text-white/60 bg-white/5"
-                    )}>
-                      {isApproved ? "Approved" : "Under Review"}
+                    <p className={cn("text-xs font-bold uppercase tracking-widest", titleColor)}>{titleText}</p>
+                    <span className={cn("text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm border", badgeStyle)}>
+                      {badgeLabel}
                     </span>
                   </div>
-                  <p className={cn("text-xs leading-relaxed", isApproved ? "text-amber-800/80" : "text-white/60")}>
-                    {isApproved
-                      ? <>Your full portfolio {isCash ? "is being liquidated and wired" : "is being re-registered in-kind"} to <strong className={isApproved ? "text-amber-900" : "text-white"}>{activeTransfer.institutionName}</strong>. Balances are locked and visible until transfer completes.</>
-                      : <>Transfer request to <strong className="text-white/90">{activeTransfer.institutionName}</strong> is awaiting advisor review. Your accounts remain active in the meantime.</>
-                    }
-                  </p>
+                  <p className={cn("text-xs leading-relaxed", bodyColor)}>{bodyText}</p>
                   {/* Progress steps */}
                   <div className="flex items-center mt-3">
                     {steps.map((step, i) => (
                       <div key={i} className="flex items-center">
                         <div className="flex flex-col items-center gap-1">
-                          <div className={cn(
-                            "w-2 h-2 rounded-full",
-                            step.done
-                              ? isApproved ? "bg-amber-500" : "bg-emerald-400"
-                              : isApproved ? "bg-amber-200" : "bg-white/20"
-                          )} />
-                          <span className={cn(
-                            "text-[9px] font-semibold uppercase tracking-wide whitespace-nowrap",
-                            step.done
-                              ? isApproved ? "text-amber-700" : "text-emerald-400"
-                              : isApproved ? "text-amber-300/60" : "text-white/30"
-                          )}>{step.label}</span>
+                          <div className={cn("w-2 h-2 rounded-full", step.done ? dotDone : dotPending)} />
+                          <span className={cn("text-[9px] font-semibold uppercase tracking-wide whitespace-nowrap", step.done ? labelDone : labelPending)}>{step.label}</span>
                         </div>
                         {i < steps.length - 1 && (
-                          <div className={cn(
-                            "w-8 h-px mb-3.5 mx-1",
-                            step.done
-                              ? isApproved ? "bg-amber-300" : "bg-emerald-400/50"
-                              : isApproved ? "bg-amber-200/40" : "bg-white/15"
-                          )} />
+                          <div className={cn("w-8 h-px mb-3.5 mx-1", step.done ? lineDone : linePending)} />
                         )}
                       </div>
                     ))}
                   </div>
                   {activeTransfer.estimatedCompletionDate && (
-                    <div className={cn(
-                      "flex items-center gap-2 mt-3 px-3 py-2 rounded-sm",
-                      isApproved ? "bg-amber-100 border border-amber-300" : "bg-white/10 border border-white/15"
-                    )}>
-                      <Clock className={cn("w-3.5 h-3.5 shrink-0", isApproved ? "text-amber-600" : "text-emerald-400")} />
+                    <div className={cn("flex items-center gap-2 mt-3 px-3 py-2 rounded-sm", completionBg)}>
+                      <Clock className={cn("w-3.5 h-3.5 shrink-0", clockColor)} />
                       <div>
-                        <p className={cn("text-[9px] font-bold uppercase tracking-widest", isApproved ? "text-amber-700" : "text-white/50")}>Estimated Completion</p>
-                        <p className={cn("text-sm font-semibold", isApproved ? "text-amber-900" : "text-white")}>
+                        <p className={cn("text-[9px] font-bold uppercase tracking-widest", completionLabel)}>Estimated Completion</p>
+                        <p className={cn("text-sm font-semibold", completionValue)}>
                           {new Date(activeTransfer.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}
                         </p>
                       </div>
@@ -303,10 +297,7 @@ export default function DashboardPage() {
               </div>
               <button
                 onClick={() => setLocation("/transfers")}
-                className={cn(
-                  "text-[10px] uppercase tracking-widest shrink-0 mt-1 flex items-center gap-0.5 transition-colors",
-                  isApproved ? "text-amber-600 hover:text-amber-900" : "text-white/40 hover:text-white/80"
-                )}
+                className={cn("text-[10px] uppercase tracking-widest shrink-0 mt-1 flex items-center gap-0.5 transition-colors", viewColor)}
               >
                 View <ChevronRight className="w-3 h-3" />
               </button>
