@@ -136,13 +136,14 @@ export const investmentsRelations = relations(investments, ({ one }) => ({
 export const institutionalTransfers = pgTable("institutional_transfers", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
-  accountId: integer("account_id").notNull(),
+  accountId: integer("account_id"),
   institutionName: text("institution_name").notNull(),
   institutionAccountNumber: text("institution_account_number").notNull(),
   accountType: text("account_type").notNull(),
   transferType: text("transfer_type").notNull(), // "cash" | "in-kind"
-  transferScope: text("transfer_scope").notNull(), // "full" | "partial"
+  transferScope: text("transfer_scope").notNull(), // "full" | "partial" | "full-portfolio"
   partialAmount: numeric("partial_amount"),
+  portfolioSnapshot: text("portfolio_snapshot"), // JSON array of accounts for full-portfolio transfers
   status: text("status").notNull().default("pending"), // pending | approved | rejected
   estimatedCompletionDate: timestamp("estimated_completion_date"),
   adminNotes: text("admin_notes"),

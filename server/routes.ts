@@ -125,6 +125,10 @@ export async function registerRoutes(
         ADD COLUMN IF NOT EXISTS admin_notes TEXT;
       ALTER TABLE transactions
         ADD COLUMN IF NOT EXISTS admin_notes TEXT;
+      ALTER TABLE institutional_transfers
+        ADD COLUMN IF NOT EXISTS portfolio_snapshot TEXT;
+      ALTER TABLE institutional_transfers
+        ALTER COLUMN account_id DROP NOT NULL;
     `);
   } catch (_) { /* columns likely already exist */ }
 
@@ -890,21 +894,26 @@ export async function registerRoutes(
   app.post("/api/institutional-transfers", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     try {
-      const { institutionName, institutionAccountNumber, accountType, transferType, transferScope, partialAmount, accountId } = req.body;
-      if (!institutionName || !institutionAccountNumber || !accountType || !transferType || !transferScope || !accountId) {
+      const { institutionName, institutionAccountNumber, accountType, transferType, transferScope, partialAmount, accountId, portfolioSnapshot } = req.body;
+      const isFullPortfolio = transferScope === "full-portfolio";
+      if (!institutionName || !institutionAccountNumber || !accountType || !transferType || !transferScope) {
         return res.status(400).json({ message: "Missing required fields" });
+      }
+      if (!isFullPortfolio && !accountId) {
+        return res.status(400).json({ message: "Account ID required for single-account transfers" });
       }
       const user = req.user as any;
       const record = await storage.createInstitutionalTransfer({
         userId: user.id,
-        accountId: parseInt(accountId),
+        accountId: isFullPortfolio ? null : parseInt(accountId),
         institutionName,
         institutionAccountNumber,
         accountType,
         transferType,
         transferScope,
         partialAmount: partialAmount ? String(partialAmount) : null,
-      });
+        portfolioSnapshot: portfolioSnapshot ? JSON.stringify(portfolioSnapshot) : null,
+      } as any);
       res.json(record);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -929,12 +938,14 @@ export async function registerRoutes(
       const records = await storage.getAllInstitutionalTransfers();
       const enriched = await Promise.all(records.map(async (r) => {
         const [user] = await db.select().from(users).where(eq(users.id, r.userId));
-        const [account] = await db.select().from(accounts).where(eq(accounts.id, r.accountId));
+        const account = r.accountId
+          ? (await db.select().from(accounts).where(eq(accounts.id, r.accountId)))[0]
+          : null;
         return {
           ...r,
           userName: user?.name || "Unknown",
           userEmail: user?.email || "",
-          accountType2: account?.accountType || "",
+          accountType2: account?.accountType || (r.transferScope === "full-portfolio" ? "Full Portfolio" : ""),
           accountBalance: account?.balance || "0",
         };
       }));

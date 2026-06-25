@@ -428,10 +428,28 @@ export default function TransfersPage() {
                             <div className="p-4 space-y-3">
                               <div className="flex items-start justify-between gap-4">
                                 <div>
-                                  <p className="font-semibold text-sm">{t.institutionName}</p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-sm">{t.institutionName}</p>
+                                    {t.transferScope === "full-portfolio" && (
+                                      <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">Full Portfolio</span>
+                                    )}
+                                  </div>
                                   <p className="text-xs text-muted-foreground mt-0.5">
-                                    {t.accountType} · {t.transferType === "in-kind" ? "In-Kind Transfer" : "Cash Transfer"} · {t.transferScope === "full" ? "Full portfolio" : `Partial — CAD $${Number(t.partialAmount).toLocaleString()}`}
+                                    {t.transferScope === "full-portfolio"
+                                      ? <>All accounts · {t.transferType === "in-kind" ? "In-Kind Transfer" : "Cash Transfer"} · CAD ${Number(t.partialAmount).toLocaleString("en-CA", { maximumFractionDigits: 0 })} total</>
+                                      : <>{t.accountType} · {t.transferType === "in-kind" ? "In-Kind Transfer" : "Cash Transfer"} · {t.transferScope === "full" ? "Full account" : `Partial — CAD $${Number(t.partialAmount).toLocaleString()}`}</>
+                                    }
                                   </p>
+                                  {t.transferScope === "full-portfolio" && t.portfolioSnapshot && (() => {
+                                    try {
+                                      const snap = JSON.parse(t.portfolioSnapshot);
+                                      return (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                          {snap.length} accounts: {snap.map((a: any) => a.accountType).join(", ")}
+                                        </p>
+                                      );
+                                    } catch { return null; }
+                                  })()}
                                 </div>
                                 {isApproved ? (
                                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
