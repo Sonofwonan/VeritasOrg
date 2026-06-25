@@ -857,14 +857,19 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
 
                           {/* Advisor note */}
                           <div className="space-y-1.5">
-                            <label className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Advisor Note <span className="normal-case text-slate-500">(optional)</span></label>
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Advisor Note <span className="normal-case text-slate-500">(optional)</span></label>
+                              {monitorForm.adminNotes && (
+                                <button type="button" onClick={() => setMonitorForm(f => ({ ...f, adminNotes: "" }))} className="text-[10px] text-slate-500 hover:text-red-400 underline transition-colors">Clear</button>
+                              )}
+                            </div>
                             <Textarea
                               value={monitorForm.adminNotes}
                               onChange={e => setMonitorForm(f => ({ ...f, adminNotes: e.target.value }))}
-                              placeholder="e.g. CDS re-registration initiated. DTC transfer underway. Contact your advisor for questions."
+                              placeholder="Optional — leave blank if no special message. Example: CDS re-registration initiated. Contact your advisor for questions."
                               className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 resize-none min-h-[80px]"
                             />
-                            <p className="text-xs text-slate-500">Displayed as an advisor note on the client's monitor</p>
+                            <p className="text-xs text-slate-500">Only fill this in if you have a specific message for the client. Leave blank to hide this section entirely.</p>
                           </div>
                         </div>
 

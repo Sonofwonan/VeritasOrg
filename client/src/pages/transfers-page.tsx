@@ -157,7 +157,7 @@ export default function TransfersPage() {
                             </div>
                           </div>
                         )}
-                        {t.adminNotes && (
+                        {t.adminNotes && t.adminNotes.toLowerCase().includes("estimated completion date") === false && (
                           <div className="border-t border-border/40 pt-2">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">Advisor Note</p>
                             <p className="text-xs text-foreground/70">{t.adminNotes}</p>
