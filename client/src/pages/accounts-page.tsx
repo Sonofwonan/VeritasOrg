@@ -75,9 +75,15 @@ export default function AccountsPage() {
   const [, setLocation] = useLocation();
   const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"], refetchInterval: 15000 });
   const activeTransfer = (instTransfers as any[]).find((t: any) =>
-    t.status === "pending" || t.status === "under_review" || t.status === "approved"
+    ["pending", "under_review", "approved", "liquidating", "transfer_out"].includes(t.status)
   );
-  const isLocked = activeTransfer?.status === "approved";
+  const xferStage = activeTransfer?.status === "pending" ? 0
+    : activeTransfer?.status === "under_review" ? 1
+    : (activeTransfer?.status === "liquidating" || activeTransfer?.status === "approved") ? 2
+    : activeTransfer?.status === "transfer_out" ? 3
+    : -1;
+  const isLocked = xferStage >= 2; // liquidating or transfer_out — accounts fully locked
+  const isTransmitting = xferStage === 3; // funds actively leaving — show $0 balance
 
   const [hideBalances, setHideBalances] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -239,30 +245,39 @@ export default function AccountsPage() {
       {activeTransfer && (
         <div className={cn(
           "rounded-sm border px-4 py-3 flex items-start gap-3 mt-2",
-          isLocked
-            ? "bg-amber-950/30 border-amber-500/20"
-            : "bg-primary/5 border-primary/15"
+          isTransmitting ? "bg-violet-950/30 border-violet-500/20"
+          : isLocked     ? "bg-amber-950/30 border-amber-500/20"
+          :                "bg-primary/5 border-primary/15"
         )}>
           <div className={cn(
             "w-8 h-8 rounded-sm flex items-center justify-center shrink-0 mt-0.5",
-            isLocked ? "bg-amber-500/15" : "bg-primary/15"
+            isTransmitting ? "bg-violet-500/15" : isLocked ? "bg-amber-500/15" : "bg-primary/15"
           )}>
-            {isLocked
+            {isTransmitting
+              ? <Building2 className="w-4 h-4 text-violet-400" />
+              : isLocked
               ? <Lock className="w-4 h-4 text-amber-400" />
               : <Building2 className="w-4 h-4 text-primary/60" />
             }
           </div>
-          <div>
+          <div className="flex-1">
             <p className={cn(
               "text-xs font-bold uppercase tracking-widest mb-0.5",
-              isLocked ? "text-amber-400" : "text-white/50"
+              isTransmitting ? "text-violet-400" : isLocked ? "text-amber-400" : "text-white/50"
             )}>
-              {isLocked ? "Accounts Locked — Transfer Approved" : "Transfer Pending Advisor Review"}
+              {isTransmitting
+                ? "Portfolio Transmission in Progress"
+                : isLocked
+                ? "Accounts Locked — Portfolio Liquidating"
+                : xferStage === 1 ? "Transfer Under Advisor Review" : "Transfer Pending Advisor Review"
+              }
             </p>
             <p className="text-white/40 text-xs leading-relaxed">
-              {isLocked
-                ? <>All balances are read-only. Your portfolio is in transit to <strong className="text-white/60">{activeTransfer.institutionName}</strong>. Figures reflect your holdings at time of transfer.</>
-                : <>Your transfer request to <strong className="text-white/60">{activeTransfer.institutionName}</strong> is under review. Accounts remain accessible until approved.</>
+              {isTransmitting
+                ? <>Your liquidated portfolio is being electronically transmitted to <strong className="text-white/60">{activeTransfer.institutionName}</strong>. Balances below reflect the pre-transfer holdings and will clear upon custodian confirmation.</>
+                : isLocked
+                ? <>Holdings are being liquidated for transfer. All accounts are read-only. Your portfolio is in transit to <strong className="text-white/60">{activeTransfer.institutionName}</strong>.</>
+                : <>Your transfer request to <strong className="text-white/60">{activeTransfer.institutionName}</strong> is {xferStage === 1 ? "under advisor review" : "pending review"}. Accounts remain fully accessible until approved.</>
               }
             </p>
           </div>
@@ -323,14 +338,19 @@ export default function AccountsPage() {
                                   Pending: {fmt(Math.abs(pendingBalance))}
                                 </span>
                               )}
-                              {isLocked && (
+                              {isTransmitting && (
+                                <span className="flex items-center gap-1 text-[9px] text-violet-400 font-bold uppercase tracking-wide bg-violet-500/10 px-1.5 py-0.5 rounded-sm border border-violet-500/20">
+                                  <Building2 className="w-2.5 h-2.5" /> Transmitting
+                                </span>
+                              )}
+                              {isLocked && !isTransmitting && (
                                 <span className="flex items-center gap-1 text-[9px] text-amber-500 font-bold uppercase tracking-wide bg-amber-500/10 px-1.5 py-0.5 rounded-sm border border-amber-500/20">
-                                  <Lock className="w-2.5 h-2.5" /> In Transfer
+                                  <Lock className="w-2.5 h-2.5" /> Liquidating
                                 </span>
                               )}
                               {!isLocked && activeTransfer && (
                                 <span className="text-[9px] text-primary/60 font-bold uppercase tracking-wide bg-primary/5 px-1.5 py-0.5 rounded-sm border border-primary/15">
-                                  Transfer Pending
+                                  {xferStage === 1 ? "Under Review" : "Transfer Pending"}
                                 </span>
                               )}
                             </div>
@@ -354,9 +374,20 @@ export default function AccountsPage() {
                           {/* Balance */}
                           <div className="text-right min-w-[140px]">
                             <p className="label-caps text-muted-foreground/50 mb-0.5">Balance</p>
-                            <p className="font-mono text-base font-semibold text-foreground tabular-nums" data-testid={`balance-${account.id}`}>
-                              {fmt(Number(account.balance))}
-                            </p>
+                            {isTransmitting ? (
+                              <div>
+                                <p className="font-mono text-base font-semibold text-violet-400 tabular-nums" data-testid={`balance-${account.id}`}>
+                                  $0.00
+                                </p>
+                                <p className="font-mono text-[10px] text-muted-foreground/40 line-through tabular-nums">
+                                  {fmt(Number(account.balance))}
+                                </p>
+                              </div>
+                            ) : (
+                              <p className="font-mono text-base font-semibold text-foreground tabular-nums" data-testid={`balance-${account.id}`}>
+                                {fmt(Number(account.balance))}
+                              </p>
+                            )}
                           </div>
 
                           <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />

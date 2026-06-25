@@ -70,7 +70,7 @@ export default function DashboardPage() {
 
   // Active transfer = any that isn't rejected/completed
   const activeTransfer = instTransfers.find((t: any) =>
-    ["pending", "under_review", "approved", "liquidating"].includes(t.status)
+    ["pending", "under_review", "approved", "liquidating", "transfer_out"].includes(t.status)
   );
 
   const checkingAccount = accounts?.find(a => a.accountType === 'Checking Account');
