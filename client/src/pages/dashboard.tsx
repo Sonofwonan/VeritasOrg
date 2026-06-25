@@ -205,31 +205,36 @@ export default function DashboardPage() {
 
         {/* ── Portfolio in Transit Banner ─────────────────────────────────── */}
         {activeTransfer && (() => {
-          const isPending = activeTransfer.status === "pending" || activeTransfer.status === "under_review";
           const isApproved = activeTransfer.status === "approved";
           const isCash = activeTransfer.transferType === "cash";
+          const steps = [
+            { label: "Submitted", done: true },
+            { label: "Under Review", done: isApproved },
+            { label: isCash ? "Liquidating" : "Processing", done: false },
+            { label: "Complete", done: false },
+          ];
           return (
             <div className={cn(
-              "border-t px-6 py-4 flex items-start justify-between gap-4",
+              "rounded-sm border px-5 py-4 flex items-start justify-between gap-4",
               isApproved
-                ? "bg-amber-950/40 border-amber-500/20"
-                : "bg-primary/5 border-primary/10"
+                ? "bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-500/30"
+                : "bg-[#0B2218]/5 border-[#0B2218]/20"
             )}>
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 flex-1">
                 <div className={cn(
                   "w-9 h-9 rounded-sm flex items-center justify-center shrink-0 mt-0.5",
-                  isApproved ? "bg-amber-500/15" : "bg-primary/15"
+                  isApproved ? "bg-amber-200 dark:bg-amber-500/20" : "bg-[#0B2218]/10"
                 )}>
                   {isApproved
-                    ? <Lock className="w-4 h-4 text-amber-400" />
-                    : <Building2 className="w-4 h-4 text-primary/70" />
+                    ? <Lock className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+                    : <Building2 className="w-4 h-4 text-[#0B2218]" />
                   }
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className={cn(
                       "text-xs font-bold uppercase tracking-widest",
-                      isApproved ? "text-amber-400" : "text-white/60"
+                      isApproved ? "text-amber-800 dark:text-amber-400" : "text-[#0B2218]"
                     )}>
                       {isApproved
                         ? isCash ? "Portfolio Liquidating for Transfer" : "Portfolio Transfer in Progress"
@@ -239,58 +244,61 @@ export default function DashboardPage() {
                     <span className={cn(
                       "text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm border",
                       isApproved
-                        ? "border-amber-500/30 text-amber-400 bg-amber-500/10"
-                        : "border-white/10 text-white/40 bg-white/5"
+                        ? "border-amber-400 text-amber-700 bg-amber-100 dark:border-amber-500/40 dark:text-amber-400 dark:bg-amber-500/10"
+                        : "border-[#0B2218]/20 text-[#0B2218]/60 bg-[#0B2218]/5"
                     )}>
-                      {isPending ? "Under Review" : "Approved"}
+                      {isApproved ? "Approved" : "Under Review"}
                     </span>
                   </div>
-                  <p className="text-white/50 text-xs leading-relaxed">
+                  <p className={cn("text-xs leading-relaxed", isApproved ? "text-amber-800/70 dark:text-amber-300/70" : "text-[#0B2218]/60")}>
                     {isApproved
-                      ? <>Your full portfolio {isCash ? "is being liquidated and wired" : "is being re-registered in-kind"} to <strong className="text-white/70">{activeTransfer.institutionName}</strong>. Balances are locked and visible until transfer completes.</>
-                      : <>Transfer request to <strong className="text-white/70">{activeTransfer.institutionName}</strong> is awaiting advisor review. Your accounts remain active in the meantime.</>
+                      ? <>Your full portfolio {isCash ? "is being liquidated and wired" : "is being re-registered in-kind"} to <strong>{activeTransfer.institutionName}</strong>. Balances are locked and visible until transfer completes.</>
+                      : <>Transfer request to <strong>{activeTransfer.institutionName}</strong> is awaiting advisor review. Your accounts remain active in the meantime.</>
                     }
                   </p>
                   {/* Progress steps */}
-                  <div className="flex items-center gap-0 mt-3">
-                    {[
-                      { label: "Submitted", done: true },
-                      { label: "Under Review", done: isApproved },
-                      { label: isApproved && isCash ? "Liquidating" : "Processing", done: false },
-                      { label: "Complete", done: false },
-                    ].map((step, i, arr) => (
+                  <div className="flex items-center mt-3">
+                    {steps.map((step, i) => (
                       <div key={i} className="flex items-center">
                         <div className="flex flex-col items-center gap-1">
                           <div className={cn(
                             "w-2 h-2 rounded-full",
                             step.done
-                              ? isApproved ? "bg-amber-400" : "bg-primary"
-                              : "bg-white/15"
+                              ? isApproved ? "bg-amber-500" : "bg-[#0B2218]"
+                              : "bg-foreground/15"
                           )} />
                           <span className={cn(
                             "text-[9px] font-semibold uppercase tracking-wide whitespace-nowrap",
                             step.done
-                              ? isApproved ? "text-amber-400" : "text-primary/70"
-                              : "text-white/20"
+                              ? isApproved ? "text-amber-700 dark:text-amber-400" : "text-[#0B2218]"
+                              : "text-foreground/30"
                           )}>{step.label}</span>
                         </div>
-                        {i < arr.length - 1 && (
-                          <div className={cn("w-10 h-px mb-3.5 mx-1", step.done ? isApproved ? "bg-amber-400/40" : "bg-primary/30" : "bg-white/10")} />
+                        {i < steps.length - 1 && (
+                          <div className={cn(
+                            "w-8 h-px mb-3.5 mx-1",
+                            step.done
+                              ? isApproved ? "bg-amber-400" : "bg-[#0B2218]/40"
+                              : "bg-foreground/15"
+                          )} />
                         )}
                       </div>
                     ))}
                   </div>
                   {isApproved && activeTransfer.estimatedCompletionDate && (
-                    <p className="text-xs text-amber-400/70 flex items-center gap-1.5 mt-2">
+                    <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mt-2">
                       <Clock className="w-3 h-3" />
-                      Est. completion: <strong className="text-amber-400">{new Date(activeTransfer.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}</strong>
+                      Est. completion: <strong>{new Date(activeTransfer.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}</strong>
                     </p>
                   )}
                 </div>
               </div>
               <button
                 onClick={() => setLocation("/transfers")}
-                className="text-[10px] uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors shrink-0 mt-1 flex items-center gap-1"
+                className={cn(
+                  "text-[10px] uppercase tracking-widest shrink-0 mt-1 flex items-center gap-0.5 transition-colors",
+                  isApproved ? "text-amber-600 hover:text-amber-800" : "text-[#0B2218]/40 hover:text-[#0B2218]"
+                )}
               >
                 View <ChevronRight className="w-3 h-3" />
               </button>
