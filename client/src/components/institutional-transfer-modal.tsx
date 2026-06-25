@@ -233,12 +233,6 @@ function FullPortfolioForm({
         </div>
       </div>
 
-      {/* Timeline notice */}
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 text-xs text-amber-800 dark:text-amber-300">
-        <span className="mt-0.5">⏱</span>
-        <span>Estimated timeline: <strong>{weeks}</strong>. All {accounts.length} accounts will be transferred together. Admin review required before processing begins.</span>
-      </div>
-
       <Button
         className="w-full"
         disabled={!canSubmit || isPending}
@@ -388,11 +382,6 @@ function SingleAccountForm({
             />
           </div>
         )}
-      </div>
-
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 text-xs text-amber-800 dark:text-amber-300">
-        <span className="mt-0.5">⏱</span>
-        <span>Estimated timeline: <strong>{weeks}</strong>. Admin review required before processing begins.</span>
       </div>
 
       <Button
