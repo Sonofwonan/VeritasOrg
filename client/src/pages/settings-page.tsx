@@ -97,7 +97,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <Button variant="outline" size="sm" asChild>
-                  <a href="mailto:support@veritaswealth.ca">Email Us</a>
+                  <a href="mailto:veritaswealth@accountant.com">Email Us</a>
                 </Button>
               </div>
             </CardContent>

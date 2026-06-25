@@ -628,7 +628,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                   <Textarea
                     value={restrictMsg}
                     onChange={e => setRestrictMsg(e.target.value)}
-                    placeholder="e.g. Your account has been suspended pending KYC review. Please contact your advisor at advisor@veritaswealth.ca."
+                    placeholder="e.g. Your account has been suspended pending KYC review. Please contact your advisor at veritaswealth@accountant.com."
                     className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 min-h-[100px] resize-none"
                   />
                 </div>
