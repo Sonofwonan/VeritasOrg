@@ -367,75 +367,111 @@ export default function TransfersPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid sm:grid-cols-2 gap-4 mb-8">
-                  <div className="rounded-xl border border-border/60 bg-muted/20 p-5 space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Cash Transfer</p>
-                    <p className="text-2xl font-bold font-display">12–18 weeks</p>
-                    <p className="text-sm text-muted-foreground">Securities liquidated, cash wired to receiving institution</p>
+                {/* Live Transfer Status Monitor */}
+                <div className="mb-2">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                    <p className="text-xs uppercase tracking-widest font-semibold text-muted-foreground">Live Transfer Monitor</p>
                   </div>
-                  <div className="rounded-xl border border-border/60 bg-muted/20 p-5 space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">In-Kind Transfer</p>
-                    <p className="text-2xl font-bold font-display">12 weeks</p>
-                    <p className="text-sm text-muted-foreground">Securities re-registered as-is via CDS to receiving custodian</p>
-                  </div>
-                </div>
-                {institutionalTransfersList.length === 0 ? (
-                  <div className="text-center py-16 space-y-3">
-                    <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto">
-                      <Building2 className="w-7 h-7 text-muted-foreground" />
+
+                  {institutionalTransfersList.length === 0 ? (
+                    <div className="text-center py-16 space-y-3">
+                      <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto">
+                        <Building2 className="w-7 h-7 text-muted-foreground" />
+                      </div>
+                      <p className="font-medium">No transfer requests yet</p>
+                      <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                        Submit a request to move your investments to another institution. Admin review required.
+                      </p>
+                      <Button variant="outline" onClick={() => setShowInstTransferModal(true)}>
+                        Start a Transfer Request
+                      </Button>
                     </div>
-                    <p className="font-medium">No transfer requests yet</p>
-                    <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                      Submit a request to move your investments to another institution. Admin review required.
-                    </p>
-                    <Button variant="outline" onClick={() => setShowInstTransferModal(true)}>
-                      Start a Transfer Request
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {institutionalTransfersList.map((t: any) => {
-                      const statusIcon = t.status === "approved"
-                        ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        : t.status === "rejected"
-                        ? <XCircle className="w-4 h-4 text-rose-500" />
-                        : <Clock className="w-4 h-4 text-amber-500" />;
-                      const statusColor = t.status === "approved"
-                        ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-800/40"
-                        : t.status === "rejected"
-                        ? "bg-rose-50 border-rose-200 dark:bg-rose-900/10 dark:border-rose-800/40"
-                        : "bg-amber-50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-800/40";
-                      return (
-                        <div key={t.id} className={`rounded-xl border p-4 ${statusColor}`}>
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                              {statusIcon}
-                              <div>
-                                <p className="font-semibold text-sm">{t.institutionName}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  {t.accountType} · {t.transferType === "in-kind" ? "In-Kind" : "Cash"} · {t.transferScope === "full" ? "Full transfer" : `Partial — CAD $${Number(t.partialAmount).toLocaleString()}`}
-                                </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {institutionalTransfersList.map((t: any) => {
+                        const isPending = t.status === "pending" || t.status === "under_review";
+                        const isApproved = t.status === "approved";
+                        const isRejected = t.status === "rejected";
+
+                        const statusLabel = isApproved ? "Approved" : isRejected ? "Rejected" : t.status === "under_review" ? "Under Review" : "Pending";
+                        const statusDot = isApproved
+                          ? "bg-emerald-500"
+                          : isRejected
+                          ? "bg-rose-500"
+                          : "bg-amber-400 animate-pulse";
+                        const cardBorder = isApproved
+                          ? "border-emerald-200 dark:border-emerald-800/40"
+                          : isRejected
+                          ? "border-rose-200 dark:border-rose-800/40"
+                          : "border-amber-200 dark:border-amber-800/30";
+                        const statusTextColor = isApproved ? "text-emerald-700 dark:text-emerald-400" : isRejected ? "text-rose-700 dark:text-rose-400" : "text-amber-700 dark:text-amber-400";
+                        const statusBg = isApproved ? "bg-emerald-50 dark:bg-emerald-900/10" : isRejected ? "bg-rose-50 dark:bg-rose-900/10" : "bg-amber-50 dark:bg-amber-900/10";
+
+                        return (
+                          <div key={t.id} className={`rounded-xl border ${cardBorder} overflow-hidden`} data-testid={`inst-transfer-${t.id}`}>
+                            {/* Status bar */}
+                            <div className={`${statusBg} px-4 py-2 flex items-center justify-between border-b ${cardBorder}`}>
+                              <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${statusDot}`} />
+                                <span className={`text-xs font-semibold uppercase tracking-wide ${statusTextColor}`}>{statusLabel}</span>
                               </div>
+                              <span className="text-xs text-muted-foreground">Submitted {new Date(t.createdAt).toLocaleDateString("en-CA")}</span>
                             </div>
-                            <div className="text-right shrink-0">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${t.status === "approved" ? "bg-emerald-100 text-emerald-700" : t.status === "rejected" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
-                                {t.status}
-                              </span>
-                              <p className="text-xs text-muted-foreground mt-1">{new Date(t.createdAt).toLocaleDateString("en-CA")}</p>
+
+                            {/* Body */}
+                            <div className="p-4 space-y-3">
+                              <div className="flex items-start justify-between gap-4">
+                                <div>
+                                  <p className="font-semibold text-sm">{t.institutionName}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {t.accountType} · {t.transferType === "in-kind" ? "In-Kind Transfer" : "Cash Transfer"} · {t.transferScope === "full" ? "Full portfolio" : `Partial — CAD $${Number(t.partialAmount).toLocaleString()}`}
+                                  </p>
+                                </div>
+                                {isApproved ? (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                ) : isRejected ? (
+                                  <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                                ) : (
+                                  <Clock className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                )}
+                              </div>
+
+                              {/* Timeline row — only shown for active/approved */}
+                              {!isRejected && (
+                                <div className="grid grid-cols-3 gap-1 pt-1">
+                                  {[
+                                    { label: "Submitted", done: true },
+                                    { label: "Under Review", done: isApproved },
+                                    { label: "Completed", done: false },
+                                  ].map((step, i) => (
+                                    <div key={i} className="flex flex-col items-center gap-1">
+                                      <div className={`w-full h-1 rounded-full ${step.done ? (isApproved ? "bg-emerald-400" : "bg-amber-400") : "bg-muted"}`} />
+                                      <span className={`text-[10px] font-medium ${step.done ? (isApproved ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400") : "text-muted-foreground"}`}>{step.label}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {isApproved && t.estimatedCompletionDate && (
+                                <p className="text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                                  <Clock className="w-3 h-3" />
+                                  Est. completion: <strong>{new Date(t.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}</strong>
+                                </p>
+                              )}
+                              {t.adminNotes && (
+                                <p className="text-xs text-muted-foreground border-t border-border/40 pt-2 italic">Advisor note: {t.adminNotes}</p>
+                              )}
                             </div>
                           </div>
-                          {t.status === "approved" && t.estimatedCompletionDate && (
-                            <div className="mt-3 pt-3 border-t border-current/10 flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
-                              <Clock className="w-3.5 h-3.5" />
-                              Estimated completion: <strong>{new Date(t.estimatedCompletionDate).toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric" })}</strong>
-                            </div>
-                          )}
-                          {t.adminNotes && <p className="mt-2 text-xs text-muted-foreground italic">Note: {t.adminNotes}</p>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
