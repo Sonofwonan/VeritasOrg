@@ -114,12 +114,17 @@ export async function registerRoutes(
 ): Promise<Server> {
   const { hashPassword } = setupAuth(app);
 
-  // Ensure restriction columns exist (safe on every startup)
+  // Ensure new columns exist (safe on every startup)
   try {
     await pool.query(`
       ALTER TABLE users
         ADD COLUMN IF NOT EXISTS login_restricted BOOLEAN DEFAULT FALSE,
         ADD COLUMN IF NOT EXISTS login_restriction_message TEXT;
+      ALTER TABLE payees
+        ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending_approval',
+        ADD COLUMN IF NOT EXISTS admin_notes TEXT;
+      ALTER TABLE transactions
+        ADD COLUMN IF NOT EXISTS admin_notes TEXT;
     `);
   } catch (_) { /* columns likely already exist */ }
 
@@ -473,6 +478,81 @@ export async function registerRoutes(
       console.error('Get payees error:', err);
       res.status(500).json({ message: "Failed to fetch payees" });
     }
+  });
+
+  // Admin: list all payees across all users
+  app.get('/api/admin/payees', requireAdmin, async (req, res) => {
+    try {
+      const all = await db.select().from(payees).orderBy(desc(payees.createdAt));
+      const enriched = await Promise.all(all.map(async (p) => {
+        const [user] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, p.userId));
+        return { ...p, userName: user?.name || "Unknown", userEmail: user?.email || "" };
+      }));
+      res.json(enriched);
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  // Admin: approve a beneficiary
+  app.post('/api/admin/payees/:id/approve', requireAdmin, async (req, res) => {
+    try {
+      const [updated] = await db.update(payees)
+        .set({ status: 'approved', adminNotes: req.body.notes || null })
+        .where(eq(payees.id, parseInt(req.params.id)))
+        .returning();
+      res.json({ ok: true, payee: updated });
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  // Admin: reject a beneficiary
+  app.post('/api/admin/payees/:id/reject', requireAdmin, async (req, res) => {
+    try {
+      const [updated] = await db.update(payees)
+        .set({ status: 'rejected', adminNotes: req.body.notes || null })
+        .where(eq(payees.id, parseInt(req.params.id)))
+        .returning();
+      res.json({ ok: true, payee: updated });
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  // Admin: list all wire disbursement transactions (payment type)
+  app.get('/api/admin/wire-transfers', requireAdmin, async (req, res) => {
+    try {
+      const all = await db.select().from(transactions)
+        .where(eq(transactions.transactionType, 'payment'))
+        .orderBy(desc(transactions.createdAt));
+      const enriched = await Promise.all(all.map(async (t) => {
+        let userName = "Unknown", userEmail = "";
+        if (t.fromAccountId) {
+          const [acc] = await db.select().from(accounts).where(eq(accounts.id, t.fromAccountId));
+          if (acc) {
+            const [u] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, acc.userId));
+            if (u) { userName = u.name; userEmail = u.email; }
+          }
+        }
+        let payeeName = "Unknown";
+        if (t.payeeId) {
+          const [p] = await db.select({ name: payees.name, bankName: payees.bankName }).from(payees).where(eq(payees.id, t.payeeId));
+          if (p) payeeName = `${p.name} (${p.bankName || "—"})`;
+        }
+        return { ...t, userName, userEmail, payeeName };
+      }));
+      res.json(enriched);
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  // Admin: update wire transfer status / notes
+  app.patch('/api/admin/wire-transfers/:id', requireAdmin, async (req, res) => {
+    try {
+      const { status, adminNotes } = req.body as { status?: string; adminNotes?: string };
+      const updates: any = {};
+      if (status) updates.status = status;
+      if (adminNotes !== undefined) updates.adminNotes = adminNotes;
+      const [updated] = await db.update(transactions)
+        .set(updates)
+        .where(eq(transactions.id, parseInt(req.params.id)))
+        .returning();
+      res.json({ ok: true, transaction: updated });
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
   });
 
   app.post('/api/payees', requireAuth, async (req, res) => {

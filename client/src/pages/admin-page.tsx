@@ -313,6 +313,54 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
   const [monitorDialog, setMonitorDialog] = useState<{ transfer: any } | null>(null);
   const [monitorForm, setMonitorForm] = useState({ status: "pending", estimatedCompletionDate: "", adminNotes: "" });
 
+  // Wire & Beneficiaries
+  const { data: allPayees = [], isLoading: payeesLoading } = useQuery({
+    queryKey: ["/api/admin/payees"],
+    queryFn: () => adminGet("/api/admin/payees"),
+    refetchInterval: 30000,
+  });
+
+  const { data: wireTransfers = [], isLoading: wireLoading } = useQuery({
+    queryKey: ["/api/admin/wire-transfers"],
+    queryFn: () => adminGet("/api/admin/wire-transfers"),
+    refetchInterval: 30000,
+  });
+
+  const approvePayeeMutation = useMutation({
+    mutationFn: (id: number) =>
+      adminFetch(`/api/admin/payees/${id}/approve`, adminKey, { method: "POST" }).then(r => r.json()),
+    onSuccess: () => {
+      toast({ title: "Beneficiary Approved", description: "Client can now wire to this beneficiary." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/payees"] });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to approve beneficiary.", variant: "destructive" }),
+  });
+
+  const rejectPayeeMutation = useMutation({
+    mutationFn: (id: number) =>
+      adminFetch(`/api/admin/payees/${id}/reject`, adminKey, { method: "POST" }).then(r => r.json()),
+    onSuccess: () => {
+      toast({ title: "Beneficiary Rejected" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/payees"] });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to reject beneficiary.", variant: "destructive" }),
+  });
+
+  const [wireDialog, setWireDialog] = useState<{ txn: any } | null>(null);
+  const [wireForm, setWireForm] = useState({ status: "pending", adminNotes: "" });
+
+  const updateWireMutation = useMutation({
+    mutationFn: ({ id, status, adminNotes }: { id: number; status: string; adminNotes?: string }) =>
+      adminFetch(`/api/admin/wire-transfers/${id}`, adminKey, {
+        method: "PATCH", body: JSON.stringify({ status, adminNotes }),
+      }).then(r => r.json()),
+    onSuccess: () => {
+      toast({ title: "Wire Transfer Updated" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/wire-transfers"] });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to update wire transfer.", variant: "destructive" }),
+  });
+
   const { data: allApplications = [], isLoading: appsLoading, refetch: refetchApps } = useQuery({
     queryKey: ["/api/admin/applications"],
     queryFn: () => adminGet("/api/admin/applications"),
@@ -432,6 +480,15 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
               {Array.isArray(instTransfers) && instTransfers.filter((t: any) => t.status === "pending").length > 0 && (
                 <span className="ml-2 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {instTransfers.filter((t: any) => t.status === "pending").length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="wire" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
+              <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
+              Wire & Beneficiaries
+              {Array.isArray(allPayees) && allPayees.filter((p: any) => p.status === "pending_approval").length > 0 && (
+                <span className="ml-2 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {allPayees.filter((p: any) => p.status === "pending_approval").length}
                 </span>
               )}
             </TabsTrigger>
@@ -905,6 +962,183 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
               </CardContent>
             </Card>
           </TabsContent>
+          {/* ── Wire & Beneficiaries ── */}
+          <TabsContent value="wire" className="mt-4 space-y-4">
+
+            {/* Wire Update Dialog */}
+            <ShadDialog open={!!wireDialog} onOpenChange={(o) => { if (!o) setWireDialog(null); }}>
+              <ShadDialogContent className="bg-slate-800 border-slate-700 text-white max-w-md">
+                <ShadDialogHeader>
+                  <ShadDialogTitle className="flex items-center gap-2 text-white">
+                    <ArrowLeftRight className="w-4 h-4 text-primary" />
+                    Update Wire Transfer #{wireDialog?.txn?.id}
+                  </ShadDialogTitle>
+                  <p className="text-slate-400 text-xs mt-1">{wireDialog?.txn?.payeeName} · {wireDialog?.txn?.userName}</p>
+                </ShadDialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Status</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { value: "pending", label: "Pending", color: "border-amber-500/40 text-amber-400" },
+                        { value: "completed", label: "Completed", color: "border-emerald-500/40 text-emerald-400" },
+                        { value: "failed", label: "Rejected", color: "border-red-500/40 text-red-400" },
+                      ].map(opt => (
+                        <button key={opt.value} type="button"
+                          onClick={() => setWireForm(f => ({ ...f, status: opt.value }))}
+                          className={`rounded-lg border p-2.5 text-sm font-semibold transition-all ${wireForm.status === opt.value ? `${opt.color} bg-white/5` : "border-slate-600 text-slate-400 hover:border-slate-500"}`}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Admin Note <span className="normal-case text-slate-500">(optional)</span></label>
+                    <Textarea value={wireForm.adminNotes} onChange={e => setWireForm(f => ({ ...f, adminNotes: e.target.value }))}
+                      placeholder="e.g. Wire confirmed by compliance. Funds dispatched via SWIFT."
+                      className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 resize-none min-h-[72px]" />
+                  </div>
+                </div>
+                <ShadDialogFooter>
+                  <Button variant="ghost" className="text-slate-400 hover:text-white" onClick={() => setWireDialog(null)}>Cancel</Button>
+                  <Button className="bg-primary hover:bg-primary/90 text-white" disabled={updateWireMutation.isPending}
+                    onClick={() => {
+                      updateWireMutation.mutate({ id: wireDialog!.txn.id, status: wireForm.status, adminNotes: wireForm.adminNotes },
+                        { onSuccess: () => setWireDialog(null) });
+                    }}>
+                    Save Update
+                  </Button>
+                </ShadDialogFooter>
+              </ShadDialogContent>
+            </ShadDialog>
+
+            {/* ─ Beneficiary Approvals ─ */}
+            <Card className="bg-slate-800/40 border-slate-700">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white text-base flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-primary" />
+                  Beneficiary Approvals
+                  {Array.isArray(allPayees) && allPayees.filter((p: any) => p.status === "pending_approval").length > 0 && (
+                    <span className="ml-1 bg-amber-500 text-white text-xs rounded-full px-2 py-0.5">
+                      {allPayees.filter((p: any) => p.status === "pending_approval").length} pending
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {payeesLoading ? (
+                  <div className="flex items-center justify-center py-8 text-slate-400"><RefreshCw className="w-4 h-4 animate-spin mr-2" />Loading…</div>
+                ) : (Array.isArray(allPayees) ? allPayees : []).length === 0 ? (
+                  <p className="text-center text-slate-400 py-8 text-sm">No beneficiaries registered yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {(Array.isArray(allPayees) ? allPayees : []).map((p: any) => {
+                      const isPending = p.status === "pending_approval";
+                      const isApproved = p.status === "approved";
+                      return (
+                        <div key={p.id} className={`rounded-lg border p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 ${isPending ? "border-amber-500/30 bg-amber-500/5" : isApproved ? "border-emerald-500/20 bg-emerald-500/5" : "border-red-500/20 bg-red-500/5"}`}
+                          data-testid={`payee-admin-${p.id}`}>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-white font-semibold text-sm">{p.name}</span>
+                              <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border ${isPending ? "border-amber-500/30 text-amber-400 bg-amber-500/10" : isApproved ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-red-500/30 text-red-400 bg-red-500/10"}`}>
+                                {isPending ? "Pending" : isApproved ? "Approved" : "Rejected"}
+                              </span>
+                            </div>
+                            <p className="text-slate-400 text-xs mt-0.5">{p.bankName || "—"} · IBAN ****{p.accountNumber?.slice(-4)} · SWIFT {p.routingNumber || "—"}</p>
+                            <p className="text-slate-500 text-xs mt-0.5">Client: {p.userName} · {new Date(p.createdAt).toLocaleDateString("en-CA")}</p>
+                          </div>
+                          {isPending && (
+                            <div className="flex gap-2 shrink-0">
+                              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1 h-8 text-xs"
+                                disabled={approvePayeeMutation.isPending || rejectPayeeMutation.isPending}
+                                onClick={() => approvePayeeMutation.mutate(p.id)}
+                                data-testid={`button-approve-payee-${p.id}`}>
+                                <CheckCircle2 className="w-3 h-3" /> Approve
+                              </Button>
+                              <Button size="sm" variant="outline" className="border-red-500/40 text-red-400 hover:bg-red-500/10 gap-1 h-8 text-xs"
+                                disabled={approvePayeeMutation.isPending || rejectPayeeMutation.isPending}
+                                onClick={() => rejectPayeeMutation.mutate(p.id)}
+                                data-testid={`button-reject-payee-${p.id}`}>
+                                <XCircle className="w-3 h-3" /> Reject
+                              </Button>
+                            </div>
+                          )}
+                          {!isPending && (
+                            <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white h-8 text-xs shrink-0"
+                              onClick={() => approvePayeeMutation.mutate(p.id)}>
+                              {isApproved ? "Re-approve" : "Approve"}
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* ─ Wire Disbursement Monitor ─ */}
+            <Card className="bg-slate-800/40 border-slate-700">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white text-base flex items-center gap-2">
+                  <ArrowLeftRight className="w-4 h-4 text-primary" />
+                  Wire Disbursements
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {wireLoading ? (
+                  <div className="flex items-center justify-center py-8 text-slate-400"><RefreshCw className="w-4 h-4 animate-spin mr-2" />Loading…</div>
+                ) : (Array.isArray(wireTransfers) ? wireTransfers : []).length === 0 ? (
+                  <p className="text-center text-slate-400 py-8 text-sm">No wire disbursements submitted yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {(Array.isArray(wireTransfers) ? wireTransfers : []).map((t: any) => {
+                      const statusColors: Record<string, string> = {
+                        pending: "border-amber-500/30 bg-amber-500/5",
+                        completed: "border-emerald-500/20 bg-emerald-500/5",
+                        failed: "border-red-500/20 bg-red-500/5",
+                      };
+                      const statusBadge: Record<string, string> = {
+                        pending: "border-amber-500/30 text-amber-400",
+                        completed: "border-emerald-500/30 text-emerald-400",
+                        failed: "border-red-500/30 text-red-400",
+                      };
+                      return (
+                        <div key={t.id} className={`rounded-lg border p-3.5 flex flex-col sm:flex-row sm:items-start gap-3 ${statusColors[t.status] || statusColors.pending}`}
+                          data-testid={`wire-txn-admin-${t.id}`}>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-white font-semibold text-sm font-mono">WT-{t.id}</span>
+                              <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border ${statusBadge[t.status] || statusBadge.pending}`}>
+                                {t.status === "failed" ? "Rejected" : t.status}
+                              </span>
+                            </div>
+                            <p className="text-slate-200 text-sm mt-0.5">To: {t.payeeName}</p>
+                            <div className="flex flex-wrap gap-x-3 text-xs text-slate-400 mt-0.5">
+                              <span>Client: <span className="text-slate-300">{t.userName}</span></span>
+                              <span>·</span>
+                              <span>CAD <strong className="text-white">${Number(t.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></span>
+                              <span>·</span>
+                              <span>{new Date(t.createdAt).toLocaleDateString("en-CA")}</span>
+                            </div>
+                            {t.adminNotes && <p className="text-slate-500 text-xs mt-1 italic">Note: {t.adminNotes}</p>}
+                          </div>
+                          <Button size="sm" variant="outline"
+                            className="border-primary/40 text-primary hover:bg-primary/10 gap-1.5 shrink-0 h-8 text-xs"
+                            data-testid={`button-update-wire-${t.id}`}
+                            onClick={() => { setWireForm({ status: t.status, adminNotes: t.adminNotes || "" }); setWireDialog({ txn: t }); }}>
+                            <Activity className="w-3 h-3" /> Update
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
         </Tabs>
       </div>
     </div>

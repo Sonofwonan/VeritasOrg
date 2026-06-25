@@ -71,6 +71,8 @@ export const payees = pgTable("payees", {
   routingNumber: text("routing_number"),
   bankName: text("bank_name"),
   type: text("type").notNull().default("individual"), // individual, business
+  status: text("status").notNull().default("pending_approval"), // pending_approval | approved | rejected
+  adminNotes: text("admin_notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

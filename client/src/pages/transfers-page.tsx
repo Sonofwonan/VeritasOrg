@@ -260,13 +260,13 @@ export default function TransfersPage() {
                     <Label className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Beneficiary</Label>
                     <Select value={payeeId} onValueChange={setPayeeId}>
                       <SelectTrigger className="h-10 text-sm" data-testid="select-payee">
-                        <SelectValue placeholder="Select registered beneficiary" />
+                        <SelectValue placeholder="Select approved beneficiary" />
                       </SelectTrigger>
                       <SelectContent>
-                        {savedPayees?.length === 0 && (
-                          <SelectItem value="__none__" disabled>No beneficiaries registered</SelectItem>
+                        {savedPayees?.filter((p: any) => p.status === "approved").length === 0 && (
+                          <SelectItem value="__none__" disabled>No approved beneficiaries yet</SelectItem>
                         )}
-                        {savedPayees?.map((payee: any) => (
+                        {savedPayees?.filter((p: any) => p.status === "approved").map((payee: any) => (
                           <SelectItem key={payee.id} value={payee.id.toString()} data-testid={`select-item-payee-${payee.id}`}>
                             <div className="text-left">
                               <p className="font-medium">{payee.name}</p>
@@ -306,40 +306,42 @@ export default function TransfersPage() {
                   <div className="pt-2 border-t border-border/40">
                     <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">Registered Beneficiaries</p>
                     <div className="space-y-1.5">
-                      {savedPayees.map((payee: any) => (
-                        <div key={payee.id} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border/40 bg-muted/20 hover:bg-muted/40 transition-colors">
-                          <div>
-                            <p className="font-medium text-sm">{payee.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{payee.bankName} · ****{payee.accountNumber?.slice(-4)}</p>
+                      {savedPayees.map((payee: any) => {
+                        const isPending = !payee.status || payee.status === "pending_approval";
+                        const isRejected = payee.status === "rejected";
+                        const isApproved = payee.status === "approved";
+                        return (
+                          <div key={payee.id} className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition-colors ${isPending ? "border-amber-200/60 bg-amber-50/40 dark:border-amber-800/30 dark:bg-amber-900/10" : isRejected ? "border-rose-200/60 bg-rose-50/40 dark:border-rose-800/30 dark:bg-rose-900/10" : "border-border/40 bg-muted/20 hover:bg-muted/40"}`}>
+                            <div className="flex items-start gap-2.5 min-w-0">
+                              <div className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${isPending ? "bg-amber-400 animate-pulse" : isRejected ? "bg-rose-400" : "bg-emerald-500"}`} />
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-medium text-sm">{payee.name}</p>
+                                  {isPending && <span className="text-[9px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">Pending Approval</span>}
+                                  {isRejected && <span className="text-[9px] font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30 px-1.5 py-0.5 rounded">Not Approved</span>}
+                                  {isApproved && <span className="text-[9px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">Verified</span>}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">{payee.bankName} · IBAN ****{payee.accountNumber?.slice(-4)} · SWIFT {payee.routingNumber || "—"}</p>
+                                {isPending && <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">Under FINTRAC review · 1–2 business days</p>}
+                              </div>
+                            </div>
+                            <div className="flex gap-1.5 shrink-0">
+                              {isApproved && (
+                                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary hover:bg-primary/10"
+                                  onClick={() => { setPayeeId(payee.id.toString()); toast({ title: "Beneficiary Selected", description: `${payee.name} set as wire recipient.` }); }}>
+                                  Select
+                                </Button>
+                              )}
+                              <Button variant="ghost" size="sm"
+                                className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => { if (window.confirm("Remove this beneficiary?")) deletePayeeMutation.mutate(payee.id); }}
+                                disabled={deletePayeeMutation.isPending}>
+                                Remove
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex gap-1.5">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="h-7 px-2 text-xs text-primary hover:bg-primary/10"
-                              onClick={() => {
-                                setPayeeId(payee.id.toString());
-                                toast({ title: "Beneficiary Selected", description: `${payee.name} set as wire recipient.` });
-                              }}
-                            >
-                              Select
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => {
-                                if (window.confirm("Remove this beneficiary from your registered list?")) {
-                                  deletePayeeMutation.mutate(payee.id);
-                                }
-                              }}
-                              disabled={deletePayeeMutation.isPending}
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
