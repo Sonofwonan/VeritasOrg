@@ -37,7 +37,7 @@ export function setupAuth(app: Express) {
     saveUninitialized: true,
     proxy: true,
     cookie: {
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      maxAge: 25 * 60 * 1000, // 25 minutes inactivity
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       httpOnly: true,

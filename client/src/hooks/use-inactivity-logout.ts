@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
-const INACTIVITY_MS = 10 * 60 * 1000;
+const INACTIVITY_MS = 25 * 60 * 1000;
 const WARNING_MS = 60 * 1000;
 const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"] as const;
 
