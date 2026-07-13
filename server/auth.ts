@@ -25,6 +25,19 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedPasswordBuf, suppliedPasswordBuf);
 }
 
+const INACTIVITY_LIMIT_MS = 25 * 60 * 1000; // 25 minutes
+
+// Paths that are background polls — must NOT reset the activity timer
+const POLLING_PATHS = new Set([
+  "/api/institutional-transfers",
+  "/api/market/quote",
+]);
+
+function isPollingRequest(req: Request): boolean {
+  return POLLING_PATHS.has(req.path) ||
+    req.path.startsWith("/api/market/");
+}
+
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     store: new PgSession({ 
@@ -34,10 +47,11 @@ export function setupAuth(app: Express) {
     }),
     secret: process.env.SESSION_SECRET || "default_secret",
     resave: true,
-    saveUninitialized: true,
+    saveUninitialized: false,
+    rolling: false,
     proxy: true,
     cookie: {
-      maxAge: 25 * 60 * 1000, // 25 minutes inactivity
+      maxAge: 8 * 60 * 60 * 1000, // 8-hour browser cookie backstop
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       httpOnly: true,
@@ -48,6 +62,14 @@ export function setupAuth(app: Express) {
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Track genuine user activity — skip background polling requests
+  app.use((req: Request, _res: Response, next: NextFunction) => {
+    if (req.session && (req.session as any).passport?.user && !isPollingRequest(req)) {
+      (req.session as any).lastActivity = Date.now();
+    }
+    next();
+  });
 
   // Set trust proxy for cross-domain cookies
   if (app.get("env") === "production") {

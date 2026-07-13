@@ -136,10 +136,17 @@ export async function registerRoutes(
     `);
   } catch (_) { /* columns likely already exist */ }
 
-  // Middleware to protect routes
+  const INACTIVITY_LIMIT_MS = 25 * 60 * 1000;
+
+  // Middleware to protect routes — enforces 25-minute inactivity timeout
   const requireAuth = (req: any, res: any, next: any) => {
-    if (req.isAuthenticated()) return next();
-    res.status(401).send();
+    if (!req.isAuthenticated()) return res.status(401).send();
+    const lastActivity = req.session?.lastActivity;
+    if (lastActivity && Date.now() - lastActivity > INACTIVITY_LIMIT_MS) {
+      req.session.destroy(() => {});
+      return res.status(401).json({ message: "Session expired due to inactivity" });
+    }
+    return next();
   };
 
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
@@ -217,7 +224,7 @@ export async function registerRoutes(
           console.error('Registration login error:', err);
           return res.status(500).json({ message: "Login failed after registration" });
         }
-        
+        (req.session as any).lastActivity = Date.now();
         req.session.save((err) => {
           if (err) {
             console.error('Session save error:', err);
@@ -269,6 +276,7 @@ export async function registerRoutes(
         if (!user) return res.status(401).json({ message: info?.message || "Invalid credentials" });
         req.logIn(user, (err) => {
             if (err) return next(err);
+            (req.session as any).lastActivity = Date.now();
             return res.status(200).json(user);
         });
     };
