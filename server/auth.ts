@@ -88,6 +88,9 @@ export function setupAuth(app: Express) {
         if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false, { message: "Invalid credentials" });
         }
+        if ((user as any).accountFrozen) {
+          return done(null, false, { message: "ACCOUNT_FROZEN" });
+        }
         if (user.loginRestricted) {
           const msg = user.loginRestrictionMessage?.trim() ||
             "Your account access has been restricted. Please contact support for assistance.";

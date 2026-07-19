@@ -366,7 +366,11 @@ export default function AuthPage() {
       onError: (err: any) => {
         const raw = err?.message || "";
         const msg = raw.replace(/^\d+:\s*/, "");
-        setLoginError(msg || "Please check your Client ID and password and try again.");
+        if (msg === "ACCOUNT_FROZEN") {
+          setLoginError("This account has been placed under a compliance hold. Please contact your advisor at veritaswealth@accountant.com for assistance.");
+        } else {
+          setLoginError(msg || "Please check your Client ID and password and try again.");
+        }
       },
     });
   });

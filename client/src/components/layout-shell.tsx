@@ -15,7 +15,8 @@ import {
   Command,
   MessageSquare,
   Phone,
-  ShieldAlert
+  ShieldAlert,
+  Snowflake
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -211,6 +212,18 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
+          {(user as any)?.accountFrozen && (
+            <div className="bg-sky-950 border-b border-sky-500/30 px-6 py-3 flex items-start gap-3">
+              <Snowflake className="w-4 h-4 text-sky-400 mt-0.5 shrink-0 animate-pulse" />
+              <div>
+                <p className="text-sky-300 text-sm font-semibold">Account Under Compliance Hold</p>
+                <p className="text-sky-400/70 text-xs mt-0.5">
+                  Your account has been temporarily frozen pending an internal review. All transactions and transfers are suspended.
+                  Please contact your advisor immediately at <span className="underline">veritaswealth@accountant.com</span>.
+                </p>
+              </div>
+            </div>
+          )}
           <main className="flex-1 overflow-y-auto overflow-x-hidden p-2 md:p-3 bg-muted/5 custom-scrollbar">
             <div className="max-w-7xl mx-auto space-y-2 md:space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {children}

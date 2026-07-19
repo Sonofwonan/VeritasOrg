@@ -10,7 +10,7 @@ import {
   Users, ArrowLeftRight, Clock, TrendingUp, CheckCircle2,
   XCircle, ShieldCheck, LogOut, Wallet, Eye, EyeOff,
   RefreshCw, DollarSign, Activity, FileText, ChevronDown, ChevronUp, Building2,
-  Lock, Unlock
+  Lock, Unlock, Snowflake
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog as ShadDialog, DialogContent as ShadDialogContent, DialogHeader as ShadDialogHeader, DialogTitle as ShadDialogTitle, DialogFooter as ShadDialogFooter } from "@/components/ui/dialog";
@@ -407,6 +407,27 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
 
   const [restrictDialog, setRestrictDialog] = useState<{ user: any } | null>(null);
   const [restrictMsg, setRestrictMsg] = useState("");
+  const [freezeDialog, setFreezeDialog] = useState<{ user: any } | null>(null);
+  const [freezeReason, setFreezeReason] = useState("");
+
+  const freezeUserMutation = useMutation({
+    mutationFn: ({ id, frozen, reason }: { id: number; frozen: boolean; reason?: string }) =>
+      adminFetch(`/api/admin/users/${id}/freeze`, adminKey, {
+        method: "POST", body: JSON.stringify({ frozen, reason }),
+      }).then(r => r.json()),
+    onSuccess: (_, vars) => {
+      toast({
+        title: vars.frozen ? "🔒 Account Frozen" : "✓ Account Unfrozen",
+        description: vars.frozen
+          ? "All sessions terminated. Client cannot log in."
+          : "Account has been restored to normal access.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setFreezeDialog(null);
+      setFreezeReason("");
+    },
+    onError: () => toast({ title: "Error", description: "Failed to update account freeze status.", variant: "destructive" }),
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -672,6 +693,41 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
           {/* ── Users ── */}
           <TabsContent value="users" className="mt-4">
             {/* Restrict dialog */}
+            {/* Freeze dialog */}
+            <ShadDialog open={!!freezeDialog} onOpenChange={(o) => { if (!o) { setFreezeDialog(null); setFreezeReason(""); } }}>
+              <ShadDialogContent className="bg-slate-800 border-sky-500/30 text-white">
+                <ShadDialogHeader>
+                  <ShadDialogTitle className="flex items-center gap-2">
+                    <Snowflake className="w-4 h-4 text-sky-400" />
+                    Freeze Account — {freezeDialog?.user?.name}
+                  </ShadDialogTitle>
+                </ShadDialogHeader>
+                <div className="space-y-3 py-2">
+                  <div className="bg-sky-500/10 border border-sky-500/20 rounded-lg px-3 py-2.5 text-xs text-sky-300">
+                    Freezing this account will immediately terminate all active sessions and prevent the client from logging in. All API access will be blocked with a compliance hold notice.
+                  </div>
+                  <Textarea
+                    value={freezeReason}
+                    onChange={e => setFreezeReason(e.target.value)}
+                    placeholder="e.g. Account suspended pending fraud investigation — fraudulent payment reported on investment account. Reference: FRD-2025-0142."
+                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 min-h-[100px] resize-none"
+                  />
+                  <p className="text-slate-500 text-xs">Freeze reason is mandatory and will be visible in the audit trail.</p>
+                </div>
+                <ShadDialogFooter>
+                  <Button variant="ghost" className="text-slate-400 hover:text-white" onClick={() => { setFreezeDialog(null); setFreezeReason(""); }}>Cancel</Button>
+                  <Button
+                    className="bg-sky-600 hover:bg-sky-700 text-white"
+                    disabled={!freezeReason.trim() || freezeUserMutation.isPending}
+                    onClick={() => freezeUserMutation.mutate({ id: freezeDialog!.user.id, frozen: true, reason: freezeReason.trim() })}
+                  >
+                    <Snowflake className="w-3.5 h-3.5 mr-1.5" />
+                    Freeze Account
+                  </Button>
+                </ShadDialogFooter>
+              </ShadDialogContent>
+            </ShadDialog>
+
             <ShadDialog open={!!restrictDialog} onOpenChange={(o) => { if (!o) { setRestrictDialog(null); setRestrictMsg(""); } }}>
               <ShadDialogContent className="bg-slate-800 border-slate-700 text-white">
                 <ShadDialogHeader>
@@ -722,24 +778,36 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                 ) : (
                   <div className="space-y-2">
                     {(allUsers as any[]).map((u: any) => (
-                      <div key={u.id} className={`rounded-lg border p-4 ${u.loginRestricted ? "border-red-500/30 bg-red-500/5" : "border-slate-700 bg-slate-700/20"}`} data-testid={`user-row-${u.id}`}>
+                      <div key={u.id} className={`rounded-lg border p-4 ${u.accountFrozen ? "border-sky-500/40 bg-sky-500/5" : u.loginRestricted ? "border-red-500/30 bg-red-500/5" : "border-slate-700 bg-slate-700/20"}`} data-testid={`user-row-${u.id}`}>
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div className="flex items-start gap-3 min-w-0">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${u.loginRestricted ? "bg-red-500/20 text-red-400" : "bg-primary/20 text-primary"}`}>
-                              {u.name?.charAt(0)?.toUpperCase()}
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${u.accountFrozen ? "bg-sky-500/20 text-sky-400" : u.loginRestricted ? "bg-red-500/20 text-red-400" : "bg-primary/20 text-primary"}`}>
+                              {u.accountFrozen ? <Snowflake className="w-4 h-4" /> : u.name?.charAt(0)?.toUpperCase()}
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-white font-medium text-sm">{u.name}</span>
                                 <span className="text-slate-500 font-mono text-xs">#{u.id}</span>
-                                {u.loginRestricted && (
+                                {u.accountFrozen && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                                    <Snowflake className="w-2.5 h-2.5" /> FROZEN
+                                  </span>
+                                )}
+                                {u.loginRestricted && !u.accountFrozen && (
                                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-500/20 text-red-400 border border-red-500/20">
                                     <Lock className="w-2.5 h-2.5" /> RESTRICTED
                                   </span>
                                 )}
                               </div>
                               <p className="text-slate-400 text-xs mt-0.5">{u.email}</p>
-                              {u.loginRestricted && u.loginRestrictionMessage && (
+                              {u.accountFrozen && u.freezeReason && (
+                                <p className="text-sky-400/70 text-xs mt-1 italic">
+                                  <Snowflake className="w-2.5 h-2.5 inline mr-1" />
+                                  Freeze reason: "{u.freezeReason}"
+                                  {u.frozenAt && <span className="ml-2 text-slate-500">— {new Date(u.frozenAt).toLocaleDateString("en-CA")}</span>}
+                                </p>
+                              )}
+                              {u.loginRestricted && !u.accountFrozen && u.loginRestrictionMessage && (
                                 <p className="text-red-400/70 text-xs mt-1 italic">"{u.loginRestrictionMessage}"</p>
                               )}
                               <div className="flex gap-4 mt-1.5 text-xs text-slate-500">
@@ -749,7 +817,27 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                               </div>
                             </div>
                           </div>
-                          <div className="flex gap-2 shrink-0">
+                          <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+                            {u.accountFrozen ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-sky-500/30 text-sky-400 hover:bg-sky-500/10 text-xs h-8"
+                                disabled={freezeUserMutation.isPending}
+                                onClick={() => freezeUserMutation.mutate({ id: u.id, frozen: false })}
+                              >
+                                <Snowflake className="w-3 h-3 mr-1" /> Unfreeze
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-sky-500/30 text-sky-400 hover:bg-sky-500/10 text-xs h-8"
+                                onClick={() => { setFreezeDialog({ user: u }); setFreezeReason(""); }}
+                              >
+                                <Snowflake className="w-3 h-3 mr-1" /> Freeze
+                              </Button>
+                            )}
                             {u.loginRestricted ? (
                               <Button
                                 size="sm"

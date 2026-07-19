@@ -38,6 +38,9 @@ export const users = pgTable("users", {
   theme: text("theme").default("light"),
   loginRestricted: boolean("login_restricted").default(false),
   loginRestrictionMessage: text("login_restriction_message"),
+  accountFrozen: boolean("account_frozen").default(false),
+  freezeReason: text("freeze_reason"),
+  frozenAt: timestamp("frozen_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

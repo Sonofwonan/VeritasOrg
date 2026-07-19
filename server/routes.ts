@@ -133,18 +133,25 @@ export async function registerRoutes(
         ADD COLUMN IF NOT EXISTS account_holder_type TEXT;
       ALTER TABLE institutional_transfers
         ADD COLUMN IF NOT EXISTS account_holder_name TEXT;
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS account_frozen BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS freeze_reason TEXT,
+        ADD COLUMN IF NOT EXISTS frozen_at TIMESTAMP;
     `);
   } catch (_) { /* columns likely already exist */ }
 
   const INACTIVITY_LIMIT_MS = 25 * 60 * 1000;
 
-  // Middleware to protect routes — enforces 25-minute inactivity timeout
+  // Middleware to protect routes — enforces 25-minute inactivity timeout + freeze check
   const requireAuth = (req: any, res: any, next: any) => {
     if (!req.isAuthenticated()) return res.status(401).send();
     const lastActivity = req.session?.lastActivity;
     if (lastActivity && Date.now() - lastActivity > INACTIVITY_LIMIT_MS) {
       req.session.destroy(() => {});
       return res.status(401).json({ message: "Session expired due to inactivity" });
+    }
+    if ((req.user as any)?.accountFrozen) {
+      return res.status(423).json({ message: "ACCOUNT_FROZEN", freezeReason: (req.user as any).freezeReason });
     }
     return next();
   };
@@ -810,6 +817,25 @@ export async function registerRoutes(
         loginRestrictionMessage: restricted ? (message || null) : null,
       });
       res.json({ success: true, loginRestricted: updated.loginRestricted });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Freeze / unfreeze an account (compliance / fraud)
+  app.post("/api/admin/users/:id/freeze", requireAdmin, async (req, res) => {
+    try {
+      const { frozen, reason } = req.body as { frozen: boolean; reason?: string };
+      const updated = await storage.updateUser(parseInt(req.params.id), {
+        accountFrozen: frozen,
+        freezeReason: frozen ? (reason || null) : null,
+        frozenAt: frozen ? new Date() : null,
+      } as any);
+      // Destroy all active sessions for this user so they are immediately logged out
+      if (frozen) {
+        await pool.query(`DELETE FROM session WHERE sess::jsonb->'passport'->>'user' = $1`, [String(req.params.id)]);
+      }
+      res.json({ success: true, accountFrozen: (updated as any).accountFrozen });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
