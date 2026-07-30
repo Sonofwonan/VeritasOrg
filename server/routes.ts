@@ -156,6 +156,26 @@ export async function registerRoutes(
     return next();
   };
 
+  // Middleware: block all write operations while an active liquidation is in progress
+  const LIQUIDATION_ACTIVE_STATUSES = ["liquidating", "approved", "transfer_out"];
+  const requireNoLiquidation = async (req: any, res: any, next: any) => {
+    try {
+      const userId = (req.user as User).id;
+      const transfers = await db
+        .select({ status: institutionalTransfers.status })
+        .from(institutionalTransfers)
+        .where(eq(institutionalTransfers.userId, userId));
+      const hasActive = transfers.some(t => LIQUIDATION_ACTIVE_STATUSES.includes(t.status ?? ""));
+      if (hasActive) {
+        return res.status(423).json({
+          message: "LIQUIDATION_IN_PROGRESS",
+          detail: "This account is currently under an active portfolio liquidation. All transactions, investments, and account changes are suspended until the transfer is complete.",
+        });
+      }
+    } catch (_) { /* fail open — don't block on DB error */ }
+    return next();
+  };
+
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
   const requireAdmin = (req: any, res: any, next: any) => {
     const key = req.headers["x-admin-key"];
@@ -305,7 +325,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/user", requireAuth, async (req, res) => {
+  app.patch("/api/user", requireAuth, requireNoLiquidation, async (req, res) => {
     try {
       const user = await storage.updateUser((req.user as User).id, req.body);
       res.json(user);
@@ -344,7 +364,7 @@ export async function registerRoutes(
     res.json(accounts);
   });
 
-  app.post(api.accounts.create.path, requireAuth, async (req, res) => {
+  app.post(api.accounts.create.path, requireAuth, requireNoLiquidation, async (req, res) => {
     try {
       console.log('Account creation request body:', JSON.stringify(req.body, null, 2));
       const input = api.accounts.create.input.parse(req.body);
@@ -370,7 +390,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete(`${api.accounts.get.path}`, requireAuth, async (req, res) => {
+  app.delete(`${api.accounts.get.path}`, requireAuth, requireNoLiquidation, async (req, res) => {
     try {
       const id = Number(req.params.id);
       await storage.deleteAccount(id, (req.user as User).id);
@@ -381,7 +401,7 @@ export async function registerRoutes(
   });
 
   // Transaction Routes
-  app.post(api.transactions.transfer.path, requireAuth, async (req, res) => {
+  app.post(api.transactions.transfer.path, requireAuth, requireNoLiquidation, async (req, res) => {
     try {
       const { fromAccountId, toAccountId, amount } = api.transactions.transfer.input.parse(req.body);
       
@@ -465,7 +485,7 @@ export async function registerRoutes(
     res.json(allInvestments);
   });
 
-  app.post(api.investments.buy.path, requireAuth, async (req, res) => {
+  app.post(api.investments.buy.path, requireAuth, requireNoLiquidation, async (req, res) => {
     try {
       const { accountId, symbol, amount } = api.investments.buy.input.parse(req.body);
        // Verify ownership
@@ -482,7 +502,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post(api.investments.sell.path, requireAuth, async (req, res) => {
+  app.post(api.investments.sell.path, requireAuth, requireNoLiquidation, async (req, res) => {
     try {
       const { accountId, symbol, shares } = api.investments.sell.input.parse(req.body);
        // Verify ownership
@@ -585,7 +605,7 @@ export async function registerRoutes(
     } catch (err: any) { res.status(500).json({ message: err.message }); }
   });
 
-  app.post('/api/payees', requireAuth, async (req, res) => {
+  app.post('/api/payees', requireAuth, requireNoLiquidation, async (req, res) => {
     try {
       console.log('Payee creation request body:', JSON.stringify(req.body, null, 2));
       const input = insertPayeeSchema.parse(req.body);
@@ -602,7 +622,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete('/api/payees/:id', requireAuth, async (req, res) => {
+  app.delete('/api/payees/:id', requireAuth, requireNoLiquidation, async (req, res) => {
     try {
       const id = Number(req.params.id);
       await storage.deletePayee(id, (req.user as User).id);
@@ -613,7 +633,7 @@ export async function registerRoutes(
   });
 
   // External Payment Route
-  app.post('/api/transactions/payment', requireAuth, async (req, res) => {
+  app.post('/api/transactions/payment', requireAuth, requireNoLiquidation, async (req, res) => {
     try {
       const { fromAccountId, payeeId, amount, description } = z.object({
         fromAccountId: z.number(),

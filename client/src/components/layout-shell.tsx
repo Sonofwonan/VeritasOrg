@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useInactivityLogout } from "@/hooks/use-inactivity-logout";
+import { useActiveLiquidation } from "@/hooks/use-liquidation-status";
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -16,7 +17,8 @@ import {
   MessageSquare,
   Phone,
   ShieldAlert,
-  Snowflake
+  Snowflake,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -69,6 +71,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   }, [logout]);
 
   const { showWarning, secondsLeft, dismiss } = useInactivityLogout(handleAutoLogout);
+  const { isUnderLiquidation } = useActiveLiquidation();
 
   const filteredItems = navItems.filter(item => 
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
@@ -220,6 +223,19 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 <p className="text-sky-400/70 text-xs mt-0.5">
                   Your account has been temporarily frozen pending an internal review. All transactions and transfers are suspended.
                   Please contact your advisor immediately at <span className="underline">veritaswealth@accountant.com</span>.
+                </p>
+              </div>
+            </div>
+          )}
+          {isUnderLiquidation && !(user as any)?.accountFrozen && (
+            <div className="bg-amber-950/60 border-b border-amber-500/30 px-6 py-3 flex items-start gap-3">
+              <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0 animate-pulse" />
+              <div>
+                <p className="text-amber-300 text-sm font-semibold">Portfolio Liquidation In Progress — Account Restricted</p>
+                <p className="text-amber-400/70 text-xs mt-0.5">
+                  Your portfolio is currently being liquidated for institutional transfer. All transactions, investments, account changes,
+                  and payments are suspended until the transfer is complete. Contact your advisor at{" "}
+                  <span className="underline">veritaswealth@accountant.com</span> for updates.
                 </p>
               </div>
             </div>
