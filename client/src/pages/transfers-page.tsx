@@ -13,10 +13,11 @@ export default function TransfersPage() {
   const { user } = useAuth();
   const [showInstTransferModal, setShowInstTransferModal] = useState(false);
 
-  const { data: institutionalTransfersList = [] } = useQuery<any[]>({
+  const { data: _institutionalTransferRaw = [] } = useQuery<any[]>({
     queryKey: ["/api/institutional-transfers"],
     refetchInterval: 15000,
   });
+  const institutionalTransfersList = _institutionalTransferRaw.filter((t: any) => t.status !== "rejected");
 
   if (loadingAccounts) {
     return (
