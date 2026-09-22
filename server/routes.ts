@@ -176,6 +176,15 @@ export async function registerRoutes(
     return next();
   };
 
+  const INVESTMENT_ACCOUNT_TYPES = new Set([
+    "Brokerage Account",
+    "Traditional IRA",
+    "Roth IRA",
+    "401(k) / 403(b)",
+    "529 Savings Plan",
+    "Trust Account",
+  ]);
+
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
   const requireAdmin = (req: any, res: any, next: any) => {
     const key = req.headers["x-admin-key"];
@@ -208,15 +217,8 @@ export async function registerRoutes(
       
       console.log('User created successfully:', user.id);
 
-      // Auto-create a default checking account and an investment account for new users
+      // New profiles are investment-only: no checking, savings, or liquid account is created.
       try {
-        const checkingAccount = await storage.createAccount({
-          userId: user.id,
-          accountType: 'Checking Account',
-          balance: '8800000.00',
-          isDemo: false,
-        });
-
         const investmentAccount = await storage.createAccount({
           userId: user.id,
           accountType: 'Brokerage Account',
@@ -225,22 +227,6 @@ export async function registerRoutes(
         });
         
         console.log('Created accounts for user:', user.id);
-        
-        // Add requested transaction from Audi AG to Checking
-        await db.insert(transactions).values({
-          toAccountId: checkingAccount.id,
-          amount: '8800000.00',
-          description: 'Payment from Audi AG',
-          transactionType: 'transfer',
-          status: 'pending',
-          isDemo: false,
-          createdAt: new Date()
-        });
-
-        // Generate historical transactions for the new accounts
-        await generateHistoricalTransactions(checkingAccount.id);
-        await generateHistoricalTransactions(investmentAccount.id);
-        console.log('Generated default history for user:', user.id);
       } catch (accountErr: any) {
         console.error('Failed to create default account or history:', accountErr);
         // Don't fail registration if account creation fails
@@ -368,6 +354,11 @@ export async function registerRoutes(
     try {
       console.log('Account creation request body:', JSON.stringify(req.body, null, 2));
       const input = api.accounts.create.input.parse(req.body);
+      if (!INVESTMENT_ACCOUNT_TYPES.has(input.accountType)) {
+        return res.status(400).json({
+          message: "Only investment and retirement accounts are available. Liquid cash accounts are not supported.",
+        });
+      }
       const account = await storage.createAccount({
         userId: (req.user as User).id,
         accountType: input.accountType,
@@ -736,28 +727,11 @@ export async function registerRoutes(
           phoneNumber: app.phone,
         }).returning();
 
-        // Create checking + brokerage accounts
-        const [checking] = await tx.insert(accounts).values({
-          userId: newUser.id,
-          accountType: "Checking Account",
-          balance: "8800000.00",
-          isDemo: false,
-        }).returning();
-
+        // Create an investment-only brokerage account with no liquid cash.
         await tx.insert(accounts).values({
           userId: newUser.id,
           accountType: "Brokerage Account",
           balance: "0.00",
-          isDemo: false,
-        });
-
-        // Opening deposit transaction
-        await tx.insert(transactions).values({
-          toAccountId: checking.id,
-          amount: "8800000.00",
-          description: "Account Opening — Initial Deposit",
-          transactionType: "transfer",
-          status: "completed",
           isDemo: false,
         });
 

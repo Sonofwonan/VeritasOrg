@@ -18,13 +18,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
-type AccountType = 'Checking Account' | 'Savings Account' | 'Money Market Account' |
-  'Certificate of Deposit (CCD)' | 'High-Yield Savings' | 'Brokerage Account' |
-  'Traditional IRA' | 'Roth IRA' | '401(k) / 403(b)' | '529 Savings Plan' |
-  'Trust Account' | 'Business Checking' | 'Business Savings';
+type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' |
+  '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
 
-const INVESTMENT_TYPES = ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan'];
-const BUSINESS_TYPES = ['Trust Account', 'Business Checking', 'Business Savings'];
+const INVESTMENT_TYPES = ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan', 'Trust Account'];
 
 const YTD_BY_TYPE: Record<string, { pct: string; gain: string; positive: boolean }> = {
   'Checking Account':          { pct: '0.00',  gain: '—',          positive: true },
@@ -49,8 +46,7 @@ function accountNumber(id: number) {
 
 function categoryOf(type: string) {
   if (INVESTMENT_TYPES.includes(type)) return 'investment';
-  if (BUSINESS_TYPES.includes(type)) return 'business';
-  return 'cash';
+  return 'investment';
 }
 
 const CATEGORY_META = {
@@ -60,15 +56,13 @@ const CATEGORY_META = {
 };
 
 const ACCOUNT_TYPE_OPTIONS = [
-  { group: 'Cash & Deposits', items: ['Checking Account','Savings Account','Money Market Account','Certificate of Deposit (CCD)','High-Yield Savings'] },
-  { group: 'Investment & Retirement', items: ['Brokerage Account','Traditional IRA','Roth IRA','401(k) / 403(b)','529 Savings Plan'] },
-  { group: 'Business & Trust', items: ['Trust Account','Business Checking','Business Savings'] },
+  { group: 'Investment & Retirement', items: ['Brokerage Account','Traditional IRA','Roth IRA','401(k) / 403(b)','529 Savings Plan','Trust Account'] },
 ];
 
 export default function AccountsPage() {
   const { data: accounts, isLoading } = useAccounts();
-  const checkingAccount = accounts?.find(a => a.accountType === 'Checking Account');
-  const { data: transactions } = useAccountTransactions(checkingAccount?.id || 0);
+  const primaryAccount = accounts?.find(a => a.accountType === 'Brokerage Account') || accounts?.[0];
+  const { data: transactions } = useAccountTransactions(primaryAccount?.id || 0);
   const createAccount = useCreateAccount();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -88,13 +82,13 @@ export default function AccountsPage() {
   const [hideBalances, setHideBalances] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState<{ title: string; message: string; type: 'success' | 'error' } | null>(null);
-  const [newAccountType, setNewAccountType] = useState<AccountType>('Checking Account');
+  const [newAccountType, setNewAccountType] = useState<AccountType>('Brokerage Account');
 
   const pendingBalance = transactions
     ?.filter(t => t.status === 'pending')
     .reduce((sum, t) => {
       const amt = Number(t.amount);
-      return t.toAccountId === checkingAccount?.id ? sum + amt : sum - amt;
+      return t.toAccountId === primaryAccount?.id ? sum + amt : sum - amt;
     }, 0) || 0;
 
   const totalBalance = accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0;
@@ -121,7 +115,7 @@ export default function AccountsPage() {
     });
   };
 
-  const grouped = ['cash', 'investment', 'business'].map(cat => ({
+  const grouped = ['investment'].map(cat => ({
     cat,
     items: (accounts || []).filter(a => categoryOf(a.accountType) === cat),
   })).filter(g => g.items.length > 0);
@@ -326,7 +320,7 @@ export default function AccountsPage() {
                 <div className="divide-y divide-border/50">
                   {items.map((account) => {
                     const ytd = YTD_BY_TYPE[account.accountType] || { pct: '—', gain: '—', positive: true };
-                    const isPending = account.accountType === 'Checking Account' && pendingBalance !== 0;
+                    const isPending = account.id === primaryAccount?.id && pendingBalance !== 0;
                     return (
                       <div
                         key={account.id}

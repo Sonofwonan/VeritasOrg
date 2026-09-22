@@ -53,11 +53,15 @@ function getGreeting() {
 }
 
 function categoryOf(type: string) {
-  const inv = ['Brokerage Account','Traditional IRA','Roth IRA','401(k) / 403(b)','529 Savings Plan'];
-  const biz = ['Trust Account','Business Checking','Business Savings'];
-  if (inv.includes(type)) return 'investment';
-  if (biz.includes(type)) return 'business';
-  return 'cash';
+  const investmentTypes = [
+    'Brokerage Account',
+    'Traditional IRA',
+    'Roth IRA',
+    '401(k) / 403(b)',
+    '529 Savings Plan',
+    'Trust Account',
+  ];
+  return investmentTypes.includes(type) ? 'investment' : 'investment';
 }
 
 export default function DashboardPage() {
@@ -74,18 +78,19 @@ export default function DashboardPage() {
   );
   const isTransmitting = activeTransfer?.status === "transfer_out";
 
-  const checkingAccount = accounts?.find(a => a.accountType === 'Checking Account');
-  const { data: transactions, isLoading: txnLoading } = useAccountTransactions(checkingAccount?.id || 0);
+  const primaryAccount = accounts?.find(a => a.accountType === 'Brokerage Account') || accounts?.[0];
+  const { data: transactions, isLoading: txnLoading } = useAccountTransactions(primaryAccount?.id || 0);
 
-  const totalBalance   = accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0;
-  const cashTotal      = accounts?.filter(a => categoryOf(a.accountType) === 'cash').reduce((s, a) => s + Number(a.balance), 0) || 0;
-  const investTotal    = accounts?.filter(a => categoryOf(a.accountType) === 'investment').reduce((s, a) => s + Number(a.balance), 0) || 0;
   const investValue    = investments?.reduce((s, i) => s + Number(i.shares) * Number(i.currentPrice || i.purchasePrice), 0) || 0;
+  const accountCash    = accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0;
+  const totalBalance   = accountCash + investValue;
+  const cashTotal      = 0;
+  const investTotal    = investValue;
   const dayChange      = totalBalance * 0.0038;
   const ytdGain        = totalBalance * 0.084;
 
   const pendingBalance = transactions?.filter(t => t.status === 'pending')
-    .reduce((s, t) => t.toAccountId === checkingAccount?.id ? s + Number(t.amount) : s - Number(t.amount), 0) || 0;
+    .reduce((s, t) => t.toAccountId === primaryAccount?.id ? s + Number(t.amount) : s - Number(t.amount), 0) || 0;
 
   const fmt  = (n: number) => `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2 })}`;
   const fmtM = (n: number) => n >= 1e6 ? `$${(n/1e6).toFixed(2)}M` : fmt(n);
@@ -439,7 +444,7 @@ export default function DashboardPage() {
                 {txnLoading ? (
                   <div className="p-4 space-y-2">{[1,2,3,4].map(i => <Skeleton key={i} className="h-12" />)}</div>
                 ) : transactions && transactions.length > 0 ? transactions.slice(0, 12).map((txn: any) => {
-                  const isIn = txn.toAccountId === checkingAccount?.id;
+                  const isIn = txn.toAccountId === primaryAccount?.id;
                   const isPending = txn.status === 'pending';
                   return (
                     <div key={txn.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/30 transition-colors cursor-pointer group"

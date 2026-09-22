@@ -20,25 +20,13 @@ async function run() {
       password,
     });
     
-    // Create accounts
-    const cashAccount = await storage.createAccount({
-      userId: user.id,
-      accountType: "Checking Account",
-      balance: "10000",
-      isDemo: true
-    });
-    
+    // Seed only an investment account; the project does not support liquid cash accounts.
     const investmentAccount = await storage.createAccount({
       userId: user.id,
       accountType: "Brokerage Account",
-      balance: "5000",
+      balance: "0",
       isDemo: true
     });
-    
-    // Add some initial investments
-    // Mock prices: AAPL 150, GOOGL 2800
-    await storage.buyAsset(investmentAccount.id, "AAPL", "1500", 150); // 10 shares
-    await storage.buyAsset(investmentAccount.id, "GOOGL", "2800", 2800); // 1 share
     
     console.log("Seed completed");
   } else {
