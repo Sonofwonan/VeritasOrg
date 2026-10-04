@@ -1,1 +1,2 @@
 - [Design Identity](design-identity.md) — Approved "Old Money, Digital Precision" visual system: Cormorant serif, forest green + cream + gold, near-zero radius, underline inputs, editorial layout.
+- [Application password retention](application-password-retention.md) — Legacy application password hashes remain stored but are not used; do not erase them without explicit approval.

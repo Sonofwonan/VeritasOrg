@@ -169,7 +169,7 @@ export const applications = pgTable("applications", {
   investmentGoal: text("investment_goal"),
   initialDeposit: text("initial_deposit"),
   sourceOfFunds: text("source_of_funds"),
-  password: text("password").notNull(),
+  password: text("password"),
   status: text("status").notNull().default("pending"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -178,6 +178,15 @@ export const applications = pgTable("applications", {
 export type Application = typeof applications.$inferSelect;
 export const insertApplicationSchema = createInsertSchema(applications).omit({ id: true, createdAt: true, status: true, notes: true });
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
+
+export const accountSetupTokens = pgTable("account_setup_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  consumedAt: timestamp("consumed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const insertUserSchema = createInsertSchema(users, {
   name: z.string().min(2, "Name must be at least 2 characters"),

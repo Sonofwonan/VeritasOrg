@@ -20,6 +20,7 @@ import CardsPage from "@/pages/cards-page";
 import SettingsPage from "@/pages/settings-page";
 import CompanyPage from "@/pages/company-page";
 import AdminPage from "@/pages/admin-page";
+import AccountActivationPage from "@/pages/account-activation";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { user, isLoading } = useAuth();
@@ -50,6 +51,7 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/company" component={CompanyPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/activate" component={AccountActivationPage} />
 
       {/* Protected Routes */}
       <Route path="/dashboard">

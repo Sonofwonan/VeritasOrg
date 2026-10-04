@@ -10,7 +10,7 @@ import {
   Users, ArrowLeftRight, Clock, TrendingUp, CheckCircle2,
   XCircle, ShieldCheck, LogOut, Wallet, Eye, EyeOff,
   RefreshCw, DollarSign, Activity, FileText, ChevronDown, ChevronUp, Building2,
-  Lock, Unlock, Snowflake
+  Lock, Unlock, Snowflake, Copy
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog as ShadDialog, DialogContent as ShadDialogContent, DialogHeader as ShadDialogHeader, DialogTitle as ShadDialogTitle, DialogFooter as ShadDialogFooter } from "@/components/ui/dialog";
@@ -367,13 +367,34 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
     refetchInterval: 30000,
   });
 
+  const [activationResult, setActivationResult] = useState<{
+    clientRef: string;
+    userName: string;
+    activationUrl: string;
+    expiresAt: string;
+  } | null>(null);
+  const [activationCopied, setActivationCopied] = useState(false);
+  const [activationCopyError, setActivationCopyError] = useState(false);
+
   const approveAppMutation = useMutation({
-    mutationFn: ({ id, notes }: { id: number; notes?: string }) =>
-      adminFetch(`/api/admin/applications/${id}/approve`, adminKey, {
+    mutationFn: async ({ id, notes }: { id: number; notes?: string }) => {
+      const response = await adminFetch(`/api/admin/applications/${id}/approve`, adminKey, {
         method: "POST", body: JSON.stringify({ notes }),
-      }).then(r => r.json()),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.message || "Failed to approve application");
+      return data;
+    },
     onSuccess: (data) => {
-      toast({ title: "Application Approved ✓", description: `Client ID: ${data.userId} — ${data.userName}` });
+      setActivationResult({
+        clientRef: data.clientRef,
+        userName: data.userName,
+        activationUrl: new URL(data.activationPath, window.location.origin).toString(),
+        expiresAt: data.activationExpiresAt,
+      });
+      setActivationCopied(false);
+      setActivationCopyError(false);
+      toast({ title: "Application approved", description: "The Client ID and one-time setup link are available in this admin page." });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/applications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
@@ -528,6 +549,54 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {activationResult && (
+                  <div className="mb-5 border border-emerald-500/30 bg-emerald-500/5 p-4" data-testid="application-activation-result">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                      <h3 className="text-sm font-semibold text-emerald-300">
+                        Approved: {activationResult.userName}
+                      </h3>
+                      <span className="font-mono text-sm text-white">
+                        Client ID: {activationResult.clientRef}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                      Verify the recipient through an established contact method before sharing. This setup link expires {new Date(activationResult.expiresAt).toLocaleString()} and can be used once.
+                    </p>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        readOnly
+                        value={activationResult.activationUrl}
+                        aria-label="One-time account setup link"
+                        className="min-w-0 border-slate-600 bg-slate-900 text-xs text-slate-200"
+                        onFocus={event => event.currentTarget.select()}
+                        data-testid="input-activation-link"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 border-slate-500 text-slate-200"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(activationResult.activationUrl);
+                            setActivationCopied(true);
+                            setActivationCopyError(false);
+                          } catch {
+                            setActivationCopied(false);
+                            setActivationCopyError(true);
+                          }
+                        }}
+                        data-testid="button-copy-activation-link"
+                      >
+                        <Copy className="mr-2 h-3.5 w-3.5" />
+                        {activationCopied ? "Copied" : "Copy link"}
+                      </Button>
+                    </div>
+                    {activationCopyError && (
+                      <p className="mt-2 text-xs text-amber-300">Copy was blocked by the browser. Select the link above and copy it manually.</p>
+                    )}
+                  </div>
+                )}
                 {appsLoading ? (
                   <div className="flex items-center justify-center py-12 text-slate-400">
                     <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Loading…

@@ -29,9 +29,7 @@ const appSchema = z.object({
   investmentGoal: z.string().min(1, "Required"),
   initialDeposit: z.string().min(1, "Required"),
   sourceOfFunds: z.string().min(1, "Required"),
-  password: z.string().min(8, "Min 8 characters"),
-  confirmPassword: z.string(),
-}).refine(d => d.password === d.confirmPassword, { message: "Passwords do not match", path: ["confirmPassword"] });
+});
 
 type AppData = z.infer<typeof appSchema>;
 
@@ -71,12 +69,11 @@ function SelectInput({ reg, options }: { reg: any; options: { v: string; l: stri
   );
 }
 
-const STEPS = ["About you", "Where you live", "How you invest", "Your password"];
+const STEPS = ["About you", "Where you live", "How you invest"];
 
 function ApplicationForm({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
-  const [showPw, setShowPw] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<AppData>({
@@ -85,7 +82,7 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
       fullName: "", email: "", phone: "", dateOfBirth: "", nationality: "",
       address: "", city: "", country: "", employmentStatus: "", annualIncome: "",
       investmentExperience: "", riskTolerance: "", investmentGoal: "",
-      initialDeposit: "", sourceOfFunds: "", password: "", confirmPassword: "",
+      initialDeposit: "", sourceOfFunds: "",
     },
     mode: "onTouched",
   });
@@ -95,16 +92,14 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
     ["fullName", "email", "phone", "dateOfBirth", "nationality"],
     ["address", "city", "country", "employmentStatus", "annualIncome"],
     ["investmentExperience", "riskTolerance", "investmentGoal", "initialDeposit", "sourceOfFunds"],
-    ["password", "confirmPassword"],
   ];
 
   const mutation = useMutation({
     mutationFn: async (data: AppData) => {
-      const { confirmPassword, ...payload } = data;
       const res = await fetch("/api/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error((await res.json()).message || "Submission failed");
       return res.json();
@@ -127,7 +122,7 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
         <div className="space-y-2 max-w-sm mx-auto">
           <h3 className="font-serif text-2xl">We have your application</h3>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Someone from our team will review it and reach out within one to two business days with your Client ID and next steps.
+             Someone from our team will review it and reach out within one to two business days. If approved, you will receive your Client ID and a one-time account setup link through a verified contact channel.
           </p>
         </div>
         <button onClick={onBack} className="label-caps text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 mx-auto">
@@ -271,28 +266,10 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
           </div>
         )}
 
-        {/* Step 3 */}
-        {step === 3 && (
-          <div className="space-y-6">
-            <p className="font-serif text-xl">Choose a password for your account</p>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              This will be activated once your application is approved. Your Client ID will be assigned and sent to you separately.
-            </p>
-            <Field label="Password" error={errors.password?.message}>
-              <div className="relative">
-                <TextInput reg={register("password")} type={showPw ? "text" : "password"} autoComplete="new-password" />
-                <button type="button" onClick={() => setShowPw(v => !v)}
-                  className="absolute right-0 bottom-2.5 text-muted-foreground hover:text-foreground">
-                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </Field>
-            <Field label="Confirm password" error={errors.confirmPassword?.message}>
-              <TextInput reg={register("confirmPassword")} type="password" autoComplete="new-password" />
-            </Field>
-            <div className="pt-2 text-xs text-muted-foreground border-t border-border space-y-1.5 leading-relaxed">
-              <p>By submitting this form you confirm that everything you have provided is accurate and that you are the beneficial owner of the assets to be invested. You agree to our Terms of Service and Privacy Policy.</p>
-            </div>
+        {step === 2 && (
+          <div className="pt-2 text-xs text-muted-foreground border-t border-border space-y-1.5 leading-relaxed">
+            <p>By submitting this form you confirm that everything you have provided is accurate and that you are the beneficial owner of the assets to be invested. You agree to our Terms of Service and Privacy Policy.</p>
+            <p>You will create your password only after your application is approved, using a one-time setup link.</p>
           </div>
         )}
 
@@ -307,7 +284,7 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
             {step === 0 ? "Back to login" : "Previous"}
           </button>
 
-          {step < 3 ? (
+          {step < 2 ? (
             <button
               type="button"
               onClick={next}

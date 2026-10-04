@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { createHash, randomBytes } from "crypto";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { api, errorSchemas, insertPayeeSchema } from "@shared/routes";
 import { z } from "zod";
-import { type User, accounts, transactions, payees, applications, users, institutionalTransfers } from "@shared/schema";
+import { type User, accounts, transactions, payees, applications, users, institutionalTransfers, accountSetupTokens } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, or, desc, sql } from "drizzle-orm";
 import twilio from "twilio";
@@ -137,6 +138,16 @@ export async function registerRoutes(
         ADD COLUMN IF NOT EXISTS account_frozen BOOLEAN DEFAULT FALSE,
         ADD COLUMN IF NOT EXISTS freeze_reason TEXT,
         ADD COLUMN IF NOT EXISTS frozen_at TIMESTAMP;
+      ALTER TABLE applications ALTER COLUMN password DROP NOT NULL;
+      CREATE TABLE IF NOT EXISTS account_setup_tokens (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        token_hash TEXT NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        consumed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS account_setup_tokens_user_id_idx ON account_setup_tokens(user_id);
     `);
   } catch (_) { /* columns likely already exist */ }
 
@@ -193,94 +204,10 @@ export async function registerRoutes(
   };
 
   // Auth Routes
-  app.post(api.auth.register.path, async (req, res) => {
-    try {
-      console.log('Registration request received:', JSON.stringify(req.body, (key, value) => key === 'password' ? '***' : value));
-      const input = api.auth.register.input.parse(req.body);
-      
-      // Check for database connectivity first
-      try {
-        const existing = await storage.getUserByEmail(input.email);
-        if (existing) {
-          return res.status(400).json({ message: "Email already exists" });
-        }
-      } catch (dbErr: any) {
-        console.error('Database connection error during user lookup:', dbErr);
-        return res.status(503).json({ 
-          message: "Database connection failed. Please ensure the database is properly initialized.",
-          isDatabaseError: true
-        });
-      }
-      
-      const hashedPassword = await hashPassword(input.password);
-      const user = await storage.createUser({ ...input, password: hashedPassword });
-      
-      console.log('User created successfully:', user.id);
-
-      // New profiles are investment-only: no checking, savings, or liquid account is created.
-      try {
-        const investmentAccount = await storage.createAccount({
-          userId: user.id,
-          accountType: 'Brokerage Account',
-          balance: '0.00',
-          isDemo: false,
-        });
-        
-        console.log('Created accounts for user:', user.id);
-      } catch (accountErr: any) {
-        console.error('Failed to create default account or history:', accountErr);
-        // Don't fail registration if account creation fails
-      }
-      
-      req.login(user, (err) => {
-        if (err) {
-          console.error('Registration login error:', err);
-          return res.status(500).json({ message: "Login failed after registration" });
-        }
-        (req.session as any).lastActivity = Date.now();
-        req.session.save((err) => {
-          if (err) {
-            console.error('Session save error:', err);
-            return res.status(500).json({ message: "Session save failed" });
-          }
-          // Log session/cookie info for easier debugging in production
-          try {
-            console.log('Registered user id:', user.id, 'sessionID:', (req as any).sessionID);
-          } catch (e) {
-            console.error('Error logging session info after registration', e);
-          }
-          res.status(201).json(user);
-        });
-      });
-    } catch (err: any) {
-      console.error('Registration ERROR:', err);
-      // Detailed logging for debugging
-      if (err instanceof Error) {
-        console.error('Error Name:', err.name);
-        console.error('Error Message:', err.message);
-        console.error('Error Stack:', err.stack);
-      }
-      
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
-      }
-      
-      // Check if it's a database error
-      const errorMessage = err?.message || "Unknown error";
-      if (errorMessage.includes('relation') || errorMessage.includes('table') || errorMessage.includes('does not exist')) {
-        return res.status(503).json({ 
-          message: "Database tables not found. Please run database migrations.",
-          isDatabaseError: true,
-          error: process.env.NODE_ENV === 'development' ? errorMessage : undefined 
-        });
-      }
-      
-      res.status(500).json({ 
-        message: "Internal server error during registration",
-        details: err.message || "Unknown error",
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined 
-      });
-    }
+  app.post(api.auth.register.path, (_req, res) => {
+    res.status(410).json({
+      message: "Direct registration is disabled. Submit an application and wait for approval.",
+    });
   });
 
   app.post(api.auth.login.path, (req, res, next) => {
@@ -675,19 +602,97 @@ export async function registerRoutes(
 
   app.post("/api/applications", async (req, res) => {
     try {
-      const { password, ...rest } = req.body;
-      if (!rest.fullName || !rest.email || !rest.phone || !rest.dateOfBirth || !password) {
-        return res.status(400).json({ message: "Required fields are missing" });
-      }
-      const hashedPw = await hashPassword(password);
+      const applicationInput = z.object({
+        fullName: z.string().trim().min(2).max(200),
+        email: z.string().trim().email().max(254),
+        phone: z.string().trim().min(7).max(32),
+        dateOfBirth: z.string().min(1).max(32),
+        nationality: z.string().max(100).optional().nullable(),
+        address: z.string().max(300).optional().nullable(),
+        city: z.string().max(120).optional().nullable(),
+        country: z.string().min(1).max(120),
+        employmentStatus: z.string().min(1).max(80),
+        annualIncome: z.string().min(1).max(80),
+        investmentExperience: z.string().min(1).max(80),
+        riskTolerance: z.string().min(1).max(80),
+        investmentGoal: z.string().min(1).max(120),
+        initialDeposit: z.string().min(1).max(80),
+        sourceOfFunds: z.string().min(1).max(120),
+      }).parse(req.body);
+
       const [app] = await db.insert(applications).values({
-        ...rest,
-        password: hashedPw,
+        ...applicationInput,
+        password: null,
         status: "pending",
       }).returning();
       res.status(201).json({ id: app.id, message: "Application submitted successfully" });
     } catch (err: any) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0]?.message || "Invalid application details" });
+      }
       res.status(500).json({ message: err.message || "Failed to submit application" });
+    }
+  });
+
+  app.post("/api/account-activation/complete", async (req, res) => {
+    const inputSchema = z.object({
+      token: z.string().min(32).max(256),
+      password: z.string()
+        .min(12, "Password must be at least 12 characters")
+        .max(128, "Password must be no more than 128 characters")
+        .regex(/[a-z]/, "Password must include a lowercase letter")
+        .regex(/[A-Z]/, "Password must include an uppercase letter")
+        .regex(/[0-9]/, "Password must include a number")
+        .regex(/[^A-Za-z0-9]/, "Password must include a symbol"),
+    });
+
+    let client;
+    try {
+      const { token, password } = inputSchema.parse(req.body);
+      const tokenHash = createHash("sha256").update(token).digest("hex");
+      const passwordHash = await hashPassword(password);
+      client = await pool.connect();
+      await client.query("BEGIN");
+
+      const tokenResult = await client.query(
+        `SELECT id, user_id
+           FROM account_setup_tokens
+          WHERE token_hash = $1
+            AND consumed_at IS NULL
+            AND expires_at > NOW()
+          FOR UPDATE`,
+        [tokenHash],
+      );
+      if (tokenResult.rowCount !== 1) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ message: "This setup link is invalid, expired, or already used. Contact support for a new link." });
+      }
+
+      const userId = tokenResult.rows[0].user_id;
+      const updateResult = await client.query(
+        "UPDATE users SET password = $1 WHERE id = $2 RETURNING client_ref",
+        [passwordHash, userId],
+      );
+      if (updateResult.rowCount !== 1) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ message: "This setup link is invalid, expired, or already used. Contact support for a new link." });
+      }
+
+      await client.query(
+        "UPDATE account_setup_tokens SET consumed_at = NOW() WHERE user_id = $1 AND consumed_at IS NULL",
+        [userId],
+      );
+      await client.query("COMMIT");
+      return res.json({ ok: true, clientRef: updateResult.rows[0].client_ref });
+    } catch (err: any) {
+      if (client) await client.query("ROLLBACK").catch(() => {});
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0]?.message || "Invalid password" });
+      }
+      console.error("Account activation failed:", err);
+      return res.status(500).json({ message: "Unable to complete account setup right now." });
+    } finally {
+      client?.release();
     }
   });
 
@@ -697,7 +702,7 @@ export async function registerRoutes(
   app.get("/api/admin/applications", requireAdmin, async (req, res) => {
     try {
       const all = await db.select().from(applications).orderBy(desc(applications.createdAt));
-      res.json(all.map(a => ({ ...a, password: undefined })));
+      res.json(all.map(({ password: _password, ...application }) => application));
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -718,12 +723,31 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Email already has an account" });
       }
 
-      // Create user with hashed password from application
+      const setupToken = randomBytes(32).toString("base64url");
+      const setupTokenHash = createHash("sha256").update(setupToken).digest("hex");
+      const setupExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const unavailablePasswordHash = await hashPassword(randomBytes(48).toString("base64url"));
+      let assignedClientRef = "";
+
       const user = await db.transaction(async (tx) => {
+        for (let attempt = 0; attempt < 10; attempt++) {
+          const candidate = `VW-${randomBytes(5).toString("hex").toUpperCase()}`;
+          const [existingRef] = await tx.select({ id: users.id })
+            .from(users)
+            .where(eq(users.clientRef, candidate))
+            .limit(1);
+          if (!existingRef) {
+            assignedClientRef = candidate;
+            break;
+          }
+        }
+        if (!assignedClientRef) throw new Error("Unable to assign a unique Client ID");
+
         const [newUser] = await tx.insert(users).values({
+          clientRef: assignedClientRef,
           name: app.fullName,
           email: app.email,
-          password: app.password,
+          password: unavailablePasswordHash,
           phoneNumber: app.phone,
         }).returning();
 
@@ -735,11 +759,27 @@ export async function registerRoutes(
           isDemo: false,
         });
 
-        await tx.update(applications).set({ status: "approved", notes: req.body.notes || null }).where(eq(applications.id, id));
+        await tx.insert(accountSetupTokens).values({
+          userId: newUser.id,
+          tokenHash: setupTokenHash,
+          expiresAt: setupExpiresAt,
+        });
+
+        await tx.update(applications)
+        .set({ status: "approved", notes: req.body.notes || null })
+          .where(eq(applications.id, id));
         return newUser;
       });
 
-      res.json({ ok: true, message: "Application approved", userId: user.id, userName: user.name });
+      res.json({
+        ok: true,
+        message: "Application approved",
+        userId: user.id,
+        userName: user.name,
+        clientRef: user.clientRef,
+        activationPath: `/activate#token=${setupToken}`,
+        activationExpiresAt: setupExpiresAt.toISOString(),
+      });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -753,7 +793,9 @@ export async function registerRoutes(
       if (!app) return res.status(404).json({ message: "Application not found" });
       if (app.status !== "pending") return res.status(400).json({ message: "Application already processed" });
 
-      await db.update(applications).set({ status: "rejected", notes: req.body.notes || null }).where(eq(applications.id, id));
+      await db.update(applications)
+        .set({ status: "rejected", notes: req.body.notes || null })
+        .where(eq(applications.id, id));
       res.json({ ok: true, message: "Application rejected" });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
