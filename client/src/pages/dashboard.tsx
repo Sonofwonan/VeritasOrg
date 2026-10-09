@@ -92,8 +92,7 @@ export default function DashboardPage() {
   const pendingBalance = transactions?.filter(t => t.status === 'pending')
     .reduce((s, t) => t.toAccountId === primaryAccount?.id ? s + Number(t.amount) : s - Number(t.amount), 0) || 0;
 
-  const fmt  = (n: number) => `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2 })}`;
-  const fmtM = (n: number) => n >= 1e6 ? `$${(n/1e6).toFixed(2)}M` : fmt(n);
+  const fmt = (n: number) => `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   if (accountsLoading || investmentsLoading) {
     return (
@@ -157,17 +156,17 @@ export default function DashboardPage() {
 
         {/* ── Portfolio Header ────────────────────────────────────────────── */}
         <div className="bg-[#0B2218] rounded-sm overflow-hidden">
-          <div className="px-8 py-7 border-b border-white/10">
+          <div className="px-5 sm:px-8 py-7 border-b border-white/10">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               {/* Net worth */}
-              <div>
+              <div className="min-w-0">
                 <p className="label-caps text-white/40 mb-1">{getGreeting()}, {user?.name?.split(' ')[0]} · Portfolio Overview</p>
-                <div className="flex items-end gap-4">
-                  <span className={`font-serif text-5xl tracking-tight ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-net-worth">
-                    {isTransmitting ? "$0.00" : fmtM(totalBalance)}
+                <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+                  <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-net-worth">
+                    {isTransmitting ? "$0.00" : fmt(totalBalance)}
                   </span>
                   {isTransmitting ? (
-                    <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmtM(totalBalance)}</span>
+                    <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
                   ) : (
                     <div className="flex items-center gap-1 text-emerald-400 text-sm font-mono mb-1.5">
                       <TrendingUp className="w-3.5 h-3.5" />
@@ -198,14 +197,14 @@ export default function DashboardPage() {
           {/* KPI strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-white/10">
             {[
-              { label: 'Liquid Cash',    val: fmtM(cashTotal),    sub: pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending` : 'Available now', icon: Landmark },
-              { label: 'Investments',    val: fmtM(investTotal),  sub: 'Mkt value excl. cash', icon: BarChart3 },
+              { label: 'Liquid Cash',    val: fmt(cashTotal),    sub: pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending` : 'Available now', icon: Landmark },
+              { label: 'Investments',    val: fmt(investTotal),  sub: 'Mkt value excl. cash', icon: BarChart3 },
               { label: 'YTD Return',     val: fmt(ytdGain),       sub: '+8.4% vs. benchmark',  icon: TrendingUp },
               { label: 'Portfolio Risk', val: 'Moderate',         sub: 'Risk band: 5 / 10',     icon: ShieldCheck },
             ].map(({ label, val, sub, icon: Icon }) => (
-              <div key={label} className="px-6 py-4 flex items-center gap-3">
+              <div key={label} className="px-3 sm:px-6 py-4 flex items-center gap-2 sm:gap-3 min-w-0">
                 <Icon className="w-4 h-4 text-white/20 shrink-0" />
-                <div>
+                <div className="min-w-0">
                   <p className="label-caps text-white/30 mb-0.5">{label}</p>
                   {isTransmitting ? (
                     <div>
@@ -213,7 +212,7 @@ export default function DashboardPage() {
                       <p className="font-mono text-white/20 text-[10px] line-through">{val}</p>
                     </div>
                   ) : (
-                    <p className="font-mono text-white font-semibold text-sm">{val}</p>
+                    <p className="font-mono text-white font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]">{val}</p>
                   )}
                   <p className="text-white/25 text-[10px] mt-0.5">{isTransmitting ? "Clearing" : sub}</p>
                 </div>
