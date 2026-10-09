@@ -476,7 +476,7 @@ export default function DashboardPage() {
                         <div className="min-w-0">
                           <p className="text-sm font-semibold truncate">{txn.description}</p>
                           <p className="text-[10px] text-muted-foreground font-mono">
-                            {transactionDate(txn.createdAt)} · {incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : `Account #${txn.toAccountId || txn.fromAccountId}`} ·{' '}
+                            {transactionDate(txn.createdAt)} · {incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : "Account details unavailable"} ·{' '}
                             <span className={cn('font-bold capitalize',
                               isPending ? 'text-amber-600' : 'text-muted-foreground')}>
                               {txn.status}

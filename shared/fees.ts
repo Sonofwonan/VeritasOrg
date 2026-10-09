@@ -96,7 +96,7 @@ export interface ManagementValuation {
 export interface ClientFeeSummary {
   totalUnpaid: string;
   totalOverdraft?: string; totalOwed?: string;
-  accounts: { accountId: number; unpaidTotal: string; unpaidCount: number; overdraft?: string; amountOwed?: string }[];
+  accounts: { accountId: number; accountName?: string; unpaidTotal: string; unpaidCount: number; overdraft?: string; amountOwed?: string }[];
 }
 export interface FeePreview {
   enabled: boolean; timeZone: string; today: string; previewToken: string;

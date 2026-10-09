@@ -106,6 +106,20 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       assert(!html.includes("demo profile"));
     }
   });
+  it("identifies the sole dormant-account overdraft by name, not an account number", () => {
+    const summary={totalUnpaid:"0.00",totalOverdraft:"12398.48",totalOwed:"12398.48",accounts:[
+      {accountId:24,accountName:"Legacy Trust Account",unpaidTotal:"0.00",unpaidCount:0,overdraft:"0.00",amountOwed:"0.00"},
+      {accountId:25,accountName:"Brokerage Account",unpaidTotal:"0.00",unpaidCount:0,overdraft:"12398.48",amountOwed:"12398.48"},
+      {accountId:26,accountName:"Inheritance Trust Account",unpaidTotal:"0.00",unpaidCount:0,overdraft:"0.00",amountOwed:"0.00"},
+    ]};
+    const html=render(FeeLiability,{summary},[]);
+    assert(html.includes("Brokerage Account"));
+    assert(html.includes("/accounts/25"));
+    assert(html.includes("CAD $12,398.48"));
+    assert(!html.includes("24,796.96"));
+    assert(!html.includes("Trust Account"));
+    assert(!html.includes("Account #"));
+  });
   it("shows full-digit debt, a negative net account balance, account links and privacy/error states", () => {
     const summary = { totalUnpaid: "11636.48", accounts: [{ accountId: 24, unpaidTotal: "11636.48", unpaidCount: 32 }] };
     const html = render(FeeLiability, { summary }, []);

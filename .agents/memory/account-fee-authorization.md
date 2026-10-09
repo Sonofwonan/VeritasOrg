@@ -3,11 +3,11 @@ name: Account fee authorization
 description: User-approved management pricing, historical fixture scope, and fee visibility requirements.
 ---
 
-The user selected an annual management minimum of CAD 381 per account or 1.7% of AUM, whichever is greater, additional to monthly service fees, for Mary's Trust and Brokerage accounts.
+The user selected an annual management minimum of CAD 381 per account or 1.7% of AUM, whichever is greater, additional to monthly service fees. Their subsequent correction limits Mary's historical overdraft to the dormant Brokerage Account, not the Trust accounts.
 
-**Why:** The user explicitly supplied the CAD minimum and rate and chose additive pricing.
+**Why:** The user explicitly supplied the CAD minimum and rate and chose additive pricing, then clarified that the Trust holding the inheritance is newly opened and must not have years of dormant-account debt.
 
-**How to apply:** Preserve this pricing decision for this fictional profile unless the user changes it; do not portray it as an exchange-rate conversion or market-standard pricing.
+**How to apply:** Preserve this pricing decision for this fictional profile unless the user changes it; do not portray it as an exchange-rate conversion or market-standard pricing. Keep the funded inheritance Trust and dormant Brokerage, with historical debt only on Brokerage. Preserve the older Trust records for audit, refund their historical fees, and end their fee plans rather than deleting history or allowing their debt to recur.
 
 The user explicitly approved monthly fictional overdraft history and subsequently requested historical annual management fees, with January 1, 2025 and January 1, 2026 as the disclosed annual dates. This is fixture authorization only, not actual consent by a customer.
 

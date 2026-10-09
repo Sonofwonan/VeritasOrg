@@ -3,6 +3,12 @@ name: Balance display
 description: User's requirements for full-digit balances and CAD denomination.
 ---
 
+Every account must be identified by its account name, including debt breakdowns and selectors, rather than a number-only “Account #…” label.
+
+**Why:** The user corrected a fee-debt display that did not identify which named account incurred the overdraft.
+
+**How to apply:** Use the account's display name or account type in client and administrative views. Keep IDs for routing and internal reconciliation, not as substitutes for names.
+
 Show balances in full digits, not abbreviated million notation such as "$2.80M".
 
 **Why:** The user said abbreviated totals do not make sense and must be shown in full digits.

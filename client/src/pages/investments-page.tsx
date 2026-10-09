@@ -1,4 +1,6 @@
 import { useInvestments, useAccounts, useBuyInvestment, useSellInvestment, useMarketQuote } from "@/hooks/use-finances";
+import { accountLabel } from "@shared/account-display";
+import { formatCAD } from "@shared/fees";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -278,7 +280,7 @@ export default function InvestmentsPage() {
                       <SelectContent>
                         {investmentAccounts.map(a => (
                           <SelectItem key={a.id} value={a.id.toString()}>
-                            Account #{a.id} (${Number(a.balance).toFixed(0)})
+                            {accountLabel(a)} ({formatCAD(a.balance)})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -436,7 +438,7 @@ export default function InvestmentsPage() {
                       <SelectContent>
                         {investmentAccounts.map(a => (
                           <SelectItem key={a.id} value={a.id.toString()}>
-                            Account #{a.id} (${Number(a.balance).toFixed(0)})
+                            {accountLabel(a)} ({formatCAD(a.balance)})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -560,7 +562,7 @@ export default function InvestmentsPage() {
                         const monthlyInterest = (balance * apy) / 12;
                         return (
                           <TableRow key={a.id}>
-                            <TableCell>Account #{a.id}</TableCell>
+                            <TableCell>{accountLabel(a)}</TableCell>
                             <TableCell>${balance.toFixed(2)}</TableCell>
                             <TableCell>{(apy * 100).toFixed(2)}%</TableCell>
                             <TableCell className="font-medium text-green-600">+${monthlyInterest.toFixed(2)}</TableCell>

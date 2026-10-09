@@ -15,6 +15,7 @@ import {
 } from "../../shared/fees";
 import { applyMaryHistory, previewMaryHistory } from "./fictional-history";
 import { inheritanceAccount, INHERITANCE } from "./inheritance";
+import { correctMaryTrust } from "./correct-mary-trust";
 
 describe("Exact CAD amounts and calendar periods", () => {
   it("adds the agreed components exactly and rejects invalid precision", () => {
@@ -324,10 +325,10 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     const own = await request("/api/fees/summary", undefined, 1);
     assert.equal(own.status, 200);
     assert.deepEqual(own.body, { totalUnpaid: "363.64", totalOverdraft:"0.00",totalOwed:"363.64",
-      accounts: [{ accountId: 1, unpaidTotal: "363.64", unpaidCount: 1,overdraft:"0",amountOwed:"363.64" }] });
+      accounts: [{ accountId: 1, accountName:"Brokerage Account", unpaidTotal: "363.64", unpaidCount: 1,overdraft:"0",amountOwed:"363.64" }] });
     const other = await request("/api/fees/summary", undefined, 2);
     assert.deepEqual(other.body, { totalUnpaid: "0.00",totalOverdraft:"0.00",totalOwed:"0.00",
-      accounts: [{ accountId: 2, unpaidTotal: "0.00", unpaidCount: 0,overdraft:"0",amountOwed:"0.00" }] });
+      accounts: [{ accountId: 2, accountName:"Trust Account", unpaidTotal: "0.00", unpaidCount: 0,overdraft:"0",amountOwed:"0.00" }] });
     assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance, "0");
     await service.assessmentAction(run.results[0].id, "waive", "Fixture waiver");
     assert.equal((await service.clientSummary(1)).totalUnpaid, "0.00");
@@ -495,6 +496,59 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     assert(run.results.every(a=>a.total==="363.64" && a.status==="paid"));
     assert.equal((await service.clientSummary(1)).totalOverdraft,"25524.24");
     assert.equal((await service.run()).results.length,0);
+  });
+  it("corrects only legacy Trust fees once, preserves both funded and dormant accounts and returns account names",async()=>{
+    await seedFictional(); setDay("2026-10-09");
+    await applyMaryHistory(pool,clock);
+    const opened = await inheritanceAccount(pool,true,clock);
+    const inheritanceId = opened.account!.accountId;
+    const originals = (await query("SELECT id FROM transactions WHERE from_account_id=1 ORDER BY id")).rows.map(t=>t.id);
+    assert.equal((await correctMaryTrust(pool)).correction.refund,"12398.48");
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance,"-12398.48");
+    const results = await Promise.all([correctMaryTrust(pool,true),correctMaryTrust(pool,true)]);
+    assert.equal(results.filter(r=>!r.alreadyApplied).length,1);
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance,"0.00");
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=3")).rows[0].balance,"-12398.48");
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=$1",[inheritanceId])).rows[0].balance,"1622886.00");
+    assert.deepEqual((await query("SELECT id FROM transactions WHERE from_account_id=1 ORDER BY id")).rows.map(t=>t.id),originals);
+    assert.equal((await query("SELECT COUNT(*)::integer AS n FROM fee_assessments WHERE account_id=1 AND status='refunded'")).rows[0].n,34);
+    assert.equal((await query("SELECT SUM(balance)::text AS net FROM accounts WHERE user_id=1")).rows[0].net,"1610487.52");
+    const summary=await service.clientSummary(1);
+    assert.equal(summary.totalOwed,"12398.48");
+    assert.equal(summary.accounts.find(a=>a.accountId===3)?.accountName,"Brokerage Account");
+    assert.equal(summary.accounts.find(a=>a.accountId===1)?.accountName,"Legacy Trust Account");
+    assert.equal((await query("SELECT password FROM users WHERE id=1")).rows[0].password,"unchanged-fixture-credential");
+    assert.equal((await query("SELECT enabled FROM fee_settings")).rows[0].enabled,false);
+    await applyMaryHistory(pool,clock);
+    await service.settings(true); setDay("2026-11-08");
+    const run=await service.run();
+    assert(!run.results.some(a=>a.accountId===1));
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance,"0.00");
+    assert.equal(run.results.filter(a=>a.accountId===inheritanceId).length,1);
+  });
+  it("refuses a Trust correction if the inheritance or historical balance is inconsistent",async()=>{
+    await seedFictional(); setDay("2026-10-09");
+    await applyMaryHistory(pool,clock);
+    await assert.rejects(correctMaryTrust(pool,true),/separate inheritance Trust/);
+    await inheritanceAccount(pool,true,clock);
+    await query("UPDATE accounts SET balance=-1 WHERE id=1");
+    await assert.rejects(correctMaryTrust(pool,true),/balances or fees changed/);
+    assert.equal((await query("SELECT COUNT(*)::integer AS n FROM transactions WHERE transaction_type='fee_refund'")).rows[0].n,0);
+  });
+  it("rolls back all Trust correction refunds, states and labels when the final audit fails",async()=>{
+    await seedFictional(); setDay("2026-10-09");
+    await applyMaryHistory(pool,clock); await inheritanceAccount(pool,true,clock);
+    await query(`CREATE FUNCTION reject_correction() RETURNS trigger AS $$ BEGIN
+      IF NEW.action='fictional_legacy_trust_fees_corrected' THEN RAISE EXCEPTION 'Injected correction audit failure'; END IF;
+      RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER reject_correction BEFORE INSERT ON fee_audit FOR EACH ROW EXECUTE FUNCTION reject_correction()`);
+    try {
+      await assert.rejects(correctMaryTrust(pool,true),/Injected correction audit failure/);
+      assert.equal((await query("SELECT balance,display_name FROM accounts WHERE id=1")).rows[0].balance,"-12398.48");
+      assert.equal((await query("SELECT display_name FROM accounts WHERE id=1")).rows[0].display_name,null);
+      assert.equal((await query("SELECT COUNT(*)::integer AS n FROM transactions WHERE transaction_type='fee_refund'")).rows[0].n,0);
+      assert.equal((await query("SELECT COUNT(*)::integer AS n FROM fee_assessments WHERE account_id=1 AND status='paid'")).rows[0].n,34);
+    } finally { await query("DROP TRIGGER reject_correction ON fee_audit; DROP FUNCTION reject_correction()"); }
   });
   it("posts the dated inheritance once under concurrent requests without changing existing accounts or global billing",async()=>{
     await seedFictional(); setDay("2026-10-09");

@@ -34,7 +34,7 @@ export function FeeLiability({ summary, error, retry, hidden = false }: {
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {summary.accounts.filter(account => Number(account.unpaidTotal) > 0 || Number(account.overdraft || 0) > 0).map(account => (
           <Link key={account.accountId} href={`/accounts/${account.accountId}`} className="underline underline-offset-4">
-            Account #{account.accountId}: {hidden ? "••••••" : formatCAD(account.amountOwed || account.unpaidTotal || "0.00")} owed
+            {account.accountName || "Account details unavailable"}: {hidden ? "••••••" : formatCAD(account.amountOwed || account.unpaidTotal || "0.00")} owed
             {Number(account.overdraft || 0) > 0 ? ` · ${hidden ? "••••••" : formatCAD(-Number(account.overdraft))} negative cash ledger` : ""}
             {Number(account.unpaidCount) > 0 ? ` · ${account.unpaidCount} unpaid fees` : ""}
           </Link>

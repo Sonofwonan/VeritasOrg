@@ -115,13 +115,14 @@ export class FeeService {
     // Include all unpaid periods, even for paused/ended plans. Paid fees already
     // reduced cash; waived/refunded/skipped assessments are not liabilities.
     const { rows } = await this.pool.query(`SELECT a.id AS account_id,
+      COALESCE(NULLIF(a.display_name,''),a.account_type) AS account_name,
       COALESCE(SUM(f.total) FILTER (WHERE f.status='unpaid'),0)::text AS unpaid_total,
       COUNT(f.id) FILTER (WHERE f.status='unpaid')::integer AS unpaid_count
       ,GREATEST(-a.balance,0)::text AS overdraft
       FROM accounts a LEFT JOIN fee_assessments f ON f.account_id=a.id
       WHERE a.user_id=$1 GROUP BY a.id ORDER BY a.id`, [userId]);
     const accounts = rows.map(row => ({
-      accountId: row.account_id, unpaidTotal: centsToMoney(moneyToCents(row.unpaid_total)), unpaidCount: row.unpaid_count,
+      accountId: row.account_id, accountName: row.account_name, unpaidTotal: centsToMoney(moneyToCents(row.unpaid_total)), unpaidCount: row.unpaid_count,
       overdraft: row.overdraft,
       amountOwed: exactAdd(row.overdraft, row.unpaid_total),
     }));

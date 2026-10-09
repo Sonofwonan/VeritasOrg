@@ -46,6 +46,10 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
 
   const total = useMemo(() => schedule.components.reduce((sum, item) => sum + (Number(item.amount) || 0), 0), [schedule.components]);
   const overview = fees.data;
+  const nameForAccount = (id: number) => {
+    const account = overview?.accounts.find(account => account.id === id);
+    return account ? accountLabel(account) : "Account details unavailable";
+  };
   const mutationBusy = action.isPending;
   const minDate = (() => {
     const date = new Date(`${billingToday()}T00:00:00Z`);
@@ -185,7 +189,7 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
             <label className="label-caps mt-4 block text-slate-400" htmlFor="fee-offer-account">Existing account</label>
              <select id="fee-offer-account" value={accountId} onChange={e => { setAccountId(e.target.value); setServicesConfirmed(false); }} className="mt-1 w-full border-b border-slate-600 bg-slate-900 py-2 text-sm text-white">
               <option value="">Select an account</option>
-              {overview.accounts.map(account => <option key={account.id} value={account.id}>{account.userName} · {accountLabel(account)} · Account #{account.id} · {formatCAD(account.balance)}</option>)}
+              {overview.accounts.map(account => <option key={account.id} value={account.id}>{account.userName} · {accountLabel(account)} · {formatCAD(account.balance)}</option>)}
             </select>
             <label className="label-caps mt-4 block text-slate-400" htmlFor="fee-first-date">Prospective first charge date · Toronto</label>
             <Input id="fee-first-date" type="date" min={minDate} value={firstChargeDate} onChange={e => setFirstChargeDate(e.target.value)} className={inputClass} />
@@ -209,7 +213,7 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
           <div>
             <h3 className="font-semibold text-white">Create management offer</h3>
             <label className="label-caps mt-4 block text-slate-400" htmlFor="management-account">Client account</label>
-            <select id="management-account" value={managementAccount} onChange={e => setManagementAccount(e.target.value)} className="mt-1 w-full border-b border-slate-600 bg-slate-900 py-2 text-sm text-white"><option value="">Select an account</option>{overview.accounts.map(account => <option key={account.id} value={account.id}>{account.userName} · {accountLabel(account)} · Account #{account.id} · {formatCAD(account.balance)}</option>)}</select>
+            <select id="management-account" value={managementAccount} onChange={e => setManagementAccount(e.target.value)} className="mt-1 w-full border-b border-slate-600 bg-slate-900 py-2 text-sm text-white"><option value="">Select an account</option>{overview.accounts.map(account => <option key={account.id} value={account.id}>{account.userName} · {accountLabel(account)} · {formatCAD(account.balance)}</option>)}</select>
             <label className="label-caps mt-4 block text-slate-400" htmlFor="management-opening-date">Prospective contract opening date</label><Input id="management-opening-date" type="date" min={minDate} value={openingDate} onChange={e => setOpeningDate(e.target.value)} className={inputClass} />
             <div className="mt-4 grid grid-cols-2 gap-4"><div><label className="label-caps text-slate-400" htmlFor="management-minimum">Annual minimum · CAD</label><Input id="management-minimum" inputMode="decimal" value={annualMinimum} onChange={e => setAnnualMinimum(e.target.value)} className={inputClass} /></div><div><label className="label-caps text-slate-400" htmlFor="management-rate">Annual AUM rate · %</label><Input id="management-rate" inputMode="decimal" value={annualRate} onChange={e => setAnnualRate(e.target.value)} className={inputClass} /></div></div>
             <div className="mt-4 border-l-2 border-amber-500/50 bg-slate-900/40 p-3 text-xs leading-relaxed text-slate-300"><p className="font-semibold text-amber-200">Next charge: {validateBillingDate(openingDate) ? dateLabel(annualDate(openingDate, 0)) : "Not scheduled"}</p><p className="mt-1">Annual arrears calculation: greater of documented period-end holdings × rate or minimum; rounded to cents. Valuation excludes cash and fee debt. Empty holdings can be snapshotted on the anniversary itself; other missing valuations block posting. Fee overdraft applies only after explicit contract acceptance.</p></div>
@@ -263,7 +267,7 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
           <div className="divide-y divide-slate-700">
             {preview.data.charges.length === 0 ? <p className="p-5 text-sm text-slate-400">No enrollments are due on {dateLabel(preview.data.today)}.</p> : preview.data.charges.map((charge, i) => (
                 <div key={`${charge.contractId ? `contract-${charge.contractId}` : `enrollment-${charge.enrollmentId}`}-${charge.dueDate}-${i}`} className="grid gap-2 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
-                <div><p className="text-sm font-semibold text-white">{charge.userName} <span className="text-slate-500">· account {charge.accountId}</span></p><p className="mt-0.5 text-xs text-slate-400">{charge.kind === "management" ? `Management contract ${charge.contractId}` : `Enrollment ${charge.enrollmentId}`} · period {charge.period + 1} · due {dateLabel(charge.dueDate)} · {charge.funding === "fee_overdraft" ? "fee overdraft" : "cash-only"}{charge.reason ? ` · ${charge.reason}` : ""}</p></div>
+                <div><p className="text-sm font-semibold text-white">{charge.userName} <span className="text-slate-500">· {nameForAccount(charge.accountId)}</span></p><p className="mt-0.5 text-xs text-slate-400">{charge.kind === "management" ? `Management contract ${charge.contractId}` : `Enrollment ${charge.enrollmentId}`} · period {charge.period + 1} · due {dateLabel(charge.dueDate)} · {charge.funding === "fee_overdraft" ? "fee overdraft" : "cash-only"}{charge.reason ? ` · ${charge.reason}` : ""}</p></div>
                 <div className="flex items-center justify-between gap-4 sm:justify-end"><span className={`label-caps ${charge.outcome === "payable" ? "text-emerald-300" : charge.outcome === "unpaid" ? "text-amber-300" : "text-slate-400"}`}>{charge.outcome}</span><span className="font-mono text-sm tabular-nums text-white">{formatCAD(charge.total)}</span></div>
               </div>
             ))}
@@ -280,7 +284,7 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
 
       {runResults && <section className="border border-emerald-700/50 bg-emerald-950/20 p-5" aria-live="polite">
         <h3 className="font-serif text-xl text-white">Run results</h3>
-         {runResults.length ? <div className="mt-3 divide-y divide-emerald-900/60">{runResults.map(row => <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"><span>Account {row.accountId} · period {row.period + 1} · {dateLabel(row.dueDate)}</span><span className="font-mono tabular-nums">{formatCAD(row.total)} · {row.status}</span></div>)}</div> : <p className="mt-2 text-sm text-emerald-100/70">The service returned no assessment rows. Refresh the ledger to confirm the recorded outcome.</p>}
+         {runResults.length ? <div className="mt-3 divide-y divide-emerald-900/60">{runResults.map(row => <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"><span>{nameForAccount(row.accountId)} · period {row.period + 1} · {dateLabel(row.dueDate)}</span><span className="font-mono tabular-nums">{formatCAD(row.total)} · {row.status}</span></div>)}</div> : <p className="mt-2 text-sm text-emerald-100/70">The service returned no assessment rows. Refresh the ledger to confirm the recorded outcome.</p>}
       </section>}
 
       <section className="border border-slate-700 bg-slate-800/30">
@@ -317,7 +321,7 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
           <div className="divide-y divide-slate-700 lg:border-r lg:border-slate-700">
             <h3 className="label-caps px-5 py-3 text-slate-500">Assessment history</h3>
             {overview.assessments.length === 0 ? <p className="p-5 text-sm text-slate-400">No assessments recorded.</p> : overview.assessments.map((assessment: FeeAssessment) => (
-              <AssessmentRow key={assessment.id} assessment={assessment} pending={mutationBusy} onAction={(name) => askConfirm({
+              <AssessmentRow key={assessment.id} assessment={assessment} accountName={nameForAccount(assessment.accountId)} pending={mutationBusy} onAction={(name) => askConfirm({
                 path: `/assessments/${assessment.id}/${name}`,
                 body: { confirmed: true, reason: "" },
                 title: `${name[0].toUpperCase()}${name.slice(1)} assessment ${assessment.id}?`,
@@ -353,10 +357,10 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
   );
 }
 
-function AssessmentRow({ assessment, pending, onAction }: { assessment: FeeAssessment; pending: boolean; onAction: (action: "retry" | "waive" | "refund") => void }) {
+function AssessmentRow({ assessment, accountName, pending, onAction }: { assessment: FeeAssessment; accountName: string; pending: boolean; onAction: (action: "retry" | "waive" | "refund") => void }) {
   return <div className="p-4">
     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-      <div><div className="flex flex-wrap items-center gap-2"><span className="text-sm font-semibold text-white">Assessment {assessment.id} · {assessment.kind === "management" ? "annual management" : "monthly services"}</span><span className="label-caps border border-slate-600 px-2 py-0.5 text-slate-300">{assessment.status}</span></div><p className="mt-1 text-xs text-slate-400">Account {assessment.accountId} · period {assessment.period + 1} · {dateLabel(assessment.dueDate)}{assessment.contractId ? ` · contract ${assessment.contractId}` : ""} · {assessment.funding === "fee_overdraft" ? "authorized fee overdraft" : "cash only"}{assessment.transactionId ? ` · ledger transaction ${assessment.transactionId}` : ""}</p>{assessment.reason && <p className="mt-1 text-xs text-slate-500">Reason: {assessment.reason}</p>}</div>
+      <div><div className="flex flex-wrap items-center gap-2"><span className="text-sm font-semibold text-white">Assessment {assessment.id} · {assessment.kind === "management" ? "annual management" : "monthly services"}</span><span className="label-caps border border-slate-600 px-2 py-0.5 text-slate-300">{assessment.status}</span></div><p className="mt-1 text-xs text-slate-400">{accountName} · period {assessment.period + 1} · {dateLabel(assessment.dueDate)}{assessment.contractId ? ` · contract ${assessment.contractId}` : ""} · {assessment.funding === "fee_overdraft" ? "authorized fee overdraft" : "cash only"}{assessment.transactionId ? ` · ledger transaction ${assessment.transactionId}` : ""}</p>{assessment.reason && <p className="mt-1 text-xs text-slate-500">Reason: {assessment.reason}</p>}</div>
       <span className="font-mono text-sm tabular-nums text-amber-300">{formatCAD(assessment.total)}</span>
     </div>
     <details className="mt-2 text-xs text-slate-400"><summary className="cursor-pointer">Itemization and calculation</summary>
