@@ -32,3 +32,15 @@ Show unpaid service-fee debt on the dashboard and account summaries, not only in
 **Why:** The user said they could not see the fees on the dashboard and that they must appear there or as a negative account amount.
 
 **How to apply:** Distinguish cash ledger balance from net balance after unpaid fees. Deduct only unpaid liabilities once; paid fees already reduced cash. Do not describe unpaid fees as an interest-bearing overdraft loan.
+
+Each account must have its own fees, overdrafted from that respective account, rather than only a separate unpaid-fee display.
+
+**Why:** The user explicitly said, “Each account must have fees and all this fees must be overdrafted from their respective accounts.”
+
+**How to apply:** Implement actual negative fee-funded ledger balances under explicit account-level authorization. Preserve previously accepted terms; never subtract already-posted fee debt a second time from net worth.
+
+For discretionary management, an annual minimum must continue after investments are liquidated if the management contract stays open, including on the fictional Mary Scott profile.
+
+**Why:** The user requested that this continuing management fee increase Mary's debt beyond the previous Trust-only fees.
+
+**How to apply:** Model contract termination separately from zero holdings. Confirm exact CAD pricing, annual AUM rate, and whether the minimum is additional to monthly fees before posting new charges; do not infer overdraft interest.
