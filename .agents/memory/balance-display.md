@@ -21,6 +21,12 @@ Keep other clients and the existing service-pricing plans in CAD. Mary Scott's a
 
 **How to apply:** Remove CAD wording from all Mary's client-facing balance, fee, transaction and statement views; use only £, never GBP on her dashboard. Stored financial records and shared accepted pricing remain unchanged. Do not relabel a CAD/USD market quote as GBP/USD; omit it from her view rather than inventing an exchange rate. Do not change unrelated clients' currencies.
 
+Currency-symbol exceptions are explicit designations, not client-controlled profile preferences.
+
+**Why:** Letting ordinary clients change the presentation symbol would make unconverted CAD ledger amounts appear to be pounds and violate the instruction to leave other clients in CAD.
+
+**How to apply:** Reject client profile requests to change display currency. Any future staff currency workflow must separately authorize the designation and retain the stated no-conversion boundary.
+
 The CAD service-fee schedule is nominal pricing, not an exchange-rate conversion of the copied GBP example.
 
 **Why:** The approved fee plan adopted CAD pricing and explicitly excluded foreign-exchange conversion and claims that the example represents typical bank fees.

@@ -88,7 +88,9 @@ export class DatabaseStorage implements IStorage {
 
   async getAccounts(userId: number): Promise<Account[]> {
     try {
-      return await db.select().from(accounts).where(eq(accounts.userId, userId));
+      // Updates can move PostgreSQL rows physically. Keep account previews and
+      // primary-account fallbacks stable across fee/transfer refreshes.
+      return await db.select().from(accounts).where(eq(accounts.userId, userId)).orderBy(accounts.id);
     } catch (err) {
       console.error('Error fetching accounts for user:', userId, err);
       throw err;

@@ -254,8 +254,10 @@ export async function registerRoutes(
     if (["debtClearanceRequired", "debtPaymentAccountId", "debtPaymentConfirmedAt"].some(key => key in req.body)) {
       return res.status(403).json({ message: "Funds access policy cannot be changed by the client" });
     }
-    if (req.body.displayCurrency !== undefined && !["CAD", "GBP"].includes(req.body.displayCurrency)) {
-      return res.status(400).json({ message: "Unsupported balance display currency" });
+    // Currency is an explicitly authorized designation, not a self-service
+    // preference: changing a symbol does not convert the underlying ledger.
+    if (Object.prototype.hasOwnProperty.call(req.body, "displayCurrency")) {
+      return res.status(403).json({ message: "Balance display currency cannot be changed through client profile settings" });
     }
     try {
       const user = await storage.updateUser((req.user as User).id, req.body);

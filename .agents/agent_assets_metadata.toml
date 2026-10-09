@@ -7,3 +7,31 @@ uri = "file://veritas_historical_seed.tar.gz"
 type = "unspecified"
 title = "Veritas Historical Data SQL (2015–2026)"
 logical_id = "78a79d0e-e5f4-417c-8589-ba48539d2f9f"
+
+[[outputs]]
+id = "O55yIAgVVl7rpm6TDgbPr"
+uri = "file://test-results/balances/runs/balances-normal-login-fund-7c7d1--and-sixth-positive-account-desktop/signed-in-funded-balance-and-debt.png"
+type = "image"
+title = "Signed-in desktop balance check"
+description = "Isolated fictional client: funded cash plus holdings above, named fee debt and negative ledger below."
+logical_id = "c8c5604d-4d39-49af-a913-f95d3a34ef3d"
+content_hash = "sha256:44cdb98546f4cfed2f0f52ec22dafbb93fd0564fce100c61853125591344761c"
+size = 164190
+mtime_ms = 1791552394800
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:fbae4b85-6efb-42af-9c4c-30c8c40979d9/c8c5604d-4d39-49af-a913-f95d3a34ef3d/0630adc7-8694-40dd-99e9-3a6e030e1464"
+storage_version_token = "1791552779978534"
+content_type = "image/png"
+
+[[outputs]]
+id = "FFTU79T0hzpgTAa-DA3Sj"
+uri = "file://test-results/balances/runs/balances-normal-login-fund-7c7d1--and-sixth-positive-account-mobile/signed-in-funded-balance-and-debt.png"
+type = "image"
+title = "Signed-in mobile balance check"
+description = "360-pixel viewport with full-digit CAD funded balance and separate named debt."
+logical_id = "5e8eda2a-d1bb-4b7a-a3f1-a895b3a851a9"
+content_hash = "sha256:1f56e8157d6a9408b17cd8bca46c1b10be8dfb1fdbb9db67b7a840945c00b9ae"
+size = 70744
+mtime_ms = 1791552438328
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:fbae4b85-6efb-42af-9c4c-30c8c40979d9/5e8eda2a-d1bb-4b7a-a3f1-a895b3a851a9/116d1887-2837-4f33-9ab7-0c5b15cf141f"
+storage_version_token = "1791552780587227"
+content_type = "image/png"
