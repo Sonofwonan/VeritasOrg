@@ -50,3 +50,9 @@ Keep newly deposited funds visibly distinguishable from existing overdraft debt 
 **Why:** The user said current balances and the deposit must reflect in the total, and asked to identify the overdraft separately from the main deposit.
 
 **How to apply:** Show current account balances and an account-specific debt breakdown alongside the net total. Distinguish an original deposit transaction from the account's changing current balance; never obscure debt simply because another account has enough funds to offset it in aggregate.
+
+For the inheritance deposit, show its date and amount in transaction history; on the dashboard show current balances and the total rather than a separate original-deposit figure.
+
+**Why:** The user clarified that transaction history must show the deposit date and the balance should be reflected in the dashboard or total balance.
+
+**How to apply:** Preserve the dated deposit entry, include its effect once in current totals, and retain separate overdraft identification without adding an original-inheritance-amount dashboard card.
