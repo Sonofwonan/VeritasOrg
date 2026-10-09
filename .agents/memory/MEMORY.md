@@ -3,3 +3,4 @@
 - [Balance display](balance-display.md) — User requires full-digit balances and says to keep everything in CAD for now.
 - [Fictional test records](fictional-test-records.md) — Mary Scott is fictional test data; use normal screens without a visible demo label, preserving internal test provenance.
 - [Account fee authorization](account-fee-authorization.md) — Approved CAD annual pricing and fictional-history scope; preserve real clients’ accepted cash-only terms.
+- [Post-merge safety](post-merge-safety.md) — Automatic setup may update schema and build, but must never seed clients, backfill fictional history, or process billing.
