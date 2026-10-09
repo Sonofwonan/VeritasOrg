@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { eq, sql, and } from "drizzle-orm";
+import { moneyToCents } from "@shared/fees";
 import {
   users, accounts, transactions, investments, payees, institutionalTransfers,
   type User, type InsertUser, type Account, type InsertAccount,
@@ -118,9 +119,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async transferFunds(fromAccountId: number, toAccountId: number, amount: string): Promise<Transaction> {
+    if (moneyToCents(amount) <= 0n) throw new Error("Amount must be positive");
     return await db.transaction(async (tx) => {
       // 1. Deduct from sender
-      const [fromAccount] = await tx.select().from(accounts).where(eq(accounts.id, fromAccountId));
+      // Lock before checking: a fee worker may be spending the same cash.
+      const lockedAccounts = await tx.select().from(accounts)
+        .where(sql`${accounts.id} IN (${fromAccountId}, ${toAccountId})`)
+        .orderBy(accounts.id).for("update");
+      const fromAccount = lockedAccounts.find(a => a.id === fromAccountId);
       if (!fromAccount) throw new Error("Source account not found");
       if (Number(fromAccount.balance) < Number(amount)) throw new Error("Insufficient funds");
 
@@ -129,7 +135,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(accounts.id, fromAccountId));
 
       // 2. Add to receiver if it's an internal transfer (same user)
-      const [toAccount] = await tx.select().from(accounts).where(eq(accounts.id, toAccountId));
+      const toAccount = lockedAccounts.find(a => a.id === toAccountId);
       const status = (toAccount && toAccount.userId === fromAccount.userId) ? 'completed' : 'pending';
 
       if (status === 'completed' && toAccount) {
@@ -154,9 +160,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async buyAsset(accountId: number, symbol: string, amount: string, price: number): Promise<Investment> {
+    if (moneyToCents(amount) <= 0n) throw new Error("Amount must be positive");
     return await db.transaction(async (tx) => {
       // 1. Check balance
-      const [account] = await tx.select().from(accounts).where(eq(accounts.id, accountId));
+      const [account] = await tx.select().from(accounts).where(eq(accounts.id, accountId)).for("update");
       if (!account) throw new Error("Account not found");
       if (Number(account.balance) < Number(amount)) throw new Error("Insufficient funds");
 
@@ -256,8 +263,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInstitutionalTransfer(data: InsertInstitutionalTransfer): Promise<InstitutionalTransfer> {
-    const [record] = await db.insert(institutionalTransfers).values(data).returning();
-    return record;
+    return db.transaction(async tx => {
+      // Serializes transfer locks with fee eligibility checks on the same owner.
+      await tx.select({ id: users.id }).from(users).where(eq(users.id, data.userId)).for("update");
+      const [record] = await tx.insert(institutionalTransfers).values(data).returning();
+      return record;
+    });
   }
 
   async getInstitutionalTransfers(userId: number): Promise<InstitutionalTransfer[]> {
@@ -277,11 +288,14 @@ export class DatabaseStorage implements IStorage {
     const updates: any = { status };
     if (estimatedCompletionDate) updates.estimatedCompletionDate = estimatedCompletionDate;
     if (adminNotes !== undefined) updates.adminNotes = adminNotes;
-    const [record] = await db.update(institutionalTransfers)
-      .set(updates)
-      .where(eq(institutionalTransfers.id, id))
-      .returning();
-    return record;
+    return db.transaction(async tx => {
+      const [existing] = await tx.select().from(institutionalTransfers).where(eq(institutionalTransfers.id, id));
+      if (!existing) throw new Error("Transfer not found");
+      await tx.select({ id: users.id }).from(users).where(eq(users.id, existing.userId)).for("update");
+      const [record] = await tx.update(institutionalTransfers).set(updates)
+        .where(eq(institutionalTransfers.id, id)).returning();
+      return record;
+    });
   }
 }
 

@@ -8,6 +8,7 @@
     "build": "NODE_ENV=production tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "test:fees": "tsx --test server/fees/fees.test.ts && tsx script/test-fee-ui.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

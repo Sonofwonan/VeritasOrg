@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { ClientFees } from "@/components/fees/client-fees";
+import { formatCAD } from "@shared/fees";
 
 type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' | '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
 
@@ -82,9 +84,12 @@ export default function AccountDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Current Balance</p>
-              <p className="text-5xl font-bold font-display text-primary">
-                ${accountBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <p className="text-sm text-muted-foreground mb-2">Recorded cash ledger balance · CAD</p>
+              <p className="break-words font-mono text-[clamp(1.75rem,7vw,3rem)] font-bold tabular-nums text-primary">
+                {formatCAD(accountBalance)}
+              </p>
+              <p className="mt-2 max-w-xl text-xs leading-relaxed text-muted-foreground">
+                This is the account ledger balance used to determine whether a fee assessment is payable. It is separate from the market value of investment holdings; holdings are not used or sold to pay service fees.
               </p>
             </div>
           </CardContent>
@@ -153,7 +158,7 @@ export default function AccountDetailPage() {
                         "font-bold text-lg",
                         transaction.status === 'pending' ? 'text-red-600' : (isIncoming ? 'text-green-600' : 'text-red-600')
                       )}>
-                        {isIncoming ? '+' : '-'}${Number(transaction.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                         {isIncoming ? '+' : '-'}{formatCAD(transaction.amount)}
                       </p>
                       <Badge variant={transaction.status === 'completed' ? 'default' : 'destructive'} className="text-xs mt-1 capitalize">
                         {transaction.status}
@@ -188,7 +193,7 @@ export default function AccountDetailPage() {
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                   <span className="text-zinc-400 text-sm">Amount</span>
                   <span className={cn("font-black text-lg", selectedTxn?.status === 'pending' ? "text-red-500" : (selectedTxn?.toAccountId === accountId ? "text-emerald-500" : "text-red-500"))}>
-                    ${Number(selectedTxn?.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatCAD(selectedTxn?.amount ?? 0)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
@@ -217,6 +222,7 @@ export default function AccountDetailPage() {
           </Dialog>
         </CardContent>
       </Card>
+      <ClientFees accountId={accountId} />
     </LayoutShell>
   );
 }

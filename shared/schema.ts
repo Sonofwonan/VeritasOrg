@@ -12,7 +12,7 @@ export const accountTypeEnum = pgEnum('account_type', [
   '529 Savings Plan',
   'Trust Account',
 ]);
-export const transactionTypeEnum = pgEnum('transaction_type', ['transfer', 'buy', 'sell', 'payment', 'withdrawal']);
+export const transactionTypeEnum = pgEnum('transaction_type', ['transfer', 'buy', 'sell', 'payment', 'withdrawal', 'fee', 'fee_refund']);
 export const transactionStatusEnum = pgEnum('transaction_status', ['completed', 'pending', 'failed']);
 
 export const users = pgTable("users", {
@@ -195,7 +195,7 @@ export const insertUserSchema = createInsertSchema(users, {
 }).omit({ id: true, createdAt: true });
 export const insertAccountSchema = createInsertSchema(accounts, {
   userId: z.number().optional(),
-  balance: z.string().min(1, "Initial deposit is required").refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Initial deposit must be at least 0"),
+  balance: z.string().min(1, "Initial deposit is required").refine((val) => Number.isFinite(Number(val)) && Number(val) >= 0, "Initial deposit must be a finite amount of at least 0"),
 }).omit({ id: true, createdAt: true });
 export const insertPayeeSchema = createInsertSchema(payees).omit({ id: true, createdAt: true });
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true });
@@ -212,3 +212,5 @@ export type InsertAccount = z.infer<typeof insertAccountSchema>;
 export type InsertPayee = z.infer<typeof insertPayeeSchema>;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type InsertInvestment = z.infer<typeof insertInvestmentSchema>;
+
+export * from "./fee-schema";

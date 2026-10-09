@@ -15,6 +15,7 @@ import {
   ArrowLeftRight, Clock, Info, ChevronRight, Landmark,
   ShieldCheck, Briefcase, Activity, BarChart3, Building2, Lock
 } from "lucide-react";
+import { formatCAD } from "@shared/fees";
 
 // ── Market index data (static realistic) ─────────────────────────────────────
 const MARKET_INDICES = [
@@ -92,7 +93,7 @@ export default function DashboardPage() {
   const pendingBalance = transactions?.filter(t => t.status === 'pending')
     .reduce((s, t) => t.toAccountId === primaryAccount?.id ? s + Number(t.amount) : s - Number(t.amount), 0) || 0;
 
-  const fmt = (n: number) => `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmt = (n: number) => formatCAD(n);
 
   if (accountsLoading || investmentsLoading) {
     return (
@@ -163,7 +164,7 @@ export default function DashboardPage() {
                 <p className="label-caps text-white/40 mb-1">{getGreeting()}, {user?.name?.split(' ')[0]} · Portfolio Overview</p>
                 <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
                   <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-net-worth">
-                    {isTransmitting ? "$0.00" : fmt(totalBalance)}
+                    {isTransmitting ? formatCAD(0) : fmt(totalBalance)}
                   </span>
                   {isTransmitting ? (
                     <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
@@ -208,7 +209,7 @@ export default function DashboardPage() {
                   <p className="label-caps text-white/30 mb-0.5">{label}</p>
                   {isTransmitting ? (
                     <div>
-                      <p className="font-mono text-violet-300 font-semibold text-sm">$0.00</p>
+                      <p className="font-mono text-violet-300 font-semibold text-sm">{formatCAD(0)}</p>
                       <p className="font-mono text-white/20 text-[10px] line-through">{val}</p>
                     </div>
                   ) : (
@@ -559,7 +560,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <p className="font-mono text-xs font-bold tabular-nums">
-                          ${Number(acc.balance).toLocaleString('en-CA', { minimumFractionDigits: 2 })}
+                          {formatCAD(acc.balance)}
                         </p>
                         <ChevronRight className="w-3 h-3 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                       </div>

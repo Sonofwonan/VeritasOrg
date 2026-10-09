@@ -14,13 +14,13 @@ import {
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog as ShadDialog, DialogContent as ShadDialogContent, DialogHeader as ShadDialogHeader, DialogTitle as ShadDialogTitle, DialogFooter as ShadDialogFooter } from "@/components/ui/dialog";
+import { AdminFees } from "@/components/fees/admin-fees";
+import { formatCAD } from "@shared/fees";
 
 const SESSION_KEY = "vw_admin_key";
 
 function fmt(amount: string | number) {
-  const n = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(n)) return "$0.00";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+  return formatCAD(amount);
 }
 
 function adminFetch(path: string, adminKey: string, options: RequestInit = {}) {
@@ -525,6 +525,10 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="fees" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
+              <DollarSign className="w-3.5 h-3.5 mr-1.5" />
+              Service Fees
+            </TabsTrigger>
             <TabsTrigger value="wire" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
               <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
               Wire & Beneficiaries
@@ -535,6 +539,10 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
               )}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="fees" className="mt-4">
+            <AdminFees adminKey={adminKey} />
+          </TabsContent>
 
           {/* ── Client Applications ── */}
           <TabsContent value="applications" className="mt-4">

@@ -10,6 +10,8 @@ import { db, pool } from "./db";
 import { eq, or, desc, sql } from "drizzle-orm";
 import twilio from "twilio";
 import passport from "passport";
+import { registerFeeRoutes } from "./fees/routes";
+import { moneyToCents } from "@shared/fees";
 
 // Twilio Notification Setup (SMS/WhatsApp)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -202,6 +204,8 @@ export async function registerRoutes(
     if (key !== ADMIN_PASSWORD) return res.status(401).json({ message: "Unauthorized" });
     next();
   };
+
+  await registerFeeRoutes(app, pool, requireAdmin);
 
   // Auth Routes
   app.post(api.auth.register.path, (_req, res) => {
@@ -567,8 +571,9 @@ export async function registerRoutes(
       }
 
       // Record external payment (deduct balance and record transaction)
+      if (moneyToCents(amount) <= 0n) throw new Error("Amount must be positive");
       const transaction = await db.transaction(async (tx) => {
-        const [acc] = await tx.select().from(accounts).where(eq(accounts.id, fromAccountId));
+        const [acc] = await tx.select().from(accounts).where(eq(accounts.id, fromAccountId)).for("update");
         if (!acc || Number(acc.balance) < Number(amount)) {
           throw new Error("Insufficient funds");
         }

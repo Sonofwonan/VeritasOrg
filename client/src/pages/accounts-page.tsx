@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { formatCAD } from "@shared/fees";
 
 type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' |
   '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
@@ -96,13 +97,7 @@ export default function AccountsPage() {
   const investTotal = accounts?.filter(a => categoryOf(a.accountType) === 'investment').reduce((s, a) => s + Number(a.balance), 0) || 0;
   const bizTotal = accounts?.filter(a => categoryOf(a.accountType) === 'business').reduce((s, a) => s + Number(a.balance), 0) || 0;
 
-  const fmt = (n: number) => hideBalances ? '••••••' : `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2 })}`;
-  const fmtShort = (n: number) => {
-    if (hideBalances) return '••••';
-    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
-    if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-    return `$${n.toFixed(2)}`;
-  };
+  const fmt = (n: number) => hideBalances ? '••••••' : formatCAD(n);
 
   const handleCreate = () => {
     if (!user) return;
@@ -184,8 +179,8 @@ export default function AccountsPage() {
             <div>
               <p className="label-caps text-white/40 mb-2">Total Portfolio Value</p>
               <div className="flex items-end gap-4">
-                <span className={`font-serif text-5xl tracking-tight ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
-                  {isTransmitting ? "$0.00" : fmt(totalBalance)}
+                  <span className={`font-serif text-[clamp(1.65rem,6vw,3rem)] tracking-tight [overflow-wrap:anywhere] ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
+                  {isTransmitting ? formatCAD(0) : fmt(totalBalance)}
                 </span>
                 {isTransmitting ? (
                   <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
@@ -237,11 +232,11 @@ export default function AccountsPage() {
               </div>
               {isTransmitting ? (
                 <div>
-                  <p className="font-mono text-xl text-violet-300 tracking-tight">$0.00</p>
-                  <p className="font-mono text-[10px] text-white/20 line-through mt-0.5">{fmtShort(value)}</p>
+                   <p className="font-mono text-sm sm:text-xl text-violet-300 tracking-tight [overflow-wrap:anywhere]">{formatCAD(0)}</p>
+                   <p className="font-mono text-[10px] text-white/20 line-through mt-0.5 [overflow-wrap:anywhere]">{fmt(value)}</p>
                 </div>
               ) : (
-                <p className="font-mono text-xl text-amber-400 tracking-tight">{fmtShort(value)}</p>
+                 <p className="font-mono text-sm sm:text-xl text-amber-400 tracking-tight [overflow-wrap:anywhere]">{fmt(value)}</p>
               )}
               <p className="text-white/25 text-[10px] mt-0.5">{isTransmitting ? "Clearing" : sub}</p>
             </div>
@@ -313,7 +308,7 @@ export default function AccountsPage() {
                     <span className="label-caps text-muted-foreground">{label}</span>
                     <span className="text-[10px] text-muted-foreground/50 font-mono ml-1">({items.length})</span>
                   </div>
-                  <span className="font-mono text-sm text-foreground/70">{fmt(catTotal)}</span>
+                   <span className="max-w-[55%] break-words text-right font-mono text-xs tabular-nums text-foreground/70 sm:max-w-none sm:text-sm">{fmt(catTotal)}</span>
                 </div>
 
                 {/* Account rows */}
@@ -366,7 +361,7 @@ export default function AccountsPage() {
                         </div>
 
                         {/* Right: balance + ytd + arrow */}
-                        <div className="flex items-center gap-8 shrink-0">
+                        <div className="flex min-w-0 items-center gap-2 sm:gap-8 shrink-0">
                           {/* YTD */}
                           <div className="hidden sm:block text-right">
                             <p className="label-caps text-muted-foreground/50 mb-0.5">YTD Return</p>
@@ -380,19 +375,19 @@ export default function AccountsPage() {
                           </div>
 
                           {/* Balance */}
-                          <div className="text-right min-w-[140px]">
+                          <div className="min-w-0 max-w-[42vw] text-right sm:min-w-[140px] sm:max-w-none">
                             <p className="label-caps text-muted-foreground/50 mb-0.5">Balance</p>
                             {isTransmitting ? (
                               <div>
                                 <p className="font-mono text-base font-semibold text-violet-400 tabular-nums" data-testid={`balance-${account.id}`}>
-                                  $0.00
+                                   {formatCAD(0)}
                                 </p>
                                 <p className="font-mono text-[10px] text-muted-foreground/40 line-through tabular-nums">
-                                  {fmt(Number(account.balance))}
+                                   {fmt(Number(account.balance))}
                                 </p>
                               </div>
                             ) : (
-                              <p className="font-mono text-base font-semibold text-foreground tabular-nums" data-testid={`balance-${account.id}`}>
+                               <p className="break-words font-mono text-[clamp(.68rem,2.8vw,1rem)] font-semibold tabular-nums text-foreground sm:text-base" data-testid={`balance-${account.id}`}>
                                 {fmt(Number(account.balance))}
                               </p>
                             )}
