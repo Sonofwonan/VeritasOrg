@@ -44,3 +44,9 @@ For discretionary management, an annual minimum must continue after investments 
 **Why:** The user requested that this continuing management fee increase Mary's debt beyond the previous Trust-only fees.
 
 **How to apply:** Model contract termination separately from zero holdings. Confirm exact CAD pricing, annual AUM rate, and whether the minimum is additional to monthly fees before posting new charges; do not infer overdraft interest.
+
+Keep newly deposited funds visibly distinguishable from existing overdraft debt while including both in the current combined balance.
+
+**Why:** The user said current balances and the deposit must reflect in the total, and asked to identify the overdraft separately from the main deposit.
+
+**How to apply:** Show current account balances and an account-specific debt breakdown alongside the net total. Distinguish an original deposit transaction from the account's changing current balance; never obscure debt simply because another account has enough funds to offset it in aggregate.
