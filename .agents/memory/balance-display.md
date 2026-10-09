@@ -27,6 +27,12 @@ Avoid a standalone £ in Mary's balance/date caption or dashboard footer; the am
 
 **How to apply:** Keep the caption as “Total balance · [date]” and use “Last updated [date]” in the footer, without duplicating the symbol.
 
+Omit standalone currency prefixes from Mary's transaction descriptions, such as “£ monthly service fee”; keep £ on the transaction amounts.
+
+**Why:** The user circled the description prefixes and explicitly requested their removal.
+
+**How to apply:** Apply a read-only transaction-description presentation rule consistently to history, transaction details and statement exports. Preserve stored descriptions, numeric amounts and other clients' CAD presentation.
+
 Currency-symbol exceptions are explicit designations, not client-controlled profile preferences.
 
 **Why:** Letting ordinary clients change the presentation symbol would make unconverted CAD ledger amounts appear to be pounds and violate the instruction to leave other clients in CAD.

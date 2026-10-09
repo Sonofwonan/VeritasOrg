@@ -10,7 +10,7 @@ import { FeeLiability, AccountFeeBalance } from "../../client/src/components/fee
 import DashboardPage from "../../client/src/pages/dashboard";
 import AccountsPage from "../../client/src/pages/accounts-page";
 import { accountStatementCsv } from "../../client/src/lib/account-statement";
-import { balanceCurrencyLabel, clientBalanceCurrency, formatBalance } from "../../shared/balance-currency";
+import { balanceCurrencyLabel, clientBalanceCurrency, formatBalance, transactionDescription } from "../../shared/balance-currency";
 import { transactionDate } from "../../shared/account-display";
 import { DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS, MANAGEMENT_TERMS, type ClientFees, type FeeOverview, type FeePreview } from "../../shared/fees";
 
@@ -19,6 +19,29 @@ const schedule = {
   id: 1, version: 1, name: "Fixture service plan", currency: "CAD" as const,
   total: "363.64", components: DEFAULT_FEE_COMPONENTS, terms: DEFAULT_FEE_TERMS, createdAt: "2030-01-01T12:00:00Z",
 };
+it("omits stray pound prefixes in fee descriptions, not monetary amounts or CAD records", () => {
+  const description = "CAD monthly service fee · 2026-09-01 · Assessment 65 · Authorized fee overdraft";
+  assert.equal(transactionDescription(description, "GBP"), description.replace(/^CAD /, ""));
+  assert.equal(transactionDescription("£ monthly service fee", "GBP"), "monthly service fee");
+  assert.equal(transactionDescription("GBP annual management fee", "GBP"), "annual management fee");
+  assert.equal(transactionDescription("£363.64 fee payment", "GBP"), "£363.64 fee payment");
+  assert.equal(transactionDescription("CAD 363.64 fee payment", "GBP"), "£ 363.64 fee payment");
+  assert.equal(transactionDescription(description, "CAD"), description);
+  assert.equal(transactionDescription("Inheritance — family farm sale proceeds", "GBP"), "Inheritance — family farm sale proceeds");
+  const transaction = {id:65,toAccountId:null,amount:"363.64",description,transactionType:"fee",status:"completed",createdAt:"2026-09-01T14:00:00Z"};
+  const csv = accountStatementCsv(25,[transaction],"GBP");
+  assert(csv.includes('"monthly service fee · 2026-09-01'));
+  assert(!csv.includes("£ monthly"));
+  assert(csv.includes('"-363.64"'));
+  assert.equal(transaction.description, description);
+  const data=dashboardData([{id:25,accountType:"Brokerage Account",balance:"-12398.48"}]);
+  data.find(item=>item.key[0]==="/api/user")!.value={id:7,displayCurrency:"GBP"};
+  data.find(item=>item.key[0]==="/api/transactions")!.value=[transaction];
+  const html=render(DashboardPage,{},data);
+  assert(html.includes("monthly service fee · 2026-09-01"));
+  assert(!html.includes("£ monthly service fee"));
+  assert(html.includes("£363.64"));
+});
 it("shows Mary's locked debt notice first, with £ only and unchanged funded balance",()=>{
   const data=dashboardData([
     {id:25,accountType:"Brokerage Account",balance:"-12398.48"},

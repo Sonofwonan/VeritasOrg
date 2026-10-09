@@ -15,7 +15,7 @@ import {
   ArrowLeftRight, Clock, Info, ChevronRight, Landmark,
   ShieldCheck, Briefcase, Activity, BarChart3, Building2, Lock
 } from "lucide-react";
-import { balanceCurrencyLabel, balanceText, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { balanceCurrencyLabel, transactionDescription, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { useFundsAccess } from "@/hooks/use-funds-access";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability";
@@ -145,7 +145,7 @@ export default function DashboardPage() {
             </DialogHeader>
             <div className="space-y-0 divide-y divide-white/10 py-2">
               {[
-                { label: 'Description', val: balanceText(selectedTxn?.description,currency) },
+                { label: 'Description', val: transactionDescription(selectedTxn?.description,currency) },
                 { label: 'Amount', val: fmt(Number(selectedTxn?.amount)), accent: true },
                 { label: 'Status', val: selectedTxn?.status, badge: true },
                 { label: 'Type', val: selectedTxn?.transactionType },
@@ -481,7 +481,7 @@ export default function DashboardPage() {
                           }
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate">{balanceText(txn.description,currency)}</p>
+                          <p className="text-sm font-semibold truncate">{transactionDescription(txn.description,currency)}</p>
                           <p className="text-[10px] text-muted-foreground font-mono">
                             {transactionDate(txn.createdAt)} · {incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : "Account details unavailable"} ·{' '}
                             <span className={cn('font-bold capitalize',

@@ -18,6 +18,13 @@ export function balanceText(text: string | null | undefined, currency: BalanceCu
   return currency === "GBP" ? (text || "").replace(/\b(?:CAD|GBP)\b/g, "£") : text || "";
 }
 
+// Fee descriptions may start with a stored currency label, not an amount.
+// Omit that label in pound views; keep symbols attached to actual numbers.
+export function transactionDescription(text: string | null | undefined, currency: BalanceCurrency): string {
+  const presented = balanceText(text, currency);
+  return currency === "GBP" ? presented.replace(/^\s*£\s*(?=[A-Za-z])/, "") : presented;
+}
+
 /** Read-only presentation copy; never pass this copy to a financial write. */
 export function balancePresentation<T>(value: T, currency: BalanceCurrency): T {
   if (currency === "CAD") return value;

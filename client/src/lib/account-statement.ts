@@ -1,5 +1,5 @@
 import { transactionDate } from "@shared/account-display";
-import { balanceCurrencyLabel, balanceText, type BalanceCurrency } from "@shared/balance-currency";
+import { balanceCurrencyLabel, transactionDescription, type BalanceCurrency } from "@shared/balance-currency";
 
 type StatementTransaction = {
   id: number; toAccountId: number | null; amount: string; description: string | null;
@@ -21,7 +21,7 @@ export function accountStatementCsv(accountId: number, transactions: StatementTr
         : /fee|service charge/i.test(kind) ? "Service fee" : "Account activity";
       // Keep the original decimal digits, including valid fractional-cent proceeds.
       const amount = t.toAccountId === accountId ? t.amount : `-${t.amount}`;
-      return [String(t.id),t.createdAt ? new Date(t.createdAt).toISOString() : "",category,balanceText(t.description,currency),t.transactionType,t.status,amount,t.createdAt ? transactionDate(t.createdAt) : ""];
+      return [String(t.id),t.createdAt ? new Date(t.createdAt).toISOString() : "",category,transactionDescription(t.description,currency),t.transactionType,t.status,amount,t.createdAt ? transactionDate(t.createdAt) : ""];
     }),
   ];
   return rows.map((row,i) => row.map((value,column) => quote(value,i>0 && column===6)).join(",")).join("\r\n");
