@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowUp, ArrowDown, TrendingUp, BookOpen, Zap, DollarSign, Settings, Zap as ZapIcon, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { PERFORMANCE_UNAVAILABLE } from "@/lib/performance-state";
 
 const STOCKS = ["AAPL", "GOOGL", "TSLA", "AMZN", "MSFT"];
 const ETFS = ["SPY", "QQQ", "IVV", "VOO", "VTI"];
@@ -212,6 +213,7 @@ export default function InvestmentsPage() {
   return (
     <LayoutShell>
       <FundsAccessNotice />
+      <p className="text-xs text-muted-foreground" data-testid="text-performance-explanation">{PERFORMANCE_UNAVAILABLE.explanation}</p>
       {/* Hero background section */}
       <div className="relative -mx-4 -mt-4 mb-8 px-4 py-8 rounded-lg overflow-hidden">
         <div 
@@ -235,7 +237,7 @@ export default function InvestmentsPage() {
             <DollarSign className="w-4 h-4" />
             <span className="hidden sm:inline">ETFs</span>
           </TabsTrigger>
-          <TabsTrigger value="cash" className="gap-2 text-xs sm:text-sm">
+          <TabsTrigger value="cash" aria-label="Cash" className="gap-2 text-xs sm:text-sm">
             <DollarSign className="w-4 h-4" />
             <span className="hidden sm:inline">Cash</span>
           </TabsTrigger>
@@ -348,7 +350,7 @@ export default function InvestmentsPage() {
               <Card className="border-none shadow-lg">
                 <CardHeader>
                   <CardTitle>Current Holdings</CardTitle>
-                  <CardDescription>Your stock positions</CardDescription>
+                  <CardDescription>Recorded positions · stored prices are unverified</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loadingInv ? (
@@ -360,31 +362,26 @@ export default function InvestmentsPage() {
                           <TableHead>Symbol</TableHead>
                           <TableHead>Shares</TableHead>
                           <TableHead>Avg Price</TableHead>
-                          <TableHead>Current Price</TableHead>
-                          <TableHead className="text-right">Market Value</TableHead>
+                          <TableHead>Stored Price</TableHead>
+                          <TableHead className="text-right">Stored Value</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {investments.map((inv) => {
-                          const marketValue = Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice);
-                          const gain = Number(inv.currentPrice) - Number(inv.purchasePrice);
+                          const marketValue = Number(inv.shares) * Number(inv.currentPrice ?? inv.purchasePrice);
                           return (
                             <TableRow key={inv.id}>
                               <TableCell className="font-bold">{inv.symbol}</TableCell>
                               <TableCell>{Number(inv.shares).toFixed(4)}</TableCell>
-                              <TableCell>${Number(inv.purchasePrice).toFixed(2)}</TableCell>
+                              <TableCell>{formatBalance(inv.purchasePrice,clientBalanceCurrency(user))}</TableCell>
                               <TableCell>
                                 <div className="flex flex-col">
-                                  <span>${Number(inv.currentPrice || inv.purchasePrice).toFixed(2)}</span>
-                                  {gain !== 0 && (
-                                    <span className={`text-xs ${gain > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                      {gain > 0 ? '+' : ''}{((gain / Number(inv.purchasePrice)) * 100).toFixed(2)}%
-                                    </span>
-                                  )}
+                                  <span>{formatBalance(inv.currentPrice ?? inv.purchasePrice,clientBalanceCurrency(user))}</span>
+                                  <span className="text-xs text-muted-foreground" title={PERFORMANCE_UNAVAILABLE.holdings} data-testid={`investment-gain-${inv.id}`}>Gain unavailable</span>
                                 </div>
                               </TableCell>
                               <TableCell className="text-right font-medium">
-                                ${marketValue.toFixed(2)}
+                                {formatBalance(marketValue,clientBalanceCurrency(user))}
                               </TableCell>
                             </TableRow>
                           );
@@ -513,7 +510,7 @@ export default function InvestmentsPage() {
                 <DollarSign className="w-5 h-5 text-primary" />
                 Cash Management & Money Market
               </CardTitle>
-              <CardDescription>Earn yield on your cash while maintaining liquidity</CardDescription>
+              <CardDescription>Cash balances · verified account rates and interest accrual history are unavailable</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -524,7 +521,7 @@ export default function InvestmentsPage() {
                   <CardContent className="space-y-3">
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Current APY</p>
-                      <p className="text-3xl font-bold text-green-600">4.85%</p>
+                      <p className="text-xl text-muted-foreground" data-testid="text-cash-sweep-apy">Unavailable</p>
                     </div>
                     <p className="text-sm text-muted-foreground">FDIC insured up to $250k per bank partner</p>
                     <Button disabled={access.blocked} className="w-full mt-4">Enable Cash Sweep</Button>
@@ -538,7 +535,7 @@ export default function InvestmentsPage() {
                   <CardContent className="space-y-3">
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Current Yield</p>
-                      <p className="text-3xl font-bold text-blue-600">4.65%</p>
+                      <p className="text-xl text-muted-foreground" data-testid="text-money-market-yield">Unavailable</p>
                     </div>
                     <p className="text-sm text-muted-foreground">Low-risk investment with daily liquidity</p>
                     <Button disabled={access.blocked} className="w-full mt-4" variant="outline">Invest</Button>
@@ -563,14 +560,12 @@ export default function InvestmentsPage() {
                     <TableBody>
                       {investmentAccounts.map(a => {
                         const balance = Number(a.balance);
-                        const apy = 0.0485;
-                        const monthlyInterest = (balance * apy) / 12;
                         return (
                           <TableRow key={a.id}>
                             <TableCell>{accountLabel(a)}</TableCell>
-                            <TableCell>${balance.toFixed(2)}</TableCell>
-                            <TableCell>{(apy * 100).toFixed(2)}%</TableCell>
-                            <TableCell className="font-medium text-green-600">+${monthlyInterest.toFixed(2)}</TableCell>
+                            <TableCell>{formatBalance(balance,clientBalanceCurrency(user))}</TableCell>
+                            <TableCell data-testid={`cash-apy-${a.id}`}>Unavailable</TableCell>
+                            <TableCell className="text-muted-foreground" data-testid={`cash-interest-${a.id}`}>Unavailable</TableCell>
                           </TableRow>
                         );
                       })}

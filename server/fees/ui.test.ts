@@ -110,6 +110,35 @@ function dashboardData(accounts: {id:number;accountType:string;balance:string;di
   ];
 }
 describe("Fee interfaces rendered with synthetic cached data", () => {
+  it("does not infer performance from synthetic prices, deposits, or fee debt, even on query failures", () => {
+    const accounts = [
+      {id:901,accountType:"Brokerage Account",balance:"1000000.00"},
+      {id:902,accountType:"Trust Account",balance:"-200.00"},
+    ];
+    for (const currentPrice of ["15", "0", null, "invalid"]) {
+      const data = dashboardData(accounts, [
+        {id:903,accountId:901,symbol:"SYNTH",shares:"10",purchasePrice:"10",currentPrice},
+      ]);
+      // This test uses only in-memory records and no shared client's identity.
+      data.find(d=>d.key[0]==="/api/user")!.value = {id:7,name:"Synthetic Performance Client"};
+      data.find(d=>d.key[0]==="/api/transactions")!.value = [
+        {id:904,toAccountId:901,amount:"1000000",description:"Synthetic inheritance deposit",transactionType:"transfer",status:"completed",createdAt:"2026-01-01"},
+        {id:905,fromAccountId:902,amount:"200",description:"Synthetic fee overdraft",transactionType:"fee",status:"completed",createdAt:"2026-02-01"},
+      ];
+      const before = JSON.stringify(data);
+      for (const failures of [[], [["/api/investments"]], [["/api/accounts"]], [["/api/transactions"]]]) {
+        const dashboard = render(DashboardPage, {}, data, failures);
+        assert.equal(displayedValue(dashboard, "text-ytd-performance"), "Unavailable");
+        assert.equal(displayedValue(dashboard, "text-day-performance"), "Daily change unavailable");
+        for (const fixed of ["+8.4", "+8.40", "vs. benchmark"]) assert(!dashboard.includes(fixed));
+        assert(dashboard.includes("Deposits are not investment gains"));
+        const accountPage = render(AccountsPage, {}, data, failures);
+        assert.equal(displayedValue(accountPage, "text-ytd-performance"), "YTD return unavailable");
+        for (const fixed of ["+11.4", "+6.40", "+8.4"]) assert(!accountPage.includes(fixed));
+      }
+      assert.equal(JSON.stringify(data), before);
+    }
+  });
   it("resolves fee-debt labels from real account records even with stale numbered fee responses",()=>{
     const accounts=[{id:25,accountType:"Brokerage Account",balance:"-12398.48"}];
     const data=dashboardData(accounts);

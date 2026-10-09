@@ -22,6 +22,7 @@ import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability
 import { accountLabel, transactionDate } from "@shared/account-display";
 
 // ── Market index data (static realistic) ─────────────────────────────────────
+import { PERFORMANCE_UNAVAILABLE } from "@/lib/performance-state";
 const MARKET_INDICES = [
   { name: 'S&P 500',   value: '5,447.21', change: '+0.38%', up: true },
   { name: 'TSX',       value: '22,183.40', change: '+0.21%', up: true },
@@ -91,7 +92,6 @@ export default function DashboardPage() {
   const { data: transactions, isLoading: txnLoading, isError: txnError } = usePortfolioTransactions();
 
   const investValue    = investments?.reduce((s, i) => s + Number(i.shares) * Number(i.currentPrice ?? i.purchasePrice), 0) ?? 0;
-  const accountCash    = accounts?.reduce((s, a) => s + Number(a.balance), 0) ?? 0;
   // Current funded assets, not net worth. Other accounts' debt stays below.
   const cashTotal      = accounts?.reduce((s, a) => s + Math.max(0, Number(a.balance)), 0) ?? 0;
   const totalBalance   = cashTotal + investValue;
@@ -100,8 +100,6 @@ export default function DashboardPage() {
   const balanceUnavailable = cashUnavailable || investmentsUnavailable || !Number.isFinite(totalBalance);
   const cashLocked = access.blocked || Boolean(activeTransfer && ["approved", "liquidating", "transfer_out"].includes(activeTransfer.status));
   const investTotal    = investValue;
-  const dayChange      = (accountCash + investValue) * 0.0038;
-  const ytdGain        = (accountCash + investValue) * 0.084;
 
   const pendingBalance = primaryTransactions?.filter(t => t.status === 'pending')
     .reduce((s, t) => t.toAccountId === primaryAccount?.id ? s + Number(t.amount) : s - Number(t.amount), 0) || 0;
@@ -186,12 +184,9 @@ export default function DashboardPage() {
                   <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
                     {balanceUnavailable ? "Unavailable" : fmt(totalBalance)}
                   </span>
-                  {isTransmitting || balanceUnavailable || Number(feeSummary.data?.totalUnpaid || 0) > 0 || feeSummary.isError ? null : (
-                    <div className="flex items-center gap-1 text-emerald-400 text-sm font-mono mb-1.5">
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      +{fmt(dayChange)} today
-                    </div>
-                  )}
+                  <p className="text-white/50 text-xs font-mono mb-1.5" title={PERFORMANCE_UNAVAILABLE.day} data-testid="text-day-performance">
+                    Daily change unavailable
+                  </p>
                 </div>
                 <p className="text-white/30 text-xs font-mono mt-1">
                   Total balance{currency === "CAD" ? " · CAD" : ""} · {format(new Date(), 'MMMM d, yyyy')}
@@ -220,21 +215,22 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-white/10">
             {[
               { label: 'Liquid Cash',    val: cashUnavailable ? "Unavailable" : fmt(cashTotal), sub: access.blocked ? 'Funds locked · payment required' : pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending${cashLocked ? " · Transfer locked" : ""}` : cashLocked ? 'Transfer locked' : 'Available now', icon: Landmark },
-              { label: 'Investments',    val: investmentsUnavailable ? "Unavailable" : fmt(investTotal), sub: 'Mkt value excl. cash', icon: BarChart3 },
-              { label: 'YTD Return',     val: balanceUnavailable ? "Unavailable" : fmt(ytdGain), sub: '+8.4% vs. benchmark', icon: TrendingUp },
+              { label: 'Investments',    val: investmentsUnavailable ? "Unavailable" : fmt(investTotal), sub: 'Stored value · unverified prices', icon: BarChart3 },
+              { label: 'YTD Return',     val: "Unavailable", sub: PERFORMANCE_UNAVAILABLE.ytd, icon: TrendingUp },
               { label: 'Portfolio Risk', val: 'Moderate',         sub: 'Risk band: 5 / 10',     icon: ShieldCheck },
             ].map(({ label, val, sub, icon: Icon }) => (
               <div key={label} className="px-3 sm:px-6 py-4 flex items-center gap-2 sm:gap-3 min-w-0">
                 <Icon className="w-4 h-4 text-white/20 shrink-0" />
                 <div className="min-w-0">
                   <p className="label-caps text-white/30 mb-0.5">{label}</p>
-                  <p className="font-mono text-white font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]" data-testid={label === 'Liquid Cash' ? "text-liquid-cash" : label === 'Investments' ? "text-investment-value" : undefined}>{val}</p>
+                  <p className="font-mono text-white font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]" data-testid={label === 'Liquid Cash' ? "text-liquid-cash" : label === 'Investments' ? "text-investment-value" : label === 'YTD Return' ? "text-ytd-performance" : undefined}>{val}</p>
                   <p className="text-white/25 text-[10px] mt-0.5">{sub}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
+        <p className="text-xs text-muted-foreground" data-testid="text-performance-explanation">{PERFORMANCE_UNAVAILABLE.explanation}</p>
 
         {!access.requiresPayment && debtNotice}
 
@@ -376,7 +372,7 @@ export default function DashboardPage() {
               <div className="px-5 py-3 border-b border-border/60 flex items-center justify-between bg-muted/20">
                 <div>
                   <p className="font-semibold text-sm">Holdings</p>
-                  <p className="text-[10px] text-muted-foreground label-caps mt-0.5">Equity positions in portfolio</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Recorded holdings · stored valuations are unverified</p>
                 </div>
                 <Button variant="ghost" size="sm" className="text-xs text-primary hover:bg-primary/5 gap-1"
                   onClick={() => setLocation('/investments')}>
@@ -386,7 +382,7 @@ export default function DashboardPage() {
 
               {/* Table header */}
               <div className="grid grid-cols-[2fr_1fr_1fr_1fr_80px] gap-2 px-5 py-2 border-b border-border/40 bg-muted/10">
-                {['Security', 'Shares', 'Avg Cost', 'Mkt Value', 'P&L'].map(h => (
+                {['Security', 'Shares', 'Avg Cost', 'Stored Value', 'P&L'].map(h => (
                   <p key={h} className="label-caps text-muted-foreground/60 text-right first:text-left">{h}</p>
                 ))}
               </div>
@@ -397,27 +393,16 @@ export default function DashboardPage() {
                 <div className="divide-y divide-border/40">
                   {investments.map((inv: any) => {
                     const mktVal = Number(inv.shares) * Number(inv.currentPrice ?? inv.purchasePrice);
-                    const cost   = Number(inv.shares) * Number(inv.purchasePrice);
-                    const pnl    = mktVal - cost;
-                    const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
                     return (
                       <div key={inv.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_80px] gap-2 px-5 py-3.5 hover:bg-muted/30 transition-colors items-center"
                         data-testid={`holding-row-${inv.id}`}>
                         <div>
                           <p className="font-bold text-sm">{inv.symbol}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono">{Number(inv.shares).toFixed(4)} sh</p>
                         </div>
-                        <p className="font-mono text-xs text-right text-muted-foreground">{fmt(Number(inv.purchasePrice))}</p>
+                        <p className="font-mono text-xs text-right text-muted-foreground">{Number(inv.shares).toFixed(4)}</p>
+                        <p className="font-mono text-xs text-right font-semibold">{fmt(Number(inv.purchasePrice))}</p>
                         <p className="font-mono text-xs text-right font-semibold">{fmt(mktVal)}</p>
-                        <p className="font-mono text-xs text-right font-semibold">{fmt(mktVal)}</p>
-                        <div className="text-right">
-                          <p className={cn('font-mono text-xs font-bold', pnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500')}>
-                            {pnl >= 0 ? '+' : ''}{fmt(pnl)}
-                          </p>
-                          <p className={cn('text-[9px] font-mono', pnl >= 0 ? 'text-emerald-500' : 'text-rose-400')}>
-                            {pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(2)}%
-                          </p>
-                        </div>
+                        <p className="text-right text-[10px] text-muted-foreground" title={PERFORMANCE_UNAVAILABLE.holdings} data-testid={`holding-pnl-${inv.id}`}>Unavailable</p>
                       </div>
                     );
                   })}
@@ -428,7 +413,7 @@ export default function DashboardPage() {
                     <p className="text-right" />
                     <p className="font-mono text-sm font-bold text-right">{fmt(investValue)}</p>
                     <p className="text-right">
-                      <span className="font-mono text-xs font-bold text-emerald-600">+8.40%</span>
+                      <span className="text-[10px] text-muted-foreground" title={PERFORMANCE_UNAVAILABLE.holdings} data-testid="text-holdings-performance">Unavailable</span>
                     </p>
                   </div>
                 </div>

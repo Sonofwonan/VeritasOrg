@@ -3,7 +3,7 @@ import { accountLabel } from "@shared/account-display";
 import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability";
 import { useState } from "react";
 import {
-  Plus, ArrowRight, ChevronRight, TrendingUp, TrendingDown,
+  Plus, ArrowRight, ChevronRight, TrendingUp,
   ShieldCheck, Landmark, Briefcase, PiggyBank, Eye, EyeOff,
   CheckCircle2, AlertCircle, MoreHorizontal, Lock, Building2
 } from "lucide-react";
@@ -21,27 +21,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { balanceCurrencyLabel, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { PERFORMANCE_UNAVAILABLE } from "@/lib/performance-state";
 
 type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' |
   '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
 
 const INVESTMENT_TYPES = ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan', 'Trust Account'];
-
-const YTD_BY_TYPE: Record<string, { pct: string; gain: string; positive: boolean }> = {
-  'Checking Account':          { pct: '0.00',  gain: '—',          positive: true },
-  'Savings Account':           { pct: '+2.10', gain: '+$12,481',   positive: true },
-  'Money Market Account':      { pct: '+4.85', gain: '+$38,220',   positive: true },
-  'Certificate of Deposit (CCD)': { pct: '+5.25', gain: '+$26,400', positive: true },
-  'High-Yield Savings':        { pct: '+4.60', gain: '+$8,740',    positive: true },
-  'Brokerage Account':         { pct: '+11.4', gain: '+$184,320',  positive: true },
-  'Traditional IRA':           { pct: '+9.80', gain: '+$62,100',   positive: true },
-  'Roth IRA':                  { pct: '+12.3', gain: '+$44,880',   positive: true },
-  '401(k) / 403(b)':          { pct: '+8.60', gain: '+$91,200',   positive: true },
-  '529 Savings Plan':          { pct: '+7.20', gain: '+$18,360',   positive: true },
-  'Trust Account':             { pct: '+6.40', gain: '+$128,000',  positive: true },
-  'Business Checking':         { pct: '0.00',  gain: '—',          positive: true },
-  'Business Savings':          { pct: '+3.10', gain: '+$24,800',   positive: true },
-};
 
 function accountNumber(id: number) {
   const n = ((id * 48271 + 13) % 900000 + 100000).toString();
@@ -193,10 +178,9 @@ export default function AccountsPage() {
                 </span>
                 {isTransmitting ? (
                   <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
-                ) : Number(feeSummary.data?.totalUnpaid || 0) > 0 || feeSummary.isError ? null : (
-                  <span className="text-emerald-400 text-sm font-mono mb-1.5 flex items-center gap-1 whitespace-nowrap">
-                    <TrendingUp className="w-3.5 h-3.5" />
-                    +8.4% YTD
+                ) : (
+                  <span className="text-white/50 text-xs font-mono mb-1.5" title={PERFORMANCE_UNAVAILABLE.ytd} data-testid="text-ytd-performance">
+                    YTD return unavailable
                   </span>
                 )}
               </div>
@@ -231,7 +215,7 @@ export default function AccountsPage() {
         <div className="grid grid-cols-1 divide-y divide-white/10 xl:grid-cols-3 xl:divide-x xl:divide-y-0">
           {[
             { label: 'Cash & Deposits', value: cashTotal, Icon: Landmark, sub: 'Available liquidity' },
-            { label: 'Investments', value: investTotal, Icon: TrendingUp, sub: '+11.4% YTD avg.' },
+            { label: 'Investments', value: investTotal, Icon: TrendingUp, sub: 'YTD return unavailable' },
             { label: 'Business & Trust', value: bizTotal, Icon: ShieldCheck, sub: 'Fiduciary accounts' },
           ].map(({ label, value, Icon, sub }) => (
             <div key={label} className="flex items-center justify-between gap-4 px-4 py-3 xl:block xl:px-6 xl:py-5">
@@ -255,6 +239,7 @@ export default function AccountsPage() {
           ))}
         </div>
       </div>
+      <p className="text-xs text-muted-foreground mt-2" data-testid="text-performance-explanation">{PERFORMANCE_UNAVAILABLE.explanation}</p>
 
       {/* ── Transfer Lock Banner ──────────────────────────────────── */}
       {activeTransfer && (
@@ -326,7 +311,6 @@ export default function AccountsPage() {
                 {/* Account rows */}
                 <div className="divide-y divide-border/50">
                   {items.map((account) => {
-                    const ytd = YTD_BY_TYPE[account.accountType] || { pct: '—', gain: '—', positive: true };
                     const isPending = account.id === primaryAccount?.id && pendingBalance !== 0;
                     return (
                       <div
@@ -375,15 +359,9 @@ export default function AccountsPage() {
                         {/* Right: balance + ytd + arrow */}
                         <div className="flex min-w-0 items-center justify-between gap-3 xl:justify-end xl:gap-8 xl:shrink-0">
                           {/* YTD */}
-                          <div className="hidden xl:block text-right">
+                          <div className="text-right" title={PERFORMANCE_UNAVAILABLE.ytd}>
                             <p className="label-caps text-muted-foreground/50 mb-0.5">YTD Return</p>
-                            <div className={cn(
-                              'flex items-center justify-end gap-1 text-xs font-mono font-semibold',
-                              ytd.positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'
-                            )}>
-                              {ytd.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                              {hideBalances ? '••••' : ytd.pct}{ytd.pct !== '0.00' && ytd.pct !== '—' ? '%' : ''}
-                            </div>
+                            <p className="text-xs text-muted-foreground" data-testid={`account-ytd-${account.id}`}>Unavailable</p>
                           </div>
 
                           {/* Balance */}
