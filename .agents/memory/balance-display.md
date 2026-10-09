@@ -55,7 +55,7 @@ Show current funded balances as the dashboard's main balance, with overdraft deb
 
 **Why:** The user explicitly corrected the combined-net-worth presentation and said the dashboard should show the overdraft below the main balance.
 
-**How to apply:** Show current positive cash and holdings separately from named account liabilities. Preserve the negative account ledger and its debt breakdown without subtracting it from the main funded-balance headline. Distinguish an original deposit transaction from the account's changing current balance.
+**How to apply:** Include all remaining positive cash balances across accounts and current holdings, not only the inheritance account or original deposit, separately from named account liabilities. Preserve the negative account ledger and its debt breakdown without subtracting it from the main funded-balance headline. Distinguish an original deposit transaction from the account's changing current balance.
 
 For the inheritance deposit, show its date and amount in transaction history; on the dashboard show current balances and the total rather than a separate original-deposit figure.
 
