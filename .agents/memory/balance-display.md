@@ -51,11 +51,11 @@ For discretionary management, an annual minimum must continue after investments 
 
 **How to apply:** Model contract termination separately from zero holdings. Confirm exact CAD pricing, annual AUM rate, and whether the minimum is additional to monthly fees before posting new charges; do not infer overdraft interest.
 
-Keep newly deposited funds visibly distinguishable from existing overdraft debt while including both in the current combined balance.
+Show current funded balances as the dashboard's main balance, with overdraft debt separately below it. Do not offset other accounts' overdrafts against the headline or call this unnetted figure net worth.
 
-**Why:** The user said current balances and the deposit must reflect in the total, and asked to identify the overdraft separately from the main deposit.
+**Why:** The user explicitly corrected the combined-net-worth presentation and said the dashboard should show the overdraft below the main balance.
 
-**How to apply:** Show current account balances and an account-specific debt breakdown alongside the net total. Distinguish an original deposit transaction from the account's changing current balance; never obscure debt simply because another account has enough funds to offset it in aggregate.
+**How to apply:** Show current positive cash and holdings separately from named account liabilities. Preserve the negative account ledger and its debt breakdown without subtracting it from the main funded-balance headline. Distinguish an original deposit transaction from the account's changing current balance.
 
 For the inheritance deposit, show its date and amount in transaction history; on the dashboard show current balances and the total rather than a separate original-deposit figure.
 
