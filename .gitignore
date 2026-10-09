@@ -8,3 +8,7 @@ vite.config.ts.*
 # Ignore local env files
 .env
 .env.local
+
+# Isolated browser regression evidence (may contain test login traces)
+test-results/
+playwright-report/
