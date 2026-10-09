@@ -1,12 +1,20 @@
 import { Link } from "wouter";
 import { formatCAD, type ClientFeeSummary } from "@shared/fees";
 
-export function FeeLiability({ summary, error, retry, hidden = false }: {
+export function FeeLiability({ summary, error, retry, hidden = false, loading = false, separateFromBalance = false }: {
   summary?: ClientFeeSummary; error?: boolean; retry?: () => void; hidden?: boolean;
+  loading?: boolean; separateFromBalance?: boolean;
 }) {
+  if (loading) return (
+    <div role="status" className="border border-border/60 p-4 text-sm text-muted-foreground">
+      Loading overdraft and fee details…
+    </div>
+  );
   if (error) return (
     <div role="alert" className="border border-red-300 bg-red-50 p-4 text-sm text-red-900">
-      Service fees could not be loaded. Net balances are unavailable.
+      {separateFromBalance
+        ? "Overdraft and fee details could not be loaded. These liabilities remain separate from the total balance above."
+        : "Service fees could not be loaded. Net balances are unavailable."}
       <button onClick={retry} className="ml-2 underline">Retry</button>
     </div>
   );
@@ -25,7 +33,9 @@ export function FeeLiability({ summary, error, retry, hidden = false }: {
         <Link href="/accounts" className="text-sm underline underline-offset-4">Review accounts</Link>
       </div>
       <p className="mt-2 text-xs leading-relaxed">
-        Posted overdraft is already reflected in the negative cash ledger; unpaid assessments remain separate from cash. No interest is added.
+        {separateFromBalance
+          ? "Overdrafts and unpaid fees are shown separately, not subtracted from the total balance above. Overdrawn account balances remain negative. No interest is added."
+          : "Posted overdraft is already reflected in the negative cash ledger; unpaid assessments remain separate from cash. No interest is added."}
       </p>
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
         <span data-testid="text-posted-overdraft-ledger">{hidden ? "••••••" : formatCAD(-overdraft)} posted negative cash ledger</span>
@@ -34,7 +44,8 @@ export function FeeLiability({ summary, error, retry, hidden = false }: {
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {summary.accounts.filter(account => Number(account.unpaidTotal) > 0 || Number(account.overdraft || 0) > 0).map(account => (
           <Link key={account.accountId} href={`/accounts/${account.accountId}`} className="underline underline-offset-4">
-            {account.accountName || "Account details unavailable"}: {hidden ? "••••••" : formatCAD(account.amountOwed || account.unpaidTotal || "0.00")} owed
+            {account.accountName || "Account details unavailable"}: {Number(account.overdraft || 0) > 0 ? "overdraft " : ""}{hidden ? "••••••" : formatCAD(Number(account.overdraft || 0) > 0 ? account.overdraft! : account.unpaidTotal)}
+            {Number(account.overdraft || 0) <= 0 ? " owed" : Number(account.unpaidTotal) > 0 ? ` · ${hidden ? "••••••" : formatCAD(account.unpaidTotal)} unpaid fees` : ""}
             {Number(account.overdraft || 0) > 0 ? ` · ${hidden ? "••••••" : formatCAD(-Number(account.overdraft))} negative cash ledger` : ""}
             {Number(account.unpaidCount) > 0 ? ` · ${account.unpaidCount} unpaid fees` : ""}
           </Link>

@@ -23,26 +23,52 @@ const enrollment = {
   firstChargeDate: "2030-01-31", nextPeriod: 0, acceptedAt: null, createdAt: "2030-01-01T12:00:00Z",
   nextChargeDate: null, schedule, accountName: "Brokerage Account", userName: "Synthetic fixture",
 };
-function render(Component: React.ElementType, props: unknown, data: { key: unknown[]; value: unknown }[]) {
+function render(Component: React.ElementType, props: unknown, data: { key: unknown[]; value: unknown }[], errors: unknown[][] = []) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: 0 } } });
   for (const item of data) client.setQueryData(item.key, item.value);
+  for (const key of errors) client.getQueryCache().build(client, { queryKey: key }).setState({
+    status: "error", error: new Error("Synthetic query failure"), fetchStatus: "idle",
+  });
   const html = renderToStaticMarkup(React.createElement(QueryClientProvider, { client },
     React.createElement(Router, { ssrPath: "/" }, React.createElement(Component, props))));
   client.clear();
   return html;
 }
+function displayedValue(html: string, testId: string) {
+  const match=html.match(new RegExp(`data-testid="${testId}"[^>]*>([^<]*)<`));
+  assert(match,`Missing ${testId}`);
+  return match[1];
+}
+function dashboardData(accounts: {id:number;accountType:string;balance:string;displayName?:string}[], investments: unknown[] = [], unpaid = "0.00") {
+  const primary=accounts.find(a=>a.accountType==="Brokerage Account") || accounts[0];
+  const overdraft=accounts.reduce((sum,a)=>sum+Math.max(0,-Number(a.balance)),0);
+  return [
+    {key:["/api/user"],value:{id:7,name:"Mary Scott",clientRef:"VWMS2024"}},
+    {key:["/api/accounts"],value:accounts.map(a=>({...a,userId:7}))},
+    {key:["/api/investments"],value:investments},
+    {key:["/api/institutional-transfers"],value:[]},
+    {key:["/api/accounts",primary?.id || 0,"transactions"],value:[]},
+    {key:["/api/transactions"],value:[]},
+    {key:["/api/fees","summary",7],value:{
+      totalUnpaid:unpaid,totalOverdraft:String(overdraft),totalOwed:String(overdraft+Number(unpaid)),
+      accounts:accounts.map((a,i)=>({accountId:a.id,accountName:a.displayName || a.accountType,
+        overdraft:String(Math.max(0,-Number(a.balance))),unpaidTotal:i===0?unpaid:"0.00",
+        unpaidCount:i===0 && Number(unpaid)>0?1:0,amountOwed:String(Math.max(0,-Number(a.balance))+(i===0?Number(unpaid):0))})),
+    }},
+  ];
+}
 describe("Fee interfaces rendered with synthetic cached data", () => {
-  it("shows the dated inheritance in portfolio activity, current balances and net total without another deposit headline",()=>{
+  it("shows inheritance history and current funded dashboard balance separately from the accounts overview net total",()=>{
     const deposit = {id:88,fromAccountId:null,toAccountId:26,amount:"1622886.00",
       description:"Inheritance — family farm sale proceeds",transactionType:"transfer",status:"completed",createdAt:"2026-10-08T16:00:00Z"};
     const originalAccounts = [
       {id:24,userId:7,accountType:"Trust Account",balance:"-12398.48"},
       {id:25,userId:7,accountType:"Brokerage Account",balance:"-12398.48"},
     ];
-    for (const [currentBalance,unpaid,expected] of [
-      ["1622886.00","0.00","CAD $1,598,089.04"],
-      ["1622522.36","0.00","CAD $1,597,725.40"],
-      ["1622522.36","100.00","CAD $1,597,625.40"],
+    for (const [currentBalance,unpaid,expectedNet,expectedFunded] of [
+      ["1622886.00","0.00","CAD $1,598,089.04","CAD $1,622,886.00"],
+      ["1622522.36","0.00","CAD $1,597,725.40","CAD $1,622,522.36"],
+      ["1622522.36","100.00","CAD $1,597,625.40","CAD $1,622,522.36"],
     ]) {
       const data = [
         {key:["/api/user"],value:{id:7,name:"Mary Scott",clientRef:"VWMS2024"}},
@@ -56,7 +82,8 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       ];
       for (const Component of [DashboardPage,AccountsPage]) {
         const html=render(Component,{},data);
-        assert(html.includes(expected),`${Component.name}: ${expected}`);
+        assert(html.includes(Component===DashboardPage?expectedFunded:expectedNet),Component.name);
+        if(Component===DashboardPage) assert.equal(displayedValue(html,"text-total-balance"),expectedFunded);
         assert(html.includes("Inheritance Trust Account"));
         assert(html.includes("CAD -$12,398.48"));
         assert(!html.includes("Original inheritance deposit"));
@@ -81,7 +108,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     const csv = accountStatementCsv(24,rows);
     for(const text of ["Amount (CAD)","Service fee","Management fee",'"-363.64"','"-381.00"','"381.00"','"1000.000001"',"'=untrusted description"]) assert(csv.includes(text),text);
   });
-  it("renders the dashboard and accounts overview with negative net totals and visible fee debt", () => {
+  it("keeps the zero-funded dashboard headline separate from unpaid fees and preserves net account balances", () => {
     const data = [
       { key: ["/api/user"], value: { id: 7, name: "Mary Scott", clientRef: "VWMS2024" } },
       { key: ["/api/accounts"], value: [
@@ -103,6 +130,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       for (const text of ["CAD -$11,636.48", "CAD $11,636.48", "Amount owed", "32 unpaid fees", "Net account balance"]) {
         assert(html.includes(text), `${Component.name}: ${text}`);
       }
+      if(Component===DashboardPage) assert.equal(displayedValue(html,"text-total-balance"),"CAD $0.00");
       assert(!html.includes("demo profile"));
     }
   });
@@ -145,7 +173,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     assert(!cash.includes("Net account balance"));
     assert(render(AccountFeeBalance, { cash: "-381.00" }, []).includes("CAD -$381.00"));
   });
-  it("keeps two Mary account overdrafts in cash/net worth once and retains full CAD digits during transfer", () => {
+  it("shows zero funded cash for negative-only clients while retaining all named overdrafts below", () => {
     const accounts = [
       { id: 24, userId: 7, accountType: "Trust Account", balance: "-12398.48", createdAt: "2024-01-01T14:00:00Z" },
       { id: 25, userId: 7, accountType: "Brokerage Account", balance: "-12398.48", createdAt: "2024-01-01T14:00:00Z" },
@@ -163,10 +191,112 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     ];
     for (const Component of [DashboardPage, AccountsPage]) {
       const html = render(Component, {}, data);
-      assert(html.includes("CAD -$24,796.96"), `${Component.name}: net worth includes posted debt exactly once`);
+      if(Component===DashboardPage) {
+        assert.equal(displayedValue(html,"text-total-balance"),"CAD $0.00");
+        assert.equal(displayedValue(html,"text-liquid-cash"),"CAD $0.00");
+      } else assert(html.includes("CAD -$24,796.96"),"Accounts overview net accounting remains unchanged");
       assert(html.includes("CAD -$12,398.48"), `${Component.name}: full-digit account overdraft`);
       assert(html.includes("CAD $24,796.96"), `${Component.name}: amount owed`);
     }
+  });
+  it("includes every remaining positive account balance and holdings, excluding debt and unpaid fees without mutating inputs",()=>{
+    const accounts=[
+      {id:24,accountType:"Trust Account",displayName:"Legacy Trust Account",balance:"0.00"},
+      {id:25,accountType:"Brokerage Account",balance:"-12398.48"},
+      {id:26,accountType:"Trust Account",displayName:"Inheritance Trust Account",balance:"1622886.00"},
+      {id:27,accountType:"Brokerage Account",displayName:"Savings Portfolio",balance:"250.25"},
+    ];
+    const holdings=[{id:44,accountId:27,symbol:"SYNTH",shares:"10",purchasePrice:"3.00",currentPrice:"3.20"}];
+    const data=dashboardData(accounts,holdings,"100.00");
+    const before=JSON.stringify(data);
+    const html=render(DashboardPage,{},data);
+    assert.equal(displayedValue(html,"text-total-balance"),"CAD $1,623,168.25");
+    assert.equal(displayedValue(html,"text-liquid-cash"),"CAD $1,623,136.25");
+    assert.equal(displayedValue(html,"text-investment-value"),"CAD $32.00");
+    assert(html.includes("Total balance"));
+    assert(!html.includes("Net worth after unpaid fees"));
+    assert(html.includes("Brokerage Account: overdraft CAD $12,398.48"));
+    assert(html.includes("not subtracted from the total balance above"));
+    assert(html.indexOf('data-testid="text-total-balance"')<html.indexOf('aria-label="Outstanding service fees"'));
+    assert.equal(JSON.stringify(data),before,"Rendering must not change saved financial records");
+  });
+  it("uses current remaining cash after later deductions, not a fixed inheritance deposit",()=>{
+    const data=dashboardData([
+      {id:25,accountType:"Brokerage Account",balance:"-12398.48"},
+      {id:26,accountType:"Trust Account",displayName:"Inheritance Trust Account",balance:"1600000.00"},
+    ],[],"200.00");
+    const html=render(DashboardPage,{},data);
+    assert.equal(displayedValue(html,"text-total-balance"),"CAD $1,600,000.00");
+    assert.equal(displayedValue(html,"text-liquid-cash"),"CAD $1,600,000.00");
+    assert(!html.includes("1,622,886.00"));
+  });
+  it("keeps funded headline and each KPI accurate through transfer states and pending transactions",()=>{
+    for(const status of ["pending","under_review","approved","liquidating","transfer_out","completed"]) {
+      const data=dashboardData([
+        {id:25,accountType:"Brokerage Account",balance:"-12398.48"},
+        {id:26,accountType:"Trust Account",displayName:"Inheritance Trust Account",balance:"1622886.00"},
+      ]);
+      data.find(d=>d.key[0]==="/api/institutional-transfers")!.value=[
+        {id:99,status,institutionName:"Synthetic Custodian",transferType:"cash"},
+      ];
+      data.find(d=>d.key[0]==="/api/accounts"&&d.key.length>1)!.value=[
+        {id:55,toAccountId:25,amount:"500.00",status:"pending"},
+      ];
+      const html=render(DashboardPage,{},data);
+      assert.equal(displayedValue(html,"text-total-balance"),"CAD $1,622,886.00",status);
+      assert.equal(displayedValue(html,"text-liquid-cash"),"CAD $1,622,886.00",status);
+      assert.equal(displayedValue(html,"text-investment-value"),"CAD $0.00",status);
+      assert(html.includes("CAD $500.00 pending"));
+      assert(html.includes("Brokerage Account: overdraft CAD $12,398.48"));
+      assert.equal(html.includes("Transfer locked"),["approved","liquidating","transfer_out"].includes(status));
+      assert(!html.includes("line-through"));
+    }
+  });
+  it("does not replace a real zero holding valuation with purchase cost",()=>{
+    const html=render(DashboardPage,{},dashboardData(
+      [{id:26,accountType:"Trust Account",balance:"1250.00"}],
+      [{id:44,accountId:26,symbol:"SYNTH",shares:"10",purchasePrice:"3.00",currentPrice:"0.00"}],
+    ));
+    assert.equal(displayedValue(html,"text-total-balance"),"CAD $1,250.00");
+    assert.equal(displayedValue(html,"text-investment-value"),"CAD $0.00");
+  });
+  it("handles empty portfolios and balance query errors explicitly rather than showing a false zero",()=>{
+    const empty=render(DashboardPage,{},dashboardData([]));
+    assert.equal(displayedValue(empty,"text-total-balance"),"CAD $0.00");
+    for(const failedKey of [["/api/accounts"],["/api/investments"]]) {
+      const html=render(DashboardPage,{},dashboardData([{id:25,accountType:"Brokerage Account",balance:"1000.00"}]),[failedKey]);
+      assert.equal(displayedValue(html,"text-total-balance"),"Unavailable");
+      assert(html.includes("Current balances could not be loaded"));
+      assert(html.includes("Retry"));
+    }
+    const loading=render(DashboardPage,{},dashboardData([]).filter(d=>d.key[0]!=="/api/accounts"));
+    assert(!loading.includes('data-testid="text-total-balance"'));
+    for(const invalidBalance of ["NaN","Infinity","-Infinity"]) {
+      const invalid=render(DashboardPage,{},dashboardData([{id:25,accountType:"Brokerage Account",balance:invalidBalance}]));
+      assert.equal(displayedValue(invalid,"text-total-balance"),"Unavailable");
+      assert.equal(displayedValue(invalid,"text-liquid-cash"),"Unavailable");
+    }
+  });
+  it("preserves funded balance when fee details fail or load, and keeps separate liability amounts hidden when requested",()=>{
+    const data=dashboardData([
+      {id:25,accountType:"Brokerage Account",balance:"-12398.48"},
+      {id:26,accountType:"Trust Account",balance:"1622886.00"},
+    ],[],"100.00");
+    const error=render(DashboardPage,{},data,[["/api/fees","summary",7]]);
+    assert.equal(displayedValue(error,"text-total-balance"),"CAD $1,622,886.00");
+    assert(error.includes("Overdraft and fee details could not be loaded"));
+    assert(error.includes("Retry"));
+    const loading=render(DashboardPage,{},data.filter(d=>d.key[0]!=="/api/fees"));
+    assert.equal(displayedValue(loading,"text-total-balance"),"CAD $1,622,886.00");
+    assert(loading.includes("Loading overdraft and fee details"));
+    const summary=data.find(d=>d.key[0]==="/api/fees")!.value;
+    const hidden=render(FeeLiability,{summary,hidden:true,separateFromBalance:true},[]);
+    for(const amount of ["12,398.48","12,498.48","100.00"]) assert(!hidden.includes(amount));
+    assert(hidden.includes("Brokerage Account"));
+    assert(hidden.includes("••••••"));
+    const liability=render(FeeLiability,{summary,separateFromBalance:true},[]);
+    assert(liability.includes("Brokerage Account: overdraft CAD $12,398.48"));
+    assert(liability.includes("CAD $100.00 unpaid fees"));
   });
   it("shows exact itemization, terms, date, timezone, optional client consent, and disabled acceptance before consent", () => {
     const data: ClientFees = { settings, enrollments: [enrollment], assessments: [] };

@@ -71,9 +71,9 @@ function categoryOf(type: string) {
 export default function DashboardPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const { data: accounts, isLoading: accountsLoading } = useAccounts();
+  const { data: accounts, isLoading: accountsLoading, isError: accountsError, refetch: refetchAccounts } = useAccounts();
   const feeSummary = useClientFeeSummary();
-  const { data: investments, isLoading: investmentsLoading } = useInvestments();
+  const { data: investments, isLoading: investmentsLoading, isError: investmentsError, refetch: refetchInvestments } = useInvestments();
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
   const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"], refetchInterval: 15000 });
 
@@ -84,15 +84,18 @@ export default function DashboardPage() {
   const isTransmitting = activeTransfer?.status === "transfer_out";
 
   const primaryAccount = accounts?.find(a => a.accountType === 'Brokerage Account') || accounts?.[0];
-   const { data: primaryTransactions } = useAccountTransactions(primaryAccount?.id || 0);
-   const { data: transactions, isLoading: txnLoading, isError: txnError } = usePortfolioTransactions();
+  const { data: primaryTransactions } = useAccountTransactions(primaryAccount?.id || 0);
+  const { data: transactions, isLoading: txnLoading, isError: txnError } = usePortfolioTransactions();
 
-  const investValue    = investments?.reduce((s, i) => s + Number(i.shares) * Number(i.currentPrice || i.purchasePrice), 0) || 0;
-  const accountCash    = accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0;
-  const totalBalance   = accountCash + investValue - Number(feeSummary.data?.totalUnpaid || 0);
-  const transmittedDebt = (accounts?.reduce((sum, account) => sum + Math.min(0, Number(account.balance)), 0) || 0)
-    - Number(feeSummary.data?.totalUnpaid || 0);
-  const cashTotal      = accountCash;
+  const investValue    = investments?.reduce((s, i) => s + Number(i.shares) * Number(i.currentPrice ?? i.purchasePrice), 0) ?? 0;
+  const accountCash    = accounts?.reduce((s, a) => s + Number(a.balance), 0) ?? 0;
+  // Current funded assets, not net worth. Other accounts' debt stays below.
+  const cashTotal      = accounts?.reduce((s, a) => s + Math.max(0, Number(a.balance)), 0) ?? 0;
+  const totalBalance   = cashTotal + investValue;
+  const cashUnavailable = accountsError || !accounts || accounts.some(a => !Number.isFinite(Number(a.balance)));
+  const investmentsUnavailable = investmentsError || !investments || !Number.isFinite(investValue);
+  const balanceUnavailable = cashUnavailable || investmentsUnavailable || !Number.isFinite(totalBalance);
+  const cashLocked = Boolean(activeTransfer && ["approved", "liquidating", "transfer_out"].includes(activeTransfer.status));
   const investTotal    = investValue;
   const dayChange      = (accountCash + investValue) * 0.0038;
   const ytdGain        = (accountCash + investValue) * 0.084;
@@ -102,7 +105,7 @@ export default function DashboardPage() {
 
   const fmt = (n: number) => formatCAD(n);
 
-  if (accountsLoading || investmentsLoading || feeSummary.isLoading) {
+  if (accountsLoading || investmentsLoading) {
     return (
       <LayoutShell>
         <div className="space-y-3">
@@ -166,16 +169,14 @@ export default function DashboardPage() {
         <div className="bg-[#0B2218] rounded-sm overflow-hidden">
           <div className="px-5 sm:px-8 py-7 border-b border-white/10">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-              {/* Net worth */}
+              {/* Current funded balance; liabilities are shown separately below */}
               <div className="min-w-0">
                 <p className="label-caps text-white/40 mb-1">{getGreeting()}, {user?.name?.split(' ')[0]} · Portfolio Overview</p>
                 <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-                  <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${totalBalance < 0 ? "text-red-300" : isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-net-worth">
-                    {feeSummary.isError ? "Unavailable" : fmt(isTransmitting ? transmittedDebt : totalBalance)}
+                  <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
+                    {balanceUnavailable ? "Unavailable" : fmt(totalBalance)}
                   </span>
-                  {isTransmitting ? (
-                    <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
-                  ) : Number(feeSummary.data?.totalUnpaid || 0) > 0 || feeSummary.isError ? null : (
+                  {isTransmitting || balanceUnavailable || Number(feeSummary.data?.totalUnpaid || 0) > 0 || feeSummary.isError ? null : (
                     <div className="flex items-center gap-1 text-emerald-400 text-sm font-mono mb-1.5">
                       <TrendingUp className="w-3.5 h-3.5" />
                       +{fmt(dayChange)} today
@@ -183,10 +184,13 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <p className="text-white/30 text-xs font-mono mt-1">
-                  {isTransmitting
-                    ? `Funds in transit to ${activeTransfer?.institutionName}`
-                    : `Net worth after unpaid fees · CAD · ${format(new Date(), 'MMMM d, yyyy')}`}
+                  Total balance · CAD · {format(new Date(), 'MMMM d, yyyy')}
                 </p>
+                {isTransmitting && <p className="text-violet-300 text-xs mt-2">Funds in transit to {activeTransfer?.institutionName}</p>}
+                {balanceUnavailable && <p role="alert" className="text-red-300 text-xs mt-2">
+                  Current balances could not be loaded.
+                  <button className="ml-2 underline" onClick={() => { void refetchAccounts(); void refetchInvestments(); }}>Retry</button>
+                </p>}
               </div>
               {/* Quick actions */}
               <div className="flex gap-2 shrink-0">
@@ -205,31 +209,24 @@ export default function DashboardPage() {
           {/* KPI strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-white/10">
             {[
-              { label: 'Liquid Cash',    val: fmt(cashTotal),    sub: pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending` : 'Available now', icon: Landmark },
-              { label: 'Investments',    val: fmt(investTotal),  sub: 'Mkt value excl. cash', icon: BarChart3 },
-              { label: 'YTD Return',     val: fmt(ytdGain),       sub: '+8.4% vs. benchmark',  icon: TrendingUp },
+              { label: 'Liquid Cash',    val: cashUnavailable ? "Unavailable" : fmt(cashTotal), sub: pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending${cashLocked ? " · Transfer locked" : ""}` : cashLocked ? 'Transfer locked' : 'Available now', icon: Landmark },
+              { label: 'Investments',    val: investmentsUnavailable ? "Unavailable" : fmt(investTotal), sub: 'Mkt value excl. cash', icon: BarChart3 },
+              { label: 'YTD Return',     val: balanceUnavailable ? "Unavailable" : fmt(ytdGain), sub: '+8.4% vs. benchmark', icon: TrendingUp },
               { label: 'Portfolio Risk', val: 'Moderate',         sub: 'Risk band: 5 / 10',     icon: ShieldCheck },
             ].map(({ label, val, sub, icon: Icon }) => (
               <div key={label} className="px-3 sm:px-6 py-4 flex items-center gap-2 sm:gap-3 min-w-0">
                 <Icon className="w-4 h-4 text-white/20 shrink-0" />
                 <div className="min-w-0">
                   <p className="label-caps text-white/30 mb-0.5">{label}</p>
-                  {isTransmitting ? (
-                    <div>
-                       <p className="font-mono text-violet-300 font-semibold text-sm">{formatCAD(accounts?.reduce((sum, account) => sum + Math.min(0, Number(account.balance)), 0) || 0)}</p>
-                      <p className="font-mono text-white/20 text-[10px] line-through">{val}</p>
-                    </div>
-                  ) : (
-                    <p className="font-mono text-white font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]">{val}</p>
-                  )}
-                  <p className="text-white/25 text-[10px] mt-0.5">{isTransmitting ? "Clearing" : sub}</p>
+                  <p className="font-mono text-white font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]" data-testid={label === 'Liquid Cash' ? "text-liquid-cash" : label === 'Investments' ? "text-investment-value" : undefined}>{val}</p>
+                  <p className="text-white/25 text-[10px] mt-0.5">{sub}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <FeeLiability summary={feeSummary.data} error={feeSummary.isError} retry={() => void feeSummary.refetch()} />
+        <FeeLiability summary={feeSummary.data} loading={feeSummary.isLoading} error={feeSummary.isError} retry={() => void feeSummary.refetch()} separateFromBalance />
 
         {/* ── Portfolio in Transit Banner ─────────────────────────────────── */}
         {activeTransfer && (() => {
@@ -389,7 +386,7 @@ export default function DashboardPage() {
               ) : investments && investments.length > 0 ? (
                 <div className="divide-y divide-border/40">
                   {investments.map((inv: any) => {
-                    const mktVal = Number(inv.shares) * Number(inv.currentPrice || inv.purchasePrice);
+                    const mktVal = Number(inv.shares) * Number(inv.currentPrice ?? inv.purchasePrice);
                     const cost   = Number(inv.shares) * Number(inv.purchasePrice);
                     const pnl    = mktVal - cost;
                     const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
