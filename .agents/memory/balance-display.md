@@ -1,11 +1,11 @@
 ---
 name: Balance display
-description: User's requirements for full-digit balances and CAD denomination.
+description: Full-digit balances, default CAD, Mary Scott's symbol-only £ exception, and separate overdrafts.
 ---
 
 Every account must be identified by its account name, including debt breakdowns and selectors, rather than a number-only “Account #…” label.
 
-**Why:** The user corrected a fee-debt display that did not identify which named account incurred the overdraft.
+**Why:** The user repeatedly corrected the fee-debt display, explicitly rejecting “Account #25” and requiring the specific account name.
 
 **How to apply:** Use the account's display name or account type in client and administrative views. Keep IDs for routing and internal reconciliation, not as substitutes for names.
 
@@ -15,11 +15,11 @@ Show balances in full digits, not abbreviated million notation such as "$2.80M".
 
 **How to apply:** Preserve full amounts when formatting account and portfolio balances, including on mobile.
 
-Keep everything in CAD for now.
+Keep other clients and the existing service-pricing plans in CAD. Mary Scott's account balances use £, retaining their existing numeric amounts.
 
-**Why:** The user explicitly gave this instruction when discussing service pricing.
+**Why:** The user originally requested CAD throughout, then explicitly requested Mary Scott's balance/account in pounds and chose “Keep the same amounts; change the currency to £.”
 
-**How to apply:** Keep account and service pricing denomination consistent with CAD until the user requests a change. Do not infer an exchange rate or silently convert existing amounts.
+**How to apply:** Show Mary's amounts with only the £ symbol, never “GBP” on her dashboard. Keep full digits and the separate named overdraft. Do not infer an exchange rate, change ledger numbers, rewrite historical descriptions or accepted pricing, or change unrelated clients' currencies.
 
 The CAD service-fee schedule is nominal pricing, not an exchange-rate conversion of the copied GBP example.
 

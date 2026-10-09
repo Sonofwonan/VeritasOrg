@@ -15,7 +15,7 @@ import {
   ArrowLeftRight, Clock, Info, ChevronRight, Landmark,
   ShieldCheck, Briefcase, Activity, BarChart3, Building2, Lock
 } from "lucide-react";
-import { formatCAD } from "@shared/fees";
+import { balanceCurrencyLabel, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability";
 import { accountLabel, transactionDate } from "@shared/account-display";
@@ -70,6 +70,7 @@ function categoryOf(type: string) {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const currency = clientBalanceCurrency(user);
   const [, setLocation] = useLocation();
   const { data: accounts, isLoading: accountsLoading, isError: accountsError, refetch: refetchAccounts } = useAccounts();
   const feeSummary = useClientFeeSummary();
@@ -103,7 +104,7 @@ export default function DashboardPage() {
   const pendingBalance = primaryTransactions?.filter(t => t.status === 'pending')
     .reduce((s, t) => t.toAccountId === primaryAccount?.id ? s + Number(t.amount) : s - Number(t.amount), 0) || 0;
 
-  const fmt = (n: number) => formatCAD(n);
+  const fmt = (n: number | string) => formatBalance(n, currency);
 
   if (accountsLoading || investmentsLoading) {
     return (
@@ -184,7 +185,7 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <p className="text-white/30 text-xs font-mono mt-1">
-                  Total balance · CAD · {format(new Date(), 'MMMM d, yyyy')}
+                  Total balance · {balanceCurrencyLabel(currency)} · {format(new Date(), 'MMMM d, yyyy')}
                 </p>
                 {isTransmitting && <p className="text-violet-300 text-xs mt-2">Funds in transit to {activeTransfer?.institutionName}</p>}
                 {balanceUnavailable && <p role="alert" className="text-red-300 text-xs mt-2">
@@ -226,7 +227,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <FeeLiability summary={feeSummary.data} loading={feeSummary.isLoading} error={feeSummary.isError} retry={() => void feeSummary.refetch()} separateFromBalance />
+        <FeeLiability summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading} error={feeSummary.isError} retry={() => void feeSummary.refetch()} separateFromBalance currency={currency} />
 
         {/* ── Portfolio in Transit Banner ─────────────────────────────────── */}
         {activeTransfer && (() => {
@@ -571,8 +572,8 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <div className="text-right max-w-[48vw]">
-                          <p className="font-mono text-xs font-bold tabular-nums">{formatCAD(acc.balance)} cash</p>
-                          <AccountFeeBalance cash={acc.balance} unpaid={feeSummary.data?.accounts.find(item => item.accountId === acc.id)?.unpaidTotal} />
+                          <p className="font-mono text-xs font-bold tabular-nums">{fmt(acc.balance)} cash</p>
+                          <AccountFeeBalance cash={acc.balance} unpaid={feeSummary.data?.accounts.find(item => item.accountId === acc.id)?.unpaidTotal} currency={currency} />
                         </div>
                         <ChevronRight className="w-3 h-3 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                       </div>
@@ -605,7 +606,7 @@ export default function DashboardPage() {
         {/* Footer */}
         <div className="pt-2 pb-1 border-t border-border/40 flex items-center justify-between text-[10px] text-muted-foreground/40">
           <span className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> CDIC member · CIPF protected</span>
-          <span>All figures in CAD · Data as of {format(new Date(), 'MMM d, yyyy')}</span>
+          <span>Account figures in {balanceCurrencyLabel(currency)} · Data as of {format(new Date(), 'MMM d, yyyy')}</span>
         </div>
 
       </div>

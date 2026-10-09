@@ -10,6 +10,7 @@ import { FeeLiability, AccountFeeBalance } from "../../client/src/components/fee
 import DashboardPage from "../../client/src/pages/dashboard";
 import AccountsPage from "../../client/src/pages/accounts-page";
 import { accountStatementCsv } from "../../client/src/lib/account-statement";
+import { balanceCurrencyLabel, clientBalanceCurrency, formatBalance } from "../../shared/balance-currency";
 import { transactionDate } from "../../shared/account-display";
 import { DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS, MANAGEMENT_TERMS, type ClientFees, type FeeOverview, type FeePreview } from "../../shared/fees";
 
@@ -39,7 +40,7 @@ function displayedValue(html: string, testId: string) {
   assert(match,`Missing ${testId}`);
   return match[1];
 }
-function dashboardData(accounts: {id:number;accountType:string;balance:string;displayName?:string}[], investments: unknown[] = [], unpaid = "0.00") {
+function dashboardData(accounts: {id:number;accountType:string;balance:string;displayName?:string}[], investments: unknown[] = [], unpaid = "0.00"): { key: unknown[]; value: unknown }[] {
   const primary=accounts.find(a=>a.accountType==="Brokerage Account") || accounts[0];
   const overdraft=accounts.reduce((sum,a)=>sum+Math.max(0,-Number(a.balance)),0);
   return [
@@ -58,6 +59,64 @@ function dashboardData(accounts: {id:number;accountType:string;balance:string;di
   ];
 }
 describe("Fee interfaces rendered with synthetic cached data", () => {
+  it("resolves fee-debt labels from real account records even with stale numbered fee responses",()=>{
+    const accounts=[{id:25,accountType:"Brokerage Account",balance:"-12398.48"}];
+    const data=dashboardData(accounts);
+    const summary=data.find(d=>d.key[0]==="/api/fees")!.value as ClientFeeSummary;
+    summary.accounts[0].accountName="Account #25";
+    for(const Component of [DashboardPage,AccountsPage]) {
+      const html=render(Component,{},data);
+      assert(html.includes("Brokerage Account: overdraft CAD $12,398.48"));
+      assert(!html.includes("Account #25"));
+      assert(html.includes('href="/accounts/25"'));
+    }
+    const renamed=render(FeeLiability,{summary,accounts:[{...accounts[0],displayName:"Discretionary Investment Account"}]},[]);
+    assert(renamed.includes("Discretionary Investment Account: overdraft"));
+    assert(!renamed.includes("Account #25"));
+    const unknown=render(FeeLiability,{summary},[]);
+    assert(!unknown.includes("Account #25"));
+    assert(unknown.includes("Account details unavailable"));
+  });
+  it("shows pounds by symbol only for an explicitly configured profile, without converting numbers or changing CAD defaults",()=>{
+    const data=dashboardData([
+      {id:24,accountType:"Trust Account",displayName:"Legacy Trust Account",balance:"0.00"},
+      {id:25,accountType:"Brokerage Account",balance:"-12398.48"},
+      {id:26,accountType:"Trust Account",displayName:"Inheritance Trust Account",balance:"1622886.00"},
+    ]);
+    data.find(d=>d.key[0]==="/api/user")!.value={id:7,name:"Mary Scott",clientRef:"VWMS2024",displayCurrency:"GBP"};
+    const before=JSON.stringify(data);
+    const html=render(DashboardPage,{},data);
+    assert.equal(displayedValue(html,"text-total-balance"),"£1,622,886.00");
+    assert.equal(displayedValue(html,"text-liquid-cash"),"£1,622,886.00");
+    assert.equal(displayedValue(html,"text-investment-value"),"£0.00");
+    assert(html.includes("Brokerage Account: overdraft £12,398.48"));
+    assert(html.includes("-£12,398.48"));
+    assert(!html.includes("GBP"));
+    assert(!html.includes("CAD $"));
+    assert(html.includes("Total balance · £"));
+    assert(html.includes("Account figures in £"));
+    assert.equal(JSON.stringify(data),before);
+    const accountsHtml=render(AccountsPage,{},data);
+    assert(accountsHtml.includes("£1,610,487.52"));
+    assert(!accountsHtml.includes("GBP"));
+    assert(!accountsHtml.includes("CAD $"));
+    assert.equal(formatBalance("1622886.00"),"CAD $1,622,886.00");
+    assert.equal(clientBalanceCurrency({displayCurrency:"CAD"}),"CAD");
+    assert.equal(clientBalanceCurrency(null),"CAD");
+    assert.equal(balanceCurrencyLabel("GBP"),"£");
+    assert.throws(()=>clientBalanceCurrency({displayCurrency:"invalid"}));
+    assert.equal(formatBalance("NaN","GBP"),"Unavailable");
+    const summary=data.find(d=>d.key[0]==="/api/fees")!.value;
+    const hidden=render(FeeLiability,{summary,currency:"GBP",hidden:true},[]);
+    assert(!hidden.includes("12,398.48"));
+    const hiddenAccount=render(AccountFeeBalance,{cash:"-12398.48",currency:"GBP",hidden:true},[]);
+    assert(!hiddenAccount.includes("12,398.48"));
+    const csv=accountStatementCsv(26,[{id:578,toAccountId:26,amount:"1622886.001",
+      description:"Inheritance — family farm sale proceeds",transactionType:"transfer",status:"completed",createdAt:"2026-10-08T16:00:00Z"}],"GBP");
+    assert(csv.includes("Amount (£)"));
+    assert(csv.includes('"1622886.001"'));
+    assert(!csv.includes("GBP"));
+  });
   it("shows inheritance history and current funded dashboard balance separately from the accounts overview net total",()=>{
     const deposit = {id:88,fromAccountId:null,toAccountId:26,amount:"1622886.00",
       description:"Inheritance — family farm sale proceeds",transactionType:"transfer",status:"completed",createdAt:"2026-10-08T16:00:00Z"};

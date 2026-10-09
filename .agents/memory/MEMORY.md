@@ -1,6 +1,6 @@
 - [Design Identity](design-identity.md) — Approved "Old Money, Digital Precision" visual system: Cormorant serif, forest green + cream + gold, near-zero radius, underline inputs, editorial layout.
 - [Application password retention](application-password-retention.md) — Legacy application password hashes remain stored but are not used; do not erase them without explicit approval.
-- [Balance display](balance-display.md) — User requires full-digit balances and says to keep everything in CAD for now.
+- [Balance display](balance-display.md) — Full digits and separate overdrafts; CAD by default, with Mary Scott using only £ and unchanged numeric amounts.
 - [Fictional test records](fictional-test-records.md) — Mary Scott is fictional test data; use normal screens without a visible demo label, preserving internal test provenance.
 - [Account fee authorization](account-fee-authorization.md) — Approved CAD annual pricing and fictional-history scope; preserve real clients’ accepted cash-only terms.
 - [Post-merge safety](post-merge-safety.md) — Automatic setup may update schema and build, but must never seed clients, backfill fictional history, or process billing.

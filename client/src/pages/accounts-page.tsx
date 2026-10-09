@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { formatCAD } from "@shared/fees";
+import { balanceCurrencyLabel, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 
 type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' |
   '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
@@ -69,6 +69,8 @@ export default function AccountsPage() {
   const { data: transactions } = useAccountTransactions(primaryAccount?.id || 0);
   const createAccount = useCreateAccount();
   const { user } = useAuth();
+  const currency = clientBalanceCurrency(user);
+  const money = (value: string | number) => formatBalance(value, currency);
   const feeSummary = useClientFeeSummary();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -102,7 +104,7 @@ export default function AccountsPage() {
   const investTotal = accounts?.filter(a => categoryOf(a.accountType) === 'investment').reduce((s, a) => s + Number(a.balance), 0) || 0;
   const bizTotal = accounts?.filter(a => categoryOf(a.accountType) === 'business').reduce((s, a) => s + Number(a.balance), 0) || 0;
 
-  const fmt = (n: number) => hideBalances ? '••••••' : formatCAD(n);
+  const fmt = (n: number) => hideBalances ? '••••••' : money(n);
 
   const handleCreate = () => {
     if (!user) return;
@@ -177,7 +179,7 @@ export default function AccountsPage() {
       </Dialog>
 
       {/* ── Portfolio Summary Header ──────────────────────────────── */}
-      <FeeLiability summary={feeSummary.data} error={feeSummary.isError} retry={() => void feeSummary.refetch()} hidden={hideBalances} />
+      <FeeLiability summary={feeSummary.data} accounts={accounts} error={feeSummary.isError} retry={() => void feeSummary.refetch()} hidden={hideBalances} currency={currency} />
 
       <div className="bg-[#0B2218] rounded-sm overflow-hidden">
         {/* Top bar */}
@@ -200,7 +202,7 @@ export default function AccountsPage() {
               </div>
               {isTransmitting
                 ? <p className="text-violet-300/60 text-xs mt-1.5 font-mono">Funds in transit to {activeTransfer?.institutionName}</p>
-                : <p className="text-white/30 text-xs mt-1.5 font-mono">CAD · As of {new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                : <p className="text-white/30 text-xs mt-1.5 font-mono">{balanceCurrencyLabel(currency)} · As of {new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
               }
             </div>
             <div className="flex items-center gap-2 mt-1">
@@ -239,7 +241,7 @@ export default function AccountsPage() {
               </div>
               {isTransmitting ? (
                 <div>
-                   <p className="font-mono text-sm sm:text-xl text-violet-300 tracking-tight [overflow-wrap:anywhere]">{formatCAD(accounts?.filter(a => (label === "Cash & Deposits" ? categoryOf(a.accountType) === "cash" : label === "Investments" ? categoryOf(a.accountType) === "investment" : categoryOf(a.accountType) === "business")).reduce((sum, a) => sum + Math.min(0, Number(a.balance)), 0) || 0)}</p>
+                   <p className="font-mono text-sm sm:text-xl text-violet-300 tracking-tight [overflow-wrap:anywhere]">{fmt(accounts?.filter(a => (label === "Cash & Deposits" ? categoryOf(a.accountType) === "cash" : label === "Investments" ? categoryOf(a.accountType) === "investment" : categoryOf(a.accountType) === "business")).reduce((sum, a) => sum + Math.min(0, Number(a.balance)), 0) || 0)}</p>
                    <p className="font-mono text-[10px] text-white/20 line-through mt-0.5 [overflow-wrap:anywhere]">{fmt(value)}</p>
                 </div>
               ) : (
@@ -387,7 +389,7 @@ export default function AccountsPage() {
                             {isTransmitting ? (
                               <div>
                                 <p className="font-mono text-base font-semibold text-violet-400 tabular-nums" data-testid={`balance-${account.id}`}>
-                                   {formatCAD(Math.min(0, Number(account.balance)))}
+                                   {fmt(Math.min(0, Number(account.balance)))}
                                 </p>
                                 <p className="font-mono text-[10px] text-muted-foreground/40 line-through tabular-nums">
                                    {fmt(Number(account.balance))}
@@ -400,7 +402,7 @@ export default function AccountsPage() {
                             )}
                             <AccountFeeBalance cash={account.balance}
                               unpaid={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.unpaidTotal}
-                              overdraft={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.overdraft} hidden={hideBalances} />
+                              overdraft={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.overdraft} hidden={hideBalances} currency={currency} />
                           </div>
 
                           <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
@@ -418,7 +420,7 @@ export default function AccountsPage() {
       {/* ── Footer note ─────────────────────────────────────────────── */}
       <div className="mt-8 pt-4 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground/40">
         <span className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> CDIC insured · Accounts protected up to eligible limits</span>
-        <span>All figures in CAD</span>
+        <span>Account figures in {balanceCurrencyLabel(currency)}</span>
       </div>
 
     </LayoutShell>

@@ -122,7 +122,8 @@ export async function registerRoutes(
     await pool.query(`
       ALTER TABLE users
         ADD COLUMN IF NOT EXISTS login_restricted BOOLEAN DEFAULT FALSE,
-        ADD COLUMN IF NOT EXISTS login_restriction_message TEXT;
+        ADD COLUMN IF NOT EXISTS login_restriction_message TEXT,
+        ADD COLUMN IF NOT EXISTS display_currency TEXT NOT NULL DEFAULT 'CAD';
       ALTER TABLE payees
         ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending_approval',
         ADD COLUMN IF NOT EXISTS admin_notes TEXT;
@@ -243,6 +244,9 @@ export async function registerRoutes(
   });
 
   app.patch("/api/user", requireAuth, requireNoLiquidation, async (req, res) => {
+    if (req.body.displayCurrency !== undefined && !["CAD", "GBP"].includes(req.body.displayCurrency)) {
+      return res.status(400).json({ message: "Unsupported balance display currency" });
+    }
     try {
       const user = await storage.updateUser((req.user as User).id, req.body);
       res.json(user);

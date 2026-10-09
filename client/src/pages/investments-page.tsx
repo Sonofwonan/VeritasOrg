@@ -1,6 +1,6 @@
 import { useInvestments, useAccounts, useBuyInvestment, useSellInvestment, useMarketQuote } from "@/hooks/use-finances";
 import { accountLabel } from "@shared/account-display";
-import { formatCAD } from "@shared/fees";
+import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -280,7 +280,7 @@ export default function InvestmentsPage() {
                       <SelectContent>
                         {investmentAccounts.map(a => (
                           <SelectItem key={a.id} value={a.id.toString()}>
-                            {accountLabel(a)} ({formatCAD(a.balance)})
+                            {accountLabel(a)} ({formatBalance(a.balance,clientBalanceCurrency(user))})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -438,7 +438,7 @@ export default function InvestmentsPage() {
                       <SelectContent>
                         {investmentAccounts.map(a => (
                           <SelectItem key={a.id} value={a.id.toString()}>
-                            {accountLabel(a)} ({formatCAD(a.balance)})
+                            {accountLabel(a)} ({formatBalance(a.balance,clientBalanceCurrency(user))})
                           </SelectItem>
                         ))}
                       </SelectContent>

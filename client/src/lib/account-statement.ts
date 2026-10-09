@@ -1,11 +1,12 @@
 import { transactionDate } from "@shared/account-display";
+import { balanceCurrencyLabel, type BalanceCurrency } from "@shared/balance-currency";
 
 type StatementTransaction = {
   id: number; toAccountId: number | null; amount: string; description: string | null;
   transactionType: string; status: string; createdAt: string | Date | null;
 };
 
-export function accountStatementCsv(accountId: number, transactions: StatementTransaction[]) {
+export function accountStatementCsv(accountId: number, transactions: StatementTransaction[], currency: BalanceCurrency = "CAD") {
   const quote = (value: unknown, numeric = false) => {
     const text = String(value ?? "");
     // Descriptions are untrusted text, not spreadsheet formulas.
@@ -13,7 +14,7 @@ export function accountStatementCsv(accountId: number, transactions: StatementTr
     return `"${safe.replaceAll('"','""')}"`;
   };
   const rows = [
-    ["Transaction ID","Recorded timestamp (ISO 8601)","Category","Description","Transaction type","Status","Amount (CAD)","Date (America/Toronto)"],
+    ["Transaction ID","Recorded timestamp (ISO 8601)","Category","Description","Transaction type","Status",`Amount (${balanceCurrencyLabel(currency)})`,"Date (America/Toronto)"],
     ...transactions.map(t => {
       const kind = `${t.transactionType} ${t.description || ""}`;
       const category = /management/i.test(kind) ? "Management fee"

@@ -12,7 +12,8 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ClientFees } from "@/components/fees/client-fees";
-import { formatCAD } from "@shared/fees";
+import { clientBalanceCurrency, formatBalance, type BalanceCurrency } from "@shared/balance-currency";
+import { useAuth } from "@/hooks/use-auth";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { FeeLiability } from "@/components/fees/fee-liability";
 import { accountStatementCsv } from "@/lib/account-statement";
@@ -22,8 +23,8 @@ type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' | '401(k
 
 const INVESTMENT_ACCOUNT_TYPES = ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan'];
 
-function exportStatement(account: { id: number; accountType: string }, transactions: any[] = []) {
-  const csv = accountStatementCsv(account.id,transactions);
+function exportStatement(account: { id: number; accountType: string }, transactions: any[] = [], currency: BalanceCurrency = "CAD") {
+  const csv = accountStatementCsv(account.id,transactions,currency);
   const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -34,6 +35,9 @@ function exportStatement(account: { id: number; accountType: string }, transacti
 }
 
 export default function AccountDetailPage() {
+  const { user } = useAuth();
+  const currency = clientBalanceCurrency(user);
+  const money = (value: string | number) => formatBalance(value,currency);
   const params = useParams();
   const [, setLocation] = useLocation();
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
@@ -104,9 +108,9 @@ export default function AccountDetailPage() {
             <div>
               <p className="text-sm text-muted-foreground mb-2">Account ledger cash less unpaid assessments · CAD</p>
               <p className={cn("break-words font-mono text-[clamp(1.75rem,7vw,3rem)] font-bold tabular-nums", netBalance < 0 ? "text-red-700" : "text-primary")}>
-                {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : formatCAD(netBalance)}
+                {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : money(netBalance)}
               </p>
-                <p className="mt-2 text-sm">Cash ledger balance: <span className={cn("font-mono font-semibold tabular-nums", accountBalance < 0 ? "text-red-700" : "")}>{formatCAD(accountBalance)}</span>{accountBalance < 0 && <span className="ml-2 text-xs text-red-700">posted fee overdraft / negative cash</span>}</p>
+                <p className="mt-2 text-sm">Cash ledger balance: <span className={cn("font-mono font-semibold tabular-nums", accountBalance < 0 ? "text-red-700" : "")}>{money(accountBalance)}</span>{accountBalance < 0 && <span className="ml-2 text-xs text-red-700">posted fee overdraft / negative cash</span>}</p>
               <FeeLiability summary={unpaidFees !== undefined ? {
                 totalUnpaid: unpaidFees, totalOverdraft: feeSummary.data!.accounts.find(item => item.accountId === accountId)?.overdraft,
                 totalOwed: feeSummary.data!.accounts.find(item => item.accountId === accountId)?.amountOwed,
@@ -143,7 +147,7 @@ export default function AccountDetailPage() {
             <CardTitle>Transaction History</CardTitle>
             <CardDescription>Recent account activity</CardDescription>
           </div>
-           <Button variant="outline" size="sm" className="gap-2" onClick={() => exportStatement(account, transactions || [])}>
+           <Button variant="outline" size="sm" className="gap-2" onClick={() => exportStatement(account, transactions || [], currency)}>
             <Download className="w-4 h-4" />
             Export
           </Button>
@@ -182,7 +186,7 @@ export default function AccountDetailPage() {
                         "font-bold text-lg",
                         transaction.status === 'pending' ? 'text-red-600' : (isIncoming ? 'text-green-600' : 'text-red-600')
                       )}>
-                         {isIncoming ? '+' : '-'}{formatCAD(transaction.amount)}
+                         {isIncoming ? '+' : '-'}{money(transaction.amount)}
                       </p>
                       <Badge variant={transaction.status === 'completed' ? 'default' : 'destructive'} className="text-xs mt-1 capitalize">
                         {transaction.status}
@@ -217,7 +221,7 @@ export default function AccountDetailPage() {
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                   <span className="text-zinc-400 text-sm">Amount</span>
                   <span className={cn("font-black text-lg", selectedTxn?.status === 'pending' ? "text-red-500" : (selectedTxn?.toAccountId === accountId ? "text-emerald-500" : "text-red-500"))}>
-                    {formatCAD(selectedTxn?.amount ?? 0)}
+                    {money(selectedTxn?.amount ?? 0)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
