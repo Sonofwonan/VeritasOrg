@@ -32,6 +32,9 @@ it("shows Mary's locked debt notice first, with £ only and unchanged funded bal
   assert(html.includes("Payment is required before access to funds can be granted."));
   assert(html.indexOf('aria-label="Outstanding service fees"')<html.indexOf('data-testid="text-total-balance"'));
   assert(!html.includes("CAD") && !html.includes("GBP") && !html.includes("Account #"));
+  assert(!html.includes("Total balance · £"));
+  assert(!html.includes("Account figures in £"));
+  assert(html.includes("Last updated"));
 });
 it("shows Mary's service terms and fees without CAD while preserving stored pricing",()=>{
   const fees={settings:{enabled:false},enrollments:[{...enrollment,accountId:25}],assessments:[],contracts:[]};
@@ -118,8 +121,10 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     assert(html.includes("-£12,398.48"));
     assert(!html.includes("GBP"));
     assert(!html.includes("CAD $"));
-    assert(html.includes("Total balance · £"));
-    assert(html.includes("Account figures in £"));
+    assert(!html.includes("Total balance · £"));
+    assert(html.includes("Total balance"));
+    assert(!html.includes("Account figures in £"));
+    assert(html.includes("Last updated"));
     assert.equal(JSON.stringify(data),before);
     const accountsHtml=render(AccountsPage,{},data);
     assert(accountsHtml.includes("£1,610,487.52"));

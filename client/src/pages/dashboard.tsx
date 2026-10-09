@@ -194,7 +194,7 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <p className="text-white/30 text-xs font-mono mt-1">
-                  Total balance · {balanceCurrencyLabel(currency)} · {format(new Date(), 'MMMM d, yyyy')}
+                  Total balance{currency === "CAD" ? " · CAD" : ""} · {format(new Date(), 'MMMM d, yyyy')}
                 </p>
                 {isTransmitting && <p className="text-violet-300 text-xs mt-2">Funds in transit to {activeTransfer?.institutionName}</p>}
                 {balanceUnavailable && <p role="alert" className="text-red-300 text-xs mt-2">
@@ -615,7 +615,7 @@ export default function DashboardPage() {
         {/* Footer */}
         <div className="pt-2 pb-1 border-t border-border/40 flex items-center justify-between text-[10px] text-muted-foreground/40">
           <span className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> CDIC member · CIPF protected</span>
-          <span>Account figures in {balanceCurrencyLabel(currency)} · Data as of {format(new Date(), 'MMM d, yyyy')}</span>
+          <span>{currency === "GBP" ? "Last updated" : `Account figures in ${balanceCurrencyLabel(currency)} · Data as of`} {format(new Date(), 'MMM d, yyyy')}</span>
         </div>
 
       </div>

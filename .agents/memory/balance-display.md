@@ -21,6 +21,12 @@ Keep other clients and the existing service-pricing plans in CAD. Mary Scott's a
 
 **How to apply:** Remove CAD wording from all Mary's client-facing balance, fee, transaction and statement views; use only £, never GBP on her dashboard. Stored financial records and shared accepted pricing remain unchanged. Do not relabel a CAD/USD market quote as GBP/USD; omit it from her view rather than inventing an exchange rate. Do not change unrelated clients' currencies.
 
+Avoid a standalone £ in Mary's balance/date caption or dashboard footer; the amounts already show their currency.
+
+**Why:** The user circled the extra £ beside the date and asked to replace it with something user-friendly.
+
+**How to apply:** Keep the caption as “Total balance · [date]” and use “Last updated [date]” in the footer, without duplicating the symbol.
+
 Currency-symbol exceptions are explicit designations, not client-controlled profile preferences.
 
 **Why:** Letting ordinary clients change the presentation symbol would make unconverted CAD ledger amounts appear to be pounds and violate the instruction to leave other clients in CAD.
