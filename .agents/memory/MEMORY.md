@@ -1,3 +1,4 @@
 - [Design Identity](design-identity.md) — Approved "Old Money, Digital Precision" visual system: Cormorant serif, forest green + cream + gold, near-zero radius, underline inputs, editorial layout.
 - [Application password retention](application-password-retention.md) — Legacy application password hashes remain stored but are not used; do not erase them without explicit approval.
 - [Balance display](balance-display.md) — User requires full-digit balances and says to keep everything in CAD for now.
+- [Fictional test records](fictional-test-records.md) — Mary Scott is fictional test data; use normal screens without a visible demo label, preserving internal test provenance.

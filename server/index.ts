@@ -78,7 +78,8 @@ app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   const redactResponseBody = /^\/api\/admin\/applications\/\d+\/approve$/.test(path)
-    || path.startsWith("/api/admin/fees") || path.startsWith("/api/fees") || /^\/api\/accounts\/\d+\/fees$/.test(path);
+    || path.startsWith("/api/admin/fees") || path.startsWith("/api/fees") || /^\/api\/accounts\/\d+\/fees$/.test(path)
+    || path === "/api/login" || path === "/api/user";
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock3, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
 import { useClientFees, useClientFeeAction } from "@/hooks/use-fees";
-import { BILLING_TIME_ZONE, formatCAD, type FeeAssessment, type FeeEnrollment } from "@shared/fees";
+import { BILLING_TIME_ZONE, centsToMoney, moneyToCents, formatCAD, type FeeAssessment, type FeeEnrollment } from "@shared/fees";
 import { Button } from "@/components/ui/button";
 
 function dateLabel(value: string | null | undefined) {
@@ -38,6 +38,8 @@ export function ClientFees({ accountId }: { accountId: number }) {
   const { settings, enrollments, assessments } = fees.data;
   const accountEnrollments = enrollments.filter(item => item.accountId === accountId);
   const accountAssessments = assessments.filter(item => item.accountId === accountId);
+  const unpaidTotal = centsToMoney(accountAssessments.filter(item => item.status === "unpaid")
+    .reduce((total, item) => total + moneyToCents(item.total), 0n));
   const offers = accountEnrollments.filter(item => item.state === "offered");
   const accepted = accountEnrollments.filter(item => item.state !== "offered");
 
@@ -102,6 +104,11 @@ export function ClientFees({ accountId }: { accountId: number }) {
 
     <div className="border-t border-border pt-5">
       <div className="flex items-center gap-2"><Clock3 className="h-4 w-4 text-accent" /><h3 className="font-serif text-2xl">Fee history</h3></div>
+      <div className="mt-3 border border-border bg-muted/20 p-4">
+        <p className="label-caps text-muted-foreground">Outstanding unpaid service fees</p>
+        <p className="mt-1 font-mono text-xl tabular-nums">{formatCAD(unpaidTotal)}</p>
+        <p className="mt-2 text-xs text-muted-foreground">Recorded separately from your cash balance. No overdraft, interest, or late-payment penalty is added.</p>
+      </div>
       {accountAssessments.length === 0 ? <div className="mt-3 border border-border bg-muted/20 p-5 text-sm text-muted-foreground">No fee assessments are recorded for this account.</div> : <div className="mt-3 divide-y divide-border border-y border-border">
         {accountAssessments.map((assessment: FeeAssessment) => <div key={assessment.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
            <div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold">Monthly service fee · period {assessment.period + 1}</p><span className="label-caps border border-border px-2 py-0.5">{assessment.status}</span></div><p className="mt-1 text-xs text-muted-foreground">Due {dateLabel(assessment.dueDate)} · recorded {dateLabel(assessment.createdAt)}</p>

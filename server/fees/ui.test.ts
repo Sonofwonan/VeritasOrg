@@ -37,15 +37,16 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
   it("shows paid, waived, and refunded client history with all components and lifecycle controls", () => {
     const data: ClientFees = {
       settings, enrollments: [{ ...enrollment, state: "active", acceptedAt: "2030-01-01T12:00:00Z", nextChargeDate: "2030-02-28" }],
-      assessments: ["paid", "waived", "refunded"].map((status, i) => ({
+      assessments: ["paid", "waived", "refunded", "unpaid"].map((status, i) => ({
         id: i + 1, enrollmentId: 1, accountId: 1, period: i, dueDate: "2030-01-31",
-        components: DEFAULT_FEE_COMPONENTS, total: "363.64", status: status as "paid" | "waived" | "refunded",
+        components: DEFAULT_FEE_COMPONENTS, total: "363.64", status: status as "paid" | "waived" | "refunded" | "unpaid",
         transactionId: status === "waived" ? null : 1, refundTransactionId: status === "refunded" ? 2 : null,
         reason: null, createdAt: "2030-01-31T12:00:00Z",
       })),
     };
     const html = render(ClientFeesComponent, { accountId: 1 }, [{ key: ["/api/fees", 1], value: data }]);
-    for (const text of ["paid", "waived", "refunded", "End enrollment", "February 28, 2030", "period 1", "period 3"]) assert(html.includes(text), text);
+    for (const text of ["paid", "waived", "refunded", "End enrollment", "February 28, 2030", "period 1", "period 3",
+      "Outstanding unpaid service fees", "CAD $363.64", "Recorded separately from your cash balance"]) assert(html.includes(text), text);
   });
   it("renders admin versioning, eligibility, processing, preview, lifecycle, and audit controls", () => {
     const data: FeeOverview = {
