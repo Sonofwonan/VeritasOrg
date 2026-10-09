@@ -12,7 +12,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ClientFees } from "@/components/fees/client-fees";
-import { clientBalanceCurrency, formatBalance, type BalanceCurrency } from "@shared/balance-currency";
+import { balanceCurrencyLabel, balanceText, clientBalanceCurrency, formatBalance, type BalanceCurrency } from "@shared/balance-currency";
 import { useAuth } from "@/hooks/use-auth";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { FeeLiability } from "@/components/fees/fee-liability";
@@ -106,7 +106,7 @@ export default function AccountDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Account ledger cash less unpaid assessments · CAD</p>
+              <p className="text-sm text-muted-foreground mb-2">Account ledger cash less unpaid assessments · {balanceCurrencyLabel(currency)}</p>
               <p className={cn("break-words font-mono text-[clamp(1.75rem,7vw,3rem)] font-bold tabular-nums", netBalance < 0 ? "text-red-700" : "text-primary")}>
                 {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : money(netBalance)}
               </p>
@@ -115,7 +115,7 @@ export default function AccountDetailPage() {
                 totalUnpaid: unpaidFees, totalOverdraft: feeSummary.data!.accounts.find(item => item.accountId === accountId)?.overdraft,
                 totalOwed: feeSummary.data!.accounts.find(item => item.accountId === accountId)?.amountOwed,
                 accounts: feeSummary.data!.accounts.filter(item => item.accountId === accountId),
-              } : undefined} error={feeSummary.isError} retry={() => void feeSummary.refetch()} />
+              } : undefined} error={feeSummary.isError} retry={() => void feeSummary.refetch()} currency={currency} accounts={[account]} />
               <p className="mt-2 max-w-xl text-xs leading-relaxed text-muted-foreground">
                 This is the account ledger balance used to determine whether a fee assessment is payable. It is separate from the market value of investment holdings; holdings are not used or sold to pay service fees.
               </p>
@@ -177,7 +177,7 @@ export default function AccountDetailPage() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium group-hover:text-primary transition-colors">{transaction.description}</p>
+                        <p className="font-medium group-hover:text-primary transition-colors">{balanceText(transaction.description,currency)}</p>
                         <p className="text-sm text-muted-foreground">{transactionDate(transaction.createdAt)}</p>
                       </div>
                     </div>
@@ -216,7 +216,7 @@ export default function AccountDetailPage() {
               <div className="space-y-4 py-4">
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                   <span className="text-zinc-400 text-sm">Description</span>
-                  <span className="font-bold">{selectedTxn?.description}</span>
+                  <span className="font-bold">{balanceText(selectedTxn?.description,currency)}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                   <span className="text-zinc-400 text-sm">Amount</span>

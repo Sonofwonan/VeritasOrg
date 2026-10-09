@@ -4,11 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus, CheckCircle2, Building2, Clock, XCircle } from "lucide-react";
 import { useState } from "react";
+import { useAuth as useFundsOwner } from "@/hooks/use-auth";
+import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { useFundsAccess } from "@/hooks/use-funds-access";
+import { FundsAccessNotice } from "@/components/fees/funds-access-notice";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { InstitutionalTransferModal } from "@/components/institutional-transfer-modal";
 
 export default function TransfersPage() {
+  const { user: fundsOwner } = useFundsOwner();
+  const access = useFundsAccess();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { user } = useAuth();
   const [showInstTransferModal, setShowInstTransferModal] = useState(false);
@@ -31,6 +37,7 @@ export default function TransfersPage() {
 
   return (
     <LayoutShell>
+      <FundsAccessNotice />
       <div className="max-w-4xl mx-auto">
         <div className="mb-5">
           <h2 className="text-xl font-bold font-display">Portfolio Transfer</h2>
@@ -49,7 +56,7 @@ export default function TransfersPage() {
                   Move your full portfolio in-kind or as cash to any registered Canadian investment dealer. All requests are subject to admin review.
                 </CardDescription>
               </div>
-              <Button onClick={() => setShowInstTransferModal(true)} className="gap-2 shrink-0" data-testid="button-new-institutional-transfer">
+              <Button disabled={access.blocked} onClick={() => setShowInstTransferModal(true)} className="gap-2 shrink-0" data-testid="button-new-institutional-transfer">
                 <Plus className="w-4 h-4" />
                 New Request
               </Button>
@@ -140,7 +147,7 @@ export default function TransfersPage() {
                               <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">Full Portfolio</span>
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              All accounts · {isCash ? "Cash Transfer" : "In-Kind Transfer"} · CAD ${Number(t.partialAmount).toLocaleString("en-CA", { maximumFractionDigits: 0 })} total
+                              All accounts · {isCash ? "Cash Transfer" : "In-Kind Transfer"} · {formatBalance(t.partialAmount,clientBalanceCurrency(fundsOwner))} total
                             </p>
                             {t.portfolioSnapshot && (() => {
                               try {

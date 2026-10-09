@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock3, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
 import { useClientFees, useClientFeeAction, useClientManagementAction } from "@/hooks/use-fees";
-import { BILLING_TIME_ZONE, annualDate, centsToMoney, moneyToCents, formatCAD, type FeeAssessment, type FeeEnrollment, type ManagementContract } from "@shared/fees";
+import { BILLING_TIME_ZONE, annualDate, centsToMoney, moneyToCents, type FeeAssessment, type FeeEnrollment, type ManagementContract } from "@shared/fees";
+import { balanceCurrencyLabel, balancePresentation, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 
 function dateLabel(value: string | null | undefined) {
@@ -11,6 +13,9 @@ function dateLabel(value: string | null | undefined) {
 }
 
 export function ClientFees({ accountId, cashBalance }: { accountId: number; cashBalance?: string }) {
+  const { user } = useAuth();
+  const currency = clientBalanceCurrency(user);
+  const formatCAD = (value: string | number) => formatBalance(value,currency);
   const fees = useClientFees(accountId);
   const action = useClientFeeAction(accountId);
   const managementAction = useClientManagementAction(accountId);
@@ -37,14 +42,15 @@ export function ClientFees({ accountId, cashBalance }: { accountId: number; cash
     <Button variant="outline" className="mt-4" onClick={() => void fees.refetch()}><RefreshCw className="mr-2 h-4 w-4" /> Retry</Button>
   </section>;
 
-  const { settings, enrollments, assessments } = fees.data;
+  const view = balancePresentation(fees.data,currency);
+  const { settings, enrollments, assessments } = view;
   const accountEnrollments = enrollments.filter(item => item.accountId === accountId);
   const accountAssessments = assessments.filter(item => item.accountId === accountId);
   const unpaidTotal = centsToMoney(accountAssessments.filter(item => item.status === "unpaid")
     .reduce((total, item) => total + moneyToCents(item.total), 0n));
   const offers = accountEnrollments.filter(item => item.state === "offered");
   const accepted = accountEnrollments.filter(item => item.state !== "offered");
-  const accountContracts = (fees.data.contracts || []).filter(item => item.accountId === accountId);
+  const accountContracts = (view.contracts || []).filter(item => item.accountId === accountId);
   const contractOffers = accountContracts.filter(item => item.state === "offered");
   const existingContracts = accountContracts.filter(item => item.state !== "offered");
   const accountOverdraft = Math.max(0, -Number(cashBalance ?? fees.data.balance ?? 0));
@@ -53,7 +59,7 @@ export function ClientFees({ accountId, cashBalance }: { accountId: number; cash
     <div className="border-t-2 border-primary pt-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div><p className="label-caps text-muted-foreground">Account services</p><h2 id="client-fees-heading" className="mt-1 font-serif text-3xl">Monthly service fees</h2><p className="mt-1 max-w-2xl text-sm text-muted-foreground">Review every service, amount, and term before deciding. Nothing is charged from an offer alone.</p></div>
-        <p className="label-caps text-muted-foreground">{settings.enabled ? "Processing enabled" : "Processing currently disabled"} · CAD</p>
+        <p className="label-caps text-muted-foreground">{settings.enabled ? "Processing enabled" : "Processing currently disabled"} · {balanceCurrencyLabel(currency)}</p>
       </div>
     </div>
     {errorMessage && <div role="alert" className="flex items-start gap-2 border border-rose-700/30 bg-rose-50 p-3 text-sm text-rose-900"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{errorMessage}</div>}
@@ -67,7 +73,7 @@ export function ClientFees({ accountId, cashBalance }: { accountId: number; cash
           <div className="sm:text-right"><p className="label-caps text-muted-foreground">Monthly total</p><p className="mt-1 font-mono text-2xl tabular-nums text-primary">{formatCAD(enrollment.schedule.total)}</p></div>
         </div>
         <div className="px-5">
-          <h4 className="label-caps pt-4 text-muted-foreground">Exact itemized schedule · CAD</h4>
+          <h4 className="label-caps pt-4 text-muted-foreground">Exact itemized schedule · {balanceCurrencyLabel(currency)}</h4>
           <div className="divide-y divide-border">
             {enrollment.schedule.components.map(component => <div key={component.name} className="grid gap-1 py-3 sm:grid-cols-[1fr_auto] sm:gap-6">
               <div><p className="text-sm font-semibold">{component.name}</p><p className="mt-0.5 text-sm text-muted-foreground">{component.serviceDescription}</p></div>

@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { useFundsAccess } from "@/hooks/use-funds-access";
+import { FundsAccessNotice } from "@/components/fees/funds-access-notice";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowUp, ArrowDown, TrendingUp, BookOpen, Zap, DollarSign, Settings, Zap as ZapIcon, Plus } from "lucide-react";
@@ -45,6 +47,7 @@ const EDUCATION_COURSES = [
 ];
 
 export default function InvestmentsPage() {
+  const access = useFundsAccess();
   const { data: investments, isLoading: loadingInv } = useInvestments();
   const { data: accounts } = useAccounts();
   const buyMutation = useBuyInvestment();
@@ -208,6 +211,7 @@ export default function InvestmentsPage() {
 
   return (
     <LayoutShell>
+      <FundsAccessNotice />
       {/* Hero background section */}
       <div className="relative -mx-4 -mt-4 mb-8 px-4 py-8 rounded-lg overflow-hidden">
         <div 
@@ -310,7 +314,7 @@ export default function InvestmentsPage() {
                       <Button 
                         className="w-full bg-emerald-600 hover:bg-emerald-700" 
                         onClick={handleBuy}
-                        disabled={buyMutation.isPending}
+                        disabled={access.blocked || buyMutation.isPending}
                       >
                         {buyMutation.isPending ? "Processing..." : "Buy Stock"}
                       </Button>
@@ -329,7 +333,7 @@ export default function InvestmentsPage() {
                       <Button 
                         className="w-full bg-rose-600 hover:bg-rose-700" 
                         onClick={handleSell}
-                        disabled={sellMutation.isPending}
+                        disabled={access.blocked || sellMutation.isPending}
                       >
                         {sellMutation.isPending ? "Processing..." : "Sell Shares"}
                       </Button>
@@ -463,6 +467,7 @@ export default function InvestmentsPage() {
                   <Button 
                     className="w-full bg-blue-600 hover:bg-blue-700" 
                     onClick={handleFractionalBuy}
+                    disabled={access.blocked}
                   >
                     Buy Fractional Shares
                   </Button>
@@ -522,7 +527,7 @@ export default function InvestmentsPage() {
                       <p className="text-3xl font-bold text-green-600">4.85%</p>
                     </div>
                     <p className="text-sm text-muted-foreground">FDIC insured up to $250k per bank partner</p>
-                    <Button className="w-full mt-4">Enable Cash Sweep</Button>
+                    <Button disabled={access.blocked} className="w-full mt-4">Enable Cash Sweep</Button>
                   </CardContent>
                 </Card>
 
@@ -536,7 +541,7 @@ export default function InvestmentsPage() {
                       <p className="text-3xl font-bold text-blue-600">4.65%</p>
                     </div>
                     <p className="text-sm text-muted-foreground">Low-risk investment with daily liquidity</p>
-                    <Button className="w-full mt-4" variant="outline">Invest</Button>
+                    <Button disabled={access.blocked} className="w-full mt-4" variant="outline">Invest</Button>
                   </CardContent>
                 </Card>
               </div>

@@ -19,6 +19,31 @@ const schedule = {
   id: 1, version: 1, name: "Fixture service plan", currency: "CAD" as const,
   total: "363.64", components: DEFAULT_FEE_COMPONENTS, terms: DEFAULT_FEE_TERMS, createdAt: "2030-01-01T12:00:00Z",
 };
+it("shows Mary's locked debt notice first, with £ only and unchanged funded balance",()=>{
+  const data=dashboardData([
+    {id:25,accountType:"Brokerage Account",balance:"-12398.48"},
+    {id:26,accountType:"Trust Account",displayName:"Inheritance Trust Account",balance:"1622886.00"},
+  ]);
+  data.push({key:["/api/user"],value:{id:7,name:"Mary Scott",clientRef:"VWMS2024",displayCurrency:"GBP",debtClearanceRequired:true}});
+  data.push({key:["/api/funds-access",7],value:{locked:true,requiresPayment:true,paymentRecorded:false,totalOwed:"12398.48",paymentAccountId:25,paymentAccountName:"Brokerage Account"}});
+  const html=render(DashboardPage,{},data);
+  assert.equal(displayedValue(html,"text-total-balance"),"£1,622,886.00");
+  assert(html.includes("Brokerage Account: overdraft £12,398.48"));
+  assert(html.includes("Payment is required before access to funds can be granted."));
+  assert(html.indexOf('aria-label="Outstanding service fees"')<html.indexOf('data-testid="text-total-balance"'));
+  assert(!html.includes("CAD") && !html.includes("GBP") && !html.includes("Account #"));
+});
+it("shows Mary's service terms and fees without CAD while preserving stored pricing",()=>{
+  const fees={settings:{enabled:false},enrollments:[{...enrollment,accountId:25}],assessments:[],contracts:[]};
+  const before=JSON.stringify(fees);
+  const html=render(ClientFeesComponent,{accountId:25},[
+    {key:["/api/user"],value:{id:7,displayCurrency:"GBP"}},
+    {key:["/api/fees",25],value:fees},
+  ]);
+  assert(html.includes("£363.64"));
+  assert(!html.includes("CAD") && !html.includes("GBP"));
+  assert.equal(JSON.stringify(fees),before);
+});
 const enrollment = {
   id: 1, accountId: 1, userId: 1, scheduleId: 1, state: "offered" as const,
   firstChargeDate: "2030-01-31", nextPeriod: 0, acceptedAt: null, createdAt: "2030-01-01T12:00:00Z",
@@ -275,7 +300,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     assert(html.includes("Total balance"));
     assert(!html.includes("Net worth after unpaid fees"));
     assert(html.includes("Brokerage Account: overdraft CAD $12,398.48"));
-    assert(html.includes("not subtracted from the total balance above"));
+    assert(html.includes("not subtracted from your total balance"));
     assert(html.indexOf('data-testid="text-total-balance"')<html.indexOf('aria-label="Outstanding service fees"'));
     assert.equal(JSON.stringify(data),before,"Rendering must not change saved financial records");
   });

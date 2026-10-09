@@ -1,4 +1,8 @@
 import { useState, useMemo } from "react";
+import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { useAuth } from "@/hooks/use-auth";
+import { useFundsAccess } from "@/hooks/use-funds-access";
+import { accountLabel } from "@shared/account-display";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -96,6 +100,9 @@ function TransferForm({
   isPending: boolean;
 }) {
   const [portfolioId, setPortfolioId] = useState("");
+  const { user } = useAuth();
+  const currency = clientBalanceCurrency(user);
+  const access = useFundsAccess();
   const [transferType, setTransferType] = useState<"cash" | "in-kind">("in-kind");
   const [holderType, setHolderType] = useState<"own" | "other">("own");
   const [holderName, setHolderName] = useState("");
@@ -129,7 +136,7 @@ function TransferForm({
         <div className="bg-primary/5 px-4 py-2.5 flex items-center justify-between border-b border-primary/10">
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">Accounts to Transfer</span>
           <span className="text-xs font-bold text-primary">
-            CAD ${totalValue.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total
+            {formatBalance(totalValue,currency)} total
           </span>
         </div>
         <div className="divide-y divide-border/40">
@@ -137,10 +144,10 @@ function TransferForm({
             <div key={a.id} className="px-4 py-2.5 flex items-center justify-between" data-testid={`portfolio-account-row-${a.id}`}>
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
-                <span className="text-sm">{a.accountType}</span>
+                <span className="text-sm">{accountLabel(a)}</span>
               </div>
               <span className="text-sm font-medium tabular-nums">
-                CAD ${Number(a.balance).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatBalance(a.balance,currency)}
               </span>
             </div>
           ))}
@@ -217,7 +224,7 @@ function TransferForm({
 
       <Button
         className="w-full"
-        disabled={!portfolioId.trim() || (holderType === "other" && !holderName.trim()) || isPending}
+        disabled={access.blocked || !portfolioId.trim() || (holderType === "other" && !holderName.trim()) || isPending}
         onClick={() => onSubmit({
           institutionName: institution.name,
           institutionAccountNumber: portfolioId,
@@ -231,7 +238,7 @@ function TransferForm({
         })}
         data-testid="button-submit-institutional-transfer"
       >
-        {isPending ? "Submitting…" : `Submit Transfer — CAD $${totalValue.toLocaleString("en-CA", { maximumFractionDigits: 0 })}`}
+        {isPending ? "Submitting…" : access.blocked ? "Funds locked · payment required" : `Submit Transfer — ${formatBalance(totalValue,currency)}`}
       </Button>
     </div>
   );

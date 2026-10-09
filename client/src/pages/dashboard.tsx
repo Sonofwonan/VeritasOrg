@@ -15,7 +15,8 @@ import {
   ArrowLeftRight, Clock, Info, ChevronRight, Landmark,
   ShieldCheck, Briefcase, Activity, BarChart3, Building2, Lock
 } from "lucide-react";
-import { balanceCurrencyLabel, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { balanceCurrencyLabel, balanceText, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { useFundsAccess } from "@/hooks/use-funds-access";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability";
 import { accountLabel, transactionDate } from "@shared/account-display";
@@ -71,6 +72,7 @@ function categoryOf(type: string) {
 export default function DashboardPage() {
   const { user } = useAuth();
   const currency = clientBalanceCurrency(user);
+  const access = useFundsAccess();
   const [, setLocation] = useLocation();
   const { data: accounts, isLoading: accountsLoading, isError: accountsError, refetch: refetchAccounts } = useAccounts();
   const feeSummary = useClientFeeSummary();
@@ -96,7 +98,7 @@ export default function DashboardPage() {
   const cashUnavailable = accountsError || !accounts || accounts.some(a => !Number.isFinite(Number(a.balance)));
   const investmentsUnavailable = investmentsError || !investments || !Number.isFinite(investValue);
   const balanceUnavailable = cashUnavailable || investmentsUnavailable || !Number.isFinite(totalBalance);
-  const cashLocked = Boolean(activeTransfer && ["approved", "liquidating", "transfer_out"].includes(activeTransfer.status));
+  const cashLocked = access.blocked || Boolean(activeTransfer && ["approved", "liquidating", "transfer_out"].includes(activeTransfer.status));
   const investTotal    = investValue;
   const dayChange      = (accountCash + investValue) * 0.0038;
   const ytdGain        = (accountCash + investValue) * 0.084;
@@ -120,9 +122,16 @@ export default function DashboardPage() {
     );
   }
 
+  const debtNotice = <FeeLiability summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading}
+    error={feeSummary.isError} retry={() => void feeSummary.refetch()} separateFromBalance currency={currency} paymentRequired={access.blocked} />;
   return (
     <LayoutShell>
       <div className="flex flex-col gap-3">
+        {access.requiresPayment && debtNotice}
+        {access.requiresPayment && (!access.data || access.isError) && <p role="alert" className="border border-red-300 p-4 text-sm text-red-900">
+          Funds remain locked while payment status is verified.
+          {access.isError && <button className="ml-2 underline" onClick={() => void access.refetch()}>Retry</button>}
+        </p>}
 
         {/* ── Transaction Detail Dialog ───────────────────────────────────── */}
         <Dialog open={!!selectedTxn} onOpenChange={o => !o && setSelectedTxn(null)}>
@@ -136,7 +145,7 @@ export default function DashboardPage() {
             </DialogHeader>
             <div className="space-y-0 divide-y divide-white/10 py-2">
               {[
-                { label: 'Description', val: selectedTxn?.description },
+                { label: 'Description', val: balanceText(selectedTxn?.description,currency) },
                 { label: 'Amount', val: fmt(Number(selectedTxn?.amount)), accent: true },
                 { label: 'Status', val: selectedTxn?.status, badge: true },
                 { label: 'Type', val: selectedTxn?.transactionType },
@@ -196,7 +205,7 @@ export default function DashboardPage() {
               {/* Quick actions */}
               <div className="flex gap-2 shrink-0">
                 {QUICK_ACTIONS.map(({ label, icon: Icon, href }) => (
-                  <button key={label} onClick={() => setLocation(href)}
+                  <button key={label} onClick={() => setLocation(href)} disabled={access.blocked && href !== "/accounts"}
                     className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-sm bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all group"
                     data-testid={`button-quick-${label.toLowerCase()}`}>
                     <Icon className="w-4 h-4 text-white/60 group-hover:text-white transition-colors" />
@@ -210,7 +219,7 @@ export default function DashboardPage() {
           {/* KPI strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-white/10">
             {[
-              { label: 'Liquid Cash',    val: cashUnavailable ? "Unavailable" : fmt(cashTotal), sub: pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending${cashLocked ? " · Transfer locked" : ""}` : cashLocked ? 'Transfer locked' : 'Available now', icon: Landmark },
+              { label: 'Liquid Cash',    val: cashUnavailable ? "Unavailable" : fmt(cashTotal), sub: access.blocked ? 'Funds locked · payment required' : pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending${cashLocked ? " · Transfer locked" : ""}` : cashLocked ? 'Transfer locked' : 'Available now', icon: Landmark },
               { label: 'Investments',    val: investmentsUnavailable ? "Unavailable" : fmt(investTotal), sub: 'Mkt value excl. cash', icon: BarChart3 },
               { label: 'YTD Return',     val: balanceUnavailable ? "Unavailable" : fmt(ytdGain), sub: '+8.4% vs. benchmark', icon: TrendingUp },
               { label: 'Portfolio Risk', val: 'Moderate',         sub: 'Risk band: 5 / 10',     icon: ShieldCheck },
@@ -227,7 +236,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <FeeLiability summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading} error={feeSummary.isError} retry={() => void feeSummary.refetch()} separateFromBalance currency={currency} />
+        {!access.requiresPayment && debtNotice}
 
         {/* ── Portfolio in Transit Banner ─────────────────────────────────── */}
         {activeTransfer && (() => {
@@ -342,7 +351,7 @@ export default function DashboardPage() {
             <span className="ml-auto text-[9px] text-muted-foreground/50 font-mono">Delayed 15 min · {format(new Date(), 'HH:mm')}</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 divide-x divide-y lg:divide-y-0 divide-border/50">
-            {MARKET_INDICES.map(idx => (
+            {MARKET_INDICES.filter(idx => currency !== "GBP" || !idx.name.includes("CAD")).map(idx => (
               <div key={idx.name} className="px-4 py-3">
                 <p className="label-caps text-muted-foreground/60 mb-0.5">{idx.name}</p>
                 <p className="font-mono text-sm font-semibold text-foreground">{idx.value}</p>
@@ -472,7 +481,7 @@ export default function DashboardPage() {
                           }
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate">{txn.description}</p>
+                          <p className="text-sm font-semibold truncate">{balanceText(txn.description,currency)}</p>
                           <p className="text-[10px] text-muted-foreground font-mono">
                             {transactionDate(txn.createdAt)} · {incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : "Account details unavailable"} ·{' '}
                             <span className={cn('font-bold capitalize',

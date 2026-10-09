@@ -13,6 +13,22 @@ export function balanceCurrencyLabel(currency: BalanceCurrency): string {
   return currency === "GBP" ? "£" : "CAD";
 }
 
+// Nominal display only; original pricing/audit records remain unchanged.
+export function balanceText(text: string | null | undefined, currency: BalanceCurrency): string {
+  return currency === "GBP" ? (text || "").replace(/\b(?:CAD|GBP)\b/g, "£") : text || "";
+}
+
+/** Read-only presentation copy; never pass this copy to a financial write. */
+export function balancePresentation<T>(value: T, currency: BalanceCurrency): T {
+  if (currency === "CAD") return value;
+  if (typeof value === "string") return balanceText(value, currency) as T;
+  if (Array.isArray(value)) return value.map(item => balancePresentation(item, currency)) as T;
+  if (value && typeof value === "object" && !(value instanceof Date)) {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, balancePresentation(item, currency)])) as T;
+  }
+  return value;
+}
+
 export function formatBalance(amount: string | number, currency: BalanceCurrency = "CAD"): string {
   if (currency === "CAD") return formatCAD(amount);
   const value = Number(amount);

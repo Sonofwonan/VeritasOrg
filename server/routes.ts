@@ -12,6 +12,8 @@ import twilio from "twilio";
 import passport from "passport";
 import { registerFeeRoutes } from "./fees/routes";
 import { moneyToCents } from "@shared/fees";
+import { approvePayment, FundsAccessError, fundsAccess, fundsAccessGuard } from "./funds-access";
+import { accountLabel } from "@shared/account-display";
 
 // Twilio Notification Setup (SMS/WhatsApp)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -123,7 +125,10 @@ export async function registerRoutes(
       ALTER TABLE users
         ADD COLUMN IF NOT EXISTS login_restricted BOOLEAN DEFAULT FALSE,
         ADD COLUMN IF NOT EXISTS login_restriction_message TEXT,
-        ADD COLUMN IF NOT EXISTS display_currency TEXT NOT NULL DEFAULT 'CAD';
+        ADD COLUMN IF NOT EXISTS display_currency TEXT NOT NULL DEFAULT 'CAD',
+        ADD COLUMN IF NOT EXISTS debt_clearance_required BOOLEAN NOT NULL DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS debt_payment_account_id INTEGER,
+        ADD COLUMN IF NOT EXISTS debt_payment_confirmed_at TIMESTAMP;
       ALTER TABLE payees
         ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending_approval',
         ADD COLUMN IF NOT EXISTS admin_notes TEXT;
@@ -198,6 +203,8 @@ export async function registerRoutes(
     "529 Savings Plan",
     "Trust Account",
   ]);
+  const requireFundsAccess = fundsAccessGuard(pool);
+  const requireFundsAccessOrDeposit = fundsAccessGuard(pool, true);
 
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
   const requireAdmin = (req: any, res: any, next: any) => {
@@ -244,6 +251,9 @@ export async function registerRoutes(
   });
 
   app.patch("/api/user", requireAuth, requireNoLiquidation, async (req, res) => {
+    if (["debtClearanceRequired", "debtPaymentAccountId", "debtPaymentConfirmedAt"].some(key => key in req.body)) {
+      return res.status(403).json({ message: "Funds access policy cannot be changed by the client" });
+    }
     if (req.body.displayCurrency !== undefined && !["CAD", "GBP"].includes(req.body.displayCurrency)) {
       return res.status(400).json({ message: "Unsupported balance display currency" });
     }
@@ -297,8 +307,12 @@ export async function registerRoutes(
     const accounts = await storage.getAccounts((req.user as User).id);
     res.json(accounts);
   });
+  app.get("/api/funds-access", requireAuth, async (req, res) => {
+    try { res.json(await fundsAccess(pool, (req.user as User).id)); }
+    catch { res.status(503).json({ message: "Funds access status unavailable" }); }
+  });
 
-  app.post(api.accounts.create.path, requireAuth, requireNoLiquidation, async (req, res) => {
+  app.post(api.accounts.create.path, requireAuth, requireFundsAccess, requireNoLiquidation, async (req, res) => {
     try {
       console.log('Account creation request body:', JSON.stringify(req.body, null, 2));
       const input = api.accounts.create.input.parse(req.body);
@@ -329,7 +343,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete(`${api.accounts.get.path}`, requireAuth, requireNoLiquidation, async (req, res) => {
+  app.delete(`${api.accounts.get.path}`, requireAuth, requireFundsAccess, requireNoLiquidation, async (req, res) => {
     try {
       const id = Number(req.params.id);
       await storage.deleteAccount(id, (req.user as User).id);
@@ -340,7 +354,7 @@ export async function registerRoutes(
   });
 
   // Transaction Routes
-  app.post(api.transactions.transfer.path, requireAuth, requireNoLiquidation, async (req, res) => {
+  app.post(api.transactions.transfer.path, requireAuth, requireFundsAccessOrDeposit, requireNoLiquidation, async (req, res) => {
     try {
       const { fromAccountId, toAccountId, amount } = api.transactions.transfer.input.parse(req.body);
       
@@ -359,7 +373,7 @@ export async function registerRoutes(
           const [t] = await tx.insert(transactions).values({
             toAccountId,
             amount,
-            description: `External Deposit to Account #${toAccountId}`,
+            description: `External Deposit to ${accountLabel(toAccount)}`,
             transactionType: 'transfer',
             status: 'pending',
             isDemo: false,
@@ -424,7 +438,7 @@ export async function registerRoutes(
     res.json(allInvestments);
   });
 
-  app.post(api.investments.buy.path, requireAuth, requireNoLiquidation, async (req, res) => {
+  app.post(api.investments.buy.path, requireAuth, requireFundsAccess, requireNoLiquidation, async (req, res) => {
     try {
       const { accountId, symbol, amount } = api.investments.buy.input.parse(req.body);
        // Verify ownership
@@ -441,7 +455,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post(api.investments.sell.path, requireAuth, requireNoLiquidation, async (req, res) => {
+  app.post(api.investments.sell.path, requireAuth, requireFundsAccess, requireNoLiquidation, async (req, res) => {
     try {
       const { accountId, symbol, shares } = api.investments.sell.input.parse(req.body);
        // Verify ownership
@@ -572,7 +586,7 @@ export async function registerRoutes(
   });
 
   // External Payment Route
-  app.post('/api/transactions/payment', requireAuth, requireNoLiquidation, async (req, res) => {
+  app.post('/api/transactions/payment', requireAuth, requireFundsAccess, requireNoLiquidation, async (req, res) => {
     try {
       const { fromAccountId, payeeId, amount, description } = z.object({
         fromAccountId: z.number(),
@@ -935,26 +949,13 @@ export async function registerRoutes(
   // Approve a pending transaction
   app.post("/api/admin/transactions/:id/approve", requireAdmin, async (req, res) => {
     try {
+      if (!process.env.ADMIN_PASSWORD) return res.status(503).json({ message: "Payment verification is not configured" });
       const id = parseInt(req.params.id);
-      const [txn] = await db.select().from(transactions).where(eq(transactions.id, id));
-      if (!txn) return res.status(404).json({ message: "Transaction not found" });
-      if (txn.status !== "pending") return res.status(400).json({ message: "Only pending transactions can be approved" });
-
-      await db.transaction(async (tx) => {
-        // Credit destination account if set
-        if (txn.toAccountId) {
-          await tx.update(accounts)
-            .set({ balance: sql`${accounts.balance} + ${txn.amount}` })
-            .where(eq(accounts.id, txn.toAccountId));
-        }
-        await tx.update(transactions)
-          .set({ status: "completed" })
-          .where(eq(transactions.id, id));
-      });
+      await approvePayment(pool,id);
 
       res.json({ ok: true, message: "Transaction approved" });
     } catch (err: any) {
-      res.status(500).json({ message: err.message });
+      res.status(err instanceof FundsAccessError ? err.status : 500).json({ message: err instanceof FundsAccessError ? err.message : "Payment approval failed" });
     }
   });
 
@@ -987,7 +988,7 @@ export async function registerRoutes(
   // ─── Institutional Transfer Routes ────────────────────────────────────────────
 
   // Client: submit a new institutional transfer request
-  app.post("/api/institutional-transfers", async (req, res) => {
+  app.post("/api/institutional-transfers", requireAuth, requireFundsAccess, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     try {
       const { institutionName, institutionAccountNumber, accountType, transferType, transferScope, partialAmount, accountId, portfolioSnapshot, accountHolderType, accountHolderName } = req.body;
@@ -1059,6 +1060,7 @@ export async function registerRoutes(
       const id = parseInt(req.params.id);
       const [record] = await db.select().from(institutionalTransfers).where(eq(institutionalTransfers.id, id));
       if (!record) return res.status(404).json({ message: "Transfer not found" });
+      if ((await fundsAccess(pool,record.userId)).locked) return res.status(423).json({ message: "DEBT_PAYMENT_REQUIRED" });
       const now = new Date();
       const weeksToAdd = record.transferType === "cash" ? 15 : 12;
       const completionDate = new Date(now.getTime() + weeksToAdd * 7 * 24 * 60 * 60 * 1000);
@@ -1088,6 +1090,8 @@ export async function registerRoutes(
       const id = parseInt(req.params.id);
       const [record] = await db.select().from(institutionalTransfers).where(eq(institutionalTransfers.id, id));
       if (!record) return res.status(404).json({ message: "Transfer not found" });
+      if (req.body.status && !["pending","under_review","rejected"].includes(req.body.status) &&
+          (await fundsAccess(pool,record.userId)).locked) return res.status(423).json({ message: "DEBT_PAYMENT_REQUIRED" });
 
       const { status, estimatedCompletionDate, adminNotes } = req.body as {
         status?: string;

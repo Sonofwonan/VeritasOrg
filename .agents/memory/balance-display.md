@@ -19,7 +19,7 @@ Keep other clients and the existing service-pricing plans in CAD. Mary Scott's a
 
 **Why:** The user originally requested CAD throughout, then explicitly requested Mary Scott's balance/account in pounds and chose “Keep the same amounts; change the currency to £.”
 
-**How to apply:** Show Mary's amounts with only the £ symbol, never “GBP” on her dashboard. Keep full digits and the separate named overdraft. Do not infer an exchange rate, change ledger numbers, rewrite historical descriptions or accepted pricing, or change unrelated clients' currencies.
+**How to apply:** Remove CAD wording from all Mary's client-facing balance, fee, transaction and statement views; use only £, never GBP on her dashboard. Stored financial records and shared accepted pricing remain unchanged. Do not relabel a CAD/USD market quote as GBP/USD; omit it from her view rather than inventing an exchange rate. Do not change unrelated clients' currencies.
 
 The CAD service-fee schedule is nominal pricing, not an exchange-rate conversion of the copied GBP example.
 
@@ -51,9 +51,9 @@ For discretionary management, an annual minimum must continue after investments 
 
 **How to apply:** Model contract termination separately from zero holdings. Confirm exact CAD pricing, annual AUM rate, and whether the minimum is additional to monthly fees before posting new charges; do not infer overdraft interest.
 
-Show current funded balances as the dashboard's main balance, with overdraft debt separately below it. Do not offset other accounts' overdrafts against the headline or call this unnetted figure net worth.
+Show current funded balances as the dashboard's main balance, with overdraft debt separately. For Mary, put the debt/payment-required notice at the very top, before the main balance. Other clients retain their existing below-balance placement.
 
-**Why:** The user explicitly corrected the combined-net-worth presentation and said the dashboard should show the overdraft below the main balance.
+**Why:** The user rejected netting the overdraft against available balances, then explicitly changed Mary's notice placement to the very top, before the main balance.
 
 **How to apply:** Include all remaining positive cash balances across accounts and current holdings, not only the inheritance account or original deposit, separately from named account liabilities. Preserve the negative account ledger and its debt breakdown without subtracting it from the main funded-balance headline. Distinguish an original deposit transaction from the account's changing current balance.
 

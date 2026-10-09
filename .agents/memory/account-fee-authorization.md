@@ -7,7 +7,19 @@ The user selected an annual management minimum of CAD 381 per account or 1.7% of
 
 **Why:** The user explicitly supplied the CAD minimum and rate and chose additive pricing, then clarified that the Trust holding the inheritance is newly opened and must not have years of dormant-account debt.
 
-**How to apply:** Preserve this pricing decision for this fictional profile unless the user changes it; do not portray it as an exchange-rate conversion or market-standard pricing. Keep the funded inheritance Trust and dormant Brokerage, with historical debt only on Brokerage. Preserve the older Trust records for audit, refund their historical fees, and end their fee plans rather than deleting history or allowing their debt to recur.
+**How to apply:** Preserve this pricing decision for this fictional profile unless the user changes it; do not portray it as an exchange-rate conversion or market-standard pricing. Keep the funded inheritance Trust and dormant Brokerage, with historical debt only on Brokerage.
+
+Mary's Legacy Trust is retired permanently. Do not recreate it or backfill its history.
+
+**Why:** The user explicitly confirmed permanent deletion of the Legacy Trust and its linked history, preserving the Brokerage opening credit without its Legacy source link.
+
+**How to apply:** Never re-run an older fictional fixture to restore the retired account. Preserve the Brokerage and Inheritance Trust and their independent balances/history.
+
+Mary's access to funds requires a separate verified payment into the Brokerage Account and full clearance of debt.
+
+**Why:** The user chose “Separate payment into the Brokerage Account” and “Keep inheritance funds locked until the payment is recorded and the debt is cleared.”
+
+**How to apply:** Allow viewing balances/history, but block outgoing money movements and trades until both conditions hold. Pending deposit requests are not payment verification. Do not debit the inheritance automatically or apply this restriction to unrelated clients.
 
 The user explicitly approved monthly fictional overdraft history and subsequently requested historical annual management fees, with January 1, 2025 and January 1, 2026 as the disclosed annual dates. This is fixture authorization only, not actual consent by a customer.
 

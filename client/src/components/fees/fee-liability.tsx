@@ -3,11 +3,12 @@ import { type ClientFeeSummary } from "@shared/fees";
 import { formatBalance, type BalanceCurrency } from "@shared/balance-currency";
 import { accountLabel } from "@shared/account-display";
 
-export function FeeLiability({ summary, error, retry, hidden = false, loading = false, separateFromBalance = false, currency = "CAD", accounts }: {
+export function FeeLiability({ summary, error, retry, hidden = false, loading = false, separateFromBalance = false, currency = "CAD", accounts, paymentRequired = false }: {
   summary?: ClientFeeSummary; error?: boolean; retry?: () => void; hidden?: boolean;
   loading?: boolean; separateFromBalance?: boolean;
   currency?: BalanceCurrency;
   accounts?: { id: number; accountType: string; displayName?: string | null }[];
+  paymentRequired?: boolean;
 }) {
   const money = (amount: string | number) => formatBalance(amount, currency);
   const nameFor = (account: ClientFeeSummary["accounts"][number]) => {
@@ -25,7 +26,7 @@ export function FeeLiability({ summary, error, retry, hidden = false, loading = 
   if (error) return (
     <div role="alert" className="border border-red-300 bg-red-50 p-4 text-sm text-red-900">
       {separateFromBalance
-        ? "Overdraft and fee details could not be loaded. These liabilities remain separate from the total balance above."
+        ? "Overdraft and fee details could not be loaded. These liabilities remain separate from your total balance."
         : "Service fees could not be loaded. Net balances are unavailable."}
       <button onClick={retry} className="ml-2 underline">Retry</button>
     </div>
@@ -35,6 +36,10 @@ export function FeeLiability({ summary, error, retry, hidden = false, loading = 
   const overdraft = Number(summary.totalOverdraft || 0);
   return (
     <section aria-label="Outstanding service fees" className="border border-red-300 bg-red-50 p-4 sm:p-5 text-red-950">
+      {paymentRequired && <div className="mb-3 border-b border-red-200 pb-3">
+        <p className="font-semibold" data-testid="text-payment-required">Payment is required before access to funds can be granted.</p>
+        <p className="mt-1 text-sm">A separate payment must be recorded in the Brokerage Account and the debt cleared before funds are available for transfer or investment.</p>
+      </div>}
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="label-caps text-red-800">Fee debt · Amount owed</p>
@@ -46,7 +51,7 @@ export function FeeLiability({ summary, error, retry, hidden = false, loading = 
       </div>
       <p className="mt-2 text-xs leading-relaxed">
         {separateFromBalance
-          ? "Overdrafts and unpaid fees are shown separately, not subtracted from the total balance above. Overdrawn account balances remain negative. No interest is added."
+          ? "Overdrafts and unpaid fees are shown separately, not subtracted from your total balance. Overdrawn account balances remain negative. No interest is added."
           : "Posted overdraft is already reflected in the negative cash ledger; unpaid assessments remain separate from cash. No interest is added."}
       </p>
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
