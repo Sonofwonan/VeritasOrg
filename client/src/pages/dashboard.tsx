@@ -16,6 +16,8 @@ import {
   ShieldCheck, Briefcase, Activity, BarChart3, Building2, Lock
 } from "lucide-react";
 import { formatCAD } from "@shared/fees";
+import { useClientFeeSummary } from "@/hooks/use-fees";
+import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability";
 
 // ── Market index data (static realistic) ─────────────────────────────────────
 const MARKET_INDICES = [
@@ -69,6 +71,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
+  const feeSummary = useClientFeeSummary();
   const { data: investments, isLoading: investmentsLoading } = useInvestments();
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
   const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"], refetchInterval: 15000 });
@@ -84,18 +87,18 @@ export default function DashboardPage() {
 
   const investValue    = investments?.reduce((s, i) => s + Number(i.shares) * Number(i.currentPrice || i.purchasePrice), 0) || 0;
   const accountCash    = accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0;
-  const totalBalance   = accountCash + investValue;
-  const cashTotal      = 0;
+  const totalBalance   = accountCash + investValue - Number(feeSummary.data?.totalUnpaid || 0);
+  const cashTotal      = accountCash;
   const investTotal    = investValue;
-  const dayChange      = totalBalance * 0.0038;
-  const ytdGain        = totalBalance * 0.084;
+  const dayChange      = (accountCash + investValue) * 0.0038;
+  const ytdGain        = (accountCash + investValue) * 0.084;
 
   const pendingBalance = transactions?.filter(t => t.status === 'pending')
     .reduce((s, t) => t.toAccountId === primaryAccount?.id ? s + Number(t.amount) : s - Number(t.amount), 0) || 0;
 
   const fmt = (n: number) => formatCAD(n);
 
-  if (accountsLoading || investmentsLoading) {
+  if (accountsLoading || investmentsLoading || feeSummary.isLoading) {
     return (
       <LayoutShell>
         <div className="space-y-3">
@@ -163,12 +166,12 @@ export default function DashboardPage() {
               <div className="min-w-0">
                 <p className="label-caps text-white/40 mb-1">{getGreeting()}, {user?.name?.split(' ')[0]} · Portfolio Overview</p>
                 <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-                  <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-net-worth">
-                    {isTransmitting ? formatCAD(0) : fmt(totalBalance)}
+                  <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${totalBalance < 0 ? "text-red-300" : isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-net-worth">
+                    {feeSummary.isError ? "Unavailable" : fmt(isTransmitting ? -Number(feeSummary.data?.totalUnpaid || 0) : totalBalance)}
                   </span>
                   {isTransmitting ? (
                     <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
-                  ) : (
+                  ) : Number(feeSummary.data?.totalUnpaid || 0) > 0 || feeSummary.isError ? null : (
                     <div className="flex items-center gap-1 text-emerald-400 text-sm font-mono mb-1.5">
                       <TrendingUp className="w-3.5 h-3.5" />
                       +{fmt(dayChange)} today
@@ -178,7 +181,7 @@ export default function DashboardPage() {
                 <p className="text-white/30 text-xs font-mono mt-1">
                   {isTransmitting
                     ? `Funds in transit to ${activeTransfer?.institutionName}`
-                    : `Total Net Worth · CAD · ${format(new Date(), 'MMMM d, yyyy')}`}
+                    : `Net worth after unpaid fees · CAD · ${format(new Date(), 'MMMM d, yyyy')}`}
                 </p>
               </div>
               {/* Quick actions */}
@@ -221,6 +224,8 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+
+        <FeeLiability summary={feeSummary.data} error={feeSummary.isError} retry={() => void feeSummary.refetch()} />
 
         {/* ── Portfolio in Transit Banner ─────────────────────────────────── */}
         {activeTransfer && (() => {
@@ -559,9 +564,10 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <p className="font-mono text-xs font-bold tabular-nums">
-                          {formatCAD(acc.balance)}
-                        </p>
+                        <div className="text-right max-w-[48vw]">
+                          <p className="font-mono text-xs font-bold tabular-nums">{formatCAD(acc.balance)} cash</p>
+                          <AccountFeeBalance cash={acc.balance} unpaid={feeSummary.data?.accounts.find(item => item.accountId === acc.id)?.unpaidTotal} />
+                        </div>
                         <ChevronRight className="w-3 h-3 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                       </div>
                     </div>

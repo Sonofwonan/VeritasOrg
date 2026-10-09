@@ -13,6 +13,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ClientFees } from "@/components/fees/client-fees";
 import { formatCAD } from "@shared/fees";
+import { useClientFeeSummary } from "@/hooks/use-fees";
+import { FeeLiability } from "@/components/fees/fee-liability";
 
 type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' | '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
 
@@ -22,6 +24,7 @@ export default function AccountDetailPage() {
   const params = useParams();
   const [, setLocation] = useLocation();
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
+  const feeSummary = useClientFeeSummary();
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
   
   const accountId = parseInt(params.id as string);
@@ -55,6 +58,8 @@ export default function AccountDetailPage() {
   }
 
   const accountBalance = Number(account.balance);
+  const unpaidFees = feeSummary.data?.accounts.find(item => item.accountId === accountId)?.unpaidTotal;
+  const netBalance = accountBalance - Number(unpaidFees || 0);
 
   return (
     <LayoutShell>
@@ -80,14 +85,18 @@ export default function AccountDetailPage() {
       <div className="grid gap-6 md:grid-cols-3 mb-8">
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Account Balance</CardTitle>
+            <CardTitle>Net Account Balance</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Recorded cash ledger balance · CAD</p>
-              <p className="break-words font-mono text-[clamp(1.75rem,7vw,3rem)] font-bold tabular-nums text-primary">
-                {formatCAD(accountBalance)}
+              <p className="text-sm text-muted-foreground mb-2">Cash less unpaid service fees · CAD</p>
+              <p className={cn("break-words font-mono text-[clamp(1.75rem,7vw,3rem)] font-bold tabular-nums", netBalance < 0 ? "text-red-700" : "text-primary")}>
+                {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : formatCAD(netBalance)}
               </p>
+              <p className="mt-2 text-sm">Cash ledger balance: {formatCAD(accountBalance)}</p>
+              <FeeLiability summary={unpaidFees !== undefined ? {
+                totalUnpaid: unpaidFees, accounts: feeSummary.data!.accounts.filter(item => item.accountId === accountId),
+              } : undefined} error={feeSummary.isError} retry={() => void feeSummary.refetch()} />
               <p className="mt-2 max-w-xl text-xs leading-relaxed text-muted-foreground">
                 This is the account ledger balance used to determine whether a fee assessment is payable. It is separate from the market value of investment holdings; holdings are not used or sold to pay service fees.
               </p>

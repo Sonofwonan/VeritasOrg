@@ -56,6 +56,7 @@ export async function registerFeeRoutes(app: Express, pool: Pool, requireAdmin: 
       return service.assessmentAction(positiveId.parse(req.params.id), action, reason);
     }));
   }
+  app.get("/api/fees/summary", feeClient, endpoint(req => service.clientSummary(req.user.id)));
   app.get("/api/accounts/:id/fees", feeClient, endpoint(req => service.clientView(req.user.id, positiveId.parse(req.params.id))));
   app.post("/api/fees/enrollments/:id/accept", feeClient, endpoint(req => service.accept(req.user.id, positiveId.parse(req.params.id), req.body)));
   app.post("/api/fees/enrollments/:id/end", feeClient, endpoint(req => service.changeState(positiveId.parse(req.params.id), "ended", req.user.id)));

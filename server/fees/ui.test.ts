@@ -3,8 +3,12 @@ import { describe, it } from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Router } from "wouter";
 import { ClientFees as ClientFeesComponent } from "../../client/src/components/fees/client-fees";
 import { AdminFees } from "../../client/src/components/fees/admin-fees";
+import { FeeLiability, AccountFeeBalance } from "../../client/src/components/fees/fee-liability";
+import DashboardPage from "../../client/src/pages/dashboard";
+import AccountsPage from "../../client/src/pages/accounts-page";
 import { DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS, type ClientFees, type FeeOverview, type FeePreview } from "../../shared/fees";
 
 const settings = { enabled: false, timeZone: "America/Toronto" };
@@ -21,11 +25,48 @@ function render(Component: React.ElementType, props: unknown, data: { key: unkno
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: 0 } } });
   for (const item of data) client.setQueryData(item.key, item.value);
   const html = renderToStaticMarkup(React.createElement(QueryClientProvider, { client },
-    React.createElement(Component, props)));
+    React.createElement(Router, { ssrPath: "/" }, React.createElement(Component, props))));
   client.clear();
   return html;
 }
 describe("Fee interfaces rendered with synthetic cached data", () => {
+  it("renders the dashboard and accounts overview with negative net totals and visible fee debt", () => {
+    const data = [
+      { key: ["/api/user"], value: { id: 7, name: "Mary Scott", clientRef: "VWMS2024" } },
+      { key: ["/api/accounts"], value: [
+        { id: 24, userId: 7, accountType: "Trust Account", balance: "0", createdAt: "2024-01-01T14:00:00Z" },
+        { id: 25, userId: 7, accountType: "Brokerage Account", balance: "0", createdAt: "2024-01-01T14:00:00Z" },
+      ] },
+      { key: ["/api/investments"], value: [] },
+      { key: ["/api/accounts", 25, "transactions"], value: [] },
+      { key: ["/api/institutional-transfers"], value: [] },
+      { key: ["/api/fees", "summary", 7], value: {
+        totalUnpaid: "11636.48", accounts: [
+          { accountId: 24, unpaidTotal: "11636.48", unpaidCount: 32 },
+          { accountId: 25, unpaidTotal: "0.00", unpaidCount: 0 },
+        ],
+      } },
+    ];
+    for (const Component of [DashboardPage, AccountsPage]) {
+      const html = render(Component, {}, data);
+      for (const text of ["CAD -$11,636.48", "CAD $11,636.48", "Amount owed", "32 unpaid fees", "Net account balance"]) {
+        assert(html.includes(text), `${Component.name}: ${text}`);
+      }
+      assert(!html.includes("demo profile"));
+    }
+  });
+  it("shows full-digit debt, a negative net account balance, account links and privacy/error states", () => {
+    const summary = { totalUnpaid: "11636.48", accounts: [{ accountId: 24, unpaidTotal: "11636.48", unpaidCount: 32 }] };
+    const html = render(FeeLiability, { summary }, []);
+    for (const text of ["CAD $11,636.48", "Amount owed", "32 unpaid fees", "/accounts/24", "not an overdraft"]) assert(html.includes(text), text);
+    const net = render(AccountFeeBalance, { cash: "0", unpaid: "11636.48" }, []);
+    assert(net.includes("CAD -$11,636.48"));
+    assert(net.includes("Net account balance"));
+    assert(!render(FeeLiability, { summary, hidden: true }, []).includes("11,636.48"));
+    assert(!render(AccountFeeBalance, { cash: "0", unpaid: "11636.48", hidden: true }, []).includes("11,636.48"));
+    assert(render(FeeLiability, { error: true }, []).includes("Net balances are unavailable"));
+    assert.equal(render(AccountFeeBalance, { cash: "0", unpaid: "0.00" }, []), "");
+  });
   it("shows exact itemization, terms, date, timezone, optional client consent, and disabled acceptance before consent", () => {
     const data: ClientFees = { settings, enrollments: [enrollment], assessments: [] };
     const html = render(ClientFeesComponent, { accountId: 1 }, [{ key: ["/api/fees", 1], value: data }]);

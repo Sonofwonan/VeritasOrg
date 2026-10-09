@@ -290,6 +290,7 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     // RegisterFeeRoutes uses the real clock; these tests intentionally exercise only read and invalid actions.
     assert.equal((await request("/api/admin/fees")).status, 401);
     assert.equal((await request("/api/accounts/1/fees")).status, 401);
+    assert.equal((await request("/api/fees/summary")).status, 401);
     assert.equal((await request("/api/accounts/1/fees", undefined, 2)).status, 404);
     assert.equal((await request("/api/accounts/1/fees", undefined, 1)).status, 200);
     const e = await offer();
@@ -299,5 +300,20 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     assert.equal((await request("/api/admin/fees/settings", { enabled: true }, undefined, true)).status, 400);
     assert.equal((await request("/api/admin/fees/run", { confirmed: true }, undefined, true)).status, 400);
     assert.equal((await request("/api/admin/fees/assessments/1/refund", { confirmed: true, reason: "" }, undefined, true)).status, 400);
+  });
+  it("summarizes only owned unpaid fees including paused plans, without changing cash", async () => {
+    const e = await accepted(); await service.settings(true); setDay("2030-01-31");
+    await query("UPDATE accounts SET balance=0 WHERE id=1");
+    const run = await service.run();
+    assert.equal(run.results[0].status, "unpaid");
+    await service.changeState(e.id, "paused");
+    const own = await request("/api/fees/summary", undefined, 1);
+    assert.equal(own.status, 200);
+    assert.deepEqual(own.body, { totalUnpaid: "363.64", accounts: [{ accountId: 1, unpaidTotal: "363.64", unpaidCount: 1 }] });
+    const other = await request("/api/fees/summary", undefined, 2);
+    assert.deepEqual(other.body, { totalUnpaid: "0.00", accounts: [{ accountId: 2, unpaidTotal: "0.00", unpaidCount: 0 }] });
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance, "0");
+    await service.assessmentAction(run.results[0].id, "waive", "Fixture waiver");
+    assert.equal((await service.clientSummary(1)).totalUnpaid, "0.00");
   });
 });

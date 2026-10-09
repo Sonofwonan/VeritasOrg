@@ -1,7 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
-import type { ClientFees, FeeOverview, FeePreview, FeeRunResult } from "@shared/fees";
+import type { ClientFees, ClientFeeSummary, FeeOverview, FeePreview, FeeRunResult } from "@shared/fees";
+import { useAuth } from "@/hooks/use-auth";
+
+export function useClientFeeSummary() {
+  const { user } = useAuth();
+  const client = useQueryClient();
+  const query = useQuery<ClientFeeSummary>({
+    queryKey: ["/api/fees", "summary", user?.id],
+    queryFn: async () => (await apiRequest("GET", "/api/fees/summary")).json(),
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+  useEffect(() => {
+    if (query.data) void client.invalidateQueries({ queryKey: ["/api/accounts"], exact: true });
+  }, [query.data, client]);
+  return query;
+}
 
 export function useClientFees(accountId: number) {
   const client = useQueryClient();
@@ -28,6 +44,7 @@ export function useClientFeeAction(accountId: number) {
         action === "accept" ? { scheduleId, accepted: true } : {})).json(),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["/api/fees", accountId] });
+      client.invalidateQueries({ queryKey: ["/api/fees", "summary"] });
       client.invalidateQueries({ queryKey: ["/api/accounts"] });
     },
   });

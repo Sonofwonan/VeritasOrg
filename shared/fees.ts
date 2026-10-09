@@ -59,6 +59,10 @@ export interface FeeOverview {
 export interface ClientFees {
   settings: FeeSettings; enrollments: FeeEnrollment[]; assessments: FeeAssessment[];
 }
+export interface ClientFeeSummary {
+  totalUnpaid: string;
+  accounts: { accountId: number; unpaidTotal: string; unpaidCount: number }[];
+}
 export interface FeePreview {
   enabled: boolean; timeZone: string; today: string; previewToken: string;
   charges: { enrollmentId: number; accountId: number; userName: string; period: number; dueDate: string; total: string;

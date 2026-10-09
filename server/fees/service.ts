@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import {
   BILLING_TIME_ZONE, billingToday, centsToMoney, feeAcceptanceInput, feeOfferInput, feeScheduleInput,
   availableCashCents, firstPeriodOnOrAfter, moneyToCents, periodDate, validateBillingDate,
-  type ClientFees, type FeeAssessment, type FeeEnrollment, type FeeOverview, type FeePreview,
+  type ClientFees, type ClientFeeSummary, type FeeAssessment, type FeeEnrollment, type FeeOverview, type FeePreview,
 } from "../../shared/fees";
 
 export class FeeError extends Error {
@@ -83,6 +83,22 @@ export class FeeService {
       this.pool.query("SELECT enabled,time_zone FROM fee_settings WHERE id=1"),
     ]);
     return { enrollments, assessments: assessments.rows.map(camel), settings: camel(settings.rows[0]) } as ClientFees;
+  }
+  async clientSummary(userId: number): Promise<ClientFeeSummary> {
+    // Include all unpaid periods, even for paused/ended plans. Paid fees already
+    // reduced cash; waived/refunded/skipped assessments are not liabilities.
+    const { rows } = await this.pool.query(`SELECT a.id AS account_id,
+      COALESCE(SUM(f.total) FILTER (WHERE f.status='unpaid'),0)::text AS unpaid_total,
+      COUNT(f.id) FILTER (WHERE f.status='unpaid')::integer AS unpaid_count
+      FROM accounts a LEFT JOIN fee_assessments f ON f.account_id=a.id
+      WHERE a.user_id=$1 GROUP BY a.id ORDER BY a.id`, [userId]);
+    const accounts = rows.map(row => ({
+      accountId: row.account_id, unpaidTotal: centsToMoney(moneyToCents(row.unpaid_total)), unpaidCount: row.unpaid_count,
+    }));
+    return {
+      accounts,
+      totalUnpaid: centsToMoney(accounts.reduce((sum, account) => sum + moneyToCents(account.unpaidTotal), 0n)),
+    };
   }
   async createSchedule(input: unknown) {
     const data = feeScheduleInput.parse(input);

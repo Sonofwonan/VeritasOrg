@@ -1,3 +1,5 @@
+import { useClientFeeSummary } from "@/hooks/use-fees";
+import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability";
 import { useState } from "react";
 import {
   Plus, ArrowRight, ChevronRight, TrendingUp, TrendingDown,
@@ -66,6 +68,7 @@ export default function AccountsPage() {
   const { data: transactions } = useAccountTransactions(primaryAccount?.id || 0);
   const createAccount = useCreateAccount();
   const { user } = useAuth();
+  const feeSummary = useClientFeeSummary();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"], refetchInterval: 15000 });
@@ -92,7 +95,7 @@ export default function AccountsPage() {
       return t.toAccountId === primaryAccount?.id ? sum + amt : sum - amt;
     }, 0) || 0;
 
-  const totalBalance = accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0;
+  const totalBalance = (accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0) - Number(feeSummary.data?.totalUnpaid || 0);
   const cashTotal = accounts?.filter(a => categoryOf(a.accountType) === 'cash').reduce((s, a) => s + Number(a.balance), 0) || 0;
   const investTotal = accounts?.filter(a => categoryOf(a.accountType) === 'investment').reduce((s, a) => s + Number(a.balance), 0) || 0;
   const bizTotal = accounts?.filter(a => categoryOf(a.accountType) === 'business').reduce((s, a) => s + Number(a.balance), 0) || 0;
@@ -172,19 +175,21 @@ export default function AccountsPage() {
       </Dialog>
 
       {/* ── Portfolio Summary Header ──────────────────────────────── */}
+      <FeeLiability summary={feeSummary.data} error={feeSummary.isError} retry={() => void feeSummary.refetch()} hidden={hideBalances} />
+
       <div className="bg-[#0B2218] rounded-sm overflow-hidden">
         {/* Top bar */}
         <div className="px-8 pt-8 pb-6 border-b border-white/10">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="label-caps text-white/40 mb-2">Total Portfolio Value</p>
+              <p className="label-caps text-white/40 mb-2">Net Account Balance · After Unpaid Fees</p>
               <div className="flex items-end gap-4">
-                  <span className={`font-serif text-[clamp(1.65rem,6vw,3rem)] tracking-tight [overflow-wrap:anywhere] ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
-                  {isTransmitting ? formatCAD(0) : fmt(totalBalance)}
+                  <span className={`font-serif text-[clamp(1.65rem,6vw,3rem)] tracking-tight [overflow-wrap:anywhere] ${totalBalance < 0 ? "text-red-300" : isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
+                  {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : fmt(isTransmitting ? -Number(feeSummary.data?.totalUnpaid || 0) : totalBalance)}
                 </span>
                 {isTransmitting ? (
                   <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
-                ) : (
+                ) : Number(feeSummary.data?.totalUnpaid || 0) > 0 || feeSummary.isError ? null : (
                   <span className="text-emerald-400 text-sm font-mono mb-1.5 flex items-center gap-1">
                     <TrendingUp className="w-3.5 h-3.5" />
                     +8.4% YTD
@@ -376,7 +381,7 @@ export default function AccountsPage() {
 
                           {/* Balance */}
                           <div className="min-w-0 max-w-[42vw] text-right sm:min-w-[140px] sm:max-w-none">
-                            <p className="label-caps text-muted-foreground/50 mb-0.5">Balance</p>
+                            <p className="label-caps text-muted-foreground/50 mb-0.5">Cash balance</p>
                             {isTransmitting ? (
                               <div>
                                 <p className="font-mono text-base font-semibold text-violet-400 tabular-nums" data-testid={`balance-${account.id}`}>
@@ -391,6 +396,8 @@ export default function AccountsPage() {
                                 {fmt(Number(account.balance))}
                               </p>
                             )}
+                            <AccountFeeBalance cash={account.balance}
+                              unpaid={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.unpaidTotal} hidden={hideBalances} />
                           </div>
 
                           <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />

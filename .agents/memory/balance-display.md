@@ -26,3 +26,9 @@ Do not normalize existing ledger balances merely to satisfy cent-precision fees;
 **Why:** The account ledger permits fractional cents, so a strict two-decimal preview can fail while PostgreSQL settlement still processes a fee. Rounding stored cash would change customers' funds.
 
 **How to apply:** Keep fee amounts in exact cents, compare available cash conservatively without rewriting it, and verify preview and settlement agree at fractional-cent boundaries.
+
+Show unpaid service-fee debt on the dashboard and account summaries, not only in fee history, including negative net balances when fees exceed assets.
+
+**Why:** The user said they could not see the fees on the dashboard and that they must appear there or as a negative account amount.
+
+**How to apply:** Distinguish cash ledger balance from net balance after unpaid fees. Deduct only unpaid liabilities once; paid fees already reduced cash. Do not describe unpaid fees as an interest-bearing overdraft loan.
