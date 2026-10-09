@@ -21,6 +21,63 @@ test.afterEach(async ({ page }, info) => {
   if (!page.isClosed()) await evidence(page, info, "final-browser-state");
 });
 
+test("Accounts balances stay horizontal and unclipped across phone and tablet widths", async ({page,identity,db},info) => {
+  for (const currency of ["GBP","CAD"]) {
+    await page.request.post("/api/logout");
+    await db.query("UPDATE users SET display_currency=$1 WHERE id=$2",[currency,identity.userId]);
+    await login(page,identity);
+    await page.goto("/accounts");
+    const headline=page.getByTestId("text-total-balance");
+    await expect(headline).toContainText(currency==="GBP"?"£":"CAD $");
+    const savedTotal=await headline.innerText();
+    for (const width of [320,375,390,430,640,768,1024,1440]) {
+      await page.setViewportSize({width,height:900});
+      await page.evaluate(()=>document.fonts.ready);
+      await expect(headline).toHaveText(savedTotal);
+      const money=page.locator('[data-testid="text-total-balance"],[data-testid^="balance-"],p.whitespace-nowrap.font-mono.text-amber-400,[data-testid="text-net-account-balance"],[data-testid="text-fee-overdraft"] span');
+      for (const node of await money.all()) {
+        const metrics=await node.evaluate(element=>{
+          const range=document.createRange();
+          range.selectNodeContents(element);
+          const rects=Array.from(range.getClientRects()).filter(r=>r.width>0 && r.height>0);
+          const topLines=new Set(rects.map(r=>Math.round(r.top)));
+          const right=Math.max(...rects.map(r=>r.right));
+          let clipped=false;
+          for(let parent=element.parentElement;parent;parent=parent.parentElement){
+            if(["hidden","clip"].includes(getComputedStyle(parent).overflowX) &&
+              right>parent.getBoundingClientRect().right+1) clipped=true;
+          }
+          return {text:element.textContent,lines:topLines.size,right,clipped};
+        });
+        expect(metrics.lines,`${currency} ${width}px: ${metrics.text}`).toBe(1);
+        expect(metrics.right,`${currency} ${width}px: amount extends past viewport`).toBeLessThanOrEqual(width);
+        expect(metrics.clipped,`${currency} ${width}px: clipped amount`).toBe(false);
+      }
+      const totalBox=await headline.boundingBox();
+      const controlBox=await page.getByTestId("button-open-account").boundingBox();
+      const overlap=totalBox!.x<controlBox!.x+controlBox!.width &&
+        totalBox!.x+totalBox!.width>controlBox!.x &&
+        totalBox!.y<controlBox!.y+controlBox!.height &&
+        totalBox!.y+totalBox!.height>controlBox!.y;
+      expect(overlap,`${currency} ${width}px: controls overlap balance`).toBe(false);
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),
+        `${currency} ${width}px: page scrolls sideways`).toBe(false);
+      if (currency==="GBP" && [390,768,1440].includes(width)) {
+        await evidence(page,info,`accounts-layout-${width}`);
+      }
+    }
+    await page.setViewportSize({width:390,height:900});
+    await page.getByTestId("button-toggle-balances").click();
+    await expect(headline).toContainText("•");
+    await page.getByTestId("button-toggle-balances").click();
+    await expect(headline).toHaveText(savedTotal);
+    await page.getByTestId("button-open-account").click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+  }
+});
+
 test("normal login, funded headline, named debt, negative accounts and sixth positive account", async ({ page, identity }, info) => {
   await login(page, identity);
   await verifyHeadline(page);

@@ -183,18 +183,18 @@ export default function AccountsPage() {
 
       <div className="bg-[#0B2218] rounded-sm overflow-hidden">
         {/* Top bar */}
-        <div className="px-8 pt-8 pb-6 border-b border-white/10">
-          <div className="flex items-start justify-between gap-4">
-            <div>
+        <div className="px-4 py-5 xl:px-8 xl:pt-8 xl:pb-6 border-b border-white/10">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-4">
+            <div className="min-w-0">
               <p className="label-caps text-white/40 mb-2">Net Account Balance · After Unpaid Fees</p>
-              <div className="flex items-end gap-4">
-                  <span className={`font-serif text-[clamp(1.65rem,6vw,3rem)] tracking-tight [overflow-wrap:anywhere] ${totalBalance < 0 ? "text-red-300" : isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
+              <div className="flex min-w-0 flex-wrap items-end gap-x-4 gap-y-1">
+                  <span className={`whitespace-nowrap font-serif text-[clamp(1.45rem,7vw,3rem)] tracking-tight tabular-nums ${totalBalance < 0 ? "text-red-300" : isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
                   {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : fmt(isTransmitting ? transmittedDebt : totalBalance)}
                 </span>
                 {isTransmitting ? (
                   <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
                 ) : Number(feeSummary.data?.totalUnpaid || 0) > 0 || feeSummary.isError ? null : (
-                  <span className="text-emerald-400 text-sm font-mono mb-1.5 flex items-center gap-1">
+                  <span className="text-emerald-400 text-sm font-mono mb-1.5 flex items-center gap-1 whitespace-nowrap">
                     <TrendingUp className="w-3.5 h-3.5" />
                     +8.4% YTD
                   </span>
@@ -202,13 +202,13 @@ export default function AccountsPage() {
               </div>
               {isTransmitting
                 ? <p className="text-violet-300/60 text-xs mt-1.5 font-mono">Funds in transit to {activeTransfer?.institutionName}</p>
-                : <p className="text-white/30 text-xs mt-1.5 font-mono">{balanceCurrencyLabel(currency)} · As of {new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                : <p className="text-white/30 text-xs mt-1.5 font-mono">{currency === "GBP" ? "Updated" : `${balanceCurrencyLabel(currency)} · As of`} {new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
               }
             </div>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex w-full items-center justify-end gap-2 xl:w-auto xl:mt-1">
               <button
                 onClick={() => setHideBalances(h => !h)}
-                className="flex items-center gap-1.5 text-white/30 hover:text-white/60 transition-colors text-xs uppercase tracking-widest"
+                className="flex min-h-10 items-center gap-1.5 px-2 text-white/50 hover:text-white/80 transition-colors text-xs uppercase tracking-widest"
                 data-testid="button-toggle-balances"
               >
                 {hideBalances ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -218,7 +218,7 @@ export default function AccountsPage() {
               <Button
                 size="sm"
                 onClick={() => setIsOpen(true)}
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-sm text-xs gap-1.5"
+                 className="min-h-10 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-sm text-xs gap-1.5"
                 data-testid="button-open-account"
               >
                 <Plus className="w-3 h-3" /> Open Account
@@ -228,26 +228,29 @@ export default function AccountsPage() {
         </div>
 
         {/* Category breakdown */}
-        <div className="grid grid-cols-3 divide-x divide-white/10">
+        <div className="grid grid-cols-1 divide-y divide-white/10 xl:grid-cols-3 xl:divide-x xl:divide-y-0">
           {[
             { label: 'Cash & Deposits', value: cashTotal, Icon: Landmark, sub: 'Available liquidity' },
             { label: 'Investments', value: investTotal, Icon: TrendingUp, sub: '+11.4% YTD avg.' },
             { label: 'Business & Trust', value: bizTotal, Icon: ShieldCheck, sub: 'Fiduciary accounts' },
           ].map(({ label, value, Icon, sub }) => (
-            <div key={label} className="px-6 py-5">
-              <div className="flex items-center gap-2 mb-2">
-                <Icon className="w-3.5 h-3.5 text-white/30" />
-                <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">{label}</span>
+            <div key={label} className="flex items-center justify-between gap-4 px-4 py-3 xl:block xl:px-6 xl:py-5">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 sm:mb-2">
+                  <Icon className="w-3.5 h-3.5 shrink-0 text-white/30" />
+                  <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">{label}</span>
+                </div>
+                <p className="hidden text-white/25 text-[10px] mt-0.5 xl:block">{isTransmitting ? "Clearing" : sub}</p>
               </div>
               {isTransmitting ? (
                 <div>
-                   <p className="font-mono text-sm sm:text-xl text-violet-300 tracking-tight [overflow-wrap:anywhere]">{fmt(accounts?.filter(a => (label === "Cash & Deposits" ? categoryOf(a.accountType) === "cash" : label === "Investments" ? categoryOf(a.accountType) === "investment" : categoryOf(a.accountType) === "business")).reduce((sum, a) => sum + Math.min(0, Number(a.balance)), 0) || 0)}</p>
-                   <p className="font-mono text-[10px] text-white/20 line-through mt-0.5 [overflow-wrap:anywhere]">{fmt(value)}</p>
+                   <p className="whitespace-nowrap font-mono text-sm xl:text-xl text-violet-300 tracking-tight tabular-nums">{fmt(accounts?.filter(a => (label === "Cash & Deposits" ? categoryOf(a.accountType) === "cash" : label === "Investments" ? categoryOf(a.accountType) === "investment" : categoryOf(a.accountType) === "business")).reduce((sum, a) => sum + Math.min(0, Number(a.balance)), 0) || 0)}</p>
+                   <p className="whitespace-nowrap font-mono text-[10px] text-white/20 line-through mt-0.5 tabular-nums">{fmt(value)}</p>
                 </div>
               ) : (
-                 <p className="font-mono text-sm sm:text-xl text-amber-400 tracking-tight [overflow-wrap:anywhere]">{fmt(value)}</p>
+                  <p className="whitespace-nowrap font-mono text-sm xl:text-xl text-amber-400 tracking-tight tabular-nums">{fmt(value)}</p>
               )}
-              <p className="text-white/25 text-[10px] mt-0.5">{isTransmitting ? "Clearing" : sub}</p>
+              <p className="sr-only sm:hidden">{isTransmitting ? "Clearing" : sub}</p>
             </div>
           ))}
         </div>
@@ -317,7 +320,7 @@ export default function AccountsPage() {
                     <span className="label-caps text-muted-foreground">{label}</span>
                     <span className="text-[10px] text-muted-foreground/50 font-mono ml-1">({items.length})</span>
                   </div>
-                   <span className="max-w-[55%] break-words text-right font-mono text-xs tabular-nums text-foreground/70 sm:max-w-none sm:text-sm">{fmt(catTotal)}</span>
+                    <span className="whitespace-nowrap text-right font-mono text-xs tabular-nums text-foreground/70 sm:text-sm">{fmt(catTotal)}</span>
                 </div>
 
                 {/* Account rows */}
@@ -328,12 +331,12 @@ export default function AccountsPage() {
                     return (
                       <div
                         key={account.id}
-                        className="grid grid-cols-[1fr_auto] gap-4 items-center py-4 px-1 hover:bg-muted/30 transition-colors cursor-pointer group"
+                         className="grid grid-cols-1 gap-2 items-center py-4 px-1 hover:bg-muted/30 transition-colors cursor-pointer group xl:grid-cols-[1fr_auto] xl:gap-4"
                         onClick={() => setLocation(`/accounts/${account.id}`)}
                         data-testid={`account-row-${account.id}`}
                       >
                         {/* Left: name + number */}
-                        <div className="flex items-center gap-4 min-w-0">
+                          <div className="flex items-center gap-3 min-w-0 xl:gap-4">
                           <div className={cn(
                             'w-9 h-9 rounded-sm flex items-center justify-center shrink-0',
                             cat === 'investment' ? 'bg-emerald-500/10' :
@@ -343,7 +346,7 @@ export default function AccountsPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground truncate">{accountLabel(account)}</p>
-                            <div className="flex items-center gap-3 mt-0.5">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                               <span className="font-mono text-[10px] text-muted-foreground">{accountNumber(account.id)}</span>
                               {isPending && (
                                 <span className="text-[9px] text-amber-600 font-bold uppercase tracking-wide bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-sm border border-amber-200 dark:border-amber-800/40">
@@ -370,9 +373,9 @@ export default function AccountsPage() {
                         </div>
 
                         {/* Right: balance + ytd + arrow */}
-                        <div className="flex min-w-0 items-center gap-2 sm:gap-8 shrink-0">
+                        <div className="flex min-w-0 items-center justify-between gap-3 xl:justify-end xl:gap-8 xl:shrink-0">
                           {/* YTD */}
-                          <div className="hidden sm:block text-right">
+                          <div className="hidden xl:block text-right">
                             <p className="label-caps text-muted-foreground/50 mb-0.5">YTD Return</p>
                             <div className={cn(
                               'flex items-center justify-end gap-1 text-xs font-mono font-semibold',
@@ -384,19 +387,19 @@ export default function AccountsPage() {
                           </div>
 
                           {/* Balance */}
-                          <div className="min-w-0 max-w-[42vw] text-right sm:min-w-[140px] sm:max-w-none">
+                          <div className="min-w-0 text-right xl:min-w-[140px]">
                             <p className="label-caps text-muted-foreground/50 mb-0.5">Cash balance</p>
                             {isTransmitting ? (
                               <div>
-                                <p className="font-mono text-base font-semibold text-violet-400 tabular-nums" data-testid={`balance-${account.id}`}>
+                                <p className="whitespace-nowrap font-mono text-[clamp(.82rem,4vw,1rem)] font-semibold text-violet-400 tabular-nums xl:text-base" data-testid={`balance-${account.id}`}>
                                    {fmt(Math.min(0, Number(account.balance)))}
                                 </p>
-                                <p className="font-mono text-[10px] text-muted-foreground/40 line-through tabular-nums">
+                                <p className="whitespace-nowrap font-mono text-[10px] text-muted-foreground/40 line-through tabular-nums">
                                    {fmt(Number(account.balance))}
                                 </p>
                               </div>
                             ) : (
-                               <p className="break-words font-mono text-[clamp(.68rem,2.8vw,1rem)] font-semibold tabular-nums text-foreground sm:text-base" data-testid={`balance-${account.id}`}>
+                                <p className="whitespace-nowrap font-mono text-[clamp(.82rem,4vw,1rem)] font-semibold tabular-nums text-foreground xl:text-base" data-testid={`balance-${account.id}`}>
                                 {fmt(Number(account.balance))}
                               </p>
                             )}
@@ -405,7 +408,7 @@ export default function AccountsPage() {
                               overdraft={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.overdraft} hidden={hideBalances} currency={currency} />
                           </div>
 
-                          <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                          <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                         </div>
                       </div>
                     );

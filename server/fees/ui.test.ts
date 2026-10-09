@@ -258,7 +258,8 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     assert(html.includes("posted negative cash ledger"));
     assert(html.includes("CAD $0.00 unpaid assessments"));
     const cash = render(AccountFeeBalance, { cash: "-11636.48", unpaid: "0.00", overdraft: "11636.48" }, []);
-    assert(cash.includes("Cash ledger overdraft CAD -$11,636.48"));
+    assert(cash.replace(/<[^>]*>/g, "").includes("Cash ledger overdraft CAD -$11,636.48"));
+    assert(cash.includes('<span class="whitespace-nowrap">CAD -$11,636.48</span>'));
     assert(!cash.includes("Net account balance"));
     assert(render(AccountFeeBalance, { cash: "-381.00" }, []).includes("CAD -$381.00"));
   });

@@ -5,3 +5,4 @@
 - [Account fee authorization](account-fee-authorization.md) — Approved CAD annual pricing and fictional-history scope; preserve real clients’ accepted cash-only terms.
 - [Post-merge safety](post-merge-safety.md) — Automatic setup may update schema and build, but must never seed clients, backfill fictional history, or process billing.
 - [Browser regression isolation](browser-test-safety.md) — Financial browser tests must use disposable identities and normal login; keep shared records untouched and use Nix-packaged Chromium.
+- [Financial responsive layouts](financial-responsive-layout.md) — Verify tablet/sidebar widths too; phone and desktop passes can hide overlapping balances and controls.
