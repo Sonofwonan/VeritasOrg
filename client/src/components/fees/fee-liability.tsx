@@ -1,16 +1,20 @@
 import { Link } from "wouter";
+import type { ReactNode } from "react";
 import { type ClientFeeSummary } from "@shared/fees";
 import { formatBalance, type BalanceCurrency } from "@shared/balance-currency";
 import { accountLabel } from "@shared/account-display";
 
-export function FeeLiability({ summary, error, retry, hidden = false, loading = false, separateFromBalance = false, currency = "CAD", accounts, paymentRequired = false }: {
+export function FeeLiability({ summary, error, retry, hidden = false, loading = false, separateFromBalance = false, currency = "CAD", accounts, paymentRequired = false, accountLinks = true }: {
   summary?: ClientFeeSummary; error?: boolean; retry?: () => void; hidden?: boolean;
   loading?: boolean; separateFromBalance?: boolean;
   currency?: BalanceCurrency;
   accounts?: { id: number; accountType: string; displayName?: string | null }[];
   paymentRequired?: boolean;
+  accountLinks?: boolean;
 }) {
   const money = (amount: string | number) => formatBalance(amount, currency);
+  const AccountReference = ({ href, children, className }: { href: string; children: ReactNode; className: string }) =>
+    accountLinks ? <Link href={href} className={className}>{children}</Link> : <span className={className}>{children}</span>;
   const nameFor = (account: ClientFeeSummary["accounts"][number]) => {
     const record = accounts?.find(item => item.id === account.accountId);
     const name = (record ? accountLabel(record) : account.accountName)?.trim();
@@ -47,7 +51,7 @@ export function FeeLiability({ summary, error, retry, hidden = false, loading = 
             {hidden ? "••••••" : money(summary.totalOwed || String(unpaid + overdraft))}
           </p>
         </div>
-        <Link href="/accounts" className="text-sm underline underline-offset-4">Review accounts</Link>
+        {accountLinks && <Link href="/accounts" className="text-sm underline underline-offset-4">Review accounts</Link>}
       </div>
       <p className="mt-2 text-xs leading-relaxed">
         {separateFromBalance
@@ -60,12 +64,12 @@ export function FeeLiability({ summary, error, retry, hidden = false, loading = 
       </div>
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {summary.accounts.filter(account => Number(account.unpaidTotal) > 0 || Number(account.overdraft || 0) > 0).map(account => (
-          <Link key={account.accountId} href={`/accounts/${account.accountId}`} className="underline underline-offset-4">
+          <AccountReference key={account.accountId} href={`/accounts/${account.accountId}`} className={accountLinks ? "underline underline-offset-4" : ""}>
             {nameFor(account)}: {Number(account.overdraft || 0) > 0 ? "overdraft " : ""}{hidden ? "••••••" : money(Number(account.overdraft || 0) > 0 ? account.overdraft! : account.unpaidTotal)}
             {Number(account.overdraft || 0) <= 0 ? " owed" : Number(account.unpaidTotal) > 0 ? ` · ${hidden ? "••••••" : money(account.unpaidTotal)} unpaid fees` : ""}
             {Number(account.overdraft || 0) > 0 ? ` · ${hidden ? "••••••" : money(-Number(account.overdraft))} negative cash ledger` : ""}
             {Number(account.unpaidCount) > 0 ? ` · ${account.unpaidCount} unpaid fees` : ""}
-          </Link>
+          </AccountReference>
         ))}
       </div>
     </section>

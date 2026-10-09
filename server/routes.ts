@@ -14,6 +14,7 @@ import { registerFeeRoutes } from "./fees/routes";
 import { moneyToCents } from "@shared/fees";
 import { approvePayment, FundsAccessError, fundsAccess, fundsAccessGuard } from "./funds-access";
 import { accountLabel } from "@shared/account-display";
+import { registerDisplayCurrencyRoutes } from "./display-currency";
 
 // Twilio Notification Setup (SMS/WhatsApp)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -214,6 +215,7 @@ export async function registerRoutes(
   };
 
   await registerFeeRoutes(app, pool, requireAdmin);
+  await registerDisplayCurrencyRoutes(app, pool, requireAdmin);
 
   // Auth Routes
   app.post(api.auth.register.path, (_req, res) => {

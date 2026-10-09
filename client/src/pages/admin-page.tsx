@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog as ShadDialog, DialogContent as ShadDialogContent, DialogHeader as ShadDialogHeader, DialogTitle as ShadDialogTitle, DialogFooter as ShadDialogFooter } from "@/components/ui/dialog";
 import { AdminFees } from "@/components/fees/admin-fees";
 import { formatCAD } from "@shared/fees";
+import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { ClientCurrencyPanel } from "@/components/admin/client-currency-panel";
 
 const SESSION_KEY = "vw_admin_key";
 
@@ -430,6 +432,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
   const [restrictMsg, setRestrictMsg] = useState("");
   const [freezeDialog, setFreezeDialog] = useState<{ user: any } | null>(null);
   const [freezeReason, setFreezeReason] = useState("");
+  const [currencyClient, setCurrencyClient] = useState<any | null>(null);
 
   const freezeUserMutation = useMutation({
     mutationFn: ({ id, frozen, reason }: { id: number; frozen: boolean; reason?: string }) =>
@@ -486,7 +489,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
             <StatCard icon={ArrowLeftRight} label="Transactions" value={statsLoading ? "—" : stats?.txCount ?? 0} />
             <StatCard icon={Clock} label="Pending" value={statsLoading ? "—" : stats?.pendingCount ?? 0} color="text-amber-400" />
             <StatCard icon={DollarSign} label="Total Volume" value={statsLoading ? "—" : fmt(stats?.totalVolume ?? 0)} color="text-emerald-400" />
-            <StatCard icon={Wallet} label="Assets Under Mgmt" value={statsLoading ? "—" : fmt(stats?.totalAssets ?? 0)} color="text-sky-400" />
+            <StatCard icon={Wallet} label="Ledger assets · CAD (not display currencies)" value={statsLoading ? "—" : fmt(stats?.totalAssets ?? 0)} color="text-sky-400" />
           </div>
         </div>
 
@@ -769,6 +772,12 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
 
           {/* ── Users ── */}
           <TabsContent value="users" className="mt-4">
+            <ClientCurrencyPanel
+              user={currencyClient}
+              adminKey={adminKey}
+              open={!!currencyClient}
+              onOpenChange={open => { if (!open) setCurrencyClient(null); }}
+            />
             {/* Restrict dialog */}
             {/* Freeze dialog */}
             <ShadDialog open={!!freezeDialog} onOpenChange={(o) => { if (!o) { setFreezeDialog(null); setFreezeReason(""); } }}>
@@ -889,12 +898,25 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                               )}
                               <div className="flex gap-4 mt-1.5 text-xs text-slate-500">
                                 <span>{u.accountCount} account{u.accountCount !== 1 ? "s" : ""}</span>
-                                <span className="text-emerald-400 font-medium">{fmt(u.totalBalance)}</span>
+                                <span className="text-emerald-400 font-medium">
+                                  {u.totalBalance === null || u.totalBalance === undefined
+                                    ? "Unavailable"
+                                    : formatBalance(u.totalBalance, clientBalanceCurrency(u))}
+                                  <span className="ml-1 text-slate-500">{clientBalanceCurrency(u) === "GBP" ? "£ display" : "CAD display"}</span>
+                                </span>
                                 <span>{new Date(u.createdAt).toLocaleDateString()}</span>
                               </div>
                             </div>
                           </div>
                           <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-primary/40 text-primary hover:bg-primary/10 text-xs h-8"
+                              onClick={() => setCurrencyClient(u)}
+                            >
+                              Display &amp; accounts
+                            </Button>
                             {u.accountFrozen ? (
                               <Button
                                 size="sm"

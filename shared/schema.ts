@@ -39,6 +39,19 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Presentation designations are independent of financial and fee-plan records.
+export const clientDisplayCurrencyAudit = pgTable("client_display_currency_audit", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  actor: text("actor").notNull(),
+  previousCurrency: text("previous_currency", { enum: ["CAD", "GBP"] }).notNull(),
+  displayCurrency: text("display_currency", { enum: ["CAD", "GBP"] }).notNull(),
+  reason: text("reason").notNull(),
+  confirmed: boolean("confirmed").notNull(),
+  presentationOnly: boolean("presentation_only").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const accounts = pgTable("accounts", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),

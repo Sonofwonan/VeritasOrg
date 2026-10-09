@@ -22,6 +22,9 @@ export function useAuth() {
     },
     retry: false,
     staleTime: Infinity,
+    // Staff may change presentation preferences while this client session is open.
+    refetchOnWindowFocus: "always",
+    refetchOnMount: "always",
   });
 
   const loginMutation = useMutation({

@@ -15,11 +15,11 @@ Show balances in full digits, not abbreviated million notation such as "$2.80M".
 
 **How to apply:** Preserve full amounts when formatting account and portfolio balances, including on mobile.
 
-Keep other clients and the existing service-pricing plans in CAD. Mary Scott's account balances use £, retaining their existing numeric amounts.
+Keep other clients in CAD unless an administrator deliberately authorizes a presentation-only exception. Existing service-pricing plans remain in their recorded currency. Mary Scott's account balances use £, retaining their existing numeric amounts.
 
-**Why:** The user originally requested CAD throughout, then explicitly requested Mary Scott's balance/account in pounds and chose “Keep the same amounts; change the currency to £.”
+**Why:** The user originally requested CAD throughout, then explicitly requested Mary Scott's balance/account in pounds and chose “Keep the same amounts; change the currency to £.” The authorized staff workflow extends this presentation-only designation without changing settlement or accepted pricing.
 
-**How to apply:** Remove CAD wording from all Mary's client-facing balance, fee, transaction and statement views; use only £, never GBP on her dashboard. Stored financial records and shared accepted pricing remain unchanged. Do not relabel a CAD/USD market quote as GBP/USD; omit it from her view rather than inventing an exchange rate. Do not change unrelated clients' currencies.
+**How to apply:** Remove CAD wording from all Mary's client-facing balance, fee, transaction and statement views; use only £, never GBP on her dashboard. Stored financial records and shared accepted pricing remain unchanged. Staff must still see pricing in its recorded currency, and cross-client totals must be identified as ledger totals rather than sums of differently labelled display figures. Do not relabel a CAD/USD market quote as GBP/USD; omit it from her view rather than inventing an exchange rate. Do not change unrelated clients' currencies.
 
 Avoid a standalone £ in Mary's balance/date caption or dashboard footer; the amounts already show their currency.
 
