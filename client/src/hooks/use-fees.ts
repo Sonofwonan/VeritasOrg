@@ -49,6 +49,19 @@ export function useClientFeeAction(accountId: number) {
     },
   });
 }
+export function useClientManagementAction(accountId: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ contractId, action }: { contractId: number; action: "accept" | "end" }) =>
+      (await apiRequest("POST", `/api/fees/management/${contractId}/${action}`,
+        action === "accept" ? { accepted: true } : {})).json(),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["/api/fees", accountId] });
+      client.invalidateQueries({ queryKey: ["/api/fees", "summary"] });
+      client.invalidateQueries({ queryKey: ["/api/accounts"] });
+    },
+  });
+}
 async function feeAdminRequest<T>(key: string, path: string, method = "GET", body?: unknown): Promise<T> {
   const res = await fetch(`/api/admin/fees${path}`, {
     method, headers: { "Content-Type": "application/json", "x-admin-key": key },

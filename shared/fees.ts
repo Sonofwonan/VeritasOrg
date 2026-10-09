@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const BILLING_TIME_ZONE = "America/Toronto";
 export const DEFAULT_FEE_TERMS = "Monthly CAD service pricing for the listed services. You authorize deductions only from available cash recorded in this application, not an external bank account. No investment sales, overdraft, interest, late penalties, or partial charges. Insufficient cash leaves an unpaid assessment. You may end enrollment at any time to stop future fees; already assessed fees remain visible and may be waived by an administrator. No proration of a completed monthly period. Taxes are not calculated or represented as included. Applicable service eligibility and disclosures must be confirmed before offering this plan.";
+export const OVERDRAFT_FEE_TERMS = "Monthly CAD service pricing for this account only. You explicitly authorize full fee debits to this account's application cash ledger, including when cash is zero or negative; this can create or increase a fee overdraft. Later deposits and refunds reduce that actual negative balance. No interest, penalties, external-bank debit, investment sale, or partial charge. Ending enrollment stops future fees, not previously posted charges. Annual discretionary-management fees, if separately accepted, are additional. No monthly proration. Taxes are not calculated. Account-specific eligibility must be confirmed.";
+export const MANAGEMENT_TERMS = "CAD discretionary-management fees are additional to monthly service fees. Each completed annual period is billed in arrears on its opening anniversary at the greater of the annual AUM percentage or annual minimum, rounded half-up to cents. AUM uses a documented end-of-period holdings valuation, excluding cash and fee debt. An empty holdings ledger can be snapshotted automatically on the anniversary itself; other valuations require administrator-confirmed evidence. No historical market values are inferred. Missing valuation blocks posting. Zero holdings do not close the contract or stop its annual minimum. You authorize fee overdraft debits to this account only. No interest, penalties, external-bank debit, or investment liquidation. Pausing skips unbilled anniversary dates during the pause on resumption, without proration. Explicit termination stops future assessments; historical charges remain. Taxes are not calculated.";
 export const DEFAULT_FEE_COMPONENTS = [
   { name: "Base maintenance", amount: "100.00", serviceDescription: "Account ledger maintenance and agreed account facilities." },
   { name: "Private relationship service", amount: "200.00", serviceDescription: "The agreed dedicated relationship service." },
@@ -17,6 +19,21 @@ export const feeScheduleInput = z.object({
     serviceDescription: z.string().trim().min(10).max(1000),
   }).strict()).length(3),
   terms: z.string().trim().min(50).max(6000),
+  funding: z.enum(["cash_only", "fee_overdraft"]).default("cash_only"),
+}).strict();
+export const managementOfferInput = z.object({
+  accountId: z.number().int().positive(),
+  openingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  annualMinimum: moneyInput,
+  annualRatePercent: z.string().regex(/^(0|[1-9]\d?)(\.\d{1,2})?$|^100(\.0{1,2})?$/),
+  terms: z.string().trim().min(50).max(6000),
+  eligibilityConfirmed: z.literal(true),
+}).strict();
+export const managementValuationInput = z.object({
+  period: z.number().int().nonnegative(),
+  aum: z.string().regex(/^(0|[1-9]\d{0,11})(\.\d{1,2})?$/),
+  evidence: z.string().trim().min(10).max(2000),
+  confirmed: z.literal(true),
 }).strict();
 export const feeOfferInput = z.object({
   accountId: z.number().int().positive(),
@@ -32,7 +49,7 @@ export const feeAcceptanceInput = z.object({
 export interface FeeComponent { name: string; amount: string; serviceDescription: string }
 export interface FeeSchedule {
   id: number; name: string; version: number; currency: "CAD"; components: FeeComponent[];
-  total: string; terms: string; createdAt: string;
+  total: string; terms: string; createdAt: string; funding?: "cash_only" | "fee_overdraft";
 }
 export interface FeeEnrollment {
   id: number; accountId: number; userId: number; scheduleId: number;
@@ -41,7 +58,9 @@ export interface FeeEnrollment {
   nextChargeDate: string | null; schedule: FeeSchedule; accountName: string; userName?: string;
 }
 export interface FeeAssessment {
-  id: number; enrollmentId: number; accountId: number; period: number; dueDate: string;
+  id: number; enrollmentId: number | null; accountId: number; period: number; dueDate: string;
+  contractId?: number | null; kind?: "monthly" | "management"; funding?: "cash_only" | "fee_overdraft";
+  calculation?: Record<string, unknown>;
   components: FeeComponent[]; total: string;
   status: "paid" | "unpaid" | "skipped" | "refunded" | "waived";
   reason: string | null; transactionId: number | null; refundTransactionId: number | null; createdAt: string;
@@ -55,17 +74,33 @@ export interface FeeOverview {
   settings: FeeSettings; schedules: FeeSchedule[]; enrollments: FeeEnrollment[];
   assessments: FeeAssessment[]; audit: FeeAudit[];
   accounts: { id: number; userId: number; accountType: string; balance: string; userName: string }[];
+  contracts?: ManagementContract[];
+  valuations?: ManagementValuation[];
 }
 export interface ClientFees {
   settings: FeeSettings; enrollments: FeeEnrollment[]; assessments: FeeAssessment[];
+  contracts?: ManagementContract[];
+  valuations?: ManagementValuation[];
+  balance?: string;
+}
+export interface ManagementContract {
+  id: number; accountId: number; userId: number; accountName: string; userName?: string;
+  state: "offered" | "active" | "paused" | "ended"; openingDate: string;
+  annualMinimum: string; annualRatePercent: string; terms: string;
+  nextPeriod: number; nextChargeDate: string | null; acceptedAt: string | null;
+  createdAt: string; funding: "fee_overdraft"; pricingInteraction: "additive";
+}
+export interface ManagementValuation {
+  id: number; contractId: number; period: number; valuationDate: string; aum: string; evidence: string; createdAt: string;
 }
 export interface ClientFeeSummary {
   totalUnpaid: string;
-  accounts: { accountId: number; unpaidTotal: string; unpaidCount: number }[];
+  totalOverdraft?: string; totalOwed?: string;
+  accounts: { accountId: number; unpaidTotal: string; unpaidCount: number; overdraft?: string; amountOwed?: string }[];
 }
 export interface FeePreview {
   enabled: boolean; timeZone: string; today: string; previewToken: string;
-  charges: { enrollmentId: number; accountId: number; userName: string; period: number; dueDate: string; total: string;
+   charges: { enrollmentId: number | null; contractId?: number; kind?: "monthly" | "management"; funding?: "cash_only" | "fee_overdraft"; accountId: number; userName: string; period: number; dueDate: string; total: string;
     outcome: "payable" | "unpaid" | "skipped"; reason: string | null }[];
 }
 export interface FeeRunResult { results: FeeAssessment[] }
@@ -126,4 +161,15 @@ export function firstPeriodOnOrAfter(anchor: string, date: string): number {
   let period = Math.max(0, (y - ay) * 12 + m - am);
   if (periodDate(anchor, period) < date) period++;
   return period;
+}
+
+export function annualDate(opening: string, period: number): string {
+  return periodDate(opening, (period + 1) * 12);
+}
+export function managementFee(aum: string, ratePercent: string, minimum: string): string {
+  const basisPoints = moneyToCents(ratePercent);
+  const product = moneyToCents(aum) * basisPoints;
+  const aumFee = (product + 5000n) / 10000n;
+  const floor = moneyToCents(minimum);
+  return centsToMoney(aumFee > floor ? aumFee : floor);
 }

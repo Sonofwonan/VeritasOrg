@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronUp, CircleDollarSign, Clock3, FilePlus2, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
 import { useAdminFees, useAdminFeeAction, useFeePreview } from "@/hooks/use-fees";
-import { BILLING_TIME_ZONE, DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS, billingToday, formatCAD, type FeeAssessment, type FeeEnrollment } from "@shared/fees";
+import { BILLING_TIME_ZONE, DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS, OVERDRAFT_FEE_TERMS, MANAGEMENT_TERMS, annualDate, validateBillingDate, billingToday, formatCAD, type FeeAssessment, type FeeEnrollment, type ManagementContract } from "@shared/fees";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +24,7 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
     name: "Monthly service fee schedule",
     components: DEFAULT_FEE_COMPONENTS.map(item => ({ ...item })),
     terms: DEFAULT_FEE_TERMS,
+    funding: "cash_only" as "cash_only" | "fee_overdraft",
   });
   const [selectedSchedule, setSelectedSchedule] = useState("");
   const [accountId, setAccountId] = useState("");
@@ -34,6 +35,13 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
   const [openTerms, setOpenTerms] = useState<number | null>(null);
   const [operationError, setOperationError] = useState("");
   const [runResults, setRunResults] = useState<FeeAssessment[] | null>(null);
+  const [managementAccount, setManagementAccount] = useState("");
+  const [openingDate, setOpeningDate] = useState("2025-01-01");
+  const [annualMinimum, setAnnualMinimum] = useState("381.00");
+  const [annualRate, setAnnualRate] = useState("1.7");
+  const [managementTerms, setManagementTerms] = useState(MANAGEMENT_TERMS);
+  const [managementEligibility, setManagementEligibility] = useState(false);
+  const [valuationInputs, setValuationInputs] = useState<Record<number, { aum: string; evidence: string; period: string }>>({});
 
   const total = useMemo(() => schedule.components.reduce((sum, item) => sum + (Number(item.amount) || 0), 0), [schedule.components]);
   const overview = fees.data;
@@ -149,9 +157,18 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
               <span className="font-mono text-lg tabular-nums text-amber-300">{formatCAD(total)}</span>
             </div>
             <label className="label-caps mt-5 block text-slate-400" htmlFor="fee-terms">Client terms</label>
-            <Textarea id="fee-terms" className="mt-2 min-h-36 border-slate-700 bg-slate-900/40 text-sm leading-relaxed text-slate-200" value={schedule.terms} onChange={e => setSchedule({ ...schedule, terms: e.target.value })} />
+            <label className="label-caps mt-4 block text-slate-400" htmlFor="fee-funding">Funding authorization for new version</label>
+            <select id="fee-funding" value={schedule.funding} onChange={e => {
+              const funding = e.target.value as "cash_only" | "fee_overdraft";
+              setSchedule({ ...schedule, funding, terms: funding === "fee_overdraft" ? OVERDRAFT_FEE_TERMS : DEFAULT_FEE_TERMS });
+            }} className="mt-1 w-full border-b border-slate-600 bg-slate-900 py-2 text-sm text-white">
+              <option value="cash_only">Cash only — insufficient cash stays unpaid</option>
+              <option value="fee_overdraft">Explicit fee overdraft — charge to negative account cash</option>
+            </select>
+            <p className="mt-2 text-xs leading-relaxed text-slate-400">{schedule.funding === "fee_overdraft" ? "New clients must separately consent to the exact account-specific schedule and overdraft terms. Existing immutable versions and accepted terms are not changed." : "Fees are charged only when the account has available recorded cash. No overdraft is authorized."}</p>
+            <Textarea id="fee-terms" aria-label="New schedule terms (version-specific)" className="mt-2 min-h-36 border-slate-700 bg-slate-900/40 text-sm leading-relaxed text-slate-200" value={schedule.terms} onChange={e => setSchedule({ ...schedule, terms: e.target.value })} />
             <Button className="mt-4 bg-amber-500 text-slate-950 hover:bg-amber-400" disabled={mutationBusy || schedule.name.trim().length < 3 || schedule.components.some(c => !c.name.trim() || c.serviceDescription.trim().length < 10 || !/^(0|[1-9]\d{0,5})(\.\d{1,2})?$/.test(c.amount)) || schedule.terms.trim().length < 50}
-              onClick={() => void submitAction("/schedules", { name: schedule.name.trim(), components: schedule.components, terms: schedule.terms.trim() })}>
+               onClick={() => void submitAction("/schedules", { name: schedule.name.trim(), components: schedule.components, terms: schedule.terms.trim(), funding: schedule.funding })}>
               {mutationBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilePlus2 className="mr-2 h-4 w-4" />} Save immutable version
             </Button>
           </div>
@@ -175,11 +192,57 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
               <input type="checkbox" checked={servicesConfirmed} onChange={e => setServicesConfirmed(e.target.checked)} className="mt-0.5 accent-amber-500" />
               I confirm the listed services and eligibility have been reviewed for this selected account; the client must independently review and explicitly consent before enrollment.
             </label>
-            <Button className="mt-4 w-full bg-white text-slate-900 hover:bg-slate-200" disabled={mutationBusy || !selectedSchedule || !accountId || !firstChargeDate || firstChargeDate < minDate || !servicesConfirmed}
+             <p className="mt-3 border-l-2 border-amber-500/50 pl-3 text-xs leading-relaxed text-slate-400">{overview.schedules.find(s => String(s.id) === selectedSchedule)?.funding === "fee_overdraft" ? "This version authorizes full account-cash debits even when cash is zero or negative. Client consent is required before enrollment." : "Cash-only schedule: insufficient cash leaves an unpaid assessment, with no overdraft."}</p>
+             <Button className="mt-4 w-full bg-white text-slate-900 hover:bg-slate-200" disabled={mutationBusy || !selectedSchedule || !accountId || !firstChargeDate || firstChargeDate < minDate || !servicesConfirmed}
               onClick={() => void submitAction("/offers", { accountId: Number(accountId), scheduleId: Number(selectedSchedule), firstChargeDate, servicesConfirmed: true })}>
               Offer to client
             </Button>
             <p className="mt-3 text-[11px] text-slate-500">Currency: CAD · Billing timezone: {BILLING_TIME_ZONE}. The next date is calculated by the service.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="border border-slate-700 bg-slate-800/30">
+        <div className="border-b border-slate-700 p-5"><p className="label-caps text-slate-400">Separate mandate · additive pricing</p><h2 className="mt-1 font-serif text-2xl text-white">Discretionary management contracts</h2><p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-400">Offer an account-specific annual contract only after eligibility confirmation. Monthly service pricing is unaffected; client acceptance is independent.</p></div>
+        <div className="grid gap-5 p-5 md:grid-cols-[.9fr_1.1fr]">
+          <div>
+            <h3 className="font-semibold text-white">Create management offer</h3>
+            <label className="label-caps mt-4 block text-slate-400" htmlFor="management-account">Client account</label>
+            <select id="management-account" value={managementAccount} onChange={e => setManagementAccount(e.target.value)} className="mt-1 w-full border-b border-slate-600 bg-slate-900 py-2 text-sm text-white"><option value="">Select an account</option>{overview.accounts.map(account => <option key={account.id} value={account.id}>{account.userName} · {account.accountType} · {formatCAD(account.balance)}</option>)}</select>
+            <label className="label-caps mt-4 block text-slate-400" htmlFor="management-opening-date">Prospective contract opening date</label><Input id="management-opening-date" type="date" min={minDate} value={openingDate} onChange={e => setOpeningDate(e.target.value)} className={inputClass} />
+            <div className="mt-4 grid grid-cols-2 gap-4"><div><label className="label-caps text-slate-400" htmlFor="management-minimum">Annual minimum · CAD</label><Input id="management-minimum" inputMode="decimal" value={annualMinimum} onChange={e => setAnnualMinimum(e.target.value)} className={inputClass} /></div><div><label className="label-caps text-slate-400" htmlFor="management-rate">Annual AUM rate · %</label><Input id="management-rate" inputMode="decimal" value={annualRate} onChange={e => setAnnualRate(e.target.value)} className={inputClass} /></div></div>
+            <div className="mt-4 border-l-2 border-amber-500/50 bg-slate-900/40 p-3 text-xs leading-relaxed text-slate-300"><p className="font-semibold text-amber-200">Next charge: {validateBillingDate(openingDate) ? dateLabel(annualDate(openingDate, 0)) : "Not scheduled"}</p><p className="mt-1">Annual arrears calculation: greater of documented period-end holdings × rate or minimum; rounded to cents. Valuation excludes cash and fee debt. Empty holdings can be snapshotted on the anniversary itself; other missing valuations block posting. Fee overdraft applies only after explicit contract acceptance.</p></div>
+            <label className="label-caps mt-4 block text-slate-400" htmlFor="management-terms">New contract terms</label><Textarea id="management-terms" value={managementTerms} onChange={e => setManagementTerms(e.target.value)} className="mt-2 min-h-36 border-slate-700 bg-slate-900/40 text-sm leading-relaxed text-slate-200" />
+            <label className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-slate-300"><input type="checkbox" checked={managementEligibility} onChange={e => setManagementEligibility(e.target.checked)} className="mt-0.5 accent-amber-500" />I confirm eligibility and account-specific disclosures have been reviewed. The client must independently accept this separate contract.</label>
+            <Button className="mt-4 bg-amber-500 text-slate-950 hover:bg-amber-400" disabled={mutationBusy || !managementAccount || !openingDate || !/^(0|[1-9]\d{0,5})(\.\d{1,2})?$/.test(annualMinimum) || !/^(0|[1-9]\d?)(\.\d{1,2})?$|^100(\.0{1,2})?$/.test(annualRate) || managementTerms.trim().length < 50 || !managementEligibility}
+              onClick={() => void submitAction("/management/offers", { accountId: Number(managementAccount), openingDate, annualMinimum, annualRatePercent: annualRate, terms: managementTerms.trim(), eligibilityConfirmed: true })}>Offer separate contract</Button>
+          </div>
+          <div className="border-t border-slate-700 pt-5 md:border-l md:border-t-0 md:pl-5 md:pt-0">
+            <h3 className="font-semibold text-white">Contract lifecycle & evidence</h3>
+            {(overview.contracts || []).length === 0 ? <p className="mt-3 border border-slate-700 p-5 text-sm text-slate-400">No management contracts or offers have been recorded.</p> : <div className="mt-3 divide-y divide-slate-700">
+              {(overview.contracts || []).map((contract: ManagementContract) => {
+                const input = valuationInputs[contract.id] || { aum: "", evidence: "", period: String(contract.nextPeriod) };
+                const valuations = (overview.valuations || []).filter(value => value.contractId === contract.id);
+                return <article key={contract.id} className="py-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+                    <div><div className="flex flex-wrap items-center gap-2"><p className="font-semibold text-white">{contract.accountName}</p><span className="label-caps border border-slate-600 px-2 py-1">{contract.state}</span></div><p className="mt-1 text-xs text-slate-400">{contract.userName || `Client ${contract.userId}`} · {contract.annualRatePercent}% / {formatCAD(contract.annualMinimum)} annual minimum · next {dateLabel(contract.nextChargeDate)}</p><p className="mt-1 text-xs text-slate-500">Opened {dateLabel(contract.openingDate)} · additive · client accepted {dateLabel(contract.acceptedAt)}</p></div>
+                    <div className="flex flex-wrap gap-2">
+                      {contract.state === "active" && <Button size="sm" variant="outline" disabled={mutationBusy} className="border-slate-600 text-white" onClick={() => askConfirm({ path: `/management/${contract.id}/state`, body: { state: "paused" }, title: "Pause management contract?", consequence: "Pausing skips unbilled anniversary dates during the pause on resumption. No proration; recorded assessments remain unchanged." })}>Pause</Button>}
+                      {contract.state === "paused" && <Button size="sm" variant="outline" disabled={mutationBusy} className="border-slate-600 text-white" onClick={() => askConfirm({ path: `/management/${contract.id}/state`, body: { state: "active" }, title: "Resume management contract?", consequence: "The contract resumes prospectively. Anniversary dates skipped while paused are not billed; no proration applies." })}>Resume</Button>}
+                      {contract.state !== "ended" && <Button size="sm" variant="outline" disabled={mutationBusy} className="border-rose-900 text-rose-200" onClick={() => askConfirm({ path: `/management/${contract.id}/state`, body: { state: "ended" }, title: "End management contract?", consequence: "Future management assessments stop. Historical charges remain in the account ledger." })}>End</Button>}
+                    </div>
+                  </div>
+                  <details className="mt-3"><summary className="cursor-pointer text-xs text-slate-400">Full contract terms</summary><p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-slate-400">{contract.terms}</p></details>
+                  {contract.state === "active" && <div className="mt-4 border border-slate-700 bg-slate-900/40 p-3">
+                    <p className="label-caps text-amber-200">Record immutable holdings valuation · period {Number(input.period) + 1}</p><p className="mt-1 text-xs text-slate-400">Evidence-based period-end holdings only; exclude cash and fee debt. Missing valuation blocks this annual charge.</p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2"><div><label className="label-caps text-slate-500" htmlFor={`valuation-aum-${contract.id}`}>Confirmed AUM · CAD</label><Input id={`valuation-aum-${contract.id}`} value={input.aum} inputMode="decimal" className={inputClass} onChange={e => setValuationInputs(v => ({ ...v, [contract.id]: { ...input, aum: e.target.value } }))} /></div><div><label className="label-caps text-slate-500" htmlFor={`valuation-evidence-${contract.id}`}>Evidence reference</label><Input id={`valuation-evidence-${contract.id}`} value={input.evidence} className={inputClass} onChange={e => setValuationInputs(v => ({ ...v, [contract.id]: { ...input, evidence: e.target.value } }))} /></div></div>
+                    <Button size="sm" className="mt-3 bg-amber-500 text-slate-950 hover:bg-amber-400" disabled={mutationBusy || !/^(0|[1-9]\d{0,11})(\.\d{1,2})?$/.test(input.aum) || input.evidence.trim().length < 10 || !/^\d+$/.test(input.period)}
+                      onClick={() => void submitAction(`/management/${contract.id}/valuations`, { period: Number(input.period), aum: input.aum, evidence: input.evidence.trim(), confirmed: true })}>Record confirmed valuation</Button>
+                  </div>}
+                  {valuations.length > 0 && <div className="mt-3 space-y-2">{valuations.map(value => <div key={value.id} className="border-l border-emerald-500/50 pl-3 text-xs text-slate-400"><p>Period {value.period + 1} · {dateLabel(value.valuationDate)} · holdings {formatCAD(value.aum)}</p><p>Evidence: {value.evidence}</p></div>)}</div>}
+                </article>;
+              })}
+            </div>}
           </div>
         </div>
       </section>
@@ -198,8 +261,8 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
           </div>
           <div className="divide-y divide-slate-700">
             {preview.data.charges.length === 0 ? <p className="p-5 text-sm text-slate-400">No enrollments are due on {dateLabel(preview.data.today)}.</p> : preview.data.charges.map((charge, i) => (
-              <div key={`${charge.enrollmentId}-${charge.dueDate}-${i}`} className="grid gap-2 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
-                <div><p className="text-sm font-semibold text-white">{charge.userName} <span className="text-slate-500">· account {charge.accountId}</span></p><p className="mt-0.5 text-xs text-slate-400">Enrollment {charge.enrollmentId} · period {charge.period + 1} · due {dateLabel(charge.dueDate)}{charge.reason ? ` · ${charge.reason}` : ""}</p></div>
+                <div key={`${charge.contractId ? `contract-${charge.contractId}` : `enrollment-${charge.enrollmentId}`}-${charge.dueDate}-${i}`} className="grid gap-2 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div><p className="text-sm font-semibold text-white">{charge.userName} <span className="text-slate-500">· account {charge.accountId}</span></p><p className="mt-0.5 text-xs text-slate-400">{charge.kind === "management" ? `Management contract ${charge.contractId}` : `Enrollment ${charge.enrollmentId}`} · period {charge.period + 1} · due {dateLabel(charge.dueDate)} · {charge.funding === "fee_overdraft" ? "fee overdraft" : "cash-only"}{charge.reason ? ` · ${charge.reason}` : ""}</p></div>
                 <div className="flex items-center justify-between gap-4 sm:justify-end"><span className={`label-caps ${charge.outcome === "payable" ? "text-emerald-300" : charge.outcome === "unpaid" ? "text-amber-300" : "text-slate-400"}`}>{charge.outcome}</span><span className="font-mono text-sm tabular-nums text-white">{formatCAD(charge.total)}</span></div>
               </div>
             ))}
@@ -207,7 +270,7 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
           <div className="flex flex-col gap-3 border-t border-slate-700 p-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-slate-400">Preview status: {preview.data.enabled ? "processing enabled" : "processing disabled"} · {preview.data.timeZone}</p>
             <Button disabled={mutationBusy || !preview.data.enabled || preview.data.charges.length === 0} className="bg-amber-500 text-slate-950 hover:bg-amber-400"
-              onClick={() => askConfirm({ path: "/run", body: { confirmed: true, previewToken: preview.data.previewToken }, title: "Run the displayed fee assessment?", consequence: "This will attempt the reviewed due assessments using the recorded cash ledger. A changed preview must be refreshed and reviewed again. Cash eligibility is checked again during settlement; unavailable funds remain unpaid or skipped. No partial charge, overdraft, external-bank debit, investment sale, or forced liquidation will occur." })}>
+               onClick={() => askConfirm({ path: "/run", body: { confirmed: true, previewToken: preview.data.previewToken }, title: "Run the displayed fee assessment?", consequence: `This will attempt reviewed due assessments using the recorded account cash ledgers. A changed preview must be refreshed and reviewed again. ${preview.data.charges.some(charge => charge.funding === "fee_overdraft") ? "An overdraft-funded charge posts its full amount to the specifically authorized account ledger; cash-only assessments still require available funds." : "Cash-only assessments require available funds; unavailable funds remain unpaid or skipped."} No external-bank debit, investment sale, or forced liquidation will occur.` })}>
               <CircleDollarSign className="mr-2 h-4 w-4" /> Confirm and run
             </Button>
           </div>
@@ -292,9 +355,13 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
 function AssessmentRow({ assessment, pending, onAction }: { assessment: FeeAssessment; pending: boolean; onAction: (action: "retry" | "waive" | "refund") => void }) {
   return <div className="p-4">
     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-      <div><div className="flex flex-wrap items-center gap-2"><span className="text-sm font-semibold text-white">Assessment {assessment.id}</span><span className="label-caps border border-slate-600 px-2 py-0.5 text-slate-300">{assessment.status}</span></div><p className="mt-1 text-xs text-slate-400">Account {assessment.accountId} · period {assessment.period + 1} · {dateLabel(assessment.dueDate)}</p>{assessment.reason && <p className="mt-1 text-xs text-slate-500">Reason: {assessment.reason}</p>}</div>
+      <div><div className="flex flex-wrap items-center gap-2"><span className="text-sm font-semibold text-white">Assessment {assessment.id} · {assessment.kind === "management" ? "annual management" : "monthly services"}</span><span className="label-caps border border-slate-600 px-2 py-0.5 text-slate-300">{assessment.status}</span></div><p className="mt-1 text-xs text-slate-400">Account {assessment.accountId} · period {assessment.period + 1} · {dateLabel(assessment.dueDate)}{assessment.contractId ? ` · contract ${assessment.contractId}` : ""} · {assessment.funding === "fee_overdraft" ? "authorized fee overdraft" : "cash only"}{assessment.transactionId ? ` · ledger transaction ${assessment.transactionId}` : ""}</p>{assessment.reason && <p className="mt-1 text-xs text-slate-500">Reason: {assessment.reason}</p>}</div>
       <span className="font-mono text-sm tabular-nums text-amber-300">{formatCAD(assessment.total)}</span>
     </div>
+    <details className="mt-2 text-xs text-slate-400"><summary className="cursor-pointer">Itemization and calculation</summary>
+      {assessment.components.map(item => <p key={item.name} className="mt-1 flex justify-between gap-3"><span>{item.name}</span><span className="font-mono">{formatCAD(item.amount)}</span></p>)}
+      {assessment.kind === "management" && <pre className="mt-2 whitespace-pre-wrap break-words">{JSON.stringify(assessment.calculation,null,2)}</pre>}
+    </details>
     {["unpaid", "skipped"].includes(assessment.status) && <div className="mt-3 flex flex-wrap gap-2">
       <Button size="sm" variant="outline" disabled={pending} className="border-slate-600 text-white" onClick={() => onAction("retry")}>Retry</Button>
       <Button size="sm" variant="outline" disabled={pending} className="border-slate-600 text-white" onClick={() => onAction("waive")}>Waive</Button>

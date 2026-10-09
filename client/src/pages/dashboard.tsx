@@ -88,6 +88,8 @@ export default function DashboardPage() {
   const investValue    = investments?.reduce((s, i) => s + Number(i.shares) * Number(i.currentPrice || i.purchasePrice), 0) || 0;
   const accountCash    = accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0;
   const totalBalance   = accountCash + investValue - Number(feeSummary.data?.totalUnpaid || 0);
+  const transmittedDebt = (accounts?.reduce((sum, account) => sum + Math.min(0, Number(account.balance)), 0) || 0)
+    - Number(feeSummary.data?.totalUnpaid || 0);
   const cashTotal      = accountCash;
   const investTotal    = investValue;
   const dayChange      = (accountCash + investValue) * 0.0038;
@@ -167,7 +169,7 @@ export default function DashboardPage() {
                 <p className="label-caps text-white/40 mb-1">{getGreeting()}, {user?.name?.split(' ')[0]} · Portfolio Overview</p>
                 <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
                   <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${totalBalance < 0 ? "text-red-300" : isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-net-worth">
-                    {feeSummary.isError ? "Unavailable" : fmt(isTransmitting ? -Number(feeSummary.data?.totalUnpaid || 0) : totalBalance)}
+                    {feeSummary.isError ? "Unavailable" : fmt(isTransmitting ? transmittedDebt : totalBalance)}
                   </span>
                   {isTransmitting ? (
                     <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
@@ -212,7 +214,7 @@ export default function DashboardPage() {
                   <p className="label-caps text-white/30 mb-0.5">{label}</p>
                   {isTransmitting ? (
                     <div>
-                      <p className="font-mono text-violet-300 font-semibold text-sm">{formatCAD(0)}</p>
+                       <p className="font-mono text-violet-300 font-semibold text-sm">{formatCAD(accounts?.reduce((sum, account) => sum + Math.min(0, Number(account.balance)), 0) || 0)}</p>
                       <p className="font-mono text-white/20 text-[10px] line-through">{val}</p>
                     </div>
                   ) : (

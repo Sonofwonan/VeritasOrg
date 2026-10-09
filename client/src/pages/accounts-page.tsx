@@ -96,6 +96,7 @@ export default function AccountsPage() {
     }, 0) || 0;
 
   const totalBalance = (accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0) - Number(feeSummary.data?.totalUnpaid || 0);
+  const transmittedDebt = (accounts?.reduce((s, a) => s + Math.min(0, Number(a.balance)), 0) || 0) - Number(feeSummary.data?.totalUnpaid || 0);
   const cashTotal = accounts?.filter(a => categoryOf(a.accountType) === 'cash').reduce((s, a) => s + Number(a.balance), 0) || 0;
   const investTotal = accounts?.filter(a => categoryOf(a.accountType) === 'investment').reduce((s, a) => s + Number(a.balance), 0) || 0;
   const bizTotal = accounts?.filter(a => categoryOf(a.accountType) === 'business').reduce((s, a) => s + Number(a.balance), 0) || 0;
@@ -185,7 +186,7 @@ export default function AccountsPage() {
               <p className="label-caps text-white/40 mb-2">Net Account Balance · After Unpaid Fees</p>
               <div className="flex items-end gap-4">
                   <span className={`font-serif text-[clamp(1.65rem,6vw,3rem)] tracking-tight [overflow-wrap:anywhere] ${totalBalance < 0 ? "text-red-300" : isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
-                  {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : fmt(isTransmitting ? -Number(feeSummary.data?.totalUnpaid || 0) : totalBalance)}
+                  {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : fmt(isTransmitting ? transmittedDebt : totalBalance)}
                 </span>
                 {isTransmitting ? (
                   <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
@@ -237,7 +238,7 @@ export default function AccountsPage() {
               </div>
               {isTransmitting ? (
                 <div>
-                   <p className="font-mono text-sm sm:text-xl text-violet-300 tracking-tight [overflow-wrap:anywhere]">{formatCAD(0)}</p>
+                   <p className="font-mono text-sm sm:text-xl text-violet-300 tracking-tight [overflow-wrap:anywhere]">{formatCAD(accounts?.filter(a => (label === "Cash & Deposits" ? categoryOf(a.accountType) === "cash" : label === "Investments" ? categoryOf(a.accountType) === "investment" : categoryOf(a.accountType) === "business")).reduce((sum, a) => sum + Math.min(0, Number(a.balance)), 0) || 0)}</p>
                    <p className="font-mono text-[10px] text-white/20 line-through mt-0.5 [overflow-wrap:anywhere]">{fmt(value)}</p>
                 </div>
               ) : (
@@ -385,7 +386,7 @@ export default function AccountsPage() {
                             {isTransmitting ? (
                               <div>
                                 <p className="font-mono text-base font-semibold text-violet-400 tabular-nums" data-testid={`balance-${account.id}`}>
-                                   {formatCAD(0)}
+                                   {formatCAD(Math.min(0, Number(account.balance)))}
                                 </p>
                                 <p className="font-mono text-[10px] text-muted-foreground/40 line-through tabular-nums">
                                    {fmt(Number(account.balance))}
@@ -397,7 +398,8 @@ export default function AccountsPage() {
                               </p>
                             )}
                             <AccountFeeBalance cash={account.balance}
-                              unpaid={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.unpaidTotal} hidden={hideBalances} />
+                              unpaid={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.unpaidTotal}
+                              overdraft={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.overdraft} hidden={hideBalances} />
                           </div>
 
                           <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />

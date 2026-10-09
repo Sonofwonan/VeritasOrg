@@ -31,7 +31,7 @@ Show unpaid service-fee debt on the dashboard and account summaries, not only in
 
 **Why:** The user said they could not see the fees on the dashboard and that they must appear there or as a negative account amount.
 
-**How to apply:** Distinguish cash ledger balance from net balance after unpaid fees. Deduct only unpaid liabilities once; paid fees already reduced cash. Do not describe unpaid fees as an interest-bearing overdraft loan.
+**How to apply:** Distinguish cash ledger balance from net balance after genuinely unposted unpaid fees. Posted overdraft debits already reduced cash; never subtract them again. Neither unposted fees nor authorized fee overdrafts accrue interest.
 
 Each account must have its own fees, overdrafted from that respective account, rather than only a separate unpaid-fee display.
 

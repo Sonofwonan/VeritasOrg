@@ -10,7 +10,10 @@ import { registerFeeRoutes } from "./routes";
 import {
   availableCashCents, billingToday, centsToMoney, DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS,
   firstPeriodOnOrAfter, formatCAD, moneyToCents, periodDate, validateBillingDate,
+  annualDate, managementFee, MANAGEMENT_TERMS, OVERDRAFT_FEE_TERMS,
+  type FeeAssessment,
 } from "../../shared/fees";
+import { applyMaryHistory, previewMaryHistory } from "./fictional-history";
 
 describe("Exact CAD amounts and calendar periods", () => {
   it("adds the agreed components exactly and rejects invalid precision", () => {
@@ -34,6 +37,14 @@ describe("Exact CAD amounts and calendar periods", () => {
     assert.equal(firstPeriodOnOrAfter("2030-01-31", "2030-02-28"), 1);
     assert.equal(validateBillingDate("2030-02-30"), false);
     assert.equal(billingToday(new Date("2030-01-01T02:00:00Z")), "2029-12-31");
+  });
+  it("calculates annual AUM versus minimum with exact half-up cents", () => {
+    assert.equal(managementFee("0.00","1.70","381.00"),"381.00");
+    assert.equal(managementFee("100000.00","1.70","381.00"),"1700.00");
+    assert.equal(managementFee("1.00","1.50","0.01"),"0.02");
+    assert.equal(managementFee("22411.77","1.70","381.00"),"381.00");
+    assert.equal(annualDate("2032-02-29",0),"2033-02-28");
+    assert.equal(annualDate("2032-02-29",3),"2036-02-29");
   });
 });
 
@@ -73,12 +84,13 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     pool = new pg.Pool({ ...config, options: `-c search_path=${schema}`, max: 8 });
     await query(`
       CREATE TYPE transaction_type AS ENUM ('transfer','buy','sell','payment','withdrawal');
-      CREATE TABLE users(id SERIAL PRIMARY KEY,name TEXT NOT NULL,account_frozen BOOLEAN DEFAULT FALSE);
-      CREATE TABLE accounts(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL,account_type TEXT NOT NULL,balance NUMERIC NOT NULL);
+      CREATE TABLE users(id SERIAL PRIMARY KEY,name TEXT NOT NULL,account_frozen BOOLEAN DEFAULT FALSE,client_ref TEXT,password TEXT);
+      CREATE TABLE accounts(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL,account_type TEXT NOT NULL,balance NUMERIC NOT NULL,is_demo BOOLEAN DEFAULT FALSE);
       CREATE TABLE transactions(id SERIAL PRIMARY KEY,from_account_id INTEGER,to_account_id INTEGER,payee_id INTEGER,
         amount NUMERIC NOT NULL,description TEXT,transaction_type transaction_type NOT NULL,status TEXT NOT NULL,
         is_demo BOOLEAN DEFAULT FALSE,created_at TIMESTAMP DEFAULT NOW());
       CREATE TABLE institutional_transfers(id SERIAL PRIMARY KEY,user_id INTEGER,status TEXT);
+      CREATE TABLE investments(id SERIAL PRIMARY KEY,account_id INTEGER,shares NUMERIC);
     `);
     await initializeFeeTables(pool);
     service = new FeeService(pool, () => clock);
@@ -253,6 +265,7 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     await assert.rejects(query("UPDATE fee_schedules SET total=999 WHERE id=1"), /immutable/);
     await assert.rejects(service.changeState(e.id, "active"), /Only a client-accepted/);
     await assert.rejects(service.createSchedule({ name: "Bad", components: DEFAULT_FEE_COMPONENTS.map(c => ({ ...c, amount: "-1" })), terms: DEFAULT_FEE_TERMS }));
+    await assert.rejects(service.createSchedule({name:"Contradictory terms",components:DEFAULT_FEE_COMPONENTS,terms:DEFAULT_FEE_TERMS,funding:"fee_overdraft"}),/cash-only\/no-overdraft/);
   });
   it("rejects stale reviewed previews rather than charging newly changed items", async () => {
     await accepted(); await service.settings(true); setDay("2030-01-31");
@@ -309,11 +322,186 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     await service.changeState(e.id, "paused");
     const own = await request("/api/fees/summary", undefined, 1);
     assert.equal(own.status, 200);
-    assert.deepEqual(own.body, { totalUnpaid: "363.64", accounts: [{ accountId: 1, unpaidTotal: "363.64", unpaidCount: 1 }] });
+    assert.deepEqual(own.body, { totalUnpaid: "363.64", totalOverdraft:"0.00",totalOwed:"363.64",
+      accounts: [{ accountId: 1, unpaidTotal: "363.64", unpaidCount: 1,overdraft:"0",amountOwed:"363.64" }] });
     const other = await request("/api/fees/summary", undefined, 2);
-    assert.deepEqual(other.body, { totalUnpaid: "0.00", accounts: [{ accountId: 2, unpaidTotal: "0.00", unpaidCount: 0 }] });
+    assert.deepEqual(other.body, { totalUnpaid: "0.00",totalOverdraft:"0.00",totalOwed:"0.00",
+      accounts: [{ accountId: 2, unpaidTotal: "0.00", unpaidCount: 0,overdraft:"0",amountOwed:"0.00" }] });
     assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance, "0");
     await service.assessmentAction(run.results[0].id, "waive", "Fixture waiver");
     assert.equal((await service.clientSummary(1)).totalUnpaid, "0.00");
+  });
+  async function overdraftPlan(accountId=1) {
+    const s = await service.createSchedule({name:"Authorized fee overdraft",components:DEFAULT_FEE_COMPONENTS,terms:OVERDRAFT_FEE_TERMS,funding:"fee_overdraft"});
+    const e = await offer(accountId,"2030-01-31",s.id);
+    await service.accept(accountId,e.id,{scheduleId:s.id,accepted:true});
+    return e;
+  }
+  async function management(accountId=1,openingDate="2030-01-02") {
+    const m = await service.offerManagement({accountId,openingDate,annualMinimum:"381.00",annualRatePercent:"1.70",terms:MANAGEMENT_TERMS,eligibilityConfirmed:true});
+    await service.acceptManagement(accountId,m.id,{accepted:true});
+    return m;
+  }
+  it("charges approved overdrafts, preserves cash-only terms, precision and current debt after deposits/refunds",async()=>{
+    await overdraftPlan(); await accepted(2); await service.settings(true); setDay("2030-01-31");
+    await query("UPDATE accounts SET balance=-0.0001 WHERE id=1");
+    await query("UPDATE accounts SET balance=0 WHERE id=2");
+    const preview = await service.preview();
+    assert.equal(preview.charges.find(a=>a.accountId===1)?.funding,"fee_overdraft");
+    assert.equal(preview.charges.find(a=>a.accountId===1)?.outcome,"payable");
+    assert.equal(preview.charges.find(a=>a.accountId===2)?.outcome,"unpaid");
+    const runs = await Promise.allSettled([service.run("admin",preview.previewToken),service.run()]);
+    const fulfilled = runs.filter((r): r is PromiseFulfilledResult<{results:FeeAssessment[]}> => r.status === "fulfilled");
+    for (const r of runs) if (r.status === "rejected") assert.match(r.reason.message,/preview has changed/);
+    // Either the reviewed run wins, or the worker wins and invalidates that preview.
+    const a = fulfilled.flatMap(r=>r.value.results).find(a=>a.accountId===1)!;
+    assert.equal(a.status,"paid"); assert.equal(a.funding,"fee_overdraft");
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance,"-363.6401");
+    assert.equal((await service.clientSummary(1)).totalUnpaid,"0.00");
+    assert.equal((await service.clientSummary(1)).totalOverdraft,"363.6401");
+    // A deposit is a real account-owned credit, not a change to historical fee totals.
+    await query("UPDATE accounts SET balance=balance+100 WHERE id=1");
+    await query("INSERT INTO transactions(to_account_id,amount,transaction_type,status) VALUES(1,100,'transfer','completed')");
+    assert.equal((await service.clientSummary(1)).totalOverdraft,"263.6401");
+    await service.assessmentAction(a.id,"refund","Corrected service charge");
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance,"99.9999");
+    assert.equal((await service.clientSummary(1)).totalOverdraft,"0.00");
+    assert.equal((await query("SELECT funding FROM fee_schedules WHERE id=1")).rows[0].funding,"cash_only");
+    await assert.rejects(service.assessmentAction(a.id,"refund","Again"),/unrefunded/);
+  });
+  it("requires independent management consent, future dates, explicit eligibility and ownership",async()=>{
+    await assert.rejects(service.offerManagement({accountId:1,openingDate:"2029-01-01",annualMinimum:"381",annualRatePercent:"1.7",terms:MANAGEMENT_TERMS,eligibilityConfirmed:true}),/future/);
+    const m = await service.offerManagement({accountId:1,openingDate:"2030-01-02",annualMinimum:"381",annualRatePercent:"1.7",terms:MANAGEMENT_TERMS,eligibilityConfirmed:true});
+    await assert.rejects(service.acceptManagement(2,m.id,{accepted:true}),/not found/);
+    await assert.rejects(service.acceptManagement(1,m.id,{accepted:false}),/Explicit/);
+    await assert.rejects(service.managementState(m.id,"active"),/accepted paused/);
+    await assert.rejects(query("UPDATE management_contracts SET annual_minimum=1 WHERE id=$1",[m.id]),/immutable/);
+    assert.equal((await request(`/api/fees/management/${m.id}/accept`,{accepted:true},2)).status,404);
+    assert.equal((await request(`/api/admin/fees/management/${m.id}/valuations`,{period:0,aum:"0",evidence:"test documentation",confirmed:true})).status,401);
+  });
+  it("bills annual minima at zero holdings, not account labels, independently of monthly coverage",async()=>{
+    await overdraftPlan(); const m = await management(); await service.settings(true);
+    await query("UPDATE accounts SET balance=0");
+    setDay("2031-01-03");
+    const before = await service.preview();
+    assert(before.charges.find(a=>a.contractId===m.id)?.reason?.includes("valuation required"));
+    await service.recordValuation(m.id,{period:0,aum:"0.00",evidence:"Confirmed zero holdings at this anniversary",confirmed:true});
+    const preview = await service.preview();
+    assert.equal(preview.charges.filter(a=>a.kind==="management").length,1);
+    const results = await Promise.all([service.run(),service.run()]);
+    const fees = results.flatMap(r=>r.results);
+    assert.equal(fees.filter(a=>a.kind==="management").length,1);
+    assert.equal(fees.find(a=>a.kind==="management")?.total,"381.00");
+    assert.equal((await service.clientView(1,1)).contracts?.[0].nextChargeDate,"2032-01-02");
+    assert.equal((await service.clientView(2,2)).contracts?.length,0);
+    await assert.rejects(service.recordValuation(m.id,{period:0,aum:"100",evidence:"Try changing the evidence",confirmed:true}),/immutable/);
+    await assert.rejects(query("DELETE FROM management_valuations WHERE contract_id=$1",[m.id]),/immutable/);
+    // Future annual minimum continues at empty holdings while the contract remains open.
+    setDay("2032-01-02");
+    await service.recordValuation(m.id,{period:1,aum:"0",evidence:"Holdings remain empty on second anniversary",confirmed:true});
+    const second = (await service.run()).results.find(a=>a.kind==="management")!;
+    assert.equal(second.total,"381.00");
+    await service.managementState(m.id,"ended",1);
+    setDay("2033-01-02");
+    assert(!(await service.run()).results.some(a=>a.kind==="management"));
+    assert.equal((await query("SELECT COUNT(*)::int AS n FROM fee_assessments WHERE contract_id=$1",[m.id])).rows[0].n,2);
+    await assert.rejects(service.managementState(m.id,"active"),/already ended/);
+  });
+  it("automatically snapshots zero holdings only on the actual anniversary, never inferred historical AUM",async()=>{
+    const m = await management(); await service.settings(true); setDay("2031-01-02");
+    await query("UPDATE accounts SET balance=0 WHERE id=1");
+    assert.equal((await service.preview()).charges[0].outcome,"payable");
+    assert.equal((await query("SELECT COUNT(*)::int AS n FROM management_valuations")).rows[0].n,0);
+    const results = await Promise.all([service.run(),service.run()]);
+    assert.equal(results.flatMap(r=>r.results).length,1);
+    assert.equal((await query("SELECT aum FROM management_valuations WHERE contract_id=$1",[m.id])).rows[0].aum,"0.00");
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance,"-381.00");
+    setDay("2032-01-03");
+    assert((await service.preview()).charges[0].reason?.includes("valuation required"));
+    assert.equal((await service.run()).results.length,0);
+    assert.equal((await service.clientView(1,1)).contracts?.[0].nextPeriod,1);
+  });
+  it("uses documented AUM, freezes/transfer locks, retry, refund and waiver consistently for management",async()=>{
+    const m = await management(); await service.settings(true); setDay("2031-01-02");
+    await query("UPDATE accounts SET balance=0 WHERE id=1");
+    await service.recordValuation(m.id,{period:0,aum:"100000.00",evidence:"Documented anniversary holdings valuation",confirmed:true});
+    await query("UPDATE users SET account_frozen=true WHERE id=1");
+    const preview = await service.preview();
+    assert.equal(preview.charges[0].outcome,"skipped");
+    const a = (await service.run()).results[0];
+    assert.equal(a.status,"skipped"); assert.equal(a.total,"1700.00");
+    await query("UPDATE users SET account_frozen=false WHERE id=1");
+    assert.equal((await service.assessmentAction(a.id,"retry","Freeze cleared")).status,"paid");
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance,"-1700.00");
+    assert.equal((await service.clientSummary(1)).totalUnpaid,"0.00");
+    await service.assessmentAction(a.id,"refund","Valuation correction");
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance,"0.00");
+    setDay("2032-01-02");
+    await service.recordValuation(m.id,{period:1,aum:"0",evidence:"Documented holdings after liquidation",confirmed:true});
+    await query("INSERT INTO institutional_transfers(user_id,status) VALUES(1,'approved')");
+    const locked = (await service.run()).results[0];
+    assert.equal(locked.status,"skipped");
+    await service.assessmentAction(locked.id,"waive","Management service waived");
+    await assert.rejects(service.assessmentAction(locked.id,"retry","Again"),/Only unpaid/);
+  });
+  it("pauses management without back-billing paused annual anniversaries",async()=>{
+    const m = await management(); await service.settings(true);
+    await service.managementState(m.id,"paused");
+    setDay("2032-04-01"); await service.managementState(m.id,"active");
+    assert.equal((await service.clientView(1,1)).contracts?.[0].nextChargeDate,"2033-01-02");
+    assert.equal((await service.run()).results.length,0);
+    await assert.rejects(service.managementState(m.id,"paused",1),/only end/);
+  });
+  async function seedFictional() {
+    await query("UPDATE users SET name='Mary Scott',client_ref='VWMS2024',password='unchanged-fixture-credential' WHERE id=1");
+    await query("UPDATE accounts SET account_type='Trust Account',balance=0,is_demo=true WHERE id=1");
+    await query("INSERT INTO accounts(user_id,account_type,balance,is_demo) VALUES(1,'Brokerage Account',0,true)");
+    const entries = [[null,1,"121539.00"],[1,3,"60769.50"],[1,null,"30384.75"],[3,null,"30384.75"],[1,null,"30384.75"],[3,null,"30384.75"]];
+    for(const [from,to,amount] of entries) await query("INSERT INTO transactions(from_account_id,to_account_id,amount,transaction_type,status,is_demo) VALUES($1,$2,$3,'transfer','completed',true)",[from,to,amount]);
+    const {rows:[e]} = await query(`INSERT INTO fee_enrollments(account_id,user_id,schedule_id,state,first_charge_date,next_period,accepted_at,accepted_by)
+      VALUES(1,1,1,'paused','2024-03-01',32,'2024-01-01T14:00:00Z',1) RETURNING id`);
+    for(let p=0;p<32;p++) await query(`INSERT INTO fee_assessments(enrollment_id,account_id,period,due_date,components,total,status)
+      VALUES($1,1,$2,$3,$4::jsonb,'363.64','unpaid')`,[e.id,p,periodDate("2024-03-01",p),JSON.stringify(DEFAULT_FEE_COMPONENTS)]);
+    await query(`INSERT INTO fee_audit(enrollment_id,actor,action,detail) VALUES($1,'test_fixture','fictional_fixture_created',
+      '{"fixture":"mary-scott-history","synthetic":true}')`,[e.id]);
+    return e;
+  }
+  it("applies both-account fictional history once, preserving credentials, originals and unrelated clients",async()=>{
+    const e = await seedFictional();
+    setDay("2026-10-09");
+    const preview = await previewMaryHistory(pool,clock);
+    assert.equal(preview.months,32); assert.equal(preview.monthlyThrough,"2026-10-01");
+    assert(preview.accounts.every(a=>a.proposedBalance==="-12398.48"));
+    const results = await Promise.all([applyMaryHistory(pool,clock),applyMaryHistory(pool,clock)]);
+    assert.equal(results.filter(r=>r.alreadyApplied).length,1);
+    const view = await service.clientSummary(1);
+    assert.equal(view.totalUnpaid,"0.00"); assert.equal(view.totalOverdraft,"24796.96");
+    assert.equal(view.accounts.length,2);
+    assert.equal((await query("SELECT password FROM users WHERE id=1")).rows[0].password,"unchanged-fixture-credential");
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=2")).rows[0].balance,"1000");
+    assert.equal((await query("SELECT enabled FROM fee_settings")).rows[0].enabled,false);
+    assert.equal((await query("SELECT COUNT(*)::int AS n FROM transactions WHERE transaction_type='fee'")).rows[0].n,68);
+    assert.equal((await query("SELECT COUNT(*)::int AS n FROM transactions WHERE transaction_type='transfer'")).rows[0].n,6);
+    assert.equal((await query("SELECT COUNT(*)::int AS n FROM fee_assessments WHERE enrollment_id=$1 AND status='paid'",[e.id])).rows[0].n,32);
+    assert.equal((await query("SELECT terms FROM fee_schedules WHERE id=1")).rows[0].terms,DEFAULT_FEE_TERMS);
+    await initializeFeeTables(pool);
+    assert.equal((await applyMaryHistory(pool,clock)).alreadyApplied,true);
+    await service.settings(true);
+    assert.equal((await service.run()).results.length,0);
+    setDay("2026-11-01");
+    const run = await service.run();
+    assert.equal(run.results.length,2);
+    assert(run.results.every(a=>a.total==="363.64" && a.status==="paid"));
+    assert.equal((await service.clientSummary(1)).totalOverdraft,"25524.24");
+    assert.equal((await service.run()).results.length,0);
+  });
+  it("rejects fixture mutation when internal fictional provenance or ledger has changed",async()=>{
+    await seedFictional(); setDay("2026-10-09");
+    await query("UPDATE accounts SET is_demo=false WHERE id=3");
+    await assert.rejects(applyMaryHistory(pool,clock),/internally marked/);
+    await query("UPDATE accounts SET is_demo=true WHERE id=3");
+    await query("INSERT INTO transactions(to_account_id,amount,transaction_type,status,is_demo) VALUES(1,1,'transfer','completed',true)");
+    await assert.rejects(applyMaryHistory(pool,clock),/ledger changed/);
+    assert.equal((await query("SELECT COUNT(*)::int AS n FROM transactions WHERE transaction_type='fee'")).rows[0].n,0);
   });
 });

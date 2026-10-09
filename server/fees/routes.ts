@@ -38,6 +38,13 @@ export async function registerFeeRoutes(app: Express, pool: Pool, requireAdmin: 
   app.get("/api/admin/fees/preview", feeAdmin, endpoint(() => service.preview()));
   app.post("/api/admin/fees/schedules", feeAdmin, endpoint(req => service.createSchedule(req.body)));
   app.post("/api/admin/fees/offers", feeAdmin, endpoint(req => service.offer(req.body)));
+  app.post("/api/admin/fees/management/offers", feeAdmin, endpoint(req => service.offerManagement(req.body)));
+  app.post("/api/admin/fees/management/:id/valuations", feeAdmin, endpoint(req =>
+    service.recordValuation(positiveId.parse(req.params.id),req.body)));
+  app.post("/api/admin/fees/management/:id/state", feeAdmin, endpoint(req => {
+    const { state } = z.object({state:z.enum(["active","paused","ended"])}).strict().parse(req.body);
+    return service.managementState(positiveId.parse(req.params.id),state);
+  }));
   app.post("/api/admin/fees/settings", feeAdmin, endpoint(req => {
     const data = z.object({ enabled: z.boolean(), confirmed: z.literal(true) }).strict().parse(req.body);
     return service.settings(data.enabled);
@@ -60,6 +67,10 @@ export async function registerFeeRoutes(app: Express, pool: Pool, requireAdmin: 
   app.get("/api/accounts/:id/fees", feeClient, endpoint(req => service.clientView(req.user.id, positiveId.parse(req.params.id))));
   app.post("/api/fees/enrollments/:id/accept", feeClient, endpoint(req => service.accept(req.user.id, positiveId.parse(req.params.id), req.body)));
   app.post("/api/fees/enrollments/:id/end", feeClient, endpoint(req => service.changeState(positiveId.parse(req.params.id), "ended", req.user.id)));
+  app.post("/api/fees/management/:id/accept", feeClient, endpoint(req =>
+    service.acceptManagement(req.user.id,positiveId.parse(req.params.id),req.body)));
+  app.post("/api/fees/management/:id/end", feeClient, endpoint(req =>
+    service.managementState(positiveId.parse(req.params.id),"ended",req.user.id)));
 
   // A dev instance can share the external database with production: never run its scheduler.
   // Production still requires explicit administrator activation of persisted settings.

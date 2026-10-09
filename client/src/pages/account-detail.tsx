@@ -15,10 +15,22 @@ import { ClientFees } from "@/components/fees/client-fees";
 import { formatCAD } from "@shared/fees";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { FeeLiability } from "@/components/fees/fee-liability";
+import { accountStatementCsv } from "@/lib/account-statement";
 
 type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' | '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
 
 const INVESTMENT_ACCOUNT_TYPES = ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan'];
+
+function exportStatement(account: { id: number; accountType: string }, transactions: any[] = []) {
+  const csv = accountStatementCsv(account.id,transactions);
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `veritas-account-${account.id}-statement.csv`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function AccountDetailPage() {
   const params = useParams();
@@ -89,13 +101,15 @@ export default function AccountDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Cash less unpaid service fees · CAD</p>
+              <p className="text-sm text-muted-foreground mb-2">Account ledger cash less unpaid assessments · CAD</p>
               <p className={cn("break-words font-mono text-[clamp(1.75rem,7vw,3rem)] font-bold tabular-nums", netBalance < 0 ? "text-red-700" : "text-primary")}>
                 {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : formatCAD(netBalance)}
               </p>
-              <p className="mt-2 text-sm">Cash ledger balance: {formatCAD(accountBalance)}</p>
+                <p className="mt-2 text-sm">Cash ledger balance: <span className={cn("font-mono font-semibold tabular-nums", accountBalance < 0 ? "text-red-700" : "")}>{formatCAD(accountBalance)}</span>{accountBalance < 0 && <span className="ml-2 text-xs text-red-700">posted fee overdraft / negative cash</span>}</p>
               <FeeLiability summary={unpaidFees !== undefined ? {
-                totalUnpaid: unpaidFees, accounts: feeSummary.data!.accounts.filter(item => item.accountId === accountId),
+                totalUnpaid: unpaidFees, totalOverdraft: feeSummary.data!.accounts.find(item => item.accountId === accountId)?.overdraft,
+                totalOwed: feeSummary.data!.accounts.find(item => item.accountId === accountId)?.amountOwed,
+                accounts: feeSummary.data!.accounts.filter(item => item.accountId === accountId),
               } : undefined} error={feeSummary.isError} retry={() => void feeSummary.refetch()} />
               <p className="mt-2 max-w-xl text-xs leading-relaxed text-muted-foreground">
                 This is the account ledger balance used to determine whether a fee assessment is payable. It is separate from the market value of investment holdings; holdings are not used or sold to pay service fees.
@@ -128,23 +142,23 @@ export default function AccountDetailPage() {
             <CardTitle>Transaction History</CardTitle>
             <CardDescription>Recent account activity</CardDescription>
           </div>
-          <Button variant="outline" size="sm" className="gap-2">
+           <Button variant="outline" size="sm" className="gap-2" onClick={() => exportStatement(account, transactions || [])}>
             <Download className="w-4 h-4" />
             Export
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="space-y-1">
+          <div className="max-h-[min(65vh,720px)] space-y-1 overflow-y-auto overscroll-contain pr-1" aria-label="Scrollable account transaction history">
             {transactions && transactions.length > 0 ? (
               transactions.map((transaction) => {
                 const isIncoming = transaction.toAccountId === accountId;
                 return (
                   <div 
                     key={transaction.id} 
-                    className="flex items-center justify-between p-4 rounded-lg hover:bg-muted/50 transition-colors border-b last:border-0 cursor-pointer group"
+                    className="flex flex-col gap-3 border-b p-3 transition-colors hover:bg-muted/50 last:border-0 cursor-pointer group sm:flex-row sm:items-center sm:justify-between sm:p-4"
                     onClick={() => setSelectedTxn(transaction)}
                   >
-                    <div className="flex items-center gap-4 flex-1">
+                      <div className="flex min-w-0 items-center gap-3 sm:gap-4 flex-1">
                       <div className={cn(
                         "p-2 rounded-full",
                         transaction.status === 'pending' ? 'bg-red-100 text-red-600' : (isIncoming ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600')
@@ -162,7 +176,7 @@ export default function AccountDetailPage() {
                         <p className="text-sm text-muted-foreground">{new Date(transaction.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <div className="text-right">
+                      <div className="flex items-center justify-between gap-3 text-right sm:block">
                       <p className={cn(
                         "font-bold text-lg",
                         transaction.status === 'pending' ? 'text-red-600' : (isIncoming ? 'text-green-600' : 'text-red-600')
@@ -231,7 +245,7 @@ export default function AccountDetailPage() {
           </Dialog>
         </CardContent>
       </Card>
-      <ClientFees accountId={accountId} />
+      <ClientFees accountId={accountId} cashBalance={account.balance} />
     </LayoutShell>
   );
 }
