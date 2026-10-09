@@ -5,6 +5,7 @@ import { BILLING_TIME_ZONE, DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS, OVERDRAFT
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { accountLabel } from "@shared/account-display";
 
 const inputClass = "vw-input min-h-10 w-full border-0 border-b border-white/25 bg-transparent px-0 text-sm text-white placeholder:text-white/30 focus-visible:ring-0 focus-visible:ring-offset-0";
 
@@ -184,7 +185,7 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
             <label className="label-caps mt-4 block text-slate-400" htmlFor="fee-offer-account">Existing account</label>
              <select id="fee-offer-account" value={accountId} onChange={e => { setAccountId(e.target.value); setServicesConfirmed(false); }} className="mt-1 w-full border-b border-slate-600 bg-slate-900 py-2 text-sm text-white">
               <option value="">Select an account</option>
-              {overview.accounts.map(account => <option key={account.id} value={account.id}>{account.userName} · {account.accountType} · {formatCAD(account.balance)}</option>)}
+              {overview.accounts.map(account => <option key={account.id} value={account.id}>{account.userName} · {accountLabel(account)} · Account #{account.id} · {formatCAD(account.balance)}</option>)}
             </select>
             <label className="label-caps mt-4 block text-slate-400" htmlFor="fee-first-date">Prospective first charge date · Toronto</label>
             <Input id="fee-first-date" type="date" min={minDate} value={firstChargeDate} onChange={e => setFirstChargeDate(e.target.value)} className={inputClass} />
@@ -208,7 +209,7 @@ export function AdminFees({ adminKey }: { adminKey: string }) {
           <div>
             <h3 className="font-semibold text-white">Create management offer</h3>
             <label className="label-caps mt-4 block text-slate-400" htmlFor="management-account">Client account</label>
-            <select id="management-account" value={managementAccount} onChange={e => setManagementAccount(e.target.value)} className="mt-1 w-full border-b border-slate-600 bg-slate-900 py-2 text-sm text-white"><option value="">Select an account</option>{overview.accounts.map(account => <option key={account.id} value={account.id}>{account.userName} · {account.accountType} · {formatCAD(account.balance)}</option>)}</select>
+            <select id="management-account" value={managementAccount} onChange={e => setManagementAccount(e.target.value)} className="mt-1 w-full border-b border-slate-600 bg-slate-900 py-2 text-sm text-white"><option value="">Select an account</option>{overview.accounts.map(account => <option key={account.id} value={account.id}>{account.userName} · {accountLabel(account)} · Account #{account.id} · {formatCAD(account.balance)}</option>)}</select>
             <label className="label-caps mt-4 block text-slate-400" htmlFor="management-opening-date">Prospective contract opening date</label><Input id="management-opening-date" type="date" min={minDate} value={openingDate} onChange={e => setOpeningDate(e.target.value)} className={inputClass} />
             <div className="mt-4 grid grid-cols-2 gap-4"><div><label className="label-caps text-slate-400" htmlFor="management-minimum">Annual minimum · CAD</label><Input id="management-minimum" inputMode="decimal" value={annualMinimum} onChange={e => setAnnualMinimum(e.target.value)} className={inputClass} /></div><div><label className="label-caps text-slate-400" htmlFor="management-rate">Annual AUM rate · %</label><Input id="management-rate" inputMode="decimal" value={annualRate} onChange={e => setAnnualRate(e.target.value)} className={inputClass} /></div></div>
             <div className="mt-4 border-l-2 border-amber-500/50 bg-slate-900/40 p-3 text-xs leading-relaxed text-slate-300"><p className="font-semibold text-amber-200">Next charge: {validateBillingDate(openingDate) ? dateLabel(annualDate(openingDate, 0)) : "Not scheduled"}</p><p className="mt-1">Annual arrears calculation: greater of documented period-end holdings × rate or minimum; rounded to cents. Valuation excludes cash and fee debt. Empty holdings can be snapshotted on the anniversary itself; other missing valuations block posting. Fee overdraft applies only after explicit contract acceptance.</p></div>

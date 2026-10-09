@@ -73,7 +73,7 @@ export interface FeeSettings { enabled: boolean; timeZone: string }
 export interface FeeOverview {
   settings: FeeSettings; schedules: FeeSchedule[]; enrollments: FeeEnrollment[];
   assessments: FeeAssessment[]; audit: FeeAudit[];
-  accounts: { id: number; userId: number; accountType: string; balance: string; userName: string }[];
+  accounts: { id: number; userId: number; accountType: string; displayName?: string | null; balance: string; userName: string }[];
   contracts?: ManagementContract[];
   valuations?: ManagementValuation[];
 }

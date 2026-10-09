@@ -10,6 +10,7 @@ import { FeeLiability, AccountFeeBalance } from "../../client/src/components/fee
 import DashboardPage from "../../client/src/pages/dashboard";
 import AccountsPage from "../../client/src/pages/accounts-page";
 import { accountStatementCsv } from "../../client/src/lib/account-statement";
+import { transactionDate } from "../../shared/account-display";
 import { DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS, MANAGEMENT_TERMS, type ClientFees, type FeeOverview, type FeePreview } from "../../shared/fees";
 
 const settings = { enabled: false, timeZone: "America/Toronto" };
@@ -31,6 +32,45 @@ function render(Component: React.ElementType, props: unknown, data: { key: unkno
   return html;
 }
 describe("Fee interfaces rendered with synthetic cached data", () => {
+  it("shows the dated inheritance in portfolio activity, current balances and net total without another deposit headline",()=>{
+    const deposit = {id:88,fromAccountId:null,toAccountId:26,amount:"1622886.00",
+      description:"Inheritance — family farm sale proceeds",transactionType:"transfer",status:"completed",createdAt:"2026-10-08T16:00:00Z"};
+    const originalAccounts = [
+      {id:24,userId:7,accountType:"Trust Account",balance:"-12398.48"},
+      {id:25,userId:7,accountType:"Brokerage Account",balance:"-12398.48"},
+    ];
+    for (const [currentBalance,unpaid,expected] of [
+      ["1622886.00","0.00","CAD $1,598,089.04"],
+      ["1622522.36","0.00","CAD $1,597,725.40"],
+      ["1622522.36","100.00","CAD $1,597,625.40"],
+    ]) {
+      const data = [
+        {key:["/api/user"],value:{id:7,name:"Mary Scott",clientRef:"VWMS2024"}},
+        {key:["/api/accounts"],value:[...originalAccounts,{id:26,userId:7,accountType:"Trust Account",displayName:"Inheritance Trust Account",balance:currentBalance}]},
+        {key:["/api/investments"],value:[]},
+        {key:["/api/institutional-transfers"],value:[]},
+        {key:["/api/accounts",25,"transactions"],value:[]},
+        {key:["/api/transactions"],value:[deposit]},
+        {key:["/api/fees","summary",7],value:{totalUnpaid:unpaid,totalOverdraft:"24796.96",totalOwed:String(24796.96+Number(unpaid)),
+          accounts:originalAccounts.map(a=>({accountId:a.id,overdraft:"12398.48",unpaidTotal:a.id===24?unpaid:"0.00",unpaidCount:Number(unpaid)>0?1:0}))}},
+      ];
+      for (const Component of [DashboardPage,AccountsPage]) {
+        const html=render(Component,{},data);
+        assert(html.includes(expected),`${Component.name}: ${expected}`);
+        assert(html.includes("Inheritance Trust Account"));
+        assert(html.includes("CAD -$12,398.48"));
+        assert(!html.includes("Original inheritance deposit"));
+        assert(!html.toLowerCase().includes("demo profile"));
+      }
+      const dashboard=render(DashboardPage,{},data);
+      assert(dashboard.includes("Inheritance — family farm sale proceeds"));
+      assert(dashboard.includes(transactionDate(deposit.createdAt)));
+    }
+    const statement=accountStatementCsv(26,[deposit]);
+    for (const text of ["1622886.00","2026-10-08T16:00:00.000Z","America/Toronto","October 8, 2026",deposit.description]) assert(statement.includes(text),text);
+    // A UTC date just after midnight still belongs to the previous Toronto date.
+    assert.equal(transactionDate("2026-10-09T00:15:00Z"),"October 8, 2026");
+  });
   it("exports account-owned monthly/annual debits, refunds and precise proceeds in CAD statements",()=>{
     const rows = [
       {id:1,toAccountId:null,amount:"363.64",description:"CAD monthly service fee",transactionType:"fee",status:"completed",createdAt:"2026-10-01T14:00:00Z"},

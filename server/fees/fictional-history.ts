@@ -9,17 +9,30 @@ const FIRST_FEE = "2024-03-01";
 const OPENING = "2024-01-01";
 const MARKER = "fictional_overdraft_history_applied";
 
-async function fixture(c: PoolClient) {
+export async function maryOriginalAccounts(c: PoolClient) {
   const { rows: [user] } = await c.query("SELECT id,name FROM users WHERE client_ref='VWMS2024'");
   if (!user || user.name !== "Mary Scott") throw new Error("The existing fictional Mary Scott profile was not found");
-  const { rows: provenance } = await c.query(`SELECT id FROM fee_audit WHERE actor='test_fixture'
+  const { rows: provenance } = await c.query(`SELECT e.account_id FROM fee_audit f JOIN fee_enrollments e ON e.id=f.enrollment_id WHERE f.actor='test_fixture'
     AND action='fictional_fixture_created' AND detail->>'fixture'='mary-scott-history'
     AND detail->>'synthetic'='true' AND enrollment_id IN (SELECT id FROM fee_enrollments WHERE user_id=$1)`,[user.id]);
   if (provenance.length !== 1) throw new Error("Fictional provenance is missing or ambiguous; refusing to modify records");
-  const { rows: accounts } = await c.query("SELECT * FROM accounts WHERE user_id=$1 ORDER BY id FOR UPDATE",[user.id]);
+  const { rows: allAccounts } = await c.query("SELECT * FROM accounts WHERE user_id=$1 ORDER BY id FOR UPDATE",[user.id]);
+  const trustId = provenance[0].account_id;
+  const { rows: allocations } = await c.query(`SELECT DISTINCT to_account_id FROM transactions
+    WHERE from_account_id=$1 AND amount=60769.50 AND transaction_type='transfer' AND status='completed' AND is_demo=true`, [trustId]);
+  if (allocations.length !== 1) throw new Error("Original fixture allocation provenance is missing or ambiguous");
+  const accounts = allAccounts.filter(a => a.id === trustId || a.id === allocations[0].to_account_id);
   if (accounts.length !== 2 || accounts.some(a => !a.is_demo) ||
     !accounts.some(a => a.account_type === "Trust Account") || !accounts.some(a => a.account_type === "Brokerage Account")) {
     throw new Error("Expected exactly the two internally marked fictional accounts");
+  }
+  for (const extra of allAccounts.filter(a => !accounts.some(original => original.id === a.id))) {
+    const { rows: markers } = await c.query(`SELECT id FROM fee_audit WHERE actor='test_fixture'
+      AND action='fictional_inheritance_account_created' AND detail->>'synthetic'='true'
+      AND detail->>'userId'=$1 AND detail->>'accountId'=$2`, [String(user.id),String(extra.id)]);
+    if (markers.length !== 1 || !extra.is_demo || extra.account_type !== "Trust Account") {
+      throw new Error("Additional account lacks recognized fictional provenance; refusing history changes");
+    }
   }
   return { user, accounts };
 }
@@ -28,7 +41,7 @@ export async function previewMaryHistory(pool: Pool, now = new Date()) {
   const c = await pool.connect();
   try {
     await c.query("BEGIN");
-    const { user, accounts } = await fixture(c);
+    const { user, accounts } = await maryOriginalAccounts(c);
     const { rows: [existing] } = await c.query("SELECT detail FROM fee_audit WHERE action=$1 AND detail->>'userId'=$2",[MARKER,String(user.id)]);
     const today = billingToday(now);
     let months = 0, years = 0;
@@ -52,7 +65,7 @@ export async function applyMaryHistory(pool: Pool, now = new Date()) {
   try {
     await c.query("BEGIN");
     await c.query("SELECT pg_advisory_xact_lock(7429,1)");
-    const { user, accounts } = await fixture(c);
+    const { user, accounts } = await maryOriginalAccounts(c);
     const { rows: [existing] } = await c.query("SELECT detail FROM fee_audit WHERE action=$1 AND detail->>'userId'=$2",[MARKER,String(user.id)]);
     if (existing) {
       await c.query("COMMIT");
@@ -66,15 +79,15 @@ export async function applyMaryHistory(pool: Pool, now = new Date()) {
       - COALESCE(SUM(CASE WHEN t.from_account_id=a.id THEN t.amount ELSE 0 END),0) AS reconstructed,
       BOOL_OR(t.transaction_type='buy' OR t.status<>'completed' OR NOT t.is_demo) AS unexpected
       FROM accounts a LEFT JOIN transactions t ON t.from_account_id=a.id OR t.to_account_id=a.id
-      WHERE a.user_id=$1 GROUP BY a.id`,[user.id]);
+       WHERE a.id=ANY($1::integer[]) GROUP BY a.id`,[accounts.map(a => a.id)]);
     for (const a of ledger) {
       const expectedEntries = accounts.find(account => account.id === a.id)?.account_type === "Trust Account" ? 4 : 3;
       if (moneyToCents(a.reconstructed) !== 0n || a.entries !== expectedEntries || a.unexpected) throw new Error("Original fixture ledger changed; refusing to overwrite or infer history");
     }
-    const { rows: contracts } = await c.query("SELECT id FROM management_contracts WHERE user_id=$1",[user.id]);
+    const { rows: contracts } = await c.query("SELECT id FROM management_contracts WHERE account_id=ANY($1::integer[])",[accounts.map(a => a.id)]);
     if (contracts.length) throw new Error("A management contract already exists; review before adding fictional history");
     const { rows: plans } = await c.query(`SELECT e.*,s.total,s.components,s.funding FROM fee_enrollments e
-      JOIN fee_schedules s ON s.id=e.schedule_id WHERE e.user_id=$1 FOR UPDATE OF e`,[user.id]);
+      JOIN fee_schedules s ON s.id=e.schedule_id WHERE e.account_id=ANY($1::integer[]) FOR UPDATE OF e`,[accounts.map(a => a.id)]);
     if (plans.length !== 1 || plans[0].state !== "paused" || plans[0].funding !== "cash_only" ||
       plans[0].first_charge_date !== FIRST_FEE || plans[0].total !== "363.64" ||
       accounts.find(a => a.id === plans[0].account_id)?.account_type !== "Trust Account") {

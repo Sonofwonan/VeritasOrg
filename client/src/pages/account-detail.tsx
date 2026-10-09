@@ -16,6 +16,7 @@ import { formatCAD } from "@shared/fees";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { FeeLiability } from "@/components/fees/fee-liability";
 import { accountStatementCsv } from "@/lib/account-statement";
+import { accountLabel, transactionDate } from "@shared/account-display";
 
 type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' | '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
 
@@ -87,7 +88,7 @@ export default function AccountDetailPage() {
         
         <div className="space-y-2">
           <h2 className="text-3xl font-bold font-display">
-            {account.accountType}
+            {accountLabel(account)}
           </h2>
           <p className="text-muted-foreground">Account ID: {account.id}</p>
         </div>
@@ -125,7 +126,7 @@ export default function AccountDetailPage() {
           <CardContent className="space-y-4 text-sm">
             <div>
               <p className="text-muted-foreground">Type</p>
-              <p className="font-semibold">{account.accountType}</p>
+              <p className="font-semibold">{accountLabel(account)}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Status</p>
@@ -173,7 +174,7 @@ export default function AccountDetailPage() {
                       </div>
                       <div className="flex-1">
                         <p className="font-medium group-hover:text-primary transition-colors">{transaction.description}</p>
-                        <p className="text-sm text-muted-foreground">{new Date(transaction.createdAt).toLocaleDateString()}</p>
+                        <p className="text-sm text-muted-foreground">{transactionDate(transaction.createdAt)}</p>
                       </div>
                     </div>
                       <div className="flex items-center justify-between gap-3 text-right sm:block">
@@ -227,7 +228,7 @@ export default function AccountDetailPage() {
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                   <span className="text-zinc-400 text-sm">Date</span>
-                  <span className="font-medium">{selectedTxn?.createdAt && format(new Date(selectedTxn.createdAt), 'MMMM dd, yyyy HH:mm')}</span>
+                  <span className="font-medium">{selectedTxn?.createdAt && transactionDate(selectedTxn.createdAt,true)}</span>
                 </div>
                 {selectedTxn?.status === 'pending' && (
                   <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">

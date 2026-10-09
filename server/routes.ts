@@ -252,6 +252,19 @@ export async function registerRoutes(
   });
 
   // Account Routes
+  app.get("/api/transactions", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as User).id;
+      const ledger = await db.select().from(transactions)
+        .where(sql`EXISTS (SELECT 1 FROM accounts a WHERE a.user_id=${userId}
+          AND (a.id=${transactions.fromAccountId} OR a.id=${transactions.toAccountId}))`)
+        .orderBy(desc(transactions.createdAt),desc(transactions.id));
+      res.json(ledger);
+    } catch {
+      res.status(500).json({ message:"Failed to fetch portfolio transactions" });
+    }
+  });
+
   app.get("/api/accounts/:id/transactions", requireAuth, async (req, res) => {
     try {
       const accountId = parseInt(req.params.id);

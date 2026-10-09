@@ -1,4 +1,5 @@
 import { useClientFeeSummary } from "@/hooks/use-fees";
+import { accountLabel } from "@shared/account-display";
 import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability";
 import { useState } from "react";
 import {
@@ -339,7 +340,7 @@ export default function AccountsPage() {
                             <Icon className={cn('w-4 h-4', color)} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground truncate">{account.accountType}</p>
+                            <p className="text-sm font-semibold text-foreground truncate">{accountLabel(account)}</p>
                             <div className="flex items-center gap-3 mt-0.5">
                               <span className="font-mono text-[10px] text-muted-foreground">{accountNumber(account.id)}</span>
                               {isPending && (

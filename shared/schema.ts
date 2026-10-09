@@ -39,6 +39,7 @@ export const accounts = pgTable("accounts", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   accountType: text("account_type").notNull(),
+  displayName: text("display_name"),
   balance: numeric("balance").notNull().default("0"),
   isDemo: boolean("is_demo").default(true),
   createdAt: timestamp("created_at").defaultNow(),

@@ -1,4 +1,4 @@
-import { useAccounts, useInvestments, useAccountTransactions } from "@/hooks/use-finances";
+import { useAccounts, useInvestments, useAccountTransactions, usePortfolioTransactions } from "@/hooks/use-finances";
 import { useLocation } from "wouter";
 import { LayoutShell } from "@/components/layout-shell";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,6 +18,7 @@ import {
 import { formatCAD } from "@shared/fees";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability";
+import { accountLabel, transactionDate } from "@shared/account-display";
 
 // ── Market index data (static realistic) ─────────────────────────────────────
 const MARKET_INDICES = [
@@ -83,7 +84,8 @@ export default function DashboardPage() {
   const isTransmitting = activeTransfer?.status === "transfer_out";
 
   const primaryAccount = accounts?.find(a => a.accountType === 'Brokerage Account') || accounts?.[0];
-  const { data: transactions, isLoading: txnLoading } = useAccountTransactions(primaryAccount?.id || 0);
+   const { data: primaryTransactions } = useAccountTransactions(primaryAccount?.id || 0);
+   const { data: transactions, isLoading: txnLoading, isError: txnError } = usePortfolioTransactions();
 
   const investValue    = investments?.reduce((s, i) => s + Number(i.shares) * Number(i.currentPrice || i.purchasePrice), 0) || 0;
   const accountCash    = accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0;
@@ -95,7 +97,7 @@ export default function DashboardPage() {
   const dayChange      = (accountCash + investValue) * 0.0038;
   const ytdGain        = (accountCash + investValue) * 0.084;
 
-  const pendingBalance = transactions?.filter(t => t.status === 'pending')
+  const pendingBalance = primaryTransactions?.filter(t => t.status === 'pending')
     .reduce((s, t) => t.toAccountId === primaryAccount?.id ? s + Number(t.amount) : s - Number(t.amount), 0) || 0;
 
   const fmt = (n: number) => formatCAD(n);
@@ -134,7 +136,7 @@ export default function DashboardPage() {
                 { label: 'Amount', val: fmt(Number(selectedTxn?.amount)), accent: true },
                 { label: 'Status', val: selectedTxn?.status, badge: true },
                 { label: 'Type', val: selectedTxn?.transactionType },
-                { label: 'Date', val: selectedTxn?.createdAt && format(new Date(selectedTxn.createdAt), 'MMMM d, yyyy · HH:mm') },
+                { label: 'Date', val: selectedTxn?.createdAt && transactionDate(selectedTxn.createdAt,true) },
               ].map(row => row.val !== undefined && (
                 <div key={row.label} className="flex items-center justify-between py-3 text-sm">
                   <span className="text-white/40 label-caps">{row.label}</span>
@@ -439,7 +441,7 @@ export default function DashboardPage() {
               <div className="px-5 py-3 border-b border-border/60 flex items-center justify-between bg-muted/20">
                 <div>
                   <p className="font-semibold text-sm">Recent Activity</p>
-                  <p className="text-[10px] text-muted-foreground label-caps mt-0.5">Primary account ledger</p>
+                  <p className="text-[10px] text-muted-foreground label-caps mt-0.5">All account activity</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1 text-[9px] text-emerald-600 font-bold uppercase tracking-widest">
@@ -450,8 +452,13 @@ export default function DashboardPage() {
               <div className="divide-y divide-border/40 max-h-[320px] overflow-y-auto custom-scrollbar">
                 {txnLoading ? (
                   <div className="p-4 space-y-2">{[1,2,3,4].map(i => <Skeleton key={i} className="h-12" />)}</div>
+                ) : txnError ? (
+                  <p role="alert" className="p-4 text-sm text-red-700">Transaction history could not be loaded.</p>
                 ) : transactions && transactions.length > 0 ? transactions.slice(0, 12).map((txn: any) => {
-                  const isIn = txn.toAccountId === primaryAccount?.id;
+                  const incomingAccount = accounts?.find(a => a.id === txn.toAccountId);
+                  const outgoingAccount = accounts?.find(a => a.id === txn.fromAccountId);
+                  const internal = Boolean(incomingAccount && outgoingAccount);
+                  const isIn = Boolean(incomingAccount && !outgoingAccount);
                   const isPending = txn.status === 'pending';
                   return (
                     <div key={txn.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/30 transition-colors cursor-pointer group"
@@ -469,7 +476,7 @@ export default function DashboardPage() {
                         <div className="min-w-0">
                           <p className="text-sm font-semibold truncate">{txn.description}</p>
                           <p className="text-[10px] text-muted-foreground font-mono">
-                            {format(new Date(txn.createdAt), 'MMM d, yyyy')} ·{' '}
+                            {transactionDate(txn.createdAt)} · {incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : `Account #${txn.toAccountId || txn.fromAccountId}`} ·{' '}
                             <span className={cn('font-bold capitalize',
                               isPending ? 'text-amber-600' : 'text-muted-foreground')}>
                               {txn.status}
@@ -479,8 +486,8 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <p className={cn('font-mono text-sm font-bold',
-                          isPending ? 'text-amber-600' : isIn ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500')}>
-                          {isIn ? '+' : '-'}{fmt(Number(txn.amount))}
+                          isPending ? 'text-amber-600' : internal ? 'text-muted-foreground' : isIn ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500')}>
+                          {internal ? '↔ ' : isIn ? '+' : '-'}{fmt(Number(txn.amount))}
                         </p>
                         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                       </div>
@@ -559,7 +566,7 @@ export default function DashboardPage() {
                           :                       <Landmark className="w-3.5 h-3.5 text-sky-600" />}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold truncate">{acc.accountType}</p>
+                          <p className="text-xs font-semibold truncate">{accountLabel(acc)}</p>
                           <p className="text-[10px] text-muted-foreground font-mono">
                             ••••{((acc.id * 1337) % 9000 + 1000).toString().slice(-4)}
                           </p>

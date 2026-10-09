@@ -13,7 +13,7 @@ The user explicitly approved monthly fictional overdraft history and subsequentl
 
 **Why:** Mary is fictional, while unrelated real clients may have accepted immutable cash-only terms.
 
-**How to apply:** Keep original credentials and history, append internal provenance, and never extend this fictional backdating or overdraft authorization to unrelated real clients or additional historical annual dates.
+**How to apply:** Keep original credentials and history, append internal provenance, and never extend this fictional backdating or overdraft authorization to unrelated real clients, subsequently opened accounts, or additional historical annual dates. A newly funded Trust Account receives the approved prospective monthly service pricing; its account type alone does not authorize a discretionary-management contract.
 
 Fees must appear when scrolling statement or transaction history, not only in a separate fee panel.
 

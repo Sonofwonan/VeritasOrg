@@ -14,6 +14,7 @@ import {
   type FeeAssessment,
 } from "../../shared/fees";
 import { applyMaryHistory, previewMaryHistory } from "./fictional-history";
+import { inheritanceAccount, INHERITANCE } from "./inheritance";
 
 describe("Exact CAD amounts and calendar periods", () => {
   it("adds the agreed components exactly and rejects invalid precision", () => {
@@ -85,7 +86,7 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     await query(`
       CREATE TYPE transaction_type AS ENUM ('transfer','buy','sell','payment','withdrawal');
       CREATE TABLE users(id SERIAL PRIMARY KEY,name TEXT NOT NULL,account_frozen BOOLEAN DEFAULT FALSE,client_ref TEXT,password TEXT);
-      CREATE TABLE accounts(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL,account_type TEXT NOT NULL,balance NUMERIC NOT NULL,is_demo BOOLEAN DEFAULT FALSE);
+      CREATE TABLE accounts(id SERIAL PRIMARY KEY,user_id INTEGER NOT NULL,account_type TEXT NOT NULL,balance NUMERIC NOT NULL,is_demo BOOLEAN DEFAULT FALSE,created_at TIMESTAMP DEFAULT NOW());
       CREATE TABLE transactions(id SERIAL PRIMARY KEY,from_account_id INTEGER,to_account_id INTEGER,payee_id INTEGER,
         amount NUMERIC NOT NULL,description TEXT,transaction_type transaction_type NOT NULL,status TEXT NOT NULL,
         is_demo BOOLEAN DEFAULT FALSE,created_at TIMESTAMP DEFAULT NOW());
@@ -494,6 +495,79 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     assert(run.results.every(a=>a.total==="363.64" && a.status==="paid"));
     assert.equal((await service.clientSummary(1)).totalOverdraft,"25524.24");
     assert.equal((await service.run()).results.length,0);
+  });
+  it("posts the dated inheritance once under concurrent requests without changing existing accounts or global billing",async()=>{
+    await seedFictional(); setDay("2026-10-09");
+    await applyMaryHistory(pool,clock);
+    const before = (await query("SELECT id,balance FROM accounts ORDER BY id")).rows;
+    const preview = await inheritanceAccount(pool,false,clock);
+    assert.equal(preview.alreadyApplied,false);
+    assert.deepEqual((await query("SELECT id,balance FROM accounts ORDER BY id")).rows,before);
+    const results = await Promise.all([inheritanceAccount(pool,true,clock),inheritanceAccount(pool,true,clock)]);
+    assert.equal(results.filter(r=>r.alreadyApplied).length,1);
+    const {rows:[a]} = await query("SELECT * FROM accounts WHERE display_name='Inheritance Trust Account'");
+    assert.equal(a.balance,INHERITANCE.amount); assert.equal(a.user_id,1); assert.equal(a.is_demo,true);
+    const {rows:txns} = await query("SELECT * FROM transactions WHERE to_account_id=$1 OR from_account_id=$1",[a.id]);
+    assert.equal(txns.length,1); assert.equal(txns[0].amount,INHERITANCE.amount);
+    assert.equal(billingToday(txns[0].created_at),"2026-10-08");
+    assert.equal(txns[0].description,INHERITANCE.description);
+    assert.deepEqual((await query("SELECT id,balance FROM accounts WHERE id<>$1 ORDER BY id",[a.id])).rows,before);
+    assert.equal((await query("SELECT SUM(balance)::text AS net FROM accounts WHERE user_id=1")).rows[0].net,"1598089.04");
+    assert.equal((await service.clientSummary(1)).totalOverdraft,"24796.96");
+    assert.equal((await service.clientSummary(1)).totalUnpaid,"0.00");
+    assert.equal((await query("SELECT enabled FROM fee_settings")).rows[0].enabled,false);
+    assert.equal((await query("SELECT password FROM users WHERE id=1")).rows[0].password,"unchanged-fixture-credential");
+    const fees = await service.clientView(1,a.id);
+    assert.equal(fees.enrollments[0].nextChargeDate,"2026-11-08");
+    assert.equal(fees.enrollments[0].schedule.funding,"fee_overdraft");
+    assert.equal(fees.assessments.length,0); assert.equal(fees.contracts!.length,0);
+    assert.equal((await applyMaryHistory(pool,clock)).alreadyApplied,true);
+    assert.equal((await previewMaryHistory(pool,clock)).accounts.length,2);
+  });
+  it("keeps original historical fee guards compatible with a newly funded account and bills it prospectively",async()=>{
+    await seedFictional(); setDay("2026-10-09");
+    const posted = await inheritanceAccount(pool,true,clock);
+    const id = posted.account!.accountId;
+    await applyMaryHistory(pool,clock);
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=$1",[id])).rows[0].balance,INHERITANCE.amount);
+    assert.equal((await query("SELECT COUNT(*)::int AS n FROM fee_assessments WHERE account_id=$1",[id])).rows[0].n,0);
+    await service.settings(true);
+    assert.equal((await service.run()).results.length,0);
+    setDay("2026-11-08");
+    const run = await service.run();
+    const inheritanceFees = run.results.filter(a=>a.accountId===id);
+    assert.equal(inheritanceFees.length,1); assert.equal(inheritanceFees[0].total,"363.64");
+    assert.equal(inheritanceFees[0].dueDate,"2026-11-08");
+    assert.equal((await query("SELECT balance FROM accounts WHERE id=$1",[id])).rows[0].balance,"1622522.36");
+    const repeat = await inheritanceAccount(pool,true,clock);
+    assert.equal(repeat.alreadyApplied,true);
+    assert.equal(repeat.account!.currentBalance,"1622522.36");
+    assert.equal((await service.run()).results.length,0);
+    assert.equal((await service.clientView(1,id)).enrollments[0].nextChargeDate,"2026-12-08");
+  });
+  it("rolls back the account, deposit and enrollment together if audit posting fails",async()=>{
+    await seedFictional(); setDay("2026-10-09");
+    const before = (await query("SELECT COUNT(*)::int AS n FROM accounts")).rows[0].n;
+    await query(`CREATE FUNCTION reject_inheritance() RETURNS trigger AS $$ BEGIN
+      IF NEW.action='fictional_inheritance_account_created' THEN RAISE EXCEPTION 'Injected audit failure'; END IF;
+      RETURN NEW; END; $$ LANGUAGE plpgsql;
+      CREATE TRIGGER reject_inheritance BEFORE INSERT ON fee_audit FOR EACH ROW EXECUTE FUNCTION reject_inheritance()`);
+    try {
+      await assert.rejects(inheritanceAccount(pool,true,clock),/Injected audit failure/);
+      assert.equal((await query("SELECT COUNT(*)::int AS n FROM accounts")).rows[0].n,before);
+      assert.equal((await query("SELECT COUNT(*)::int AS n FROM transactions WHERE amount=1622886")).rows[0].n,0);
+      assert.equal((await query("SELECT COUNT(*)::int AS n FROM fee_enrollments")).rows[0].n,1);
+    } finally { await query("DROP TRIGGER reject_inheritance ON fee_audit; DROP FUNCTION reject_inheritance()"); }
+  });
+  it("refuses altered inheritance provenance, unknown extra accounts, and invalid prospective dates",async()=>{
+    await seedFictional(); setDay("2026-10-09");
+    await assert.rejects(inheritanceAccount(pool,true,new Date("2026-11-08T17:00:00Z")),/prospective fee date/);
+    await inheritanceAccount(pool,true,clock);
+    await query("UPDATE transactions SET amount=1 WHERE amount=1622886");
+    await assert.rejects(inheritanceAccount(pool,true,clock),/changed or are missing/);
+    assert.equal((await query("SELECT COUNT(*)::int AS n FROM accounts WHERE display_name='Inheritance Trust Account'")).rows[0].n,1);
+    await query("INSERT INTO accounts(user_id,account_type,balance,is_demo) VALUES(1,'Trust Account',0,true)");
+    await assert.rejects(applyMaryHistory(pool,clock),/recognized fictional provenance/);
   });
   it("rejects fixture mutation when internal fictional provenance or ledger has changed",async()=>{
     await seedFictional(); setDay("2026-10-09");

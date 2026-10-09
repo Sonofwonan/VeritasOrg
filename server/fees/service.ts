@@ -64,7 +64,7 @@ export class FeeService {
     if (!s?.enabled) throw new FeeError("Fee processing is disabled");
   }
   private async enrollments(userId?: number, accountId?: number): Promise<FeeEnrollment[]> {
-    const { rows } = await this.pool.query(`SELECT e.*, row_to_json(s.*)::jsonb || jsonb_build_object('total',s.total::text) AS schedule, a.account_type AS account_name,
+    const { rows } = await this.pool.query(`SELECT e.*, row_to_json(s.*)::jsonb || jsonb_build_object('total',s.total::text) AS schedule, COALESCE(a.display_name,a.account_type) AS account_name,
       u.name AS user_name FROM fee_enrollments e JOIN fee_schedules s ON s.id=e.schedule_id
       JOIN accounts a ON a.id=e.account_id JOIN users u ON u.id=e.user_id
       WHERE ($1::integer IS NULL OR e.user_id=$1) AND ($2::integer IS NULL OR e.account_id=$2)
@@ -75,7 +75,7 @@ export class FeeService {
     }) as FeeEnrollment);
   }
   private async contracts(userId?: number, accountId?: number): Promise<ManagementContract[]> {
-    const { rows } = await this.pool.query(`SELECT m.*,a.account_type AS account_name,u.name AS user_name
+    const { rows } = await this.pool.query(`SELECT m.*,COALESCE(a.display_name,a.account_type) AS account_name,u.name AS user_name
       FROM management_contracts m JOIN accounts a ON a.id=m.account_id JOIN users u ON u.id=m.user_id
       WHERE ($1::integer IS NULL OR m.user_id=$1) AND ($2::integer IS NULL OR m.account_id=$2) ORDER BY m.id DESC`,
     [userId ?? null, accountId ?? null]);

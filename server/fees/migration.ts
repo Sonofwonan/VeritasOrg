@@ -9,6 +9,7 @@ export async function initializeFeeTables(pool: Pool) {
   try {
     await client.query("BEGIN");
     await client.query("SELECT pg_advisory_xact_lock(7429, 1)");
+    await client.query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS display_name TEXT");
     await client.query(`
       CREATE TABLE IF NOT EXISTS fee_schedules (
         id SERIAL PRIMARY KEY, name TEXT NOT NULL, version INTEGER NOT NULL UNIQUE,

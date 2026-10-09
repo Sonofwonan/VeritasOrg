@@ -82,6 +82,14 @@ export function useSellInvestment() {
 }
 
 // TRANSACTIONS
+export function usePortfolioTransactions() {
+  return useQuery<any[]>({
+    queryKey: ["/api/transactions"],
+    queryFn: async () => (await apiRequest("GET", "/api/transactions")).json(),
+    refetchInterval: 30000,
+  });
+}
+
 export function useAccountTransactions(accountId: number) {
   return useQuery<any[]>({
     queryKey: ['/api/accounts', accountId, 'transactions'],
@@ -90,6 +98,7 @@ export function useAccountTransactions(accountId: number) {
       return res.json();
     },
     enabled: !!accountId,
+    refetchInterval: 30000,
   });
 }
 
