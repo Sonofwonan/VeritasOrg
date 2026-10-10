@@ -40,7 +40,7 @@ export default function CompanyPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-primary selection:text-primary-foreground font-sans overflow-x-hidden">
+    <div className="wealth-company min-h-screen bg-[#050505] text-white selection:bg-primary selection:text-primary-foreground font-sans overflow-x-hidden">
       {/* Modern Navigation */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? "bg-black/80 backdrop-blur-xl py-4 border-b border-white/10" : "bg-transparent py-6"}`}>
         <div className="container mx-auto px-6 flex items-center justify-between">
@@ -130,7 +130,7 @@ export default function CompanyPage() {
                 </span>
                 Global Strategic Holdings
               </div>
-              <h1 className="text-6xl md:text-9xl font-black font-display tracking-tight mb-8 leading-[0.9] bg-clip-text text-transparent bg-gradient-to-b from-white to-white/50">
+              <h1 className="text-6xl md:text-9xl font-black font-display tracking-tight mb-8 leading-[0.9] bg-clip-text text-transparent bg-gradient-to-b from-white to-white/90">
                 Architecting <br />Global <span className="text-primary italic">Wealth.</span>
               </h1>
               <p className="text-xl md:text-2xl text-white/50 mb-12 leading-relaxed max-w-2xl font-light">

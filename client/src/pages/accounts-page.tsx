@@ -38,9 +38,9 @@ function categoryOf(type: string): keyof typeof CATEGORY_META {
 }
 
 const CATEGORY_META = {
-  cash:       { label: 'Cash & Deposits',        Icon: Landmark,  color: 'text-sky-400' },
-  investment: { label: 'Investment & Retirement', Icon: TrendingUp, color: 'text-emerald-400' },
-  business:   { label: 'Business & Trust',        Icon: Briefcase, color: 'text-amber-400' },
+  cash:       { label: 'Cash & Deposits',        Icon: Landmark,  color: 'text-sky-800 dark:text-sky-300' },
+  investment: { label: 'Investment & Retirement', Icon: TrendingUp, color: 'text-emerald-800 dark:text-emerald-300' },
+  business:   { label: 'Business & Trust',        Icon: Briefcase, color: 'text-amber-800 dark:text-amber-300' },
 };
 
 const ACCOUNT_TYPE_OPTIONS = [
@@ -129,7 +129,7 @@ export default function AccountsPage() {
 
       {/* Open account dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-sm bg-[#0B2218] border-white/10 text-white">
+        <DialogContent className="sm:max-w-sm bg-[#0B2218] wealth-panel border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl text-white">Open New Account</DialogTitle>
             <DialogDescription className="text-white/40 text-xs">Select an account type to establish with Veritas.</DialogDescription>
@@ -141,7 +141,7 @@ export default function AccountsPage() {
                 <SelectTrigger className="bg-white/5 border-white/10 text-white rounded-sm h-10">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0B2218] border-white/10 text-white">
+                <SelectContent className="bg-[#0B2218] wealth-panel border-white/10 text-white">
                   {ACCOUNT_TYPE_OPTIONS.map(group => (
                     <div key={group.group}>
                       <p className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-widest text-white/30 font-semibold">{group.group}</p>
@@ -166,7 +166,7 @@ export default function AccountsPage() {
       {/* ── Portfolio Summary Header ──────────────────────────────── */}
       <FeeLiability summary={feeSummary.data} accounts={accounts} error={feeSummary.isError} retry={() => void feeSummary.refetch()} hidden={hideBalances} currency={currency} />
 
-      <div className="bg-[#0B2218] rounded-sm overflow-hidden">
+      <div className="bg-[#0B2218] wealth-panel rounded-sm overflow-hidden">
         {/* Top bar */}
         <div className="px-4 py-5 xl:px-8 xl:pt-8 xl:pb-6 border-b border-white/10">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-4">
@@ -263,7 +263,7 @@ export default function AccountsPage() {
           <div className="flex-1">
             <p className={cn(
               "text-xs font-bold uppercase tracking-widest mb-0.5",
-              isTransmitting ? "text-violet-400" : isLocked ? "text-amber-400" : "text-white/50"
+              isTransmitting ? "text-violet-400" : isLocked ? "text-amber-400" : "text-primary"
             )}>
               {isTransmitting
                 ? "Portfolio Transmission in Progress"
@@ -272,12 +272,12 @@ export default function AccountsPage() {
                 : xferStage === 1 ? "Transfer Under Advisor Review" : "Transfer Pending Advisor Review"
               }
             </p>
-            <p className="text-white/40 text-xs leading-relaxed">
+            <p className={cn("text-xs leading-relaxed", isTransmitting || isLocked ? "text-white/90" : "text-foreground/80")}>
               {isTransmitting
-                ? <>Your liquidated portfolio is being transmitted to <strong className="text-white/60">{activeTransfer.institutionName}</strong>. Balances below reflect the pre-transfer holdings and will clear upon custodian confirmation.</>
+                ? <>Your liquidated portfolio is being transmitted to <strong className={isTransmitting || isLocked ? "text-white" : "text-foreground"}>{activeTransfer.institutionName}</strong>. Balances below reflect the pre-transfer holdings and will clear upon custodian confirmation.</>
                 : isLocked
-                ? <>Holdings are being liquidated for transfer. All accounts are read-only. Your portfolio is in transit to <strong className="text-white/60">{activeTransfer.institutionName}</strong>.</>
-                : <>Your transfer request to <strong className="text-white/60">{activeTransfer.institutionName}</strong> is {xferStage === 1 ? "under advisor review" : "pending review"}. Accounts remain fully accessible until approved.</>
+                ? <>Holdings are being liquidated for transfer. All accounts are read-only. Your portfolio is in transit to <strong className={isTransmitting || isLocked ? "text-white" : "text-foreground"}>{activeTransfer.institutionName}</strong>.</>
+                : <>Your transfer request to <strong className={isTransmitting || isLocked ? "text-white" : "text-foreground"}>{activeTransfer.institutionName}</strong> is {xferStage === 1 ? "under advisor review" : "pending review"}. Accounts remain fully accessible until approved.</>
               }
             </p>
           </div>
@@ -333,7 +333,7 @@ export default function AccountsPage() {
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                               <span className="font-mono text-[10px] text-muted-foreground">{accountNumber(account.id)}</span>
                               {isPending && (
-                                <span className="text-[9px] text-amber-600 font-bold uppercase tracking-wide bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-sm border border-amber-200 dark:border-amber-800/40">
+                                <span className="text-[9px] text-amber-800 dark:text-amber-300 font-bold uppercase tracking-wide bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-sm border border-amber-200 dark:border-amber-800/40">
                                   Pending: {fmt(Math.abs(pendingBalance))}
                                 </span>
                               )}
@@ -343,7 +343,7 @@ export default function AccountsPage() {
                                 </span>
                               )}
                               {isLocked && !isTransmitting && (
-                                <span className="flex items-center gap-1 text-[9px] text-amber-500 font-bold uppercase tracking-wide bg-amber-500/10 px-1.5 py-0.5 rounded-sm border border-amber-500/20">
+                                <span className="flex items-center gap-1 text-[9px] text-amber-800 dark:text-amber-300 font-bold uppercase tracking-wide bg-amber-500/10 px-1.5 py-0.5 rounded-sm border border-amber-500/20">
                                   <Lock className="w-2.5 h-2.5" /> Liquidating
                                 </span>
                               )}

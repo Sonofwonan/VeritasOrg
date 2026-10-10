@@ -25,7 +25,7 @@ export function MetallicCard({
       transition={{ duration: 0.5 }}
       className={cn("perspective-1000", className)}
     >
-      <Card className="relative w-full aspect-[1.586/1] overflow-hidden rounded-2xl border-none shadow-2xl transition-transform duration-500 preserve-3d group hover:rotate-y-12">
+      <Card className="wealth-card relative w-full aspect-[1.586/1] overflow-hidden rounded-2xl border-none shadow-2xl transition-transform duration-500 preserve-3d group hover:rotate-y-12">
         {/* Metallic Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] via-[#333] to-[#0a0a0a] shadow-[inset_0_0_100px_rgba(255,255,255,0.05)]" />
         

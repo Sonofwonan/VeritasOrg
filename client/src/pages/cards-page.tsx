@@ -85,7 +85,7 @@ export default function CardsPage() {
                     <Shield className="w-4 h-4 text-primary" />
                     <span className="text-sm font-medium">Fraud Protection</span>
                   </div>
-                  <span className="text-xs font-bold text-green-600 uppercase">Active</span>
+                  <span className="text-xs font-bold text-green-700 dark:text-green-400 uppercase">Active</span>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-accent/5">
                   <div className="flex items-center gap-3">

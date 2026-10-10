@@ -8,3 +8,4 @@
 - [Financial responsive layouts](financial-responsive-layout.md) — Verify tablet/sidebar widths too; phone and desktop passes can hide overlapping balances and controls.
 - [Performance evidence](performance-evidence.md) — Stored numeric prices are not verified market evidence; deposits and fee liabilities must never imply investment gains.
 - [Navigation collapse](navigation-collapse.md) — Client side menu and top settings bar start collapsed; only deliberate user actions open them.
+- [Diagnostic runtime safety](diagnostic-runtime-safety.md) — One-off language commands can add unwanted runtimes; use the project's existing runtime for diagnostics.

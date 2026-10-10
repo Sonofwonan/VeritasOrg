@@ -67,7 +67,7 @@ export default function AccountActivationPage() {
   }
 
   return (
-    <main className="min-h-screen bg-cream px-6 py-12 text-foreground sm:px-10">
+    <main className="activation-page min-h-screen bg-cream px-6 py-12 text-foreground sm:px-10">
       <div className="mx-auto w-full max-w-lg">
         <Link href="/auth" className="mb-12 inline-flex items-center gap-2 font-serif text-lg text-primary">
           <ShieldCheck className="h-5 w-5" />

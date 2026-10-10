@@ -222,10 +222,11 @@ export default function InvestmentsPage() {
           className="absolute inset-0 bg-cover bg-center opacity-15"
           style={{ backgroundImage: 'url(/assets/IMG_3476_1766680873153.jpeg)' }}
         />
+        <div className="investment-hero-scrim absolute inset-0" />
         <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-accent/20" />
         <div className="relative">
-          <h2 className="text-3xl font-bold font-display">Investments</h2>
-          <p className="text-muted-foreground">Trade stocks, ETFs, access research, and manage your portfolio.</p>
+          <h2 className="text-3xl font-bold font-display text-white">Investments</h2>
+          <p className="text-white/90">Trade stocks, ETFs, access research, and manage your portfolio.</p>
         </div>
       </div>
 
@@ -258,7 +259,7 @@ export default function InvestmentsPage() {
                       <p className="text-sm text-muted-foreground">Stock Quote</p>
                     </div>
                     {quote && (
-                      <div className={`text-right ${quote.change >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      <div className={`text-right ${quote.change >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
                         <p className="text-2xl font-bold">${quote.price.toFixed(2)}</p>
                         <p className="text-sm font-medium flex items-center justify-end gap-1">
                           {quote.change >= 0 ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>}
@@ -411,7 +412,7 @@ export default function InvestmentsPage() {
                       <p className="text-sm text-muted-foreground">ETF - Fractional Shares Available</p>
                     </div>
                     {etfQuote && (
-                      <div className={`text-right ${etfQuote.change >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      <div className={`text-right ${etfQuote.change >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
                         <p className="text-2xl font-bold">${etfQuote.price.toFixed(2)}</p>
                         <p className="text-sm font-medium flex items-center justify-end gap-1">
                           {etfQuote.change >= 0 ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>}

@@ -87,7 +87,7 @@ export function AccountFeeBalance({ cash, unpaid, overdraft, hidden = false, dar
   const net = Number(cash) - Number(unpaid || 0);
   const fmt = (value: number | string) => hidden ? "••••••" : formatBalance(value, currency);
   return (
-    <div className={`mt-2 border-t pt-2 ${dark ? "border-white/10 text-red-300" : "border-red-200 text-red-800"}`}>
+    <div className={`mt-2 border-t pt-2 ${dark ? "border-white/10 text-red-300" : "border-red-200 text-red-800 dark:text-red-300"}`}>
       {cashDebt > 0 && <p className="break-words font-mono font-semibold" data-testid="text-fee-overdraft">Cash ledger overdraft <span className="whitespace-nowrap">{fmt(-cashDebt)}</span></p>}
       {unpaidAmount > 0 && <>
         <p className="mt-1 text-[10px] uppercase tracking-wide">Net account balance after unpaid fees</p>

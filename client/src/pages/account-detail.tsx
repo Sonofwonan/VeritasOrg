@@ -107,10 +107,10 @@ export default function AccountDetailPage() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground mb-2">Account ledger cash less unpaid assessments · {balanceCurrencyLabel(currency)}</p>
-              <p className={cn("break-words font-mono text-[clamp(1.75rem,7vw,3rem)] font-bold tabular-nums", netBalance < 0 ? "text-red-700" : "text-primary")}>
+              <p className={cn("break-words font-mono text-[clamp(1.75rem,7vw,3rem)] font-bold tabular-nums", netBalance < 0 ? "text-red-700 dark:text-red-300" : "text-primary")}>
                 {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : money(netBalance)}
               </p>
-                <p className="mt-2 text-sm">Cash ledger balance: <span className={cn("font-mono font-semibold tabular-nums", accountBalance < 0 ? "text-red-700" : "")}>{money(accountBalance)}</span>{accountBalance < 0 && <span className="ml-2 text-xs text-red-700">posted fee overdraft / negative cash</span>}</p>
+                <p className="mt-2 text-sm">Cash ledger balance: <span className={cn("font-mono font-semibold tabular-nums", accountBalance < 0 ? "text-red-700 dark:text-red-300" : "")}>{money(accountBalance)}</span>{accountBalance < 0 && <span className="ml-2 text-xs text-red-700 dark:text-red-300">posted fee overdraft / negative cash</span>}</p>
               <FeeLiability summary={unpaidFees !== undefined ? {
                 totalUnpaid: unpaidFees, totalOverdraft: feeSummary.data!.accounts.find(item => item.accountId === accountId)?.overdraft,
                 totalOwed: feeSummary.data!.accounts.find(item => item.accountId === accountId)?.amountOwed,
@@ -166,7 +166,7 @@ export default function AccountDetailPage() {
                       <div className="flex min-w-0 items-center gap-3 sm:gap-4 flex-1">
                       <div className={cn(
                         "p-2 rounded-full",
-                        transaction.status === 'pending' ? 'bg-red-100 text-red-600' : (isIncoming ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600')
+                        transaction.status === 'pending' ? 'bg-red-100 text-red-700' : (isIncoming ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')
                       )}>
                         {transaction.status === 'pending' ? (
                           <Clock className="w-5 h-5 animate-pulse" />
@@ -184,7 +184,7 @@ export default function AccountDetailPage() {
                       <div className="flex items-center justify-between gap-3 text-right sm:block">
                       <p className={cn(
                         "font-bold text-lg",
-                        transaction.status === 'pending' ? 'text-red-600' : (isIncoming ? 'text-green-600' : 'text-red-600')
+                         transaction.status === 'pending' ? 'text-red-700 dark:text-red-300' : (isIncoming ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
                       )}>
                          {isIncoming ? '+' : '-'}{money(transaction.amount)}
                       </p>
@@ -220,7 +220,7 @@ export default function AccountDetailPage() {
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                   <span className="text-zinc-400 text-sm">Amount</span>
-                  <span className={cn("font-black text-lg", selectedTxn?.status === 'pending' ? "text-red-500" : (selectedTxn?.toAccountId === accountId ? "text-emerald-500" : "text-red-500"))}>
+                  <span className={cn("font-black text-lg", selectedTxn?.status === 'pending' ? "text-red-300" : (selectedTxn?.toAccountId === accountId ? "text-emerald-300" : "text-red-300"))}>
                     {money(selectedTxn?.amount ?? 0)}
                   </span>
                 </div>

@@ -127,7 +127,7 @@ export default function TransfersPage() {
                     { label: "Complete", done: stage >= 4 },
                   ];
                   const stepColor = stage === 4 ? "bg-emerald-400" : stage === 3 ? "bg-violet-400" : stage === 2 ? "bg-orange-400" : "bg-amber-400";
-                  const stepTextColor = stage === 4 ? "text-emerald-600 dark:text-emerald-400" : stage === 3 ? "text-violet-600 dark:text-violet-400" : stage === 2 ? "text-orange-600 dark:text-orange-400" : "text-amber-600 dark:text-amber-400";
+                  const stepTextColor = stage === 4 ? "text-emerald-800 dark:text-emerald-300" : stage === 3 ? "text-violet-800 dark:text-violet-300" : stage === 2 ? "text-orange-800 dark:text-orange-300" : "text-amber-800 dark:text-amber-300";
 
                   return (
                     <div key={t.id} className={`rounded-xl border ${cardBorder} overflow-hidden`} data-testid={`inst-transfer-${t.id}`}>

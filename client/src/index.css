@@ -15,46 +15,50 @@
     --popover: 0 0% 100%;
     --popover-foreground: 150 28% 8%;
 
-    --primary: 148 48% 17%;
+    --primary: 148 38% 23%;
+    --primary-text: 148 38% 23%;
     --primary-foreground: 42 28% 96%;
+    --wealth-panel: 149 45% 16%;
 
     --secondary: 42 20% 93%;
     --secondary-foreground: 150 28% 8%;
 
     --muted: 42 18% 92%;
-    --muted-foreground: 148 8% 46%;
+    --muted-foreground: 148 15% 34%;
 
     --accent: 38 62% 44%;
     --accent-foreground: 42 28% 97%;
 
-    --destructive: 0 80% 58%;
+    --destructive: 0 72% 42%;
     --destructive-foreground: 42 28% 97%;
 
     --border: 42 14% 88%;
     --input: 42 14% 88%;
-    --ring: 148 48% 17%;
+    --ring: 148 38% 23%;
 
     --radius: 0.2rem;
   }
 
   .dark {
-    --background: 150 30% 5%;
+    --background: 150 28% 7%;
     --foreground: 42 25% 93%;
 
-    --card: 150 28% 7%;
+    --card: 150 28% 9%;
     --card-foreground: 42 25% 93%;
 
-    --popover: 150 28% 7%;
+    --popover: 150 28% 9%;
     --popover-foreground: 42 25% 93%;
 
-    --primary: 148 42% 30%;
+    --primary: 148 38% 34%;
+    --primary-text: 42 28% 96%;
     --primary-foreground: 42 28% 96%;
+    --wealth-panel: 149 38% 20%;
 
     --secondary: 150 22% 12%;
     --secondary-foreground: 42 25% 93%;
 
     --muted: 150 22% 12%;
-    --muted-foreground: 148 10% 58%;
+    --muted-foreground: 148 18% 74%;
 
     --accent: 38 58% 50%;
     --accent-foreground: 150 30% 5%;
@@ -64,7 +68,7 @@
 
     --border: 150 18% 16%;
     --input: 150 18% 16%;
-    --ring: 148 42% 30%;
+    --ring: 148 38% 34%;
   }
 }
 
@@ -105,8 +109,222 @@
     @apply border-t border-border;
   }
   .vw-input {
-    @apply w-full bg-transparent border-0 border-b border-border pb-2 pt-1 text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/50;
+    @apply w-full bg-transparent border-0 border-b border-border pb-2 pt-1 text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground;
   }
+}
+
+/* The underlying forest surfaces stay quiet; their foregrounds do not. */
+.wealth-panel {
+  background-color: hsl(var(--wealth-panel)) !important;
+}
+
+.wealth-panel :is(
+  [class~="text-white/5"],
+  [class~="text-white/10"],
+  [class~="text-white/15"],
+  [class~="text-white/20"],
+  [class~="text-white/25"],
+  [class~="text-white/30"],
+  [class~="text-white/40"],
+  [class~="text-white/50"],
+  [class~="text-white/60"],
+  [class~="text-white/70"],
+  [class~="text-white/80"]
+) {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+/* Opacity-based muted utilities were too faint for essential labels and data. */
+[class~="text-muted-foreground/20"],
+[class~="text-muted-foreground/25"],
+[class~="text-muted-foreground/30"],
+[class~="text-muted-foreground/40"],
+[class~="text-muted-foreground/50"],
+[class~="text-muted-foreground/60"] {
+  color: hsl(var(--muted-foreground));
+}
+
+[class~="text-primary-foreground/25"],
+[class~="text-primary-foreground/30"],
+[class~="text-primary-foreground/40"],
+[class~="text-primary-foreground/60"],
+[class~="text-primary-foreground/70"] {
+  color: hsl(var(--primary-foreground));
+}
+
+.wealth-panel .text-gold {
+  color: #dfbd76 !important;
+}
+
+.wealth-panel .text-accent {
+  color: #dfbd76 !important;
+}
+
+.dark [class~="bg-cream"],
+.dark [class~="bg-cream/60"],
+.dark [class~="bg-cream/90"] {
+  --foreground: 150 28% 8%;
+  --secondary: 42 20% 93%;
+  --muted: 42 18% 92%;
+  --muted-foreground: 148 15% 34%;
+  --primary-text: 148 38% 23%;
+  color: hsl(var(--foreground));
+}
+
+.dark [class~="bg-white"],
+.dark [class~="bg-white/60"],
+.dark [class~="bg-white/70"],
+.dark [class~="bg-white/80"],
+.dark [class~="bg-white/90"],
+.dark [class~="bg-white/95"] {
+  --primary-text: 148 38% 23%;
+}
+
+.dark :is(
+  [class~="text-primary"],
+  [class~="text-primary/20"],
+  [class~="text-primary/30"],
+  [class~="text-primary/40"],
+  [class~="text-primary/50"],
+  [class~="text-primary/60"],
+  [class~="text-primary/70"],
+  [class~="text-primary/80"],
+  [class~="dark:text-primary"],
+  [class~="dark:text-primary/40"],
+  [class~="dark:text-primary/60"]
+) {
+  color: hsl(var(--primary-text));
+}
+
+.dark .group:hover [class~="group-hover:text-primary"],
+.dark .group:hover [class~="group-hover:text-primary/40"],
+.dark .group:hover [class~="group-hover:text-primary/60"],
+.dark [class~="hover:text-primary"]:hover {
+  color: hsl(var(--primary-text));
+}
+
+.activation-page .text-accent {
+  color: #78551f !important;
+}
+
+.wealth-company :is(
+  [class~="text-white/5"],
+  [class~="text-white/10"],
+  [class~="text-white/15"],
+  [class~="text-white/20"],
+  [class~="text-white/25"],
+  [class~="text-white/30"],
+  [class~="text-white/40"],
+  [class~="text-white/50"],
+  [class~="text-white/60"],
+  [class~="text-white/70"],
+  [class~="text-white/80"]
+) {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.wealth-company .text-primary {
+  color: #d7bf85 !important;
+}
+
+.wealth-company [class~="text-primary/40"] {
+  color: #d7bf85;
+}
+
+.wealth-card :is(
+  [class~="text-white/5"],
+  [class~="text-white/10"],
+  [class~="text-white/15"],
+  [class~="text-white/20"],
+  [class~="text-white/25"],
+  [class~="text-white/30"],
+  [class~="text-white/40"],
+  [class~="text-white/50"],
+  [class~="text-white/60"],
+  [class~="text-white/70"],
+  [class~="text-white/80"]
+) {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.wealth-card .text-primary {
+  color: #dfbd76 !important;
+}
+
+.vw-input::placeholder {
+  opacity: 1;
+}
+
+.login-entry {
+  min-height: 44px;
+  padding-inline: 1rem;
+  border: 1px solid hsl(var(--primary) / 0.46);
+  color: hsl(var(--primary));
+  font-weight: 600;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.compact-login {
+  padding-inline: 0.5rem;
+}
+
+.login-entry:hover {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.login-submit {
+  min-height: 48px;
+  background-color: #24513a;
+  color: #fbf8f1;
+  border: 1px solid #24513a;
+  font-weight: 600;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.login-submit:hover:not(:disabled) {
+  background-color: #1c422f;
+  border-color: #1c422f;
+}
+
+.login-entry:focus-visible,
+.login-submit:focus-visible {
+  outline: 3px solid hsl(var(--primary));
+  outline-offset: 3px;
+}
+
+.login-entry-dark {
+  border-color: rgba(255, 255, 255, 0.72);
+  color: #fff;
+}
+
+.login-entry-dark:focus-visible {
+  outline-color: #fff;
+}
+
+.login-entry-dark:hover {
+  background-color: #fff;
+  border-color: #fff;
+  color: #173b2b;
+}
+
+.login-submit:disabled {
+  background-color: #315f47;
+  border-color: #315f47;
+  cursor: wait;
+}
+
+.auth-error-copy {
+  color: #a32222;
+}
+
+.hero-media-scrim {
+  background-color: rgba(29, 73, 53, 0.86);
+}
+
+.investment-hero-scrim {
+  background-color: rgba(29, 73, 53, 0.84);
 }
 
 /* Ticker animation */

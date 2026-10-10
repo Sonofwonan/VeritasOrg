@@ -147,7 +147,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     >
       <ResetSidebarOnRouteChange location={location} />
       <div className="flex h-screen w-full overflow-hidden bg-background">
-        <Sidebar collapsible="offcanvas" className="border-r border-border/50 bg-zinc-950 text-zinc-100">
+        <Sidebar collapsible="offcanvas" className="wealth-panel border-r border-border/50 bg-zinc-950 text-zinc-100">
           <SidebarPanel>
           <SidebarHeader className="h-20 flex-row items-center justify-between gap-2 px-4 border-b border-white/5">
             <div className="flex items-center gap-4">
@@ -156,7 +156,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-lg tracking-tight leading-none">Veritas</span>
-                <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-black mt-1">Wealth Management</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-white/80 font-black mt-1">Wealth Management</span>
               </div>
             </div>
             <ShellSidebarToggle testId="sidebar-close" />
@@ -250,7 +250,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
         <SidebarInset className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           <header className={cn(
-            "shrink-0 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl flex items-center justify-between z-10 transition-[height,padding] duration-200",
+            "wealth-panel shrink-0 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl flex items-center justify-between z-10 transition-[height,padding] duration-200",
             topNavigationOpen ? "h-16 px-4 md:px-8" : "h-12 px-3 md:px-5"
           )}>
             <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
@@ -330,7 +330,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
       {/* Inactivity warning dialog */}
       <Dialog open={showWarning} onOpenChange={(open) => { if (!open) dismiss(); }}>
-        <DialogContent className="sm:max-w-sm border-amber-500/30 bg-zinc-950 text-white">
+        <DialogContent className="sm:max-w-sm border-amber-500/30 bg-zinc-950 wealth-panel text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-400">
               <ShieldAlert className="w-5 h-5" />

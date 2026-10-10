@@ -16,11 +16,23 @@ description: Approved visual system for the platform. Apply to all new pages/com
 - Tailwind aliases: `font-serif`, `font-sans`, `font-mono`
 
 **Colors**
-- Background: warm cream `#F6F1E8` (CSS var `--background: 42 28% 97%`)
-- Primary: deep forest green `#0B2218` (CSS var `--primary: 148 48% 17%`)
-- Accent/numbers: warm gold `#B8832A` (CSS var `--accent: 38 62% 44%`)
+- Background: warm cream
+- Primary: softly lightened forest green, not near-black green
+- Accent/numbers: warm gold, with readable contrast on dark panels
 - Text: near-black with green tint
-- Dark sections: use `bg-[#0B2218]` directly
+- Dark sections: use the shared forest-panel palette rather than restoring the old deepest green
+
+**Visibility rule:** Keep login actions prominent and essential copy readable, including muted labels, placeholders, errors, and text on dark panels.
+
+**Why:** The user requested a modestly lighter green palette and more visible login actions and text, without changing the established design.
+
+**How to apply:** Preserve the existing fonts, cream/green/gold identity and layouts. Check alpha-blended contrast against the actual surface, not just the opaque palette swatch.
+
+**CSS state rule:** Opacity-color overrides must match standalone utility tokens, not substring matches that also capture hover or placeholder variants. Avoid blanket important foregrounds that prevent state-specific colors from winning.
+
+**Why:** Broad overrides made inactive hover text light on cream and stopped foregrounds changing when their hovered backgrounds became green.
+
+**How to apply:** Preserve hover/focus and light/dark context-specific foregrounds; verify those states in the isolated browser harness.
 
 **Borders & radius**
 - `--radius: 0.2rem` — near-zero rounding everywhere

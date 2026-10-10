@@ -122,12 +122,12 @@ export default function HomePage() {
 
       {/* Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-cream/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="/assets/IMG_4531_1771684255921.jpeg" alt="Veritas" className="w-6 h-6 object-contain" />
             <div className="flex flex-col leading-tight">
               <span className="font-serif text-[1.05rem] tracking-tight">Veritas Wealth</span>
-              <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Private wealth management since 1967</span>
+              <span className="hidden sm:inline text-[10px] text-muted-foreground tracking-widest uppercase">Private wealth management since 1967</span>
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-7 text-[13px] text-muted-foreground">
@@ -152,17 +152,17 @@ export default function HomePage() {
               About
             </button>
           </nav>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={() => setLocation("/auth")}
-              className="text-[13px] text-muted-foreground hover:text-foreground transition-colors hidden sm:inline"
+              className="login-entry compact-login text-[12px] sm:text-[13px]"
             >
               Client login
             </button>
             <button
               onClick={() => setLocation("/auth")}
               data-testid="button-get-started"
-              className="flex items-center gap-1.5 bg-primary text-primary-foreground text-[13px] px-4 py-2 hover:bg-primary/90 transition-colors"
+              className="flex items-center gap-1.5 bg-primary text-primary-foreground text-[12px] sm:text-[13px] px-1 sm:px-4 py-2 hover:bg-primary/90 transition-colors"
             >
               Apply now <ArrowRight className="w-3.5 h-3.5" />
             </button>
@@ -180,16 +180,17 @@ export default function HomePage() {
         >
           <source src="/assets/aHR0cHM6Ly9hc3NldHMuZ3Jvay5jb20vdXNlcnMvZjg1MzVhY2QtY2ExZS00Mz_1771684255921.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B2218] via-[#0B2218]/10 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
+        <div className="hero-media-scrim absolute inset-0" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#173B2B] via-[#173B2B]/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#173B2B]/90 via-[#173B2B]/72 to-transparent" />
 
         <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-8 pb-10 sm:pb-14">
           <div className="max-w-2xl">
-            <p className="label-caps text-white/50 mb-4 tracking-[0.2em]">Private wealth management since 1967</p>
+            <p className="label-caps text-white/85 mb-4 tracking-[0.2em]">Private wealth management since 1967</p>
             <h1 className="font-serif text-white leading-[1.1]" style={{ fontSize: "clamp(2rem, 4vw, 3.8rem)" }}>
               Capital, <em>protected</em>. Wealth, grown.
             </h1>
-            <p className="text-white/60 text-lg sm:text-xl mt-5 max-w-lg leading-relaxed">
+            <p className="text-white/85 text-lg sm:text-xl mt-5 max-w-lg leading-relaxed">
               We manage money for people with a lot of it. Families, founders and institutions with $500M or more who want a real partner, not just a platform.
             </p>
             <div className="flex flex-wrap items-center gap-4 mt-7">
@@ -203,7 +204,7 @@ export default function HomePage() {
               <button
                 onClick={() => setLocation("/auth")}
                 data-testid="button-sign-in"
-                className="label-caps text-white/60 hover:text-white flex items-center gap-1.5 transition-colors"
+                className="login-entry login-entry-dark label-caps flex items-center gap-1.5 transition-colors"
               >
                 Client login <ArrowUpRight className="w-3 h-3" />
               </button>
@@ -213,13 +214,13 @@ export default function HomePage() {
       </section>
 
       {/* Live market ticker */}
-      <div className="bg-[#0B2218] border-t border-white/5 py-3 overflow-hidden">
+      <div className="bg-[#0B2218] wealth-panel border-t border-white/5 py-3 overflow-hidden">
         <div className="ticker-track">
           {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
             <span key={i} className="inline-flex items-center gap-3 px-8">
-              <span className="label-caps text-white/30">{item.symbol}</span>
+              <span className="label-caps text-white/80">{item.symbol}</span>
               <span className="font-mono-nums text-white text-sm">{item.value}</span>
-              <span className={`font-mono-nums text-xs ${item.up ? "text-emerald-400" : "text-red-400"}`}>{item.change}</span>
+              <span className={`font-mono-nums text-xs ${item.up ? "text-emerald-400" : "text-red-300"}`}>{item.change}</span>
               <span className="text-white/10 ml-2">·</span>
             </span>
           ))}
@@ -232,7 +233,7 @@ export default function HomePage() {
           <p className="font-serif text-base italic text-muted-foreground">
             Veritas Wealth has been serving investors, families and institutions for over <strong className="text-foreground not-italic font-medium">57 years</strong>.
           </p>
-          <div className="flex items-center gap-8 text-[11px]">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 sm:gap-8 text-[11px]">
             {["CIRO Registered Dealer", "CIPF Member", "Deloitte Canada Audited", "Fiduciary Standard"].map(b => (
               <span key={b} className="label-caps text-muted-foreground/60 flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-primary/40 inline-block" /> {b}
@@ -265,9 +266,9 @@ export default function HomePage() {
                 className={`p-8 space-y-5 flex flex-col justify-between group hover:bg-primary hover:text-primary-foreground transition-colors duration-300 ${i < 3 ? "lg:border-r border-border" : ""} ${i < 2 ? "sm:border-r border-border" : ""}`}
               >
                 <div className="space-y-3">
-                  <span className="font-mono-nums text-[10px] text-muted-foreground group-hover:text-primary-foreground/40 transition-colors">0{i + 1}</span>
+                  <span className="font-mono-nums text-[10px] text-muted-foreground group-hover:text-primary-foreground transition-colors">0{i + 1}</span>
                   <h3 className="font-serif text-xl leading-snug">{seg.label}</h3>
-                  <p className="text-[15px] text-muted-foreground group-hover:text-primary-foreground/70 leading-relaxed transition-colors">{seg.summary}</p>
+                  <p className="text-[15px] text-muted-foreground group-hover:text-primary-foreground leading-relaxed transition-colors">{seg.summary}</p>
                 </div>
                 <div className="pt-4 border-t border-border group-hover:border-primary-foreground/20 transition-colors space-y-2">
                   <button
@@ -276,7 +277,7 @@ export default function HomePage() {
                   >
                     {seg.cta} <ArrowRight className="w-3.5 h-3.5" />
                   </button>
-                  <p className="label-caps text-muted-foreground/50 group-hover:text-primary-foreground/30 transition-colors">{seg.min}</p>
+                  <p className="label-caps text-muted-foreground/50 group-hover:text-primary-foreground transition-colors">{seg.min}</p>
                 </div>
               </div>
             ))}
@@ -320,29 +321,29 @@ export default function HomePage() {
       </section>
 
       {/* Performance */}
-      <section id="performance" className="bg-[#0B2218] text-primary-foreground border-b border-white/5">
+      <section id="performance" className="bg-[#0B2218] wealth-panel text-primary-foreground border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-28">
           <div className="grid lg:grid-cols-[auto_1fr] gap-16 lg:gap-32 items-start">
             <div className="lg:max-w-xs space-y-4">
-              <p className="label-caps text-white/30">Verified track record</p>
+              <p className="label-caps text-white/85">Verified track record</p>
               <h2 className="font-serif text-white leading-tight" style={{ fontSize: "clamp(1.8rem, 3vw, 2.8rem)" }}>
                 Numbers that speak for themselves.
               </h2>
-              <p className="text-white/50 text-[15px] leading-relaxed">
+              <p className="text-white/85 text-[15px] leading-relaxed">
                 All performance figures are net of fees, across diversified model portfolios, and audited annually by Deloitte.
               </p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 divide-x divide-white/10">
+            <div className="grid min-w-0 grid-cols-2 sm:grid-cols-4 gap-0 divide-x divide-white/10">
               {[
                 { v: "$4.2B", l: "Assets under management", sub: "as of Q4 2024" },
                 { v: "12.4%", l: "Average 10 year return", sub: "annualised, net of fees" },
                 { v: "0.32%", l: "All in annual fee", sub: "no hidden costs" },
                 { v: "51K+", l: "Client accounts", sub: "across 38 countries" },
               ].map(s => (
-                <div key={s.l} className="px-6 sm:px-8 first:pl-0 space-y-2 py-2">
+                <div key={s.l} className="min-w-0 px-6 sm:px-8 first:pl-0 space-y-2 py-2">
                   <p className="font-mono-nums text-gold text-3xl sm:text-4xl font-medium tracking-tight">{s.v}</p>
-                  <p className="text-white/60 text-sm leading-snug">{s.l}</p>
-                  <p className="label-caps text-white/25">{s.sub}</p>
+                  <p className="text-white/85 text-sm leading-snug">{s.l}</p>
+                  <p className="label-caps text-white/80">{s.sub}</p>
                 </div>
               ))}
             </div>
@@ -492,16 +493,16 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA */}
-      <section className="bg-primary text-primary-foreground">
+      <section className="bg-primary wealth-panel text-primary-foreground">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-24 sm:py-32">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-5">
-              <p className="label-caps text-primary-foreground/30">Ready to begin?</p>
+              <p className="label-caps text-primary-foreground/85">Ready to begin?</p>
               <h2 className="font-serif leading-tight text-white" style={{ fontSize: "clamp(2rem, 3.5vw, 3rem)" }}>
                 Serious capital deserves<br />
                 <em>serious stewardship.</em>
               </h2>
-              <p className="text-primary-foreground/60 text-[15px] leading-relaxed max-w-sm">
+              <p className="text-primary-foreground/85 text-[15px] leading-relaxed max-w-sm">
                 The application takes about 15 minutes. Your advisor will reach out within one business day to talk through your goals and see if we're the right fit for each other.
               </p>
             </div>
@@ -515,16 +516,16 @@ export default function HomePage() {
               </button>
               <button
                 onClick={() => setLocation("/auth")}
-                className="label-caps text-primary-foreground/40 hover:text-primary-foreground flex items-center gap-1.5 transition-colors"
+                className="login-entry login-entry-dark label-caps flex items-center gap-1.5 transition-colors"
               >
                 Client login <ArrowUpRight className="w-3 h-3" />
               </button>
             </div>
           </div>
 
-          <div className="mt-20 pt-8 border-t border-white/10 grid sm:grid-cols-2 gap-4 text-[11px] text-primary-foreground/25 leading-relaxed">
-            <p>Veritas Wealth Management, LLC is a registered investment adviser. Registration does not imply a certain level of skill or training. Past performance is not a guarantee of future results.</p>
-            <p>All figures shown are based on model portfolio returns and may differ from individual client outcomes. Fees may vary based on account size and service level. Please refer to our ADV for full disclosures.</p>
+          <div className="mt-20 pt-8 border-t border-white/10 grid min-w-0 sm:grid-cols-2 gap-4 text-[11px] text-primary-foreground/80 leading-relaxed">
+            <p className="min-w-0 break-words">Veritas Wealth Management, LLC is a registered investment adviser. Registration does not imply a certain level of skill or training. Past performance is not a guarantee of future results.</p>
+            <p className="min-w-0 break-words">All figures shown are based on model portfolio returns and may differ from individual client outcomes. Fees may vary based on account size and service level. Please refer to our ADV for full disclosures.</p>
           </div>
         </div>
       </section>

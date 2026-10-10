@@ -239,6 +239,7 @@ export function ClientCurrencyPanel({
                           unpaid={fee.unpaidTotal}
                           overdraft={fee.overdraft}
                           hidden={hidden}
+                          dark
                           currency={displayCurrency}
                         />
                       )}

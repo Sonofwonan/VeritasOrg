@@ -129,7 +129,7 @@ export default function DashboardPage() {
 
         {/* ── Transaction Detail Dialog ───────────────────────────────────── */}
         <Dialog open={!!selectedTxn} onOpenChange={o => !o && setSelectedTxn(null)}>
-          <DialogContent className="sm:max-w-md border-primary/20 bg-[#0B2218] text-white">
+          <DialogContent className="sm:max-w-md border-primary/20 bg-[#0B2218] wealth-panel text-white">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 font-serif text-xl">
                 <Info className="w-4 h-4 text-amber-400" />
@@ -170,7 +170,7 @@ export default function DashboardPage() {
         </Dialog>
 
         {/* ── Portfolio Header ────────────────────────────────────────────── */}
-        <div className="bg-[#0B2218] rounded-sm overflow-hidden">
+        <div className="bg-[#0B2218] wealth-panel rounded-sm overflow-hidden">
           <div className="px-5 sm:px-8 py-7 border-b border-white/10">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               {/* Current funded balance; liabilities are shown separately below */}
@@ -242,7 +242,7 @@ export default function DashboardPage() {
 
           // Per-stage visual tokens — dark green for stages 0-1, amber for 2, violet for 3
           const onDark = stage <= 1; // white-text dark-bg states
-          const bannerBg = stage === 3 ? "bg-violet-50 border-violet-300" : stage === 2 ? "bg-amber-50 border-amber-300" : "bg-[#0B2218] border-[#163830]";
+          const bannerBg = stage === 3 ? "bg-violet-50 border-violet-300" : stage === 2 ? "bg-amber-50 border-amber-300" : "bg-[#0B2218] wealth-panel border-[#163830]";
           const iconBg = stage === 3 ? "bg-violet-200" : stage === 2 ? "bg-amber-200" : "bg-white/10";
           const iconEl = stage >= 2
             ? <Lock className={`w-4 h-4 ${stage === 3 ? "text-violet-700" : "text-amber-700"}`} />
@@ -262,7 +262,7 @@ export default function DashboardPage() {
           const clockColor = stage === 3 ? "text-violet-600" : stage === 2 ? "text-amber-600" : "text-emerald-400";
           const completionLabel = stage === 3 ? "text-violet-700" : stage === 2 ? "text-amber-700" : "text-white/50";
           const completionValue = stage === 3 ? "text-violet-900" : stage === 2 ? "text-amber-900" : "text-white";
-          const viewColor = stage === 3 ? "text-violet-600 hover:text-violet-900" : stage === 2 ? "text-amber-600 hover:text-amber-900" : "text-white/40 hover:text-white/80";
+          const viewColor = stage === 3 ? "text-violet-800 hover:text-violet-950" : stage === 2 ? "text-amber-800 hover:text-amber-950" : "text-white/40 hover:text-white/80";
 
           const titleText = stage === 0 ? "Portfolio Transfer — Pending Review"
             : stage === 1 ? "Portfolio Transfer — Under Advisor Review"
@@ -349,7 +349,7 @@ export default function DashboardPage() {
                 <p className="label-caps text-muted-foreground/60 mb-0.5">{idx.name}</p>
                 <p className="font-mono text-sm font-semibold text-foreground">{idx.value}</p>
                 <p className={cn('text-[10px] font-mono font-bold flex items-center gap-0.5 mt-0.5',
-                  idx.up ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500')}>
+                  idx.up ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400')}>
                   {idx.up ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
                   {idx.change}
                 </p>
@@ -433,7 +433,7 @@ export default function DashboardPage() {
                   <p className="text-[10px] text-muted-foreground label-caps mt-0.5">All account activity</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1 text-[9px] text-emerald-600 font-bold uppercase tracking-widest">
+                  <span className="flex items-center gap-1 text-[9px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-widest">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
                   </span>
                 </div>
@@ -456,10 +456,10 @@ export default function DashboardPage() {
                         <div className={cn('w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
                           isPending ? 'bg-amber-100 dark:bg-amber-900/30' : isIn ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-rose-100 dark:bg-rose-900/30')}>
                           {isPending
-                            ? <Clock className="w-3.5 h-3.5 text-amber-600" />
+                            ? <Clock className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                             : isIn
-                              ? <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
-                              : <ArrowDownRight className="w-3.5 h-3.5 text-rose-500" />
+                              ? <ArrowUpRight className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                              : <ArrowDownRight className="w-3.5 h-3.5 text-rose-700 dark:text-rose-400" />
                           }
                         </div>
                         <div className="min-w-0">
@@ -467,7 +467,7 @@ export default function DashboardPage() {
                           <p className="text-[10px] text-muted-foreground font-mono">
                             {transactionDate(txn.createdAt)} · {incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : "Account details unavailable"} ·{' '}
                             <span className={cn('font-bold capitalize',
-                              isPending ? 'text-amber-600' : 'text-muted-foreground')}>
+                              isPending ? 'text-amber-800 dark:text-amber-300' : 'text-muted-foreground')}>
                               {txn.status}
                             </span>
                           </p>
@@ -475,7 +475,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <p className={cn('font-mono text-sm font-bold',
-                          isPending ? 'text-amber-600' : internal ? 'text-muted-foreground' : isIn ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500')}>
+                          isPending ? 'text-amber-800 dark:text-amber-300' : internal ? 'text-muted-foreground' : isIn ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400')}>
                           {internal ? '↔ ' : isIn ? '+' : '-'}{fmt(Number(txn.amount))}
                         </p>
                         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-primary transition-colors" />
@@ -552,8 +552,8 @@ export default function DashboardPage() {
                         <div className={cn('w-7 h-7 rounded-sm flex items-center justify-center shrink-0',
                           cat === 'investment' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
                           cat === 'business'   ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-sky-100 dark:bg-sky-900/30')}>
-                          {cat === 'investment' ? <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
-                          : cat === 'business'  ? <Briefcase className="w-3.5 h-3.5 text-amber-600" />
+                          {cat === 'investment' ? <BarChart3 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                          : cat === 'business'  ? <Briefcase className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                           :                       <Landmark className="w-3.5 h-3.5 text-sky-600" />}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -565,10 +565,10 @@ export default function DashboardPage() {
                         <ChevronRight className="mt-1 w-3 h-3 shrink-0 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                       </div>
                       <div className="mt-1 pl-[38px]">
-                        <p className={cn("font-mono text-xs font-bold tabular-nums", overdrawn && "text-rose-600")}>
+                        <p className={cn("font-mono text-xs font-bold tabular-nums", overdrawn && "text-rose-700 dark:text-rose-400")}>
                           <span className="whitespace-nowrap" data-testid={`dash-account-balance-${acc.id}`}>{fmt(overdrawn ? Math.abs(Number(acc.balance)) : acc.balance)}</span>{" "}{overdrawn ? "overdraft" : "cash"}
                         </p>
-                        {unpaid > 0 && <p className="mt-1 text-xs text-rose-600">
+                        {unpaid > 0 && <p className="mt-1 text-xs text-rose-700 dark:text-rose-400">
                           Unpaid fees: <span className="whitespace-nowrap">{fmt(unpaid)}</span>
                         </p>}
                       </div>
