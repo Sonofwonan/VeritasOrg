@@ -20,8 +20,12 @@ function isolatedDatabase() {
   return new pg.Pool({ connectionString });
 }
 
-export const test = base.extend<{ identity: Identity; db: pg.Pool; browserEvidence: void }>({
-  browserEvidence: [async ({ page }, use, info) => {
+export const test = base.extend<{
+  identity: Identity; db: pg.Pool; browserEvidence: void;
+  expectedHttpFailures: Record<string, number>;
+}>({
+  expectedHttpFailures: [{}, { option: true }],
+  browserEvidence: [async ({ page, expectedHttpFailures }, use, info) => {
     const errors: string[] = [];
     const consoleMessages: { type: string; text: string }[] = [];
     const failedRequests: { path: string; status: number; expected: boolean }[] = [];
@@ -36,7 +40,8 @@ export const test = base.extend<{ identity: Identity; db: pg.Pool; browserEviden
       const path = new URL(response.url()).pathname;
       const expected = (path === "/api/user" && response.status() === 401) ||
         (info.title.startsWith("clients cannot") && path === "/api/user" && response.status() === 403) ||
-        (info.title.startsWith("loading,") && response.status() === 503);
+        (info.title.startsWith("loading,") && response.status() === 503) ||
+        expectedHttpFailures[path] === response.status();
       failedRequests.push({ path, status: response.status(), expected });
     });
     await use();
@@ -48,7 +53,9 @@ export const test = base.extend<{ identity: Identity; db: pg.Pool; browserEviden
     // Browser-generated resource errors are recorded above; all other console
     // errors are unexpected. Warnings (including existing React warnings) are evidence.
     expect(consoleMessages.filter(m => m.type === "error" &&
-      !/Failed to load resource:.*(?:401|503)/.test(m.text)), "Unexpected console errors").toEqual([]);
+       !/Failed to load resource:.*(?:401|503)/.test(m.text) &&
+       !Object.values(expectedHttpFailures).some(status => m.text.includes("Failed to load resource:") &&
+         new RegExp(`\\b${status}\\b`).test(m.text))), "Unexpected console errors").toEqual([]);
   }, { auto: true }],
   db: async ({}, use) => {
     const db = isolatedDatabase();

@@ -34,7 +34,7 @@ cluster created by this runner. SIGINT/SIGTERM also trigger cleanup.
 
 ## Coverage and evidence
 
-Seven journeys run on desktop (1440×1000) and narrow mobile (360×800):
+Journeys run on desktop (1440×1000) and narrow mobile (360×800):
 
 - Funded cash plus holdings, separately linked named debt below, negative cash
   ledgers, all positive accounts (including the sixth, outside the dashboard's
@@ -51,6 +51,13 @@ Seven journeys run on desktop (1440×1000) and narrow mobile (360×800):
 - A preconfigured, isolated £ exception retains numeric ledger values and uses
   consistent headline, account-detail, fee-debt and statement labels. Ordinary
   fixtures remain CAD. Accepted fee-plan pricing/terms are not relabeled.
+- Trusts remain in Business & Trust on Accounts while appearing alongside
+  brokerage, IRA, workplace retirement and education accounts in the trading
+  selector. Normal trading controls buy additional shares and sell trust
+  holdings, with cash, holdings and completed transaction records checked.
+  Debt restrictions disable trading and reject direct requests; all three active
+  liquidation statuses reject buys and sells without changing financial records.
+  Another client's trust is neither offered nor authorized for trading.
 
 The browser clock advances client polling intervals; server dates remain real.
 Assertions wait for rendered values rather than assuming clock advancement
@@ -62,7 +69,8 @@ Screenshots for each meaningful state, JSON console/page/network error evidence,
 the isolated server log and an isolation manifest are saved under
 `test-results/balances/`. The HTML report is under `playwright-report/balances/`;
 failed cases also retain Playwright traces. Both directories are gitignored.
-Expected anonymous `/api/user` 401s and deliberately injected 503s are identified
-in the evidence; unexpected HTTP failures, console errors or page errors fail
+Expected anonymous `/api/user` 401s, deliberately injected 503s, and explicitly
+configured trade rejection responses are identified in the evidence;
+unexpected HTTP failures, console errors or page errors fail
 the test. Evidence contains only fictional identities, but failed-login traces
 can contain ephemeral test passwords, so do not publish raw traces.

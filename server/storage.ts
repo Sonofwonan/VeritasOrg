@@ -190,7 +190,7 @@ export class DatabaseStorage implements IStorage {
             shares: sql`${investments.shares} + ${shares}`,
             // Weighted average price could be implemented here, but for simplicity keep purchase price of last or initial?
             // Let's keep purchase price as average cost basis
-            purchasePrice: sql`((${investments.shares} * ${investments.purchasePrice}) + (${shares} * ${price})) / (${investments.shares} + ${shares})`
+            purchasePrice: sql`((${investments.shares} * ${investments.purchasePrice}) + (${shares}::numeric * ${price}::numeric)) / (${investments.shares} + ${shares})`
           })
           .where(eq(investments.id, existing.id))
           .returning();

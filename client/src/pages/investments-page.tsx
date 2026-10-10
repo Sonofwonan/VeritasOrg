@@ -87,8 +87,10 @@ export default function InvestmentsPage() {
   const { data: quote } = useMarketQuote(selectedSymbol);
   const { data: etfQuote } = useMarketQuote(selectedETF);
 
-  const investmentAccounts = accounts?.filter(a => 
-    ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan'].includes(a.accountType)
+  // Trading eligibility is independent of Accounts-page presentation groups:
+  // trusts display under Business & Trust but can also hold and trade investments.
+  const investmentAccounts = accounts?.filter(a =>
+    ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan', 'Trust Account'].includes(a.accountType)
   ) || [];
 
   const handleBuy = () => {

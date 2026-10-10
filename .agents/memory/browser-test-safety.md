@@ -14,3 +14,9 @@ On Replit, prefer the packaged Chromium executable for local Playwright runs; a 
 **Why:** The downloaded browser launched unsuccessfully despite a successful installation because its shared-library dependencies were unavailable. The packaged browser includes its runtime closure.
 
 **How to apply:** Use the harness browser override or platform-packaged browser rather than repeatedly reinstalling the download.
+
+Playwright array-valued option fixtures need its explicit tuple wrapper in test.use; use an object-valued option for expected HTTP rejections to avoid that ambiguity.
+
+**Why:** A plain array supplied through test.use was interpreted as fixture configuration instead of the value, causing response-evidence collection to fail.
+
+**How to apply:** Configure rejection evidence by exact endpoint and status, and still assert the response message and unchanged financial records in the test.
