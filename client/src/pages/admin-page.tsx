@@ -18,6 +18,7 @@ import { AdminFees } from "@/components/fees/admin-fees";
 import { formatCAD } from "@shared/fees";
 import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { ClientCurrencyPanel } from "@/components/admin/client-currency-panel";
+import { DebtRestrictionPanel } from "@/components/admin/debt-restriction-panel";
 
 const SESSION_KEY = "vw_admin_key";
 
@@ -433,6 +434,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
   const [freezeDialog, setFreezeDialog] = useState<{ user: any } | null>(null);
   const [freezeReason, setFreezeReason] = useState("");
   const [currencyClient, setCurrencyClient] = useState<any | null>(null);
+  const [debtNoticeClient, setDebtNoticeClient] = useState<any | null>(null);
 
   const freezeUserMutation = useMutation({
     mutationFn: ({ id, frozen, reason }: { id: number; frozen: boolean; reason?: string }) =>
@@ -772,6 +774,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
 
           {/* ── Users ── */}
           <TabsContent value="users" className="mt-4">
+            <DebtRestrictionPanel user={debtNoticeClient} adminKey={adminKey} onClose={() => setDebtNoticeClient(null)} />
             <ClientCurrencyPanel
               user={currencyClient}
               adminKey={adminKey}
@@ -865,6 +868,10 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                   <div className="space-y-2">
                     {(allUsers as any[]).map((u: any) => (
                       <div key={u.id} className={`rounded-lg border p-4 ${u.accountFrozen ? "border-sky-500/40 bg-sky-500/5" : u.loginRestricted ? "border-red-500/30 bg-red-500/5" : "border-slate-700 bg-slate-700/20"}`} data-testid={`user-row-${u.id}`}>
+                        {u.debtClearanceRequired && <Button variant="outline" size="sm"
+                          className="mb-3 border-slate-500 bg-transparent text-slate-200"
+                          data-testid={`debt-notice-admin-${u.id}`}
+                          onClick={() => setDebtNoticeClient(u)}>Debt restriction notice</Button>}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div className="flex items-start gap-3 min-w-0">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${u.accountFrozen ? "bg-sky-500/20 text-sky-400" : u.loginRestricted ? "bg-red-500/20 text-red-400" : "bg-primary/20 text-primary"}`}>

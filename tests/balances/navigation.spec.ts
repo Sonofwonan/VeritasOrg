@@ -14,9 +14,12 @@ test("client navigation stays collapsed until deliberately opened", async ({page
     await expect(sidebar).toHaveAttribute("aria-expanded","false");
     await expect(top).toHaveAttribute("aria-expanded","false");
     await expect(gear).toHaveCount(0);
-    const box=await header.boundingBox();
-    expect(box!.height).toBeLessThanOrEqual(48);
-    expect(box!.x).toBe(0);
+    // Responsive offcanvas and header transitions settle after their aria state
+    // changes. Check the final layout, not an intermediate animation frame.
+    await expect.poll(async () => {
+      const box=await header.boundingBox();
+      return {height:box?.height,x:box?.x};
+    }).toEqual({height:48,x:0});
     for (const control of [sidebar,top]) {
       const target=await control.boundingBox();
       expect(target!.width).toBeGreaterThanOrEqual(44);

@@ -156,10 +156,10 @@ export function ClientCurrencyPanel({
 
   return (
     <Dialog open={open} onOpenChange={value => { if (!saving) onOpenChange(value); }}>
-      <DialogContent className="w-[calc(100%-2rem)] min-w-0 max-h-[90dvh] overflow-x-hidden overflow-y-auto border-slate-700 bg-slate-900 text-white sm:max-w-2xl">
+      <DialogContent className="w-[calc(100dvw_-_2rem)] min-w-0 max-w-[calc(100dvw_-_2rem)] max-h-[90dvh] overflow-x-hidden overflow-y-auto border-slate-700 bg-slate-900 text-white sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Client display currency</DialogTitle>
-          <DialogDescription className="break-words text-slate-400">
+          <DialogDescription className="min-w-0 [overflow-wrap:anywhere] text-slate-400">
             {user?.name} {user?.email ? `· ${user.email}` : ""}
           </DialogDescription>
         </DialogHeader>

@@ -85,7 +85,19 @@ Present dashboard debt as an ordinary, simple account balance card: amount owed 
 
 **Why:** The user repeatedly rejected lengthy explanations and duplicated amounts, then clarified that debt should look like a normal credit-account balance rather than a notice.
 
-**How to apply:** Change presentation without changing debt, fee contracts, separate funded-balance accounting or existing funds locks. Do not infer an admin debt restriction from debt alone or a generic freeze. Keep the verified separate Brokerage payment requirement for existing restricted funds.
+**How to apply:** Change presentation without changing debt, fee contracts, separate funded-balance accounting or existing funds locks. Do not infer an admin debt restriction from debt alone, a generic freeze or a historical funds-lock flag without explicit admin confirmation. Keep the verified separate Brokerage payment requirement for existing restricted funds.
+
+Historical funds-lock policy and an administrator-confirmed restriction reason are distinct. Do not backfill administrative provenance just to make a notice appear, and withdrawing a notice must never count as releasing funds or verifying payment.
+
+**Why:** Existing fictional lock policies were established during account setup, without evidence of a separate administrator restriction decision. The user now wants restriction notices only after that decision, while preserving the existing payment requirement.
+
+**How to apply:** Preserve old enforcement even when reason evidence is unavailable. Require an explicit audited admin confirmation for notice attribution; keep financial clearance independent.
+
+An administrative debt notice is not a permanent user designation. A payment, credit or fee reduction invalidates its confirmation; any still-active or renewed restriction needs a fresh admin notice decision.
+
+**Why:** A user-wide confirmation could otherwise reappear when new debt locks the same account after earlier debt was cleared, falsely implying a new administrative restriction decision.
+
+**How to apply:** Bind confirmation to its clearance evidence and retire it when clearance is observed. Qualifying payment/fee history changes only the notice's validity; it must never independently release funds or modify debt.
 
 In dashboard account previews, show an overdrawn account's full name and the overdraft amount once, rather than repeating the negative cash balance in a second debt note.
 

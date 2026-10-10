@@ -12,7 +12,7 @@ import twilio from "twilio";
 import passport from "passport";
 import { registerFeeRoutes } from "./fees/routes";
 import { moneyToCents } from "@shared/fees";
-import { approvePayment, FundsAccessError, fundsAccess, fundsAccessGuard } from "./funds-access";
+import { approvePayment, FundsAccessError, fundsAccess, fundsAccessGuard, registerDebtRestrictionNoticeRoutes } from "./funds-access";
 import { accountLabel } from "@shared/account-display";
 import { registerDisplayCurrencyRoutes } from "./display-currency";
 
@@ -216,6 +216,7 @@ export async function registerRoutes(
 
   await registerFeeRoutes(app, pool, requireAdmin);
   await registerDisplayCurrencyRoutes(app, pool, requireAdmin);
+  registerDebtRestrictionNoticeRoutes(app, pool, requireAdmin);
 
   // Auth Routes
   app.post(api.auth.register.path, (_req, res) => {

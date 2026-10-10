@@ -36,7 +36,8 @@ test("named funded trusts and brokerage stay in their presentation groups withou
   await login(page, identity);
   // Positive cash and holdings, not net of the trust's overdraft.
   await verifyHeadline(page, "$2,004,000.25");
-  await expect(page.getByRole("link", { name: /Fee Reserve Trust: overdraft/ })).toBeVisible();
+  await expect(page.getByTestId(`debt-account-name-${identity.debt}`)).toHaveText("Fee Reserve Trust");
+  await expect(page.getByTestId(`debt-account-details-${identity.debt}`)).toBeVisible();
   await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("CAD $1,250.75 overdraft");
   await page.goto("/accounts");
   await expect(page.getByTestId("text-total-balance")).toHaveText(`CAD ${money(ledgerTotal - 363.64)}`);

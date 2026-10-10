@@ -18,7 +18,8 @@ import {
 import { balanceCurrencyLabel, transactionDescription, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { useFundsAccess } from "@/hooks/use-funds-access";
 import { useClientFeeSummary } from "@/hooks/use-fees";
-import { FeeLiability } from "@/components/fees/fee-liability";
+import { DebtAccountSummary } from "@/components/fees/debt-account-summary";
+import { DebtRestrictionStatus } from "@/components/fees/debt-restriction-status";
 import { accountLabel, transactionDate } from "@shared/account-display";
 
 // ── Market index data (static realistic) ─────────────────────────────────────
@@ -120,16 +121,11 @@ export default function DashboardPage() {
     );
   }
 
-  const debtNotice = <FeeLiability summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading}
-    error={feeSummary.isError} retry={() => void feeSummary.refetch()} separateFromBalance currency={currency} paymentRequired={access.blocked} />;
   return (
     <LayoutShell>
       <div className="flex flex-col gap-3">
-        {access.requiresPayment && debtNotice}
-        {access.requiresPayment && (!access.data || access.isError) && <p role="alert" className="border border-red-300 p-4 text-sm text-red-900">
-          Funds remain locked while payment status is verified.
-          {access.isError && <button className="ml-2 underline" onClick={() => void access.refetch()}>Retry</button>}
-        </p>}
+        <DebtRestrictionStatus requiresPayment={access.requiresPayment} data={access.data}
+          error={access.isError} retry={() => void access.refetch()} />
 
         {/* ── Transaction Detail Dialog ───────────────────────────────────── */}
         <Dialog open={!!selectedTxn} onOpenChange={o => !o && setSelectedTxn(null)}>
@@ -232,7 +228,8 @@ export default function DashboardPage() {
         </div>
         <p className="text-xs text-muted-foreground" data-testid="text-performance-explanation">{PERFORMANCE_UNAVAILABLE.explanation}</p>
 
-        {!access.requiresPayment && debtNotice}
+        <DebtAccountSummary summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading}
+          error={feeSummary.isError} retry={() => void feeSummary.refetch()} currency={currency} />
 
         {/* ── Portfolio in Transit Banner ─────────────────────────────────── */}
         {activeTransfer && (() => {

@@ -7,18 +7,76 @@ import { Router } from "wouter";
 import { ClientFees as ClientFeesComponent } from "../../client/src/components/fees/client-fees";
 import { AdminFees } from "../../client/src/components/fees/admin-fees";
 import { FeeLiability, AccountFeeBalance } from "../../client/src/components/fees/fee-liability";
+import { DebtAccountSummary } from "../../client/src/components/fees/debt-account-summary";
+import { DebtRestrictionStatus } from "../../client/src/components/fees/debt-restriction-status";
 import DashboardPage from "../../client/src/pages/dashboard";
 import AccountsPage from "../../client/src/pages/accounts-page";
 import { accountStatementCsv } from "../../client/src/lib/account-statement";
 import { balanceCurrencyLabel, clientBalanceCurrency, formatBalance, transactionDescription } from "../../shared/balance-currency";
 import { transactionDate } from "../../shared/account-display";
-import { DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS, MANAGEMENT_TERMS, type ClientFees, type FeeOverview, type FeePreview } from "../../shared/fees";
+import { DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS, MANAGEMENT_TERMS, type ClientFees, type ClientFeeSummary, type FeeOverview, type FeePreview } from "../../shared/fees";
 
 const settings = { enabled: false, timeZone: "America/Toronto" };
 const schedule = {
   id: 1, version: 1, name: "Fixture service plan", currency: "CAD" as const,
   total: "363.64", components: DEFAULT_FEE_COMPONENTS, terms: DEFAULT_FEE_TERMS, createdAt: "2030-01-01T12:00:00Z",
 };
+it("separates confirmed debt restrictions from debt, failed evidence, generic freezes and liquidation", () => {
+  const access = { locked:true, requiresPayment:true, paymentRecorded:false,
+    totalOwed:"50.00", paymentAccountId:901, paymentAccountName:"Synthetic Brokerage" };
+  for (const props of [
+    {requiresPayment:false},
+    {requiresPayment:true, data:{...access,locked:false,debtRestrictionConfirmed:true}},
+  ]) assert.equal(render(DebtRestrictionStatus,props,[]),"");
+  for (const props of [
+    {requiresPayment:true},
+    {requiresPayment:true,data:access},
+    {requiresPayment:true,data:{...access,debtRestrictionConfirmed:false}},
+    {requiresPayment:true,error:true,data:{...access,debtRestrictionConfirmed:true}},
+  ]) {
+    const html=render(DebtRestrictionStatus,props,[]);
+    assert(html.includes("unavailable"));
+    assert(!html.includes("Your administrator"));
+  }
+  const confirmed=render(DebtRestrictionStatus,{requiresPayment:true,
+    data:{...access,debtRestrictionConfirmed:true}},[]);
+  assert(confirmed.includes("Your administrator has restricted transfers and investing"));
+  assert(!confirmed.includes("sign in") && !confirmed.includes("50.00"));
+  for (const condition of ["no restriction","generic freeze","liquidation","failed access"]) {
+    const data=dashboardData([{id:901,accountType:"Brokerage Account",balance:"-50.00"}]);
+    data.find(item=>item.key[0]==="/api/user")!.value = {
+      id:7,name:"Synthetic Restriction Client",accountFrozen:condition==="generic freeze",
+      debtClearanceRequired:condition==="failed access",
+    };
+    if(condition==="liquidation") data.find(item=>item.key[0]==="/api/institutional-transfers")!.value=[
+      {id:902,status:"liquidating",institutionName:"Synthetic Custodian",transferType:"cash"}];
+    const html=render(DashboardPage,{},data,condition==="failed access"?[["/api/funds-access",7]]:[]);
+    assert(!html.includes("Your administrator has restricted"),condition);
+    assert.equal(displayedValue(html,"debt-account-amount-901"),"CAD $50.00");
+    if(condition==="failed access") for(const action of ["transfer","invest","wire"]) {
+      assert(html.match(new RegExp(`<button[^>]*data-testid="button-quick-${action}"[^>]*>`))?.[0].includes("disabled"));
+    }
+  }
+});
+it("renders only exact named debt amounts and preserves privacy, unavailable and zero states", () => {
+  const summary:ClientFeeSummary={totalUnpaid:"25.00",totalOverdraft:"100.00",totalOwed:"125.00",
+    accounts:[{accountId:901,accountName:"Account #901",unpaidTotal:"25.00",unpaidCount:1,overdraft:"100.00"}]};
+  const props={summary,accounts:[{id:901,accountType:"Brokerage Account",displayName:"Synthetic Discretionary Investment Account"}],currency:"GBP"};
+  const before=JSON.stringify(props);
+  const html=render(DebtAccountSummary,props,[]);
+  assert.equal(displayedValue(html,"debt-account-amount-901"),"£125.00");
+  assert.equal(html.match(/£125\.00/g)?.length,1);
+  assert(html.includes("Synthetic Discretionary Investment Account") && html.includes('/accounts/901'));
+  for(const forbidden of ["Account #","CAD","GBP","red-","notice","negative cash ledger","interest","minimum payment","due date","credit limit"])
+    assert(!html.includes(forbidden),forbidden);
+  assert(!render(DebtAccountSummary,{...props,hidden:true},[]).includes("125.00"));
+  assert(render(DebtAccountSummary,{loading:true},[]).includes("Loading account balances"));
+  assert(render(DebtAccountSummary,{error:true},[]).includes("unavailable"));
+  assert(render(DebtAccountSummary,{summary:{...summary,accounts:[]}},[]).includes("Account details unavailable"));
+  assert(render(DebtAccountSummary,{summary:{...summary,accounts:[{...summary.accounts[0],overdraft:"NaN"}]}},[]).includes("Unavailable"));
+  assert.equal(render(DebtAccountSummary,{summary:{totalUnpaid:"0",totalOverdraft:"0",accounts:[]}},[]),"");
+  assert.equal(JSON.stringify(props),before);
+});
 it("omits stray pound prefixes in fee descriptions, not monetary amounts or CAD records", () => {
   const description = "CAD monthly service fee · 2026-09-01 · Assessment 65 · Authorized fee overdraft";
   assert.equal(transactionDescription(description, "GBP"), description.replace(/^CAD /, ""));
@@ -42,7 +100,7 @@ it("omits stray pound prefixes in fee descriptions, not monetary amounts or CAD 
   assert(!html.includes("£ monthly service fee"));
   assert(html.includes("£363.64"));
 });
-it("shows Mary's locked debt notice first, with £ only and unchanged funded balance",()=>{
+it("shows a normal named GBP debt card below the funded balance without changing access locks",()=>{
   const data=dashboardData([
     {id:25,accountType:"Brokerage Account",balance:"-12398.48"},
     {id:26,accountType:"Trust Account",displayName:"Inheritance Trust Account",balance:"1622886.00"},
@@ -51,10 +109,11 @@ it("shows Mary's locked debt notice first, with £ only and unchanged funded bal
   data.push({key:["/api/funds-access",7],value:{locked:true,requiresPayment:true,paymentRecorded:false,totalOwed:"12398.48",paymentAccountId:25,paymentAccountName:"Brokerage Account"}});
   const html=render(DashboardPage,{},data);
   assert.equal(displayedValue(html,"text-total-balance"),"£1,622,886.00");
-  const notice=html.match(/<section aria-label="Outstanding service fees"[\s\S]*?<\/section>/)?.[0];
+  const notice=html.match(/<article[^>]*data-testid="debt-account-25"[^>]*>[\s\S]*?<\/article>/)?.[0];
   assert(notice);
   assert(notice.includes("Brokerage Account") && notice.includes('href="/accounts/25"'));
-  assert(notice.includes("Review accounts"));
+  assert(notice.includes("Account details"));
+  assert(!notice.includes("red-") && !notice.includes("role=\"alert\""));
   assert.equal(notice.match(/£12,398\.48/g)?.length,1);
   const card=html.match(/<button[^>]*data-testid="dash-account-25"[^>]*>[\s\S]*?<\/button>/)?.[0];
   assert(card);
@@ -69,7 +128,9 @@ it("shows Mary's locked debt notice first, with £ only and unchanged funded bal
     const button=html.match(new RegExp(`<button[^>]*data-testid="button-quick-${action}"[^>]*>`))?.[0];
     assert(button?.includes("disabled"),`${action} must remain locked`);
   }
-  assert(html.indexOf('aria-label="Outstanding service fees"')<html.indexOf('data-testid="text-total-balance"'));
+  assert(html.indexOf('data-testid="text-total-balance"')<html.indexOf('data-testid="debt-account-summary"'));
+  assert(html.includes("Restriction details unavailable"));
+  assert(!html.includes("restricted by your administrator"));
   assert(!html.includes("CAD") && !html.includes("GBP") && !html.includes("Account #"));
   assert(!html.includes("Total balance · £"));
   assert(!html.includes("Account figures in £"));
@@ -162,7 +223,10 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     summary.accounts[0].accountName="Account #25";
     for(const Component of [DashboardPage,AccountsPage]) {
       const html=render(Component,{},data);
-      assert(html.includes("Brokerage Account: overdraft CAD $12,398.48"));
+      if (Component===DashboardPage) {
+        assert.equal(displayedValue(html,"debt-account-name-25"),"Brokerage Account");
+        assert.equal(displayedValue(html,"debt-account-amount-25"),"CAD $12,398.48");
+      } else assert(html.includes("Brokerage Account: overdraft CAD $12,398.48"));
       assert(!html.includes("Account #25"));
       assert(html.includes('href="/accounts/25"'));
     }
@@ -185,8 +249,8 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     assert.equal(displayedValue(html,"text-total-balance"),"£1,622,886.00");
     assert.equal(displayedValue(html,"text-liquid-cash"),"£1,622,886.00");
     assert.equal(displayedValue(html,"text-investment-value"),"£0.00");
-    assert(html.includes("Brokerage Account: overdraft £12,398.48"));
-    assert(html.includes("-£12,398.48"));
+    assert.equal(displayedValue(html,"debt-account-name-25"),"Brokerage Account");
+    assert.equal(displayedValue(html,"debt-account-amount-25"),"£12,398.48");
     assert(!html.includes("GBP"));
     assert(!html.includes("CAD $"));
     assert(!html.includes("Total balance · £"));
@@ -242,7 +306,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
         assert(html.includes(Component===DashboardPage?expectedFunded:expectedNet),Component.name);
         if(Component===DashboardPage) assert.equal(displayedValue(html,"text-total-balance"),expectedFunded);
         assert(html.includes("Inheritance Trust Account"));
-        assert(html.includes("CAD -$12,398.48"));
+        assert(html.includes(Component===DashboardPage?"CAD $12,398.48":"CAD -$12,398.48"));
         assert(!html.includes("Original inheritance deposit"));
         assert(!html.toLowerCase().includes("demo profile"));
       }
@@ -284,7 +348,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     ];
     for (const Component of [DashboardPage, AccountsPage]) {
       const html = render(Component, {}, data);
-      for (const text of ["CAD $11,636.48", "Amount owed", "32 unpaid fees"]) {
+      for (const text of ["CAD $11,636.48", "Amount owed"]) {
         assert(html.includes(text), `${Component.name}: ${text}`);
       }
       if(Component===DashboardPage) {
@@ -292,6 +356,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
         assert.equal(displayedValue(html,"dash-account-balance-24"),"CAD $0.00");
         assert(html.includes("Unpaid fees:"));
       } else {
+        assert(html.includes("32 unpaid fees"));
         assert(html.includes("CAD -$11,636.48"));
         assert(html.includes("Net account balance"));
       }
@@ -360,8 +425,10 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
         assert.equal(displayedValue(html,"text-total-balance"),"CAD $0.00");
         assert.equal(displayedValue(html,"text-liquid-cash"),"CAD $0.00");
       } else assert(html.includes("CAD -$24,796.96"),"Accounts overview net accounting remains unchanged");
-      assert(html.includes("CAD -$12,398.48"), `${Component.name}: full-digit account overdraft`);
-      assert(html.includes("CAD $24,796.96"), `${Component.name}: amount owed`);
+      assert(html.includes(Component===DashboardPage?"CAD $12,398.48":"CAD -$12,398.48"), `${Component.name}: full-digit account overdraft`);
+      if(Component===DashboardPage) {
+        for(const id of [24,25]) assert.equal(displayedValue(html,`debt-account-amount-${id}`),"CAD $12,398.48");
+      } else assert(html.includes("CAD $24,796.96"), `${Component.name}: amount owed`);
     }
   });
   it("includes every remaining positive account balance and holdings, excluding debt and unpaid fees without mutating inputs",()=>{
@@ -380,9 +447,10 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     assert.equal(displayedValue(html,"text-investment-value"),"CAD $32.00");
     assert(html.includes("Total balance"));
     assert(!html.includes("Net worth after unpaid fees"));
-    assert(html.includes("Brokerage Account: overdraft CAD $12,398.48"));
-    assert(html.includes("not subtracted from your total balance"));
-    assert(html.indexOf('data-testid="text-total-balance"')<html.indexOf('aria-label="Outstanding service fees"'));
+    assert.equal(displayedValue(html,"debt-account-name-25"),"Brokerage Account");
+    assert.equal(displayedValue(html,"debt-account-amount-25"),"CAD $12,398.48");
+    assert(!html.includes("not subtracted from your total balance"));
+    assert(html.indexOf('data-testid="text-total-balance"')<html.indexOf('data-testid="debt-account-summary"'));
     assert.equal(JSON.stringify(data),before,"Rendering must not change saved financial records");
   });
   it("uses current remaining cash after later deductions, not a fixed inheritance deposit",()=>{
@@ -412,7 +480,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       assert.equal(displayedValue(html,"text-liquid-cash"),"CAD $1,622,886.00",status);
       assert.equal(displayedValue(html,"text-investment-value"),"CAD $0.00",status);
       assert(html.includes("CAD $500.00 pending"));
-      assert(html.includes("Brokerage Account: overdraft CAD $12,398.48"));
+      assert.equal(displayedValue(html,"debt-account-amount-25"),"CAD $12,398.48");
       assert.equal(html.includes("Transfer locked"),["approved","liquidating","transfer_out"].includes(status));
       assert(!html.includes("line-through"));
     }
@@ -449,11 +517,11 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     ],[],"100.00");
     const error=render(DashboardPage,{},data,[["/api/fees","summary",7]]);
     assert.equal(displayedValue(error,"text-total-balance"),"CAD $1,622,886.00");
-    assert(error.includes("Overdraft and fee details could not be loaded"));
+    assert(error.includes("Account balance details are unavailable"));
     assert(error.includes("Retry"));
     const loading=render(DashboardPage,{},data.filter(d=>d.key[0]!=="/api/fees"));
     assert.equal(displayedValue(loading,"text-total-balance"),"CAD $1,622,886.00");
-    assert(loading.includes("Loading overdraft and fee details"));
+    assert(loading.includes("Loading account balances"));
     const summary=data.find(d=>d.key[0]==="/api/fees")!.value;
     const hidden=render(FeeLiability,{summary,hidden:true,separateFromBalance:true},[]);
     for(const amount of ["12,398.48","12,498.48","100.00"]) assert(!hidden.includes(amount));

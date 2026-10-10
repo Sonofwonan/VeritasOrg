@@ -20,3 +20,9 @@ Playwright array-valued option fixtures need its explicit tuple wrapper in test.
 **Why:** A plain array supplied through test.use was interpreted as fixture configuration instead of the value, causing response-evidence collection to fail.
 
 **How to apply:** Configure rejection evidence by exact endpoint and status, and still assert the response message and unchanged financial records in the test.
+
+Wait for final layout geometry when testing responsive disclosure controls; an updated aria state does not mean an offcanvas or height transition has finished.
+
+**Why:** Browser regressions intermittently measured the header partway through a sidebar transition, despite the correct final collapsed state.
+
+**How to apply:** Poll the expected final bounds rather than asserting one immediate bounding-box sample or adding arbitrary sleeps.

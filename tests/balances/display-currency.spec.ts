@@ -112,9 +112,15 @@ test("staff can deliberately change a client display and see named masked balanc
     await expect(panel).toContainText("CAD → £");
     const shot = info.outputPath("staff-pound-display.png");
     await page.screenshot({ path: shot, animations: "disabled" });
-    const bounds = await panel.boundingBox();
-    expect(bounds!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
-    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    // Restored dialog animations and font layout can settle just after capture.
+    // Keep the exact viewport containment requirement, but measure final layout.
+    await expect.poll(() => panel.evaluate((element,viewportWidth) => {
+      const bounds=element.getBoundingClientRect();
+      return {fits:bounds.width<=viewportWidth && bounds.x>=0,
+        width:bounds.width,x:bounds.x,layoutViewport:window.innerWidth,
+        visualViewport:window.visualViewport?.width,
+        cssWidth:getComputedStyle(element).width};
+    },page.viewportSize()!.width)).toMatchObject({fits:true});
     await info.attach("staff-pound-display", { path: shot, contentType: "image/png" });
     await panel.getByRole("button", { name: "Cancel" }).click();
     await page.getByRole("tab", { name: /Fees/ }).click();
@@ -127,7 +133,7 @@ test("staff can deliberately change a client display and see named masked balanc
     await expect(client.getByTestId(`balance-${identity.funded}`)).toHaveText("£2,000,000.25");
     await client.goto("/dashboard");
     await verifyHeadline(client, "£2,003,900.25");
-    await expect(client.getByTestId("text-total-fee-debt")).toHaveText("£1,614.39");
+    await expect(client.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("£1,614.39");
     await expect(client.locator("body")).not.toContainText("GBP");
     await expect(client.locator("body")).not.toContainText("CAD");
   } finally { await context.close(); }

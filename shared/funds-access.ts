@@ -5,4 +5,6 @@ export interface FundsAccess {
   totalOwed: string;
   paymentAccountId: number | null;
   paymentAccountName: string | null;
+  /** Explicit admin confirmation, never inferred from a ledger or generic freeze. */
+  debtRestrictionConfirmed?: boolean;
 }
