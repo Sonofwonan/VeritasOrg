@@ -80,3 +80,9 @@ For the inheritance deposit, show its date and amount in transaction history; on
 **Why:** The user clarified that transaction history must show the deposit date and the balance should be reflected in the dashboard or total balance.
 
 **How to apply:** Preserve the dated deposit entry, include its effect once in current totals, and retain separate overdraft identification without adding an original-inheritance-amount dashboard card.
+
+Keep Mary's dashboard debt notice simple: amount owed once, the account name and the review link; omit the payment-required paragraphs and ledger/unpaid-assessment explanation.
+
+**Why:** The user explicitly requested removal of those paragraphs and rejected repeating the debt amount in the notice.
+
+**How to apply:** Change presentation only. Keep the notice above the main balance, preserve separate overdraft accounting and keep funds locked until the verified Brokerage payment clears the debt.

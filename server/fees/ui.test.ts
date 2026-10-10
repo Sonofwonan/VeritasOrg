@@ -51,8 +51,17 @@ it("shows Mary's locked debt notice first, with £ only and unchanged funded bal
   data.push({key:["/api/funds-access",7],value:{locked:true,requiresPayment:true,paymentRecorded:false,totalOwed:"12398.48",paymentAccountId:25,paymentAccountName:"Brokerage Account"}});
   const html=render(DashboardPage,{},data);
   assert.equal(displayedValue(html,"text-total-balance"),"£1,622,886.00");
-  assert(html.includes("Brokerage Account: overdraft £12,398.48"));
-  assert(html.includes("Payment is required before access to funds can be granted."));
+  const notice=html.match(/<section aria-label="Outstanding service fees"[\s\S]*?<\/section>/)?.[0];
+  assert(notice);
+  assert(notice.includes("Brokerage Account") && notice.includes('href="/accounts/25"'));
+  assert(notice.includes("Review accounts"));
+  assert.equal(notice.match(/£12,398\.48/g)?.length,1);
+  for (const removed of ["Payment is required", "A separate payment", "Overdrafts and unpaid fees",
+    "negative cash ledger", "unpaid assessments", "No interest is added"]) assert(!notice.includes(removed),removed);
+  for (const action of ["transfer","invest","wire"]) {
+    const button=html.match(new RegExp(`<button[^>]*data-testid="button-quick-${action}"[^>]*>`))?.[0];
+    assert(button?.includes("disabled"),`${action} must remain locked`);
+  }
   assert(html.indexOf('aria-label="Outstanding service fees"')<html.indexOf('data-testid="text-total-balance"'));
   assert(!html.includes("CAD") && !html.includes("GBP") && !html.includes("Account #"));
   assert(!html.includes("Total balance · £"));

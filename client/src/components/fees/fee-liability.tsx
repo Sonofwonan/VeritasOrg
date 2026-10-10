@@ -40,19 +40,16 @@ export function FeeLiability({ summary, error, retry, hidden = false, loading = 
   const overdraft = Number(summary.totalOverdraft || 0);
   return (
     <section aria-label="Outstanding service fees" className="border border-red-300 bg-red-50 p-4 sm:p-5 text-red-950">
-      {paymentRequired && <div className="mb-3 border-b border-red-200 pb-3">
-        <p className="font-semibold" data-testid="text-payment-required">Payment is required before access to funds can be granted.</p>
-        <p className="mt-1 text-sm">A separate payment must be recorded in the Brokerage Account and the debt cleared before funds are available for transfer or investment.</p>
-      </div>}
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="label-caps text-red-800">Fee debt · Amount owed</p>
+          <p className="label-caps text-red-800">{paymentRequired ? "Amount owed" : "Fee debt · Amount owed"}</p>
           <p className="mt-1 break-all font-mono text-xl sm:text-2xl font-semibold" data-testid="text-total-fee-debt">
             {hidden ? "••••••" : money(summary.totalOwed || String(unpaid + overdraft))}
           </p>
         </div>
         {accountLinks && <Link href="/accounts" className="text-sm underline underline-offset-4">Review accounts</Link>}
       </div>
+      {!paymentRequired && <>
       <p className="mt-2 text-xs leading-relaxed">
         {separateFromBalance
           ? "Overdrafts and unpaid fees are shown separately, not subtracted from your total balance. Overdrawn account balances remain negative. No interest is added."
@@ -62,13 +59,16 @@ export function FeeLiability({ summary, error, retry, hidden = false, loading = 
         <span data-testid="text-posted-overdraft-ledger">{hidden ? "••••••" : money(-overdraft)} posted negative cash ledger</span>
         <span>{hidden ? "••••••" : money(summary.totalUnpaid)} unpaid assessments</span>
       </div>
+      </>}
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {summary.accounts.filter(account => Number(account.unpaidTotal) > 0 || Number(account.overdraft || 0) > 0).map(account => (
           <AccountReference key={account.accountId} href={`/accounts/${account.accountId}`} className={accountLinks ? "underline underline-offset-4" : ""}>
+            {paymentRequired ? nameFor(account) : <>
             {nameFor(account)}: {Number(account.overdraft || 0) > 0 ? "overdraft " : ""}{hidden ? "••••••" : money(Number(account.overdraft || 0) > 0 ? account.overdraft! : account.unpaidTotal)}
             {Number(account.overdraft || 0) <= 0 ? " owed" : Number(account.unpaidTotal) > 0 ? ` · ${hidden ? "••••••" : money(account.unpaidTotal)} unpaid fees` : ""}
             {Number(account.overdraft || 0) > 0 ? ` · ${hidden ? "••••••" : money(-Number(account.overdraft))} negative cash ledger` : ""}
             {Number(account.unpaidCount) > 0 ? ` · ${account.unpaidCount} unpaid fees` : ""}
+            </>}
           </AccountReference>
         ))}
       </div>
