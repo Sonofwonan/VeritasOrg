@@ -78,6 +78,62 @@ test("Accounts balances stay horizontal and unclipped across phone and tablet wi
   }
 });
 
+test("dashboard account previews show complete names and one overdraft amount", async ({page,identity,db},info) => {
+  const longName="Inheritance Trust Account — Family Farm Proceeds";
+  await db.query("UPDATE accounts SET display_name=$1 WHERE id=$2 AND user_id=$3",
+    [longName,identity.funded,identity.userId]);
+  for (const currency of ["GBP","CAD"]) {
+    await db.query("UPDATE users SET display_currency=$1 WHERE id=$2",[currency,identity.userId]);
+    // Stop detail-page polling before ending its session for the next currency.
+    await page.goto("about:blank");
+    await page.request.post("/api/logout");
+    await login(page,identity);
+    const card=page.getByTestId(`dash-account-${identity.debt}`);
+    const money=currency==="GBP"?"£1,250.75":"CAD $1,250.75";
+    await expect(page.getByTestId(`dash-account-balance-${identity.debt}`)).toHaveText(money);
+    await expect(card).toContainText(`${money} overdraft`);
+    await expect(card).toContainText("Unpaid fees:");
+    await expect(card).not.toContainText("Cash ledger overdraft");
+    expect((await card.innerText()).split(money).length-1).toBe(1);
+    for (const width of [320,390,768,1024,1280,1440]) {
+      await page.setViewportSize({width,height:1000});
+      await page.evaluate(()=>document.fonts.ready);
+      for (const id of [identity.debt,identity.funded]) {
+        const name=page.getByTestId(`dash-account-name-${id}`);
+        await expect(name).toHaveText(id===identity.debt?"Fee Reserve Trust":longName);
+        const visible=await name.evaluate(element=>{
+          const box=element.getBoundingClientRect();
+          return {width:box.width,clipped:element.scrollWidth>element.clientWidth+1,
+            truncated:getComputedStyle(element).textOverflow==="ellipsis"};
+        });
+        expect(visible.width,`${currency} ${width}px: name squeezed out`).toBeGreaterThan(80);
+        expect(visible.clipped,`${currency} ${width}px: name clipped`).toBe(false);
+        expect(visible.truncated).toBe(false);
+        const amount=page.getByTestId(`dash-account-balance-${id}`);
+        const bounds=await amount.evaluate(element=>{
+          const range=document.createRange();
+          range.selectNodeContents(element);
+          const rectangles=Array.from(range.getClientRects());
+          const card=element.closest("button")!.getBoundingClientRect();
+          return {lines:new Set(rectangles.map(r=>Math.round(r.top))).size,
+            overflow:rectangles.some(r=>r.right>card.right+1)};
+        });
+        expect(bounds.lines,`${currency} ${width}px: amount wrapped`).toBe(1);
+        expect(bounds.overflow,`${currency} ${width}px: amount clipped`).toBe(false);
+      }
+      if (currency==="GBP" && [390,1024].includes(width)) {
+        await card.scrollIntoViewIfNeeded();
+        await evidence(page,info,`dashboard-account-preview-${width}`);
+      }
+    }
+    await card.click();
+    await expect(page).toHaveURL(new RegExp(`/accounts/${identity.debt}$`));
+  }
+  const {rows:[account]}=await db.query("SELECT balance FROM accounts WHERE id=$1 AND user_id=$2",
+    [identity.debt,identity.userId]);
+  expect(account.balance).toBe("-1250.75");
+});
+
 test("normal login, funded headline, named debt, negative accounts and sixth positive account", async ({ page, identity }, info) => {
   await login(page, identity);
   await verifyHeadline(page);
@@ -92,7 +148,7 @@ test("normal login, funded headline, named debt, negative accounts and sixth pos
   const headlineBox = await page.getByTestId("text-total-balance").boundingBox();
   const debtBox = await debt.boundingBox();
   expect(debtBox!.y).toBeGreaterThan(headlineBox!.y);
-  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("-$1,250.75 cash");
+  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("$1,250.75 overdraft");
   await expect(page.getByTestId(`dash-account-${identity.extra}`)).toContainText("$500.00 cash");
   await evidence(page, info, "signed-in-funded-balance-and-debt");
   // The sixth account is not in the dashboard's five-row preview but must count.
@@ -134,14 +190,14 @@ test("fee retry/refund and account/holding polling refresh without netting debt"
   expect(settings.ok()).toBeTruthy();
   await feeAction("retry");
   await page.clock.runFor(31000);
-  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("-$1,614.39 cash");
+  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("$1,614.39 overdraft");
   await expect(page.getByTestId("text-total-fee-debt")).toHaveText("CAD $1,614.39");
   await verifyHeadline(page);
   await evidence(page, info, "fee-posted-to-negative-ledger");
   await feeAction("refund");
   await page.clock.runFor(31000);
   await expect(page.getByTestId("text-total-fee-debt")).toHaveText("CAD $1,250.75");
-  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("-$1,250.75 cash");
+  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("$1,250.75 overdraft");
   await verifyHeadline(page);
   await db.query("UPDATE accounts SET balance=balance+10 WHERE id=$1 AND user_id=$2", [identity.extra, identity.userId]);
   await db.query("UPDATE investments SET current_price=251 WHERE account_id=$1", [identity.funded]);
@@ -310,7 +366,7 @@ test("preconfigured pound exception preserves amounts and consistent detail/debt
   await expect(page.getByTestId("text-liquid-cash")).toHaveText("£2,001,400.25");
   await expect(page.getByTestId("text-investment-value")).toHaveText("£2,500.00");
   await expect(page.getByTestId("text-total-fee-debt")).toHaveText("£1,614.39");
-  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("-£1,250.75 cash");
+  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("£1,250.75 overdraft");
   await evidence(page, info, "preconfigured-pound-exception-funded-balance-and-debt");
   await page.getByTestId("button-quick-accounts").click();
   await expect(page.getByTestId(`balance-${identity.sixth}`)).toHaveText("£125.00");

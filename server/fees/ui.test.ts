@@ -56,6 +56,13 @@ it("shows Mary's locked debt notice first, with £ only and unchanged funded bal
   assert(notice.includes("Brokerage Account") && notice.includes('href="/accounts/25"'));
   assert(notice.includes("Review accounts"));
   assert.equal(notice.match(/£12,398\.48/g)?.length,1);
+  const card=html.match(/<button[^>]*data-testid="dash-account-25"[^>]*>[\s\S]*?<\/button>/)?.[0];
+  assert(card);
+  assert.equal(displayedValue(card,"dash-account-name-25"),"Brokerage Account");
+  assert.equal(displayedValue(card,"dash-account-balance-25"),"£12,398.48");
+  assert.equal(card.match(/£12,398\.48/g)?.length,1);
+  assert(card.includes("overdraft"));
+  assert(!card.includes("Cash ledger overdraft") && !card.includes("truncate"));
   for (const removed of ["Payment is required", "A separate payment", "Overdrafts and unpaid fees",
     "negative cash ledger", "unpaid assessments", "No interest is added"]) assert(!notice.includes(removed),removed);
   for (const action of ["transfer","invest","wire"]) {
@@ -277,10 +284,17 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     ];
     for (const Component of [DashboardPage, AccountsPage]) {
       const html = render(Component, {}, data);
-      for (const text of ["CAD -$11,636.48", "CAD $11,636.48", "Amount owed", "32 unpaid fees", "Net account balance"]) {
+      for (const text of ["CAD $11,636.48", "Amount owed", "32 unpaid fees"]) {
         assert(html.includes(text), `${Component.name}: ${text}`);
       }
-      if(Component===DashboardPage) assert.equal(displayedValue(html,"text-total-balance"),"CAD $0.00");
+      if(Component===DashboardPage) {
+        assert.equal(displayedValue(html,"text-total-balance"),"CAD $0.00");
+        assert.equal(displayedValue(html,"dash-account-balance-24"),"CAD $0.00");
+        assert(html.includes("Unpaid fees:"));
+      } else {
+        assert(html.includes("CAD -$11,636.48"));
+        assert(html.includes("Net account balance"));
+      }
       assert(!html.includes("demo profile"));
     }
   });

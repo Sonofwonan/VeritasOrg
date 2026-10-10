@@ -86,3 +86,9 @@ Keep Mary's dashboard debt notice simple: amount owed once, the account name and
 **Why:** The user explicitly requested removal of those paragraphs and rejected repeating the debt amount in the notice.
 
 **How to apply:** Change presentation only. Keep the notice above the main balance, preserve separate overdraft accounting and keep funds locked until the verified Brokerage payment clears the debt.
+
+In dashboard account previews, show an overdrawn account's full name and the overdraft amount once, rather than repeating the negative cash balance in a second debt note.
+
+**Why:** The user approved “Brokerage Account — £12,398.48 overdraft” once after the duplicate debt note crowded the account name out of view.
+
+**How to apply:** Keep the actual negative ledger balance unchanged. Display its magnitude with an explicit overdraft label in the preview; retain distinct unpaid fees when present and full details on the account page.

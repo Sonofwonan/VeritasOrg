@@ -18,7 +18,7 @@ import {
 import { balanceCurrencyLabel, transactionDescription, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { useFundsAccess } from "@/hooks/use-funds-access";
 import { useClientFeeSummary } from "@/hooks/use-fees";
-import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability";
+import { FeeLiability } from "@/components/fees/fee-liability";
 import { accountLabel, transactionDate } from "@shared/account-display";
 
 // ── Market index data (static realistic) ─────────────────────────────────────
@@ -546,10 +546,12 @@ export default function DashboardPage() {
               <div className="divide-y divide-border/40">
                 {accounts?.slice(0, 5).map(acc => {
                   const cat = categoryOf(acc.accountType);
+                  const overdrawn = Number(acc.balance) < 0;
+                  const unpaid = Number(feeSummary.data?.accounts.find(item => item.accountId === acc.id)?.unpaidTotal || 0);
                   return (
-                    <div key={acc.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/30 transition-colors cursor-pointer group"
+                    <button type="button" key={acc.id} className="block w-full px-5 py-3.5 text-left hover:bg-muted/30 transition-colors group"
                       onClick={() => setLocation(`/accounts/${acc.id}`)} data-testid={`dash-account-${acc.id}`}>
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-start gap-2.5 min-w-0">
                         <div className={cn('w-7 h-7 rounded-sm flex items-center justify-center shrink-0',
                           cat === 'investment' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
                           cat === 'business'   ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-sky-100 dark:bg-sky-900/30')}>
@@ -557,21 +559,23 @@ export default function DashboardPage() {
                           : cat === 'business'  ? <Briefcase className="w-3.5 h-3.5 text-amber-600" />
                           :                       <Landmark className="w-3.5 h-3.5 text-sky-600" />}
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold truncate">{accountLabel(acc)}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold [overflow-wrap:anywhere]" data-testid={`dash-account-name-${acc.id}`}>{accountLabel(acc)}</p>
                           <p className="text-[10px] text-muted-foreground font-mono">
                             ••••{((acc.id * 1337) % 9000 + 1000).toString().slice(-4)}
                           </p>
                         </div>
+                        <ChevronRight className="mt-1 w-3 h-3 shrink-0 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <div className="text-right max-w-[48vw]">
-                          <p className="font-mono text-xs font-bold tabular-nums">{fmt(acc.balance)} cash</p>
-                          <AccountFeeBalance cash={acc.balance} unpaid={feeSummary.data?.accounts.find(item => item.accountId === acc.id)?.unpaidTotal} currency={currency} />
-                        </div>
-                        <ChevronRight className="w-3 h-3 text-muted-foreground/30 group-hover:text-primary transition-colors" />
+                      <div className="mt-1 pl-[38px]">
+                        <p className={cn("font-mono text-xs font-bold tabular-nums", overdrawn && "text-rose-600")}>
+                          <span className="whitespace-nowrap" data-testid={`dash-account-balance-${acc.id}`}>{fmt(overdrawn ? Math.abs(Number(acc.balance)) : acc.balance)}</span>{" "}{overdrawn ? "overdraft" : "cash"}
+                        </p>
+                        {unpaid > 0 && <p className="mt-1 text-xs text-rose-600">
+                          Unpaid fees: <span className="whitespace-nowrap">{fmt(unpaid)}</span>
+                        </p>}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
