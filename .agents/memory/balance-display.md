@@ -69,9 +69,9 @@ For discretionary management, an annual minimum must continue after investments 
 
 **How to apply:** Model contract termination separately from zero holdings. Confirm exact CAD pricing, annual AUM rate, and whether the minimum is additional to monthly fees before posting new charges; do not infer overdraft interest.
 
-Show current funded balances as the dashboard's main balance, with overdraft debt separately. For Mary, put the debt/payment-required notice at the very top, before the main balance. Other clients retain their existing below-balance placement.
+Show current funded balances as the dashboard's main balance, with overdraft debt separately.
 
-**Why:** The user rejected netting the overdraft against available balances, then explicitly changed Mary's notice placement to the very top, before the main balance.
+**Why:** The user rejected netting the overdraft against available balances.
 
 **How to apply:** Include all remaining positive cash balances across accounts and current holdings, not only the inheritance account or original deposit, separately from named account liabilities. Preserve the negative account ledger and its debt breakdown without subtracting it from the main funded-balance headline. Distinguish an original deposit transaction from the account's changing current balance.
 
@@ -81,11 +81,11 @@ For the inheritance deposit, show its date and amount in transaction history; on
 
 **How to apply:** Preserve the dated deposit entry, include its effect once in current totals, and retain separate overdraft identification without adding an original-inheritance-amount dashboard card.
 
-Keep Mary's dashboard debt notice simple: amount owed once, the account name and the review link; omit the payment-required paragraphs and ledger/unpaid-assessment explanation.
+Present dashboard debt as an ordinary, simple account balance card: amount owed once, the full account name and access to details, not a warning notice or long fee/ledger explanation. A restriction notice belongs separately and only after a confirmed administrative restriction specifically for debt.
 
-**Why:** The user explicitly requested removal of those paragraphs and rejected repeating the debt amount in the notice.
+**Why:** The user repeatedly rejected lengthy explanations and duplicated amounts, then clarified that debt should look like a normal credit-account balance rather than a notice.
 
-**How to apply:** Change presentation only. Keep the notice above the main balance, preserve separate overdraft accounting and keep funds locked until the verified Brokerage payment clears the debt.
+**How to apply:** Change presentation without changing debt, fee contracts, separate funded-balance accounting or existing funds locks. Do not infer an admin debt restriction from debt alone or a generic freeze. Keep the verified separate Brokerage payment requirement for existing restricted funds.
 
 In dashboard account previews, show an overdrawn account's full name and the overdraft amount once, rather than repeating the negative cash balance in a second debt note.
 
