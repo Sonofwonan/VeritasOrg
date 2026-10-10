@@ -7,3 +7,4 @@
 - [Browser regression isolation](browser-test-safety.md) — Financial browser tests must use disposable identities and normal login; keep shared records untouched and use Nix-packaged Chromium.
 - [Financial responsive layouts](financial-responsive-layout.md) — Verify tablet/sidebar widths too; phone and desktop passes can hide overlapping balances and controls.
 - [Performance evidence](performance-evidence.md) — Stored numeric prices are not verified market evidence; deposits and fee liabilities must never imply investment gains.
+- [Navigation collapse](navigation-collapse.md) — Client side menu and top settings bar start collapsed; only deliberate user actions open them.

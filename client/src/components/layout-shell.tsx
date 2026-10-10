@@ -12,6 +12,8 @@ import {
   CreditCard,
   Settings,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Search,
   Command,
   MessageSquare,
@@ -45,10 +47,11 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
   SidebarFooter,
-  SidebarInset
+  SidebarInset,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 
 const navItems = [
@@ -60,11 +63,49 @@ const navItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
+function ResetSidebarOnRouteChange({ location }: { location: string }) {
+  const { setOpen, setOpenMobile } = useSidebar();
+  const previousLocation = useRef(location);
+
+  useEffect(() => {
+    if (previousLocation.current === location) return;
+    previousLocation.current = location;
+    setOpen(false);
+    setOpenMobile(false);
+  }, [location, setOpen, setOpenMobile]);
+
+  return null;
+}
+
+function SidebarPanel({ children }: { children: React.ReactNode }) {
+  const { isMobile, open, openMobile } = useSidebar();
+  // React 18 needs a string for this native HTML boolean attribute.
+  const inactive = !(isMobile ? openMobile : open) ? { inert: "" } : {};
+  return <div {...inactive} id="veritas-side-navigation" className="flex h-full flex-col">{children}</div>;
+}
+
+function ShellSidebarToggle({ testId = "sidebar-toggle" }: { testId?: string }) {
+  const { isMobile, open, openMobile } = useSidebar();
+  const expanded = isMobile ? openMobile : open;
+
+  return (
+    <SidebarTrigger
+      data-testid={testId}
+      aria-label={expanded ? "Close side navigation" : "Open side navigation"}
+      aria-expanded={expanded}
+      aria-controls="veritas-side-navigation"
+      className="h-11 w-11 shrink-0 rounded-none text-white/70 hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-primary"
+    />
+  );
+}
+
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [topNavigationOpen, setTopNavigationOpen] = useState(false);
 
   const handleAutoLogout = useCallback(() => {
     logout.mutate();
@@ -72,6 +113,10 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   const { showWarning, secondsLeft, dismiss } = useInactivityLogout(handleAutoLogout);
   const { isUnderLiquidation } = useActiveLiquidation();
+
+  useEffect(() => {
+    setTopNavigationOpen(false);
+  }, [location]);
 
   const filteredItems = navItems.filter(item => 
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
@@ -94,10 +139,17 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <SidebarProvider style={style as React.CSSProperties}>
+    <SidebarProvider
+      open={sidebarOpen}
+      onOpenChange={setSidebarOpen}
+      defaultOpen={false}
+      style={style as React.CSSProperties}
+    >
+      <ResetSidebarOnRouteChange location={location} />
       <div className="flex h-screen w-full overflow-hidden bg-background">
-        <Sidebar className="border-r border-border/50 bg-zinc-950 text-zinc-100">
-          <SidebarHeader className="h-20 flex items-center px-6 border-b border-white/5">
+        <Sidebar collapsible="offcanvas" className="border-r border-border/50 bg-zinc-950 text-zinc-100">
+          <SidebarPanel>
+          <SidebarHeader className="h-20 flex-row items-center justify-between gap-2 px-4 border-b border-white/5">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
                 <img src="/assets/IMG_4531_1771684255921.jpeg" alt="Logo" className="w-7 h-7 object-contain rounded-sm" />
@@ -107,6 +159,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-black mt-1">Wealth Management</span>
               </div>
             </div>
+            <ShellSidebarToggle testId="sidebar-close" />
           </SidebarHeader>
 
           <SidebarContent className="px-3 pt-6">
@@ -192,26 +245,53 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
               </Button>
             </div>
           </SidebarFooter>
+          </SidebarPanel>
         </Sidebar>
 
         <SidebarInset className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-          <header className="h-20 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl flex items-center justify-between px-8 z-10">
-            <div className="flex items-center gap-6">
-              <SidebarTrigger className="hover:scale-110 transition-transform text-white/70 hover:text-white" />
-              <div className="h-6 w-[1px] bg-white/10 hidden md:block" />
-              <div className="hidden md:flex items-center gap-3 text-sm font-bold tracking-tight">
-                <span className="text-white/40 uppercase tracking-widest text-[10px]">Portal</span>
-                <ChevronRight className="w-4 h-4 text-white/20" />
-                <span className="text-white capitalize">{location.substring(1) || 'Dashboard'}</span>
+          <header className={cn(
+            "shrink-0 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl flex items-center justify-between z-10 transition-[height,padding] duration-200",
+            topNavigationOpen ? "h-16 px-4 md:px-8" : "h-12 px-3 md:px-5"
+          )}>
+            <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
+              <ShellSidebarToggle />
+              <button
+                type="button"
+                data-testid="top-navigation-toggle"
+                aria-label={topNavigationOpen ? "Hide navigation details" : "Show navigation details"}
+                aria-expanded={topNavigationOpen}
+                aria-controls="veritas-top-navigation-details veritas-top-navigation-actions"
+                onClick={() => setTopNavigationOpen((open) => !open)}
+                className="flex h-11 min-w-11 items-center justify-center gap-2 border border-white/10 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white/60 transition-colors hover:border-white/25 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span className="hidden sm:inline">{topNavigationOpen ? "Hide details" : "Navigation"}</span>
+                {topNavigationOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
+              <div
+                id="veritas-top-navigation-details"
+                className={cn(
+                  topNavigationOpen ? "flex" : "hidden",
+                  "min-w-0 flex-1 items-center gap-2 md:gap-3 text-sm font-bold tracking-tight"
+                )}
+              >
+                <span className="hidden md:inline text-white/40 uppercase tracking-widest text-[10px]">Portal</span>
+                <ChevronRight className="hidden md:block w-4 h-4 shrink-0 text-white/20" />
+                <span className="min-w-0 truncate text-white capitalize">{location.substring(1) || 'Dashboard'}</span>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div 
-                className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer hover:bg-primary hover:border-primary transition-all group"
-                onClick={() => setLocation("/settings")}
-              >
-                <Settings className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
-              </div>
+            <div id="veritas-top-navigation-actions" className="flex items-center gap-3">
+              {topNavigationOpen && (
+                <Button
+                  type="button"
+                  data-testid="header-settings-button"
+                  variant="ghost"
+                  aria-label="Settings"
+                  onClick={() => setLocation("/settings")}
+                  className="h-11 w-11 rounded-none border border-white/10 bg-white/5 p-0 text-white/55 hover:border-primary hover:bg-primary hover:text-white"
+                >
+                  <Settings className="w-5 h-5" />
+                </Button>
+              )}
             </div>
           </header>
 
