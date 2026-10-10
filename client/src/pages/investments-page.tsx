@@ -17,7 +17,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowUp, ArrowDown, TrendingUp, BookOpen, Zap, DollarSign, Settings, Zap as ZapIcon, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { PERFORMANCE_UNAVAILABLE } from "@/lib/performance-state";
 
 const STOCKS = ["AAPL", "GOOGL", "TSLA", "AMZN", "MSFT"];
 const ETFS = ["SPY", "QQQ", "IVV", "VOO", "VTI"];
@@ -215,7 +214,6 @@ export default function InvestmentsPage() {
   return (
     <LayoutShell>
       <FundsAccessNotice />
-      <p className="text-xs text-muted-foreground" data-testid="text-performance-explanation">{PERFORMANCE_UNAVAILABLE.explanation}</p>
       {/* Hero background section */}
       <div className="relative -mx-4 -mt-4 mb-8 px-4 py-8 rounded-lg overflow-hidden">
         <div 
@@ -250,7 +248,7 @@ export default function InvestmentsPage() {
         <TabsContent value="stocks" className="space-y-6">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Trading Panel */}
-            <div className="lg:col-span-1">
+            <div className="min-w-0 lg:col-span-1">
               <Card className="border-none shadow-xl shadow-primary/5 overflow-hidden">
                 <div className="bg-primary/5 p-6 border-b border-primary/10">
                   <div className="flex justify-between items-start mb-4">
@@ -349,7 +347,7 @@ export default function InvestmentsPage() {
             </div>
 
             {/* Portfolio Table */}
-            <div className="lg:col-span-2">
+            <div className="min-w-0 lg:col-span-2">
               <Card className="border-none shadow-lg">
                 <CardHeader>
                   <CardTitle>Current Holdings</CardTitle>
@@ -377,12 +375,7 @@ export default function InvestmentsPage() {
                               <TableCell className="font-bold">{inv.symbol}</TableCell>
                               <TableCell>{Number(inv.shares).toFixed(4)}</TableCell>
                               <TableCell>{formatBalance(inv.purchasePrice,clientBalanceCurrency(user))}</TableCell>
-                              <TableCell>
-                                <div className="flex flex-col">
-                                  <span>{formatBalance(inv.currentPrice ?? inv.purchasePrice,clientBalanceCurrency(user))}</span>
-                                  <span className="text-xs text-muted-foreground" title={PERFORMANCE_UNAVAILABLE.holdings} data-testid={`investment-gain-${inv.id}`}>Gain unavailable</span>
-                                </div>
-                              </TableCell>
+                              <TableCell>{formatBalance(inv.currentPrice ?? inv.purchasePrice,clientBalanceCurrency(user))}</TableCell>
                               <TableCell className="text-right font-medium">
                                 {formatBalance(marketValue,clientBalanceCurrency(user))}
                               </TableCell>
@@ -511,41 +504,11 @@ export default function InvestmentsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-primary" />
-                Cash Management & Money Market
+                Cash Management
               </CardTitle>
-              <CardDescription>Cash balances · verified account rates and interest accrual history are unavailable</CardDescription>
+              <CardDescription>Cash balances held in your investment accounts.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">High-Yield Cash Sweep</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Current APY</p>
-                      <p className="text-xl text-muted-foreground" data-testid="text-cash-sweep-apy">Unavailable</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">FDIC insured up to $250k per bank partner</p>
-                    <Button disabled={access.blocked} className="w-full mt-4">Enable Cash Sweep</Button>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Money Market Fund</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Current Yield</p>
-                      <p className="text-xl text-muted-foreground" data-testid="text-money-market-yield">Unavailable</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Low-risk investment with daily liquidity</p>
-                    <Button disabled={access.blocked} className="w-full mt-4" variant="outline">Invest</Button>
-                  </CardContent>
-                </Card>
-              </div>
-
               <Card className="bg-muted/30">
                 <CardHeader>
                   <CardTitle className="text-base">Your Cash Positions</CardTitle>
@@ -556,8 +519,6 @@ export default function InvestmentsPage() {
                       <TableRow>
                         <TableHead>Account</TableHead>
                         <TableHead>Cash Balance</TableHead>
-                        <TableHead>APY</TableHead>
-                        <TableHead>Monthly Interest</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -567,8 +528,6 @@ export default function InvestmentsPage() {
                           <TableRow key={a.id}>
                             <TableCell>{accountLabel(a)}</TableCell>
                             <TableCell>{formatBalance(balance,clientBalanceCurrency(user))}</TableCell>
-                            <TableCell data-testid={`cash-apy-${a.id}`}>Unavailable</TableCell>
-                            <TableCell className="text-muted-foreground" data-testid={`cash-interest-${a.id}`}>Unavailable</TableCell>
                           </TableRow>
                         );
                       })}

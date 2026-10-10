@@ -148,7 +148,8 @@ test("client palette stays readable without changing money or collapsed navigati
   await verifyHeadline(page, "£2,003,900.25");
   await expect(page.locator("main").last()).not.toContainText("CAD");
   await expect(page.locator("main").last()).not.toContainText("GBP");
-  await expect(page.getByTestId("text-day-performance")).toContainText("unavailable");
-  await expect(page.getByTestId("text-ytd-performance")).toHaveText("Unavailable");
+  await expect(page.getByTestId("text-day-performance")).toHaveCount(0);
+  await expect(page.getByTestId("text-ytd-performance")).toHaveCount(0);
+  await expect(page.getByTestId("text-performance-explanation")).toHaveCount(0);
   expect(await snapshot()).toEqual(before);
 });

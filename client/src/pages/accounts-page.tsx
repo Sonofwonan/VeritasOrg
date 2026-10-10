@@ -21,7 +21,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { balanceCurrencyLabel, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
-import { PERFORMANCE_UNAVAILABLE } from "@/lib/performance-state";
 
 type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' |
   '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
@@ -176,12 +175,8 @@ export default function AccountsPage() {
                   <span className={`whitespace-nowrap font-serif text-[clamp(1.45rem,7vw,3rem)] tracking-tight tabular-nums ${totalBalance < 0 ? "text-red-300" : isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
                   {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : fmt(isTransmitting ? transmittedDebt : totalBalance)}
                 </span>
-                {isTransmitting ? (
+                {isTransmitting && (
                   <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
-                ) : (
-                  <span className="text-white/50 text-xs font-mono mb-1.5" title={PERFORMANCE_UNAVAILABLE.ytd} data-testid="text-ytd-performance">
-                    YTD return unavailable
-                  </span>
                 )}
               </div>
               {isTransmitting
@@ -215,7 +210,7 @@ export default function AccountsPage() {
         <div className="grid grid-cols-1 divide-y divide-white/10 xl:grid-cols-3 xl:divide-x xl:divide-y-0">
           {[
             { cat: 'cash', label: 'Cash & Deposits', value: cashTotal, Icon: Landmark, sub: 'Available liquidity' },
-            { cat: 'investment', label: 'Investments', value: investTotal, Icon: TrendingUp, sub: 'YTD return unavailable' },
+            { cat: 'investment', label: 'Investments', value: investTotal, Icon: TrendingUp },
             { cat: 'business', label: 'Business & Trust', value: bizTotal, Icon: ShieldCheck, sub: 'Fiduciary accounts' },
           ].map(({ cat, label, value, Icon, sub }) => (
             <div key={label} data-testid={`account-summary-${cat}`} className="flex items-center justify-between gap-4 px-4 py-3 xl:block xl:px-6 xl:py-5">
@@ -224,7 +219,7 @@ export default function AccountsPage() {
                   <Icon className="w-3.5 h-3.5 shrink-0 text-white/30" />
                   <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">{label}</span>
                 </div>
-                <p className="hidden text-white/25 text-[10px] mt-0.5 xl:block">{isTransmitting ? "Clearing" : sub}</p>
+                {(isTransmitting || sub) && <p className="hidden text-white/25 text-[10px] mt-0.5 xl:block">{isTransmitting ? "Clearing" : sub}</p>}
               </div>
               {isTransmitting ? (
                 <div>
@@ -234,12 +229,11 @@ export default function AccountsPage() {
               ) : (
                   <p data-testid={`account-summary-balance-${cat}`} className="whitespace-nowrap font-mono text-sm xl:text-xl text-amber-400 tracking-tight tabular-nums">{fmt(value)}</p>
               )}
-              <p className="sr-only sm:hidden">{isTransmitting ? "Clearing" : sub}</p>
+              {(isTransmitting || sub) && <p className="sr-only sm:hidden">{isTransmitting ? "Clearing" : sub}</p>}
             </div>
           ))}
         </div>
       </div>
-      <p className="text-xs text-muted-foreground mt-2" data-testid="text-performance-explanation">{PERFORMANCE_UNAVAILABLE.explanation}</p>
 
       {/* ── Transfer Lock Banner ──────────────────────────────────── */}
       {activeTransfer && (
@@ -356,14 +350,8 @@ export default function AccountsPage() {
                           </div>
                         </div>
 
-                        {/* Right: balance + ytd + arrow */}
-                        <div className="flex min-w-0 items-center justify-between gap-3 xl:justify-end xl:gap-8 xl:shrink-0">
-                          {/* YTD */}
-                          <div className="text-right" title={PERFORMANCE_UNAVAILABLE.ytd}>
-                            <p className="label-caps text-muted-foreground/50 mb-0.5">YTD Return</p>
-                            <p className="text-xs text-muted-foreground" data-testid={`account-ytd-${account.id}`}>Unavailable</p>
-                          </div>
-
+                        {/* Right: balance + arrow */}
+                        <div className="flex min-w-0 items-center justify-between gap-3 xl:justify-end xl:gap-4 xl:shrink-0">
                           {/* Balance */}
                           <div className="min-w-0 text-right xl:min-w-[140px]">
                             <p className="label-caps text-muted-foreground/50 mb-0.5">Cash balance</p>

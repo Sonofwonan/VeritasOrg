@@ -205,12 +205,17 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       const before = JSON.stringify(data);
       for (const failures of [[], [["/api/investments"]], [["/api/accounts"]], [["/api/transactions"]]]) {
         const dashboard = render(DashboardPage, {}, data, failures);
-        assert.equal(displayedValue(dashboard, "text-ytd-performance"), "Unavailable");
-        assert.equal(displayedValue(dashboard, "text-day-performance"), "Daily change unavailable");
+        assert(!dashboard.includes('data-testid="text-ytd-performance"'));
+        assert(!dashboard.includes('data-testid="text-day-performance"'));
+        assert(!dashboard.includes('data-testid="text-holdings-performance"'));
+        assert(!dashboard.includes('data-testid="holding-pnl-'));
         for (const fixed of ["+8.4", "+8.40", "vs. benchmark"]) assert(!dashboard.includes(fixed));
-        assert(dashboard.includes("Deposits are not investment gains"));
+        assert(!dashboard.includes("Deposits are not investment gains"));
+        assert(!dashboard.includes('data-testid="text-performance-explanation"'));
         const accountPage = render(AccountsPage, {}, data, failures);
-        assert.equal(displayedValue(accountPage, "text-ytd-performance"), "YTD return unavailable");
+        assert(!accountPage.includes('data-testid="text-ytd-performance"'));
+        assert(!accountPage.includes('data-testid="account-ytd-'));
+        assert(!accountPage.includes('data-testid="text-performance-explanation"'));
         for (const fixed of ["+11.4", "+6.40", "+8.4"]) assert(!accountPage.includes(fixed));
       }
       assert.equal(JSON.stringify(data), before);

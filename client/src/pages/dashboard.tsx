@@ -23,7 +23,6 @@ import { DebtRestrictionStatus } from "@/components/fees/debt-restriction-status
 import { accountLabel, transactionDate } from "@shared/account-display";
 
 // ── Market index data (static realistic) ─────────────────────────────────────
-import { PERFORMANCE_UNAVAILABLE } from "@/lib/performance-state";
 const MARKET_INDICES = [
   { name: 'S&P 500',   value: '5,447.21', change: '+0.38%', up: true },
   { name: 'TSX',       value: '22,183.40', change: '+0.21%', up: true },
@@ -180,9 +179,6 @@ export default function DashboardPage() {
                   <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
                     {balanceUnavailable ? "Unavailable" : fmt(totalBalance)}
                   </span>
-                  <p className="text-white/50 text-xs font-mono mb-1.5" title={PERFORMANCE_UNAVAILABLE.day} data-testid="text-day-performance">
-                    Daily change unavailable
-                  </p>
                 </div>
                 <p className="text-white/30 text-xs font-mono mt-1">
                   Total balance{currency === "CAD" ? " · CAD" : ""} · {format(new Date(), 'MMMM d, yyyy')}
@@ -208,25 +204,23 @@ export default function DashboardPage() {
           </div>
 
           {/* KPI strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-white/10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
             {[
               { label: 'Liquid Cash',    val: cashUnavailable ? "Unavailable" : fmt(cashTotal), sub: access.blocked ? 'Funds locked · payment required' : pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending${cashLocked ? " · Transfer locked" : ""}` : cashLocked ? 'Transfer locked' : 'Available now', icon: Landmark },
               { label: 'Investments',    val: investmentsUnavailable ? "Unavailable" : fmt(investTotal), sub: 'Stored value · unverified prices', icon: BarChart3 },
-              { label: 'YTD Return',     val: "Unavailable", sub: PERFORMANCE_UNAVAILABLE.ytd, icon: TrendingUp },
               { label: 'Portfolio Risk', val: 'Moderate',         sub: 'Risk band: 5 / 10',     icon: ShieldCheck },
             ].map(({ label, val, sub, icon: Icon }) => (
-              <div key={label} className="px-3 sm:px-6 py-4 flex items-center gap-2 sm:gap-3 min-w-0">
+              <div key={label} className="px-4 sm:px-6 py-4 flex items-center gap-3 min-w-0">
                 <Icon className="w-4 h-4 text-white/20 shrink-0" />
                 <div className="min-w-0">
                   <p className="label-caps text-white/30 mb-0.5">{label}</p>
-                  <p className="font-mono text-white font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]" data-testid={label === 'Liquid Cash' ? "text-liquid-cash" : label === 'Investments' ? "text-investment-value" : label === 'YTD Return' ? "text-ytd-performance" : undefined}>{val}</p>
+                  <p className="font-mono text-white font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]" data-testid={label === 'Liquid Cash' ? "text-liquid-cash" : label === 'Investments' ? "text-investment-value" : undefined}>{val}</p>
                   <p className="text-white/25 text-[10px] mt-0.5">{sub}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground" data-testid="text-performance-explanation">{PERFORMANCE_UNAVAILABLE.explanation}</p>
 
         <DebtAccountSummary summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading}
           error={feeSummary.isError} retry={() => void feeSummary.refetch()} currency={currency} />
@@ -378,8 +372,8 @@ export default function DashboardPage() {
               </div>
 
               {/* Table header */}
-              <div className="grid grid-cols-[2fr_1fr_1fr_1fr_80px] gap-2 px-5 py-2 border-b border-border/40 bg-muted/10">
-                {['Security', 'Shares', 'Avg Cost', 'Stored Value', 'P&L'].map(h => (
+              <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-5 py-2 border-b border-border/40 bg-muted/10">
+                {['Security', 'Shares', 'Avg Cost', 'Stored Value'].map(h => (
                   <p key={h} className="label-caps text-muted-foreground/60 text-right first:text-left">{h}</p>
                 ))}
               </div>
@@ -391,7 +385,7 @@ export default function DashboardPage() {
                   {investments.map((inv: any) => {
                     const mktVal = Number(inv.shares) * Number(inv.currentPrice ?? inv.purchasePrice);
                     return (
-                      <div key={inv.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_80px] gap-2 px-5 py-3.5 hover:bg-muted/30 transition-colors items-center"
+                      <div key={inv.id} className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-5 py-3.5 hover:bg-muted/30 transition-colors items-center"
                         data-testid={`holding-row-${inv.id}`}>
                         <div>
                           <p className="font-bold text-sm">{inv.symbol}</p>
@@ -399,19 +393,15 @@ export default function DashboardPage() {
                         <p className="font-mono text-xs text-right text-muted-foreground">{Number(inv.shares).toFixed(4)}</p>
                         <p className="font-mono text-xs text-right font-semibold">{fmt(Number(inv.purchasePrice))}</p>
                         <p className="font-mono text-xs text-right font-semibold">{fmt(mktVal)}</p>
-                        <p className="text-right text-[10px] text-muted-foreground" title={PERFORMANCE_UNAVAILABLE.holdings} data-testid={`holding-pnl-${inv.id}`}>Unavailable</p>
                       </div>
                     );
                   })}
                   {/* Totals row */}
-                  <div className="grid grid-cols-[2fr_1fr_1fr_1fr_80px] gap-2 px-5 py-3 bg-muted/20 items-center border-t border-border">
+                  <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-5 py-3 bg-muted/20 items-center border-t border-border">
                     <p className="label-caps text-muted-foreground">Total</p>
                     <p className="text-right" />
                     <p className="text-right" />
                     <p className="font-mono text-sm font-bold text-right">{fmt(investValue)}</p>
-                    <p className="text-right">
-                      <span className="text-[10px] text-muted-foreground" title={PERFORMANCE_UNAVAILABLE.holdings} data-testid="text-holdings-performance">Unavailable</span>
-                    </p>
                   </div>
                 </div>
               ) : (
