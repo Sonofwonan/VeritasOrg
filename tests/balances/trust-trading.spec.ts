@@ -29,7 +29,13 @@ async function financialRecords(db: Pool, userId: number) {
   return Promise.all(queries.map(async sql => (await db.query(sql, [userId])).rows));
 }
 
-test("clients select trusts alongside retirement accounts and buy and sell through normal trading controls", async ({ page, identity, db }, info) => {
+test.describe("trust pricing suspension", () => {
+test.use({ expectedHttpFailures: {
+  "/api/investments/buy": 503,
+  "/api/investments/sell": 503,
+} });
+
+test("clients select trusts alongside retirement accounts but cannot trade without verified pricing", async ({ page, identity, db }, info) => {
   await prepareTrust(db, identity);
   await db.query(
     "INSERT INTO accounts(user_id,account_type,display_name,balance,is_demo) VALUES($1,'401(k) / 403(b)','Workplace Retirement',100,true)",
@@ -49,42 +55,20 @@ test("clients select trusts alongside retirement accounts and buy and sell throu
   await page.getByRole("option", { name: "Trading Family Trust (CAD $1,000.00)", exact: true }).click();
   await page.screenshot({ path: info.outputPath("trust-selected.png"), fullPage: true });
   await page.getByPlaceholder("0.00", { exact: true }).fill("100");
-  const buyResponse = page.waitForResponse(r => new URL(r.url()).pathname === "/api/investments/buy" && r.request().method() === "POST");
-  await page.getByRole("button", { name: "Buy Stock", exact: true }).click();
-  const buy = await buyResponse;
-  expect(buy.status()).toBe(201);
-  expect(buy.request().postDataJSON()).toEqual({ accountId: identity.sixth, symbol: "AAPL", amount: "100" });
-  const bought = await buy.json();
-  expect(bought.accountId).toBe(identity.sixth);
-  expect(Number(bought.shares)).toBeGreaterThan(10);
-  await expect(page.getByText("Purchase Successful", { exact: true })).toBeVisible();
-  const { rows: [cashAfterBuy] } = await db.query("SELECT balance FROM accounts WHERE id=$1", [identity.sixth]);
-  expect(Number(cashAfterBuy.balance)).toBe(900);
+  await expect(page.getByRole("button", { name: "Buy Stock", exact: true })).toBeDisabled();
   await page.getByRole("tab", { name: "Sell", exact: true }).click();
   await page.getByPlaceholder("0", { exact: true }).fill("1");
-  const sellResponse = page.waitForResponse(r => new URL(r.url()).pathname === "/api/investments/sell" && r.request().method() === "POST");
-  await page.getByRole("button", { name: "Sell Shares", exact: true }).click();
-  const sell = await sellResponse;
-  expect(sell.status()).toBe(201);
-  expect(sell.request().postDataJSON()).toEqual({ accountId: identity.sixth, symbol: "AAPL", shares: "1" });
-  const sold = await sell.json();
-  expect(Number(sold.shares)).toBeCloseTo(Number(bought.shares) - 1, 4);
-  await expect(page.getByText("Sale Successful", { exact: true })).toBeVisible();
-  const { rows: trades } = await db.query(
-    "SELECT from_account_id,to_account_id,amount,transaction_type,status FROM transactions WHERE from_account_id=$1 OR to_account_id=$1 ORDER BY id",
-    [identity.sixth]);
-  expect(trades).toHaveLength(2);
-  expect(trades[0]).toMatchObject({ from_account_id: identity.sixth, to_account_id: null, transaction_type: "buy", status: "completed" });
-  expect(Number(trades[0].amount)).toBe(100);
-  expect(trades[1]).toMatchObject({ from_account_id: null, to_account_id: identity.sixth, transaction_type: "sell", status: "completed" });
-  expect(Number(trades[1].amount)).toBeGreaterThan(0);
-  const after = await financialRecords(db, identity.userId);
-  expect(Number(after[0].find(a => a.id === identity.sixth).balance)).toBeCloseTo(900 + Number(trades[1].amount), 2);
-  expect(after[1].find(i => i.account_id === identity.sixth).shares).toBe(sold.shares);
-  expect(after[0].filter(a => a.id !== identity.sixth)).toEqual(before[0].filter(a => a.id !== identity.sixth));
-  expect(after[1].filter(i => i.account_id !== identity.sixth)).toEqual(before[1].filter(i => i.account_id !== identity.sixth));
-  expect(after.slice(3)).toEqual(before.slice(3)); // Fee history and currency preferences stay unchanged.
-  await page.screenshot({ path: info.outputPath("trust-traded.png"), fullPage: true });
+  await expect(page.getByRole("button", { name: "Sell Shares", exact: true })).toBeDisabled();
+  for (const operation of ["buy", "sell"]) {
+    const response = await page.request.post(`/api/investments/${operation}`, { data: {
+      accountId: identity.sixth, symbol: "AAPL", ...(operation === "buy" ? { amount: "100" } : { shares: "1" }),
+    } });
+    expect(response.status()).toBe(503);
+    expect((await response.json()).code).toBe("MARKET_DATA_UNAVAILABLE");
+  }
+  expect(await financialRecords(db, identity.userId)).toEqual(before);
+  await page.screenshot({ path: info.outputPath("trust-trading-paused.png"), fullPage: true });
+});
 });
 
 test.describe("trust trading restrictions", () => {
@@ -128,12 +112,12 @@ test.describe("trust trading restrictions", () => {
       for (const operation of ["buy", "sell"]) {
         await page.getByRole("tab", { name: operation === "buy" ? "Buy" : "Sell", exact: true }).click();
         await page.getByPlaceholder(operation === "buy" ? "0.00" : "0", { exact: true }).fill(operation === "buy" ? "100" : "1");
-        const pending = page.waitForResponse(r => new URL(r.url()).pathname === `/api/investments/${operation}` && r.request().method() === "POST");
-        await page.getByRole("button", { name: operation === "buy" ? "Buy Stock" : "Sell Shares", exact: true }).click();
-        const response = await pending;
+        await expect(page.getByRole("button", { name: operation === "buy" ? "Buy Stock" : "Sell Shares", exact: true })).toBeDisabled();
+        const response = await page.request.post(`/api/investments/${operation}`, { data: {
+          accountId: identity.sixth, symbol: "AAPL", ...(operation === "buy" ? { amount: "100" } : { shares: "1" }),
+        } });
         expect(response.status()).toBe(423);
         expect((await response.json()).message).toBe("LIQUIDATION_IN_PROGRESS");
-        await expect(page.getByText("423: LIQUIDATION_IN_PROGRESS", { exact: true }).first()).toBeVisible();
       }
       expect(await financialRecords(db, identity.userId)).toEqual(before);
     });

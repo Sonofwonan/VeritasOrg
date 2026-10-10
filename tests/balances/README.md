@@ -53,11 +53,17 @@ Journeys run on desktop (1440×1000) and narrow mobile (360×800):
   fixtures remain CAD. Accepted fee-plan pricing/terms are not relabeled.
 - Trusts remain in Business & Trust on Accounts while appearing alongside
   brokerage, IRA, workplace retirement and education accounts in the trading
-  selector. Normal trading controls buy additional shares and sell trust
-  holdings, with cash, holdings and completed transaction records checked.
+  selector. Stock and ETF controls remain disabled until verified pricing is
+  approved. Direct buys/sells return 503 without mutating any financial records.
   Debt restrictions disable trading and reject direct requests; all three active
   liquidation statuses reject buys and sells without changing financial records.
   Another client's trust is neither offered nor authorized for trading.
+- No simulated quotes, static market indices or public homepage ticker prices
+  and changes appear. Anonymous quote/trade
+  requests still require login; authenticated quotes fail explicitly with no
+  price fallback. Supplied prices, sources, stale/fresh timestamps and currencies
+  cannot override the suspension. CAD and nominal GBP balances, historical
+  prices, fee contracts/events and access settings remain unchanged.
 
 The browser clock advances client polling intervals; server dates remain real.
 Assertions wait for rendered values rather than assuming clock advancement

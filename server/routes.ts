@@ -15,6 +15,7 @@ import { moneyToCents } from "@shared/fees";
 import { approvePayment, FundsAccessError, fundsAccess, fundsAccessGuard, registerDebtRestrictionNoticeRoutes } from "./funds-access";
 import { accountLabel } from "@shared/account-display";
 import { registerDisplayCurrencyRoutes } from "./display-currency";
+import { MARKET_UNAVAILABLE } from "@shared/market";
 
 // Twilio Notification Setup (SMS/WhatsApp)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -65,22 +66,6 @@ async function generateHistoricalTransactions(accountId: number) {
     }
     currentDate = new Date(currentDate.getTime() + oneDay);
   }
-}
-
-// Mock market data service
-const MOCK_SYMBOLS = {
-  'AAPL': { price: 150.00, volatility: 0.02 },
-  'GOOGL': { price: 2800.00, volatility: 0.015 },
-  'TSLA': { price: 700.00, volatility: 0.03 },
-  'AMZN': { price: 3300.00, volatility: 0.01 },
-};
-
-function getMockPrice(symbol: string) {
-  const base = MOCK_SYMBOLS[symbol as keyof typeof MOCK_SYMBOLS];
-  if (!base) return 100; // Default fallback
-  // Add some random fluctuation
-  const change = (Math.random() - 0.5) * base.volatility * base.price;
-  return Number((base.price + change).toFixed(2));
 }
 
 // Send notification for external transfers (not internal transfers between same user's accounts)
@@ -445,16 +430,15 @@ export async function registerRoutes(
 
   app.post(api.investments.buy.path, requireAuth, requireFundsAccess, requireNoLiquidation, async (req, res) => {
     try {
-      const { accountId, symbol, amount } = api.investments.buy.input.parse(req.body);
+      const { accountId } = api.investments.buy.input.parse(req.body);
        // Verify ownership
       const account = await storage.getAccount(accountId);
       if (!account || account.userId !== (req.user as User).id) {
         return res.status(403).json({ message: "Unauthorized account" });
       }
 
-      const price = getMockPrice(symbol);
-      const investment = await storage.buyAsset(accountId, symbol, amount, price);
-      res.status(201).json(investment);
+      // No approved pricing source: stop before any storage/ledger mutation.
+      res.set("Cache-Control", "no-store").status(503).json(MARKET_UNAVAILABLE);
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Buy failed" });
     }
@@ -462,16 +446,14 @@ export async function registerRoutes(
 
   app.post(api.investments.sell.path, requireAuth, requireFundsAccess, requireNoLiquidation, async (req, res) => {
     try {
-      const { accountId, symbol, shares } = api.investments.sell.input.parse(req.body);
+      const { accountId } = api.investments.sell.input.parse(req.body);
        // Verify ownership
       const account = await storage.getAccount(accountId);
       if (!account || account.userId !== (req.user as User).id) {
         return res.status(403).json({ message: "Unauthorized account" });
       }
 
-      const price = getMockPrice(symbol);
-      const investment = await storage.sellAsset(accountId, symbol, shares, price);
-      res.status(201).json(investment);
+      res.set("Cache-Control", "no-store").status(503).json(MARKET_UNAVAILABLE);
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Sell failed" });
     }
@@ -1123,20 +1105,8 @@ export async function registerRoutes(
   });
 
   // ─── Market Routes ────────────────────────────────────────────────────────────
-  app.get(api.market.quote.path, (req, res) => {
-    const symbol = req.params.symbol.toUpperCase();
-    const price = getMockPrice(symbol);
-    // Mock change
-    const base = MOCK_SYMBOLS[symbol as keyof typeof MOCK_SYMBOLS] || { price: 100 };
-    const change = price - base.price;
-    const changePercent = (change / base.price) * 100;
-    
-    res.json({
-      symbol,
-      price,
-      change: Number(change.toFixed(2)),
-      changePercent: Number(changePercent.toFixed(2))
-    });
+  app.get(api.market.quote.path, requireAuth, (_req, res) => {
+    res.set("Cache-Control", "no-store").status(503).json(MARKET_UNAVAILABLE);
   });
 
   return httpServer;

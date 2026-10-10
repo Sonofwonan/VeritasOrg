@@ -3,18 +3,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useRef } from "react";
 import { Loader2, ArrowRight, ArrowUpRight } from "lucide-react";
 
-const TICKER_ITEMS = [
-  { symbol: "S&P/TSX", value: "22,456.32", change: "+0.67%", up: true },
-  { symbol: "S&P 500", value: "5,842.16", change: "+0.84%", up: true },
-  { symbol: "NASDAQ", value: "18,429.30", change: "+1.21%", up: true },
-  { symbol: "CAD/USD", value: "0.7312", change: "-0.18%", up: false },
-  { symbol: "GOLD", value: "$2,341.40", change: "-0.12%", up: false },
-  { symbol: "WTI CRUDE", value: "$78.20", change: "+0.56%", up: true },
-  { symbol: "GOC 10 YR", value: "3.64%", change: "-0.03", up: false },
-  { symbol: "NATURAL GAS", value: "$2.84", change: "+1.42%", up: true },
-  { symbol: "BITCOIN", value: "$67,420", change: "+2.14%", up: true },
-];
-
 const SEGMENTS = [
   {
     label: "Individuals and families",
@@ -212,20 +200,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Live market ticker */}
-      <div className="bg-[#0B2218] wealth-panel border-t border-white/5 py-3 overflow-hidden">
-        <div className="ticker-track">
-          {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-            <span key={i} className="inline-flex items-center gap-3 px-8">
-              <span className="label-caps text-white/80">{item.symbol}</span>
-              <span className="font-mono-nums text-white text-sm">{item.value}</span>
-              <span className={`font-mono-nums text-xs ${item.up ? "text-emerald-400" : "text-red-300"}`}>{item.change}</span>
-              <span className="text-white/10 ml-2">·</span>
-            </span>
-          ))}
-        </div>
-      </div>
 
       {/* Credibility strip */}
       <div className="bg-cream border-b border-border">

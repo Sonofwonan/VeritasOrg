@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl, type InsertAccount } from "@shared/routes";
+import { api, type InsertAccount } from "@shared/routes";
 import { apiRequest } from "@/lib/queryClient";
 
 // ACCOUNTS
@@ -112,20 +112,6 @@ export function useTransfer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.accounts.list.path] });
     },
-  });
-}
-
-// MARKET DATA
-export function useMarketQuote(symbol: string) {
-  return useQuery({
-    queryKey: [api.market.quote.path, symbol],
-    queryFn: async () => {
-      const url = buildUrl(api.market.quote.path, { symbol });
-      const res = await apiRequest("GET", url);
-      return api.market.quote.responses[200].parse(await res.json());
-    },
-    enabled: !!symbol,
-    refetchInterval: 10000, // Real-time feel
   });
 }
 

@@ -11,9 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import {
-  TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
+  TrendingUp, ArrowUpRight, ArrowDownRight,
   ArrowLeftRight, Clock, Info, ChevronRight, Landmark,
-  ShieldCheck, Briefcase, Activity, BarChart3, Building2, Lock
+  ShieldCheck, Briefcase, BarChart3, Building2, Lock
 } from "lucide-react";
 import { balanceCurrencyLabel, transactionDescription, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { useFundsAccess } from "@/hooks/use-funds-access";
@@ -21,18 +21,6 @@ import { useClientFeeSummary } from "@/hooks/use-fees";
 import { DebtAccountSummary } from "@/components/fees/debt-account-summary";
 import { DebtRestrictionStatus } from "@/components/fees/debt-restriction-status";
 import { accountLabel, transactionDate } from "@shared/account-display";
-
-// ── Market index data (static realistic) ─────────────────────────────────────
-const MARKET_INDICES = [
-  { name: 'S&P 500',   value: '5,447.21', change: '+0.38%', up: true },
-  { name: 'TSX',       value: '22,183.40', change: '+0.21%', up: true },
-  { name: 'NASDAQ',    value: '17,689.50', change: '+0.52%', up: true },
-  { name: 'DOW',       value: '39,118.86', change: '-0.11%', up: false },
-  { name: 'Gold',      value: '$2,338',    change: '+0.14%', up: true },
-  { name: 'CAD/USD',   value: '0.7341',    change: '-0.08%', up: false },
-  { name: 'US 10Y',    value: '4.318%',    change: '+2bp',   up: false },
-  { name: 'Oil WTI',   value: '$82.14',    change: '+0.62%', up: true },
-];
 
 // ── Asset allocation buckets ──────────────────────────────────────────────────
 const ALLOCATION = [
@@ -329,28 +317,6 @@ export default function DashboardPage() {
             </div>
           );
         })()}
-
-        {/* ── Market Indices Bar ──────────────────────────────────────────── */}
-        <div className="border border-border/60 rounded-sm overflow-hidden">
-          <div className="bg-muted/30 px-4 py-1.5 border-b border-border/60 flex items-center gap-2">
-            <Activity className="w-3 h-3 text-muted-foreground" />
-            <span className="label-caps text-muted-foreground">Market Indices</span>
-            <span className="ml-auto text-[9px] text-muted-foreground/50 font-mono">Delayed 15 min · {format(new Date(), 'HH:mm')}</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 divide-x divide-y lg:divide-y-0 divide-border/50">
-            {MARKET_INDICES.filter(idx => currency !== "GBP" || !idx.name.includes("CAD")).map(idx => (
-              <div key={idx.name} className="px-4 py-3">
-                <p className="label-caps text-muted-foreground/60 mb-0.5">{idx.name}</p>
-                <p className="font-mono text-sm font-semibold text-foreground">{idx.value}</p>
-                <p className={cn('text-[10px] font-mono font-bold flex items-center gap-0.5 mt-0.5',
-                  idx.up ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400')}>
-                  {idx.up ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
-                  {idx.change}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* ── Main Grid ───────────────────────────────────────────────────── */}
         <div className="grid gap-3 lg:grid-cols-[1fr_360px]">

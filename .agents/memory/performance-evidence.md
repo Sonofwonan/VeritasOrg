@@ -14,3 +14,9 @@ Omit unsupported performance metrics from client screens rather than displaying 
 **Why:** The user clarified: “anything that's not available shouldn't be placed on the ui I'm building a professional website... this is not a demo”.
 
 **How to apply:** Hide unsupported returns, gains and yields without inventing values. This does not authorize hiding failed balance retrieval or unresolved access checks; keep operational failures explicit and financial actions safely blocked.
+
+Keep market pricing and trading suspended until the user approves a licensed provider.
+
+**Why:** The user chose “Remove simulated prices; keep trading blocked” rather than approving a provider. This is an intentional product decision, not an integration failure to work around.
+
+**How to apply:** Do not activate a market-data source or resume trading without approval. Future pricing must establish provenance, quote currency, exchange timestamps and an acceptable freshness policy before enabling execution. Preserve historical prices and nominal GBP amounts.

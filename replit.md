@@ -213,7 +213,10 @@ a7k9mxq2w8j3h5f6g1b4c9d2e7k3n8p1
 - `POST /api/investments/sell` - Sell assets
 
 ### Market Data
-- `GET /api/market/quote/:symbol` - Get live quote
+- `GET /api/market/quote/:symbol` - Requires authentication; returns 503
+  `MARKET_DATA_UNAVAILABLE` while no approved provider is configured. Stock and
+  ETF trading is deliberately suspended, including direct buy/sell requests.
+  Do not use stored holding prices as execution prices or live quote evidence.
 
 ## Development Notes
 

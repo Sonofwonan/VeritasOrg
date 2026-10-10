@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { marketUnavailableSchema } from './market';
 import { insertUserSchema, insertAccountSchema, insertTransactionSchema, insertInvestmentSchema, users, accounts, transactions, investments } from './schema';
 
 export * from './schema';
@@ -111,6 +112,7 @@ export const api = {
       responses: {
         201: z.custom<typeof investments.$inferSelect>(),
         400: errorSchemas.validation,
+        503: marketUnavailableSchema,
       },
     },
     sell: {
@@ -124,6 +126,7 @@ export const api = {
       responses: {
         201: z.custom<typeof investments.$inferSelect>(),
         400: errorSchemas.validation,
+        503: marketUnavailableSchema,
       },
     },
   },
@@ -132,12 +135,8 @@ export const api = {
       method: 'GET' as const,
       path: '/api/market/quote/:symbol',
       responses: {
-        200: z.object({
-          symbol: z.string(),
-          price: z.number(),
-          change: z.number(),
-          changePercent: z.number(),
-        }),
+        401: errorSchemas.validation,
+        503: marketUnavailableSchema,
       },
     },
   },

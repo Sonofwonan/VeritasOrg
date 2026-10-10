@@ -1,4 +1,5 @@
-import { useInvestments, useAccounts, useBuyInvestment, useSellInvestment, useMarketQuote } from "@/hooks/use-finances";
+import { useInvestments, useAccounts, useBuyInvestment, useSellInvestment } from "@/hooks/use-finances";
+import { MARKET_TRADING_ENABLED, MARKET_TRADING_NOTICE } from "@shared/market";
 import { accountLabel } from "@shared/account-display";
 import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { LayoutShell } from "@/components/layout-shell";
@@ -15,7 +16,7 @@ import { useFundsAccess } from "@/hooks/use-funds-access";
 import { FundsAccessNotice } from "@/components/fees/funds-access-notice";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUp, ArrowDown, TrendingUp, BookOpen, Zap, DollarSign, Settings, Zap as ZapIcon, Plus } from "lucide-react";
+import { TrendingUp, BookOpen, Zap, DollarSign, Settings, Zap as ZapIcon, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 const STOCKS = ["AAPL", "GOOGL", "TSLA", "AMZN", "MSFT"];
@@ -82,9 +83,11 @@ export default function InvestmentsPage() {
   const [trailingPercent, setTrailingPercent] = useState("");
   const [orderAccount, setOrderAccount] = useState<string>("");
 
-  // Market data
-  const { data: quote } = useMarketQuote(selectedSymbol);
-  const { data: etfQuote } = useMarketQuote(selectedETF);
+  // Never enable trading from cached quotes or stored holding prices.
+  const pricingBlocked = !MARKET_TRADING_ENABLED;
+  const rejectUnpricedOrder = () => {
+    toast({ title: "Trading paused", description: MARKET_TRADING_NOTICE, variant: "destructive" });
+  };
 
   // Trading eligibility is independent of Accounts-page presentation groups:
   // trusts display under Business & Trust but can also hold and trade investments.
@@ -93,6 +96,7 @@ export default function InvestmentsPage() {
   ) || [];
 
   const handleBuy = () => {
+    if (pricingBlocked) return rejectUnpricedOrder();
     if (!selectedAccount) {
       toast({ title: "Select an account", variant: "destructive" });
       return;
@@ -113,6 +117,7 @@ export default function InvestmentsPage() {
   };
 
   const handleSell = () => {
+    if (pricingBlocked) return rejectUnpricedOrder();
     if (!selectedAccount) {
       toast({ title: "Select an account", variant: "destructive" });
       return;
@@ -133,15 +138,7 @@ export default function InvestmentsPage() {
   };
 
   const handleFractionalBuy = () => {
-    if (!etfAccount) {
-      toast({ title: "Select an account", variant: "destructive" });
-      return;
-    }
-    toast({ 
-      title: "Fractional Share Order Placed", 
-      description: `Buying $${etfAmount} of ${selectedETF} - fractional shares purchased successfully.` 
-    });
-    setEtfAmount("");
+    rejectUnpricedOrder();
   };
 
   const handleRoboSetup = () => {
@@ -224,17 +221,21 @@ export default function InvestmentsPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-accent/20" />
         <div className="relative">
           <h2 className="text-3xl font-bold font-display text-white">Investments</h2>
-          <p className="text-white/90">Trade stocks, ETFs, access research, and manage your portfolio.</p>
+          <p className="text-white/90">Review your recorded holdings and cash positions.</p>
         </div>
+      </div>
+
+      <div role="alert" data-testid="market-trading-paused" className="mb-6 border border-border bg-muted/30 p-4 text-sm">
+        {MARKET_TRADING_NOTICE}
       </div>
 
       <Tabs defaultValue="stocks" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="stocks" className="gap-2 text-xs sm:text-sm">
+          <TabsTrigger value="stocks" aria-label="Stocks" className="gap-2 text-xs sm:text-sm">
             <TrendingUp className="w-4 h-4" />
             <span className="hidden sm:inline">Stocks</span>
           </TabsTrigger>
-          <TabsTrigger value="etfs" className="gap-2 text-xs sm:text-sm">
+          <TabsTrigger value="etfs" aria-label="ETFs" className="gap-2 text-xs sm:text-sm">
             <DollarSign className="w-4 h-4" />
             <span className="hidden sm:inline">ETFs</span>
           </TabsTrigger>
@@ -254,17 +255,8 @@ export default function InvestmentsPage() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-2xl font-bold">{selectedSymbol}</h3>
-                      <p className="text-sm text-muted-foreground">Stock Quote</p>
+                      <p className="text-sm text-muted-foreground">Stock</p>
                     </div>
-                    {quote && (
-                      <div className={`text-right ${quote.change >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
-                        <p className="text-2xl font-bold">${quote.price.toFixed(2)}</p>
-                        <p className="text-sm font-medium flex items-center justify-end gap-1">
-                          {quote.change >= 0 ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>}
-                          {quote.changePercent.toFixed(2)}%
-                        </p>
-                      </div>
-                    )}
                   </div>
                   
                   <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
@@ -317,7 +309,7 @@ export default function InvestmentsPage() {
                       <Button 
                         className="w-full bg-emerald-600 hover:bg-emerald-700" 
                         onClick={handleBuy}
-                        disabled={access.blocked || buyMutation.isPending}
+                        disabled={pricingBlocked || access.blocked || buyMutation.isPending}
                       >
                         {buyMutation.isPending ? "Processing..." : "Buy Stock"}
                       </Button>
@@ -336,7 +328,7 @@ export default function InvestmentsPage() {
                       <Button 
                         className="w-full bg-rose-600 hover:bg-rose-700" 
                         onClick={handleSell}
-                        disabled={access.blocked || sellMutation.isPending}
+                        disabled={pricingBlocked || access.blocked || sellMutation.isPending}
                       >
                         {sellMutation.isPending ? "Processing..." : "Sell Shares"}
                       </Button>
@@ -402,17 +394,8 @@ export default function InvestmentsPage() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-2xl font-bold">{selectedETF}</h3>
-                      <p className="text-sm text-muted-foreground">ETF - Fractional Shares Available</p>
+                      <p className="text-sm text-muted-foreground">ETF</p>
                     </div>
-                    {etfQuote && (
-                      <div className={`text-right ${etfQuote.change >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
-                        <p className="text-2xl font-bold">${etfQuote.price.toFixed(2)}</p>
-                        <p className="text-sm font-medium flex items-center justify-end gap-1">
-                          {etfQuote.change >= 0 ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>}
-                          {etfQuote.changePercent.toFixed(2)}%
-                        </p>
-                      </div>
-                    )}
                   </div>
                   
                   <Select value={selectedETF} onValueChange={setSelectedETF}>
@@ -454,13 +437,12 @@ export default function InvestmentsPage() {
                         onChange={e => setEtfAmount(e.target.value)}
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">Invest any amount. You'll automatically receive fractional shares.</p>
                   </div>
 
                   <Button 
                     className="w-full bg-blue-600 hover:bg-blue-700" 
                     onClick={handleFractionalBuy}
-                    disabled={access.blocked}
+                    disabled={pricingBlocked || access.blocked}
                   >
                     Buy Fractional Shares
                   </Button>
@@ -472,23 +454,22 @@ export default function InvestmentsPage() {
               <Card className="border-none shadow-lg">
                 <CardHeader>
                   <CardTitle>Popular ETFs</CardTitle>
-                  <CardDescription>Low-cost diversified investment options</CardDescription>
+                  <CardDescription>ETF symbols for reference</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     {[
-                      { symbol: "SPY", name: "S&P 500 ETF", expense: "0.03%" },
-                      { symbol: "QQQ", name: "Nasdaq-100 ETF", expense: "0.20%" },
-                      { symbol: "IVV", name: "Core S&P 500 ETF", expense: "0.03%" },
-                      { symbol: "VOO", name: "Vanguard S&P 500", expense: "0.03%" },
-                      { symbol: "VTI", name: "Total Stock Market", expense: "0.03%" },
+                      { symbol: "SPY", name: "S&P 500 ETF" },
+                      { symbol: "QQQ", name: "Nasdaq-100 ETF" },
+                      { symbol: "IVV", name: "Core S&P 500 ETF" },
+                      { symbol: "VOO", name: "Vanguard S&P 500" },
+                      { symbol: "VTI", name: "Total Stock Market" },
                     ].map(etf => (
                       <div key={etf.symbol} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
                         <div>
                           <p className="font-semibold text-sm">{etf.symbol}</p>
                           <p className="text-xs text-muted-foreground">{etf.name}</p>
                         </div>
-                        <Badge variant="outline">Exp: {etf.expense}</Badge>
                       </div>
                     ))}
                   </div>
