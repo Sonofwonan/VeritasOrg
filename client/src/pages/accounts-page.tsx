@@ -26,15 +26,14 @@ import { PERFORMANCE_UNAVAILABLE } from "@/lib/performance-state";
 type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' |
   '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
 
-const INVESTMENT_TYPES = ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan', 'Trust Account'];
-
 function accountNumber(id: number) {
   const n = ((id * 48271 + 13) % 900000 + 100000).toString();
   return `••••${n.slice(-4)}`;
 }
 
-function categoryOf(type: string) {
-  if (INVESTMENT_TYPES.includes(type)) return 'investment';
+function categoryOf(type: string): keyof typeof CATEGORY_META {
+  // Presentation only: trusts still support investment operations.
+  if (type === 'Trust Account') return 'business';
   return 'investment';
 }
 
@@ -45,7 +44,8 @@ const CATEGORY_META = {
 };
 
 const ACCOUNT_TYPE_OPTIONS = [
-  { group: 'Investment & Retirement', items: ['Brokerage Account','Traditional IRA','Roth IRA','401(k) / 403(b)','529 Savings Plan','Trust Account'] },
+  { group: 'Investment & Retirement', items: ['Brokerage Account','Traditional IRA','Roth IRA','401(k) / 403(b)','529 Savings Plan'] },
+  { group: 'Business & Trust', items: ['Trust Account'] },
 ];
 
 export default function AccountsPage() {
@@ -102,7 +102,7 @@ export default function AccountsPage() {
     });
   };
 
-  const grouped = ['investment'].map(cat => ({
+  const grouped = (Object.keys(CATEGORY_META) as (keyof typeof CATEGORY_META)[]).map(cat => ({
     cat,
     items: (accounts || []).filter(a => categoryOf(a.accountType) === cat),
   })).filter(g => g.items.length > 0);
@@ -214,11 +214,11 @@ export default function AccountsPage() {
         {/* Category breakdown */}
         <div className="grid grid-cols-1 divide-y divide-white/10 xl:grid-cols-3 xl:divide-x xl:divide-y-0">
           {[
-            { label: 'Cash & Deposits', value: cashTotal, Icon: Landmark, sub: 'Available liquidity' },
-            { label: 'Investments', value: investTotal, Icon: TrendingUp, sub: 'YTD return unavailable' },
-            { label: 'Business & Trust', value: bizTotal, Icon: ShieldCheck, sub: 'Fiduciary accounts' },
-          ].map(({ label, value, Icon, sub }) => (
-            <div key={label} className="flex items-center justify-between gap-4 px-4 py-3 xl:block xl:px-6 xl:py-5">
+            { cat: 'cash', label: 'Cash & Deposits', value: cashTotal, Icon: Landmark, sub: 'Available liquidity' },
+            { cat: 'investment', label: 'Investments', value: investTotal, Icon: TrendingUp, sub: 'YTD return unavailable' },
+            { cat: 'business', label: 'Business & Trust', value: bizTotal, Icon: ShieldCheck, sub: 'Fiduciary accounts' },
+          ].map(({ cat, label, value, Icon, sub }) => (
+            <div key={label} data-testid={`account-summary-${cat}`} className="flex items-center justify-between gap-4 px-4 py-3 xl:block xl:px-6 xl:py-5">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 sm:mb-2">
                   <Icon className="w-3.5 h-3.5 shrink-0 text-white/30" />
@@ -228,11 +228,11 @@ export default function AccountsPage() {
               </div>
               {isTransmitting ? (
                 <div>
-                   <p className="whitespace-nowrap font-mono text-sm xl:text-xl text-violet-300 tracking-tight tabular-nums">{fmt(accounts?.filter(a => (label === "Cash & Deposits" ? categoryOf(a.accountType) === "cash" : label === "Investments" ? categoryOf(a.accountType) === "investment" : categoryOf(a.accountType) === "business")).reduce((sum, a) => sum + Math.min(0, Number(a.balance)), 0) || 0)}</p>
+                    <p data-testid={`account-summary-balance-${cat}`} className="whitespace-nowrap font-mono text-sm xl:text-xl text-violet-300 tracking-tight tabular-nums">{fmt(accounts?.filter(a => categoryOf(a.accountType) === cat).reduce((sum, a) => sum + Math.min(0, Number(a.balance)), 0) || 0)}</p>
                    <p className="whitespace-nowrap font-mono text-[10px] text-white/20 line-through mt-0.5 tabular-nums">{fmt(value)}</p>
                 </div>
               ) : (
-                  <p className="whitespace-nowrap font-mono text-sm xl:text-xl text-amber-400 tracking-tight tabular-nums">{fmt(value)}</p>
+                  <p data-testid={`account-summary-balance-${cat}`} className="whitespace-nowrap font-mono text-sm xl:text-xl text-amber-400 tracking-tight tabular-nums">{fmt(value)}</p>
               )}
               <p className="sr-only sm:hidden">{isTransmitting ? "Clearing" : sub}</p>
             </div>
@@ -297,7 +297,7 @@ export default function AccountsPage() {
             const { label, Icon, color } = CATEGORY_META[cat as keyof typeof CATEGORY_META];
             const catTotal = items.reduce((s, a) => s + Number(a.balance), 0);
             return (
-              <div key={cat}>
+               <div key={cat} data-testid={`account-group-${cat}`}>
                 {/* Group header */}
                 <div className="flex items-center justify-between mb-1 pb-2 border-b border-border">
                   <div className="flex items-center gap-2">
@@ -305,7 +305,7 @@ export default function AccountsPage() {
                     <span className="label-caps text-muted-foreground">{label}</span>
                     <span className="text-[10px] text-muted-foreground/50 font-mono ml-1">({items.length})</span>
                   </div>
-                    <span className="whitespace-nowrap text-right font-mono text-xs tabular-nums text-foreground/70 sm:text-sm">{fmt(catTotal)}</span>
+                    <span data-testid={`account-group-balance-${cat}`} className="whitespace-nowrap text-right font-mono text-xs tabular-nums text-foreground/70 sm:text-sm">{fmt(catTotal)}</span>
                 </div>
 
                 {/* Account rows */}
