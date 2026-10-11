@@ -33,6 +33,12 @@ Omit standalone currency prefixes from Mary's transaction descriptions, such as 
 
 **How to apply:** Apply a read-only transaction-description presentation rule consistently to history, transaction details and statement exports. Preserve stored descriptions, numeric amounts and other clients' CAD presentation.
 
+Client-facing generated fee descriptions should use the plain service name, without assessment numbering, duplicate dates or “Authorized fee overdraft” suffixes. Show the transaction date separately once.
+
+**Why:** The user said the monthly service fee description with its date, assessment number and funding-method text “make no sense and that numbering is not needed”.
+
+**How to apply:** Clean the presentation of known generated fee descriptions across history, activity, dialogs and client exports. Keep meaningful fee/refund types, original stored descriptions and audit references; do not strip numbers from unrelated transaction text.
+
 Currency-symbol exceptions are explicit designations, not client-controlled profile preferences.
 
 **Why:** Letting ordinary clients change the presentation symbol would make unconverted CAD ledger amounts appear to be pounds and violate the instruction to leave other clients in CAD.
