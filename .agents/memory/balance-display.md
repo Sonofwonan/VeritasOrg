@@ -75,9 +75,9 @@ For discretionary management, an annual minimum must continue after investments 
 
 **How to apply:** Model contract termination separately from zero holdings. Confirm exact CAD pricing, annual AUM rate, and whether the minimum is additional to monthly fees before posting new charges; do not infer overdraft interest.
 
-Show current funded balances as the dashboard's main balance, with overdraft debt separately.
+Show current funded balances as the main balance on client summary screens, with overdraft debt separately. An investment-account type does not turn negative cash into an investment; exclude debt from investment/asset summaries.
 
-**Why:** The user rejected netting the overdraft against available balances.
+**Why:** The user rejected netting the overdraft against available balances and later flagged the Accounts page showing the Brokerage overdraft as Investments.
 
 **How to apply:** Include all remaining positive cash balances across accounts and current holdings, not only the inheritance account or original deposit, separately from named account liabilities. Preserve the negative account ledger and its debt breakdown without subtracting it from the main funded-balance headline. Distinguish an original deposit transaction from the account's changing current balance.
 
