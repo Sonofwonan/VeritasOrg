@@ -74,7 +74,8 @@ it("separates confirmed debt restrictions from debt, failed evidence, generic fr
     const html=render(DashboardPage,{},data,condition==="failed access"?[["/api/funds-access",7]]:[]);
     assert(!html.includes("Your administrator has restricted"),condition);
     assert.equal(displayedValue(html,"debt-account-amount-901"),"CAD $50.00");
-    if(condition==="failed access") for(const action of ["transfer","invest","wire"]) {
+    assert(!html.includes('data-testid="button-quick-wire"'));
+    if(condition==="failed access") for(const action of ["transfer","invest"]) {
       assert(html.match(new RegExp(`<button[^>]*data-testid="button-quick-${action}"[^>]*>`))?.[0].includes("data-funds-action"));
     }
   }
@@ -205,7 +206,8 @@ it("shows a normal named GBP debt card below the funded balance without changing
   assert(!card.includes("Cash ledger overdraft") && !card.includes("truncate"));
   for (const removed of ["Payment is required", "A separate payment", "Overdrafts and unpaid fees",
     "negative cash ledger", "unpaid assessments", "No interest is added"]) assert(!notice.includes(removed),removed);
-  for (const action of ["transfer","invest","wire"]) {
+  assert(!html.includes('data-testid="button-quick-wire"'));
+  for (const action of ["transfer","invest"]) {
     const button=html.match(new RegExp(`<button[^>]*data-testid="button-quick-${action}"[^>]*>`))?.[0];
     assert(button?.includes("data-funds-action") && !button.includes("disabled"),`${action} must provide guarded feedback`);
   }

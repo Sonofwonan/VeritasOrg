@@ -30,7 +30,9 @@ test("blocked entry actions show a short popup without navigation or financial m
   await expect(page.getByTestId("debt-restriction-unavailable")).toHaveCount(0);
   const before = await snapshot(db,identity.userId);
   const message = "Transfers and investing are blocked until your account debt is cleared.";
-  for (const action of ["transfer","invest","wire"]) {
+  await expect(page.locator('[data-testid^="button-quick-"]')).toHaveText(["Transfer", "Invest", "Accounts"]);
+  await expect(page.getByTestId("button-quick-wire")).toHaveCount(0);
+  for (const action of ["transfer","invest"]) {
     await assertFundsActionBlocked(page,`button-quick-${action}`);
     await expect(page.getByTestId(`button-quick-${action}`)).toBeFocused();
   }

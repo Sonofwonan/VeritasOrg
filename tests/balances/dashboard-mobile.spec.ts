@@ -76,7 +76,8 @@ test("dashboard information fits at normal mobile zoom without clipping amounts 
       await page.setViewportSize({ width, height: 1000 });
       await page.evaluate(() => document.fonts.ready);
       expect(await page.evaluate(() => visualViewport?.scale)).toBe(1);
-      await expectTextContained(page, `[data-testid="holding-row-${holding.id}"],[data-testid="txn-row-${deposit.id}"],[data-testid="text-total-balance"],[data-testid="button-quick-transfer"],[data-testid="button-quick-invest"],[data-testid="button-quick-accounts"],[data-testid="button-quick-wire"]`);
+      await expect(page.getByTestId("button-quick-wire")).toHaveCount(0);
+      await expectTextContained(page, `[data-testid="holding-row-${holding.id}"],[data-testid="txn-row-${deposit.id}"],[data-testid="text-total-balance"],[data-testid="button-quick-transfer"],[data-testid="button-quick-invest"],[data-testid="button-quick-accounts"]`);
       if ([320, 390, 768, 1440].includes(width)) {
         await page.screenshot({ path: info.outputPath(`${currency}-normal-zoom-${width}.png`), animations: "disabled" });
       }

@@ -27,7 +27,6 @@ const QUICK_ACTIONS = [
   { label: 'Transfer',   icon: ArrowLeftRight, href: '/transfers' },
   { label: 'Invest',     icon: TrendingUp,     href: '/investments' },
   { label: 'Accounts',   icon: Landmark,       href: '/accounts' },
-  { label: 'Wire',       icon: ArrowUpRight,   href: '/transfers' },
 ];
 
 function getGreeting() {
@@ -169,7 +168,7 @@ export default function DashboardPage() {
                 </p>}
               </div>
               {/* Quick actions */}
-              <div className="grid grid-cols-4 gap-1.5 w-full md:w-auto md:flex md:gap-2 shrink-0">
+              <div className="grid grid-cols-3 gap-1.5 w-full md:w-auto md:flex md:gap-2 shrink-0">
                 {QUICK_ACTIONS.map(({ label, icon: Icon, href }) => (
                   <button key={label} onClick={() => setLocation(href)}
                     data-funds-action={href !== "/accounts" ? "" : undefined}

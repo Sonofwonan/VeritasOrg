@@ -8,3 +8,9 @@ Use clear, ordinary wording throughout the client interface. Avoid unnecessary n
 **Why:** The user asked for a professional, simple interface across the project and specifically requested advisor-directed payment notices.
 
 **How to apply:** “View transaction history” must lead to actual read-only transaction history, not a transfer form. Keep history accessible under the existing debt policy. Preserve accurate dates, account names, balances, fee contracts and access restrictions. Simplify surrounding explanations without deleting material consent terms, genuine error states or confirmed account holds. Do not substitute unsupported financial reassurance for removed technical wording.
+
+Do not add a separate Wire action to the dashboard.
+
+**Why:** The user considers it redundant because Transfer is already present.
+
+**How to apply:** Use Transfer as the dashboard entry for transfers. This does not authorize removing wire-transfer capabilities elsewhere.

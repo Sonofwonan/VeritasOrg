@@ -114,8 +114,8 @@ test("client palette stays readable without changing money or collapsed navigati
   await expect(page.getByTestId("top-navigation-toggle")).toHaveAttribute("aria-expanded", "false");
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
-    await assertReadable(page, "main,header", info, `dashboard-${width}`);
     await verifyHeadline(page, "£2,003,900.25");
+    await assertReadable(page, "main,header", info, `dashboard-${width}`);
     await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("£1,614.39");
     await page.screenshot({ path: info.outputPath(`dashboard-${width}.png`), animations: "disabled" });
     await page.goto("/accounts");

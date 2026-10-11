@@ -39,14 +39,30 @@ test("unsupported performance is omitted without inventing returns or changing f
     }
     await expect(page.getByTestId(`debt-account-amount-${identity.debt}`))
       .toHaveText(currency === "GBP" ? "£1,614.39" : "CAD $1,614.39");
-    // Four supported columns with no empty P&L header/cells.
+    // Four supported fields: desktop columns and labeled mobile fields,
+    // with no empty P&L header/cells.
     const cells = page.getByTestId(`holding-row-${holding.id}`).locator(":scope > *");
     await expect(cells).toHaveCount(4);
     const centers = await cells.evaluateAll(nodes => nodes.map(node=>{
       const rect = node.getBoundingClientRect();
       return rect.top + rect.height / 2;
     }));
-    expect(Math.max(...centers)-Math.min(...centers)).toBeLessThan(1);
+    if (page.viewportSize()!.width >= 640) {
+      expect(Math.max(...centers)-Math.min(...centers)).toBeLessThan(1);
+    } else {
+      const row = page.getByTestId(`holding-row-${holding.id}`);
+      for (const label of ["Shares", "Avg Cost", "Stored Value"]) {
+        await expect(row.getByText(label, {exact:true})).toBeVisible();
+      }
+      const bounds = await cells.evaluateAll(nodes => nodes.map(node => {
+        const rect = node.getBoundingClientRect();
+        return {left:rect.left,right:rect.right};
+      }));
+      for (const box of bounds) {
+        expect(box.left).toBeGreaterThanOrEqual(0);
+        expect(box.right).toBeLessThanOrEqual(page.viewportSize()!.width);
+      }
+    }
     await expect(page.getByText("P&L", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Synthetic inheritance deposit", { exact: true })).toBeVisible();
     await page.screenshot({path:test.info().outputPath(`dashboard-${currency}.png`),animations:"disabled"});
