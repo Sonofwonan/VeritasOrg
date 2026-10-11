@@ -259,7 +259,13 @@ test("pending deposits, internal transfer, and institutional status/navigation c
   await db.query("UPDATE transactions SET status='failed' WHERE id=$1 AND to_account_id=$2", [identity.deposit, identity.funded]);
   await page.clock.runFor(31000);
   await expect(page.getByTestId(`txn-row-${identity.deposit}`)).toContainText("failed");
-  await expect(page.getByText("CAD $9,000,000.00 pending", { exact: true })).toHaveCount(0);
+  // Activity and the primary-account pending summary poll independently.
+  // Advance the paused clock while waiting so an in-flight earlier request
+  // can finish and the summary's next interval can fetch the changed status.
+  await expect.poll(async () => {
+    await page.clock.runFor(31000);
+    return page.getByText("CAD $9,000,000.00 pending", { exact: true }).count();
+  }, {timeout:20000,message:"The refreshed primary-account summary must exclude the failed deposit"}).toBe(0);
   await verifyHeadline(page);
   // Only ledger posting, not transaction status, changes funded assets.
   await db.query("UPDATE accounts SET balance=balance+9000000 WHERE id=$1 AND user_id=$2", [identity.funded, identity.userId]);

@@ -27,6 +27,12 @@ A running browser suite may keep pre-edit test assertions. Its error message can
 
 **How to apply:** Use the recorded error and page snapshot to identify what ran. After assertion-only changes, finish the running suite and rerun affected cases; do not restore obsolete financial wording or behavior to satisfy cached tests.
 
+Advancing frozen browser time does not settle network responses or synchronize independent queries.
+
+**Why:** A status-change regression showed refreshed activity while a separately polled pending summary still held an earlier response. With time paused, ordinary assertion retries could not trigger its next refresh.
+
+**How to apply:** Wait for each required financial state independently. When testing natural polling with a paused clock, advance virtual time during the wait so in-flight requests can finish and subsequent intervals can run. Keep the exact status and balance assertions; do not reload or weaken them to mask stale data.
+
 Wait for final layout geometry when testing responsive disclosure controls; an updated aria state does not mean an offcanvas or height transition has finished.
 
 **Why:** Browser regressions intermittently measured the header partway through a sidebar transition, despite the correct final collapsed state.
