@@ -491,7 +491,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
             <StatCard icon={ArrowLeftRight} label="Transactions" value={statsLoading ? "—" : stats?.txCount ?? 0} />
             <StatCard icon={Clock} label="Pending" value={statsLoading ? "—" : stats?.pendingCount ?? 0} color="text-amber-400" />
             <StatCard icon={DollarSign} label="Total Volume" value={statsLoading ? "—" : fmt(stats?.totalVolume ?? 0)} color="text-emerald-400" />
-            <StatCard icon={Wallet} label="Ledger assets · CAD (not display currencies)" value={statsLoading ? "—" : fmt(stats?.totalAssets ?? 0)} color="text-sky-400" />
+            <StatCard icon={Wallet} label="Account cash balances · CAD" value={statsLoading ? "—" : fmt(stats?.totalAssets ?? 0)} color="text-sky-400" />
           </div>
         </div>
 

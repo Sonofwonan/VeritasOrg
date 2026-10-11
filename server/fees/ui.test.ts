@@ -28,10 +28,10 @@ it("explains existing locks without inventing debt, payment or admin confirmatio
   const before = structuredClone(access);
   for (const confirmed of [undefined, false, true]) {
     assert.equal(fundsActionFeedback(true, {...access,debtRestrictionConfirmed:confirmed})?.message,
-      "Transfers and investing are blocked until your account debt is cleared.");
+      "Transfers and investing are blocked until your account debt is cleared. Please contact your advisor to arrange payment.");
   }
   assert.equal(fundsActionFeedback(false, access),null);
-  assert.equal(fundsActionFeedback(true,{...access,totalOwed:"0.00"})?.title,"Payment verification required");
+  assert.equal(fundsActionFeedback(true,{...access,totalOwed:"0.00"})?.title,"Payment confirmation needed");
   assert.equal(fundsActionFeedback(true,access,true)?.retry,true);
   assert(!fundsActionFeedback(true,access,true)?.message.includes("debt"));
   assert.equal(fundsActionFeedback(true)?.title,"Checking access");
@@ -61,7 +61,7 @@ it("separates confirmed debt restrictions from debt, failed evidence, generic fr
   }
   const confirmed=render(DebtRestrictionStatus,{requiresPayment:true,
     data:{...access,debtRestrictionConfirmed:true}},[]);
-  assert(confirmed.includes("Your administrator has restricted transfers and investing"));
+  assert(confirmed.includes("Transfers and investing are on hold. Please contact your advisor"));
   assert(!confirmed.includes("sign in") && !confirmed.includes("50.00"));
   for (const condition of ["no restriction","generic freeze","liquidation","failed access"]) {
     const data=dashboardData([{id:901,accountType:"Brokerage Account",balance:"-50.00"}]);
@@ -572,7 +572,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       assert.equal(displayedValue(html,"text-investment-value"),"CAD $0.00",status);
       assert(html.includes("CAD $500.00 pending"));
       assert.equal(displayedValue(html,"debt-account-amount-25"),"CAD $12,398.48");
-      assert.equal(html.includes("Transfer locked"),["approved","liquidating","transfer_out"].includes(status));
+      assert.equal(html.includes("Transfer on hold"),["approved","liquidating","transfer_out"].includes(status));
       assert(!html.includes("line-through"));
     }
   });
@@ -627,7 +627,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     const data: ClientFees = { settings, enrollments: [enrollment], assessments: [] };
     const html = render(ClientFeesComponent, { accountId: 1 }, [{ key: ["/api/fees", 1], value: data }]);
     for (const text of ["CAD $363.64", "CAD $100.00", "CAD $200.00", "CAD $63.64", "America/Toronto",
-      "explicitly consent", "Processing currently disabled", "No fee assessments"]) assert(html.includes(text), text);
+      "explicitly consent", "Processing currently disabled", "No fee charges"]) assert(html.includes(text), text);
     assert.match(html, /disabled=""[^>]*>Accept this exact plan/);
     assert(html.includes("January 31, 2030"));
   });
@@ -642,8 +642,8 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       })),
     };
     const html = render(ClientFeesComponent, { accountId: 1 }, [{ key: ["/api/fees", 1], value: data }]);
-    for (const text of ["paid", "waived", "refunded", "End enrollment", "February 28, 2030", "period 1", "period 3",
-      "Outstanding unpaid assessments", "CAD $363.64", "Posted overdraft is reflected in the negative cash ledger"]) assert(html.includes(text), text);
+    for (const text of ["paid", "waived", "refunded", "End enrollment", "February 28, 2030", "Monthly service fee", "January 31, 2030",
+      "Unpaid fees", "CAD $363.64", "These fees have not been deducted from your account"]) assert(html.includes(text), text);
   });
   it("renders explicit account-specific management consent, annual calculation, overdraft terms and valuation history", () => {
     const contract = {
@@ -658,8 +658,8 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       balance: "-381.00" };
     const html = render(ClientFeesComponent, { accountId: 1 }, [{ key: ["/api/fees", 1], value: data }]);
     for (const text of ["Discretionary management", "First annual charge date", "January 1, 2026", "CAD $381.00",
-      "1.7%", "fee-overdraft authorization", "Accept this management contract", "independent of monthly",
-      "Posted negative cash ledger"]) assert(html.includes(text), text);
+      "1.7%", "fee-overdraft authorization", "Accept this management contract", "separate from monthly service fees",
+      "Overdraft"]) assert(html.includes(text), text);
   });
   it("shows both approved historical annual assessments of CAD 381 per Mary account and the 2027 prospective date", () => {
     for (const [accountId, accountName] of [[24, "Trust Account"], [25, "Brokerage Account"]] as const) {
@@ -687,7 +687,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
         balance: "-12398.48" };
       const html = render(ClientFeesComponent, { accountId }, [{ key: ["/api/fees", accountId], value: data }]);
       for (const text of ["January 1, 2025", "January 1, 2026", "January 1, 2027", "CAD $381.00",
-        "Annual management fee", "period 1", "period 2", "fee overdraft", "documented valuation"]) assert(html.includes(text), `${accountName}: ${text}`);
+        "Annual management fee", "Due", "recorded", "fee overdraft", "Confirmed investment values"]) assert(html.includes(text), `${accountName}: ${text}`);
     }
   });
   it("renders admin versioning, eligibility, processing, preview, lifecycle, and audit controls", () => {

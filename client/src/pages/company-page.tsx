@@ -212,7 +212,7 @@ export default function CompanyPage() {
               icon={ShieldCheck}
               title="Risk & Security"
               tag="Core"
-              description="Military-grade encryption and global risk assessment for cross-border enterprise."
+              description="Account support for your business."
               onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             />
             <DivisionCard 

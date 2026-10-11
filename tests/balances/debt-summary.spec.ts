@@ -59,7 +59,7 @@ test("normal debt card stays separate from admin provenance and preserves locked
   expect((await page.request.patch("/api/user",{data:{debtClearanceRequired:false}})).status()).toBe(403);
   expect((await page.request.post(path,{headers:admin,data:{confirmed:true,reason:"Synthetic admin debt restriction review"}})).status()).toBe(200);
   await page.reload();
-  await expect(page.getByTestId("debt-restriction-status")).toContainText("Your administrator");
+  await expect(page.getByTestId("debt-restriction-status")).toContainText("Please contact your advisor");
   await expect(page.getByTestId("debt-restriction-status")).not.toContainText("sign in");
   await expect(page.getByTestId("debt-restriction-status")).not.toContainText("1,614.39");
   await verifyHeadline(page, "£2,003,900.25");

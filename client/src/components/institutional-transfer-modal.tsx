@@ -239,7 +239,7 @@ function TransferForm({
         })}
         data-testid="button-submit-institutional-transfer"
       >
-        {isPending ? "Submitting…" : access.blocked ? "Funds locked · payment required" : `Submit Transfer — ${formatBalance(totalValue,currency)}`}
+        {isPending ? "Submitting…" : access.blocked ? "Transfer on hold" : `Submit Transfer — ${formatBalance(totalValue,currency)}`}
       </Button>
     </div>
   );

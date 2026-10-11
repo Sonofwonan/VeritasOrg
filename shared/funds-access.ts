@@ -22,7 +22,7 @@ export function fundsActionFeedback(
   if (!blocked) return null;
   if (error) return {
     title: "Please try again",
-    message: "We couldn't check access to your funds. Please retry before transferring or investing.",
+    message: "We couldn't check access to your funds. Please retry or contact your advisor.",
     retry: true,
   };
   if (!data) return {
@@ -32,16 +32,16 @@ export function fundsActionFeedback(
   const owed = Number(data.totalOwed);
   if (!data.totalOwed?.trim() || !Number.isFinite(owed) || owed < 0) return {
     title: "Please try again",
-    message: "We couldn't check access to your funds. Please retry before transferring or investing.",
+    message: "We couldn't check access to your funds. Please retry or contact your advisor.",
     retry: true,
   };
   if (data.locked && data.requiresPayment && owed > 0) return {
     title: "Account debt",
-    message: "Transfers and investing are blocked until your account debt is cleared.",
+    message: "Transfers and investing are blocked until your account debt is cleared. Please contact your advisor to arrange payment.",
   };
   if (data.locked && data.requiresPayment && !data.paymentRecorded) return {
-    title: "Payment verification required",
-    message: "Transfers and investing are blocked until your payment is verified.",
+    title: "Payment confirmation needed",
+    message: "Transfers and investing are blocked until your payment is verified. Please contact your advisor for help.",
   };
   return {
     title: "Access restricted",

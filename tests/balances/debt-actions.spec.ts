@@ -174,7 +174,7 @@ test("ordinary debt and non-debt holds never create a fabricated debt restrictio
   await db.query("UPDATE users SET account_frozen=true WHERE id=$1",[identity.userId]);
   await page.goto("/dashboard");
   await page.reload();
-  await expect(page.getByText("Account Under Compliance Hold",{exact:true})).toBeVisible();
+  await expect(page.getByText("Account on hold",{exact:true})).toBeVisible();
   await page.getByTestId("button-quick-invest").click();
   await expect(page).toHaveURL(/\/investments$/);
   await expect(page.getByTestId("funds-action-dialog")).toHaveCount(0);

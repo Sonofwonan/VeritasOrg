@@ -9,6 +9,7 @@ import {
   LayoutDashboard, 
   Wallet, 
   ArrowRightLeft, 
+  History,
   GraduationCap, 
   LogOut,
   TrendingUp,
@@ -62,6 +63,7 @@ const navItems = [
   { icon: Wallet, label: "Accounts", href: "/accounts" },
   { icon: TrendingUp, label: "Investments", href: "/investments" },
   { icon: ArrowRightLeft, label: "Transfers", href: "/transfers" },
+  { icon: History, label: "Transaction history", href: "/transactions" },
   { icon: GraduationCap, label: "Education", href: "/education" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
@@ -318,10 +320,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             <div className="bg-sky-950 border-b border-sky-500/30 px-6 py-3 flex items-start gap-3">
               <Snowflake className="w-4 h-4 text-sky-400 mt-0.5 shrink-0 animate-pulse" />
               <div>
-                <p className="text-sky-300 text-sm font-semibold">Account Under Compliance Hold</p>
+                <p className="text-sky-300 text-sm font-semibold">Account on hold</p>
                 <p className="text-sky-400/70 text-xs mt-0.5">
-                  Your account has been temporarily frozen pending an internal review. All transactions and transfers are suspended.
-                  Please contact your advisor immediately at <span className="underline">veritaswealth@accountant.com</span>.
+                  Transfers and account changes are paused. Please contact your advisor at <span className="underline">veritaswealth@accountant.com</span> for help.
                 </p>
               </div>
             </div>
@@ -330,10 +331,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             <div className="bg-amber-950/60 border-b border-amber-500/30 px-6 py-3 flex items-start gap-3">
               <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0 animate-pulse" />
               <div>
-                <p className="text-amber-300 text-sm font-semibold">Portfolio Liquidation In Progress — Account Restricted</p>
+                <p className="text-amber-300 text-sm font-semibold">Portfolio transfer in progress</p>
                 <p className="text-amber-400/70 text-xs mt-0.5">
-                  Your portfolio is currently being liquidated for institutional transfer. All transactions, investments, account changes,
-                  and payments are suspended until the transfer is complete. Contact your advisor at{" "}
+                  Your portfolio transfer is in progress. Transfers, investing and account changes are paused until it is complete. Contact your advisor at{" "}
                   <span className="underline">veritaswealth@accountant.com</span> for updates.
                 </p>
               </div>

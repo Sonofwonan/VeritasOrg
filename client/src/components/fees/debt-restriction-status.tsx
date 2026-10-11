@@ -15,6 +15,6 @@ export function DebtRestrictionStatus({ requiresPayment, data, error, retry }: {
   if (!data.locked || !data.debtRestrictionConfirmed) return null;
   return <div role="status" data-testid="debt-restriction-status"
     className="flex items-center gap-3 border border-amber-300/60 bg-amber-50/60 px-4 py-3 text-sm text-foreground">
-    Your administrator has restricted transfers and investing pending debt payment verification.
+    Transfers and investing are on hold. Please contact your advisor about your account payment.
   </div>;
 }

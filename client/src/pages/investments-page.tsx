@@ -1,5 +1,5 @@
 import { useInvestments, useAccounts, useBuyInvestment, useSellInvestment } from "@/hooks/use-finances";
-import { MARKET_TRADING_ENABLED, MARKET_TRADING_NOTICE } from "@shared/market";
+import { MARKET_TRADING_ENABLED } from "@shared/market";
 import { accountLabel } from "@shared/account-display";
 import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { LayoutShell } from "@/components/layout-shell";
@@ -86,7 +86,7 @@ export default function InvestmentsPage() {
   // Never enable trading from cached quotes or stored holding prices.
   const pricingBlocked = !MARKET_TRADING_ENABLED;
   const rejectUnpricedOrder = () => {
-    toast({ title: "Trading paused", description: MARKET_TRADING_NOTICE, variant: "destructive" });
+    toast({ title: "Trading paused", description: "Trading is currently paused. Please contact your advisor.", variant: "destructive" });
   };
 
   // Trading eligibility is independent of Accounts-page presentation groups:
@@ -229,7 +229,7 @@ export default function InvestmentsPage() {
       </div>
 
       <div role="alert" data-testid="market-trading-paused" className="mb-6 border border-border bg-muted/30 p-4 text-sm">
-        {MARKET_TRADING_NOTICE}
+        Trading is currently paused. Please contact your advisor.
       </div>
 
       <Tabs defaultValue="stocks" className="w-full">
@@ -352,7 +352,7 @@ export default function InvestmentsPage() {
               <Card className="border-none shadow-lg">
                 <CardHeader>
                   <CardTitle>Current Holdings</CardTitle>
-                  <CardDescription>Recorded positions · stored prices are unverified</CardDescription>
+                  <CardDescription>Your recorded investments</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loadingInv ? (

@@ -58,6 +58,11 @@ export function FundsActionDialog({
               Retry
             </Button>
           )}
+          {!retry && message.includes("advisor") && (
+            <Button asChild className="w-full sm:w-auto">
+              <a href="mailto:veritaswealth@accountant.com">Contact advisor</a>
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

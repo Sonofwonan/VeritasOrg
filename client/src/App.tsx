@@ -15,6 +15,7 @@ import AccountsPage from "@/pages/accounts-page";
 import AccountDetailPage from "@/pages/account-detail";
 import InvestmentsPage from "@/pages/investments-page";
 import TransfersPage from "@/pages/transfers-page";
+import TransactionsPage from "@/pages/transactions-page";
 import EducationPage from "@/pages/education-page";
 import CardsPage from "@/pages/cards-page";
 import SettingsPage from "@/pages/settings-page";
@@ -68,6 +69,9 @@ function Router() {
       </Route>
       <Route path="/transfers">
         {() => <ProtectedRoute component={TransfersPage} />}
+      </Route>
+      <Route path="/transactions">
+        {() => <ProtectedRoute component={TransactionsPage} />}
       </Route>
       <Route path="/education">
         {() => <ProtectedRoute component={EducationPage} />}

@@ -82,7 +82,7 @@ test("no provider means no quotes or execution, regardless of supplied source, f
       }
     }
     await page.goto("/investments");
-    await expect(page.getByTestId("market-trading-paused")).toHaveText(MARKET_UNAVAILABLE.message);
+    await expect(page.getByTestId("market-trading-paused")).toHaveText("Trading is currently paused. Please contact your advisor.");
     await expect(page.getByText("Stock Quote", { exact: true })).toHaveCount(0);
     await expect(page.locator("main").last()).not.toContainText(/999,999\.99|999999\.99|99%/);
     await page.getByRole("combobox").filter({ hasText: "Select Account" }).click();
