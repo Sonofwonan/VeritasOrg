@@ -1,4 +1,4 @@
-import { test, expect, login, verifyHeadline } from "./fixtures";
+import { test, expect, login, verifyHeadline, assertFundsActionBlocked } from "./fixtures";
 import { assertContained, assertReadable } from "./contrast-helper";
 import { writeFile } from "node:fs/promises";
 
@@ -108,8 +108,8 @@ test("client palette stays readable without changing money or collapsed navigati
   const before = await snapshot();
   await login(page, identity);
   await verifyHeadline(page, "£2,003,900.25");
-  await expect(page.getByTestId("button-quick-transfer")).toBeDisabled();
-  await expect(page.getByTestId("button-quick-invest")).toBeDisabled();
+  await assertFundsActionBlocked(page,"button-quick-transfer");
+  await assertFundsActionBlocked(page,"button-quick-invest");
   await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute("aria-expanded", "false");
   await expect(page.getByTestId("top-navigation-toggle")).toHaveAttribute("aria-expanded", "false");
   for (const width of [320, 390, 768, 1024, 1440]) {

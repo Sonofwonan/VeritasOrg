@@ -87,7 +87,6 @@ export function FeeLiability({ summary, error, retry, hidden = false, loading = 
             {amount(totalOwed)}
           </p>
         </div>
-        {accountLinks && <Link href="/accounts" className="text-sm underline underline-offset-4">Review accounts</Link>}
       </div>
       <div className="mt-3 divide-y divide-red-200/80">
         {owingAccounts.map(account => (

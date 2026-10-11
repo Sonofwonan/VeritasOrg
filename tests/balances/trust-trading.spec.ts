@@ -1,4 +1,4 @@
-import { test, expect, login, type Identity } from "./fixtures";
+import { test, expect, login, assertFundsActionBlocked, type Identity } from "./fixtures";
 import type { Page } from "@playwright/test";
 import type { Pool } from "pg";
 
@@ -84,10 +84,10 @@ test.describe("trust trading restrictions", () => {
     const before = await financialRecords(db, identity.userId);
     await login(page, identity);
     await selectTrust(page);
-    await expect(page.getByRole("alert").filter({ hasText: "Payment must be recorded" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Buy Stock", exact: true })).toBeDisabled();
+    await expect(page.getByRole("alert").filter({ hasText: "Transfers and investing are blocked until your account debt is cleared." })).toBeVisible();
+    await assertFundsActionBlocked(page,page.getByRole("button", { name: "Buy Stock", exact: true }));
     await page.getByRole("tab", { name: "Sell", exact: true }).click();
-    await expect(page.getByRole("button", { name: "Sell Shares", exact: true })).toBeDisabled();
+    await assertFundsActionBlocked(page,page.getByRole("button", { name: "Sell Shares", exact: true }));
     for (const operation of ["buy", "sell"]) {
       const response = await page.request.post(`/api/investments/${operation}`, { data: {
         accountId: identity.sixth, symbol: "AAPL", ...(operation === "buy" ? { amount: "100" } : { shares: "1" }),

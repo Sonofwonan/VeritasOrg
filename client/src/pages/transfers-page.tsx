@@ -56,7 +56,7 @@ export default function TransfersPage() {
                   Move your full portfolio in-kind or as cash to any registered Canadian investment dealer. All requests are subject to admin review.
                 </CardDescription>
               </div>
-              <Button disabled={access.blocked} onClick={() => setShowInstTransferModal(true)} className="gap-2 shrink-0" data-testid="button-new-institutional-transfer">
+              <Button data-funds-action="" onClick={() => setShowInstTransferModal(true)} className="gap-2 shrink-0" data-testid="button-new-institutional-transfer">
                 <Plus className="w-4 h-4" />
                 New Request
               </Button>
@@ -80,7 +80,7 @@ export default function TransfersPage() {
                 <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                   Submit a request to move your investments to another institution. Admin review required.
                 </p>
-                <Button variant="outline" onClick={() => setShowInstTransferModal(true)}>
+                <Button variant="outline" data-funds-action="" onClick={() => setShowInstTransferModal(true)}>
                   Start a Transfer Request
                 </Button>
               </div>

@@ -9,6 +9,7 @@ import { AdminFees } from "../../client/src/components/fees/admin-fees";
 import { FeeLiability, AccountFeeBalance } from "../../client/src/components/fees/fee-liability";
 import { DebtAccountSummary } from "../../client/src/components/fees/debt-account-summary";
 import { DebtRestrictionStatus } from "../../client/src/components/fees/debt-restriction-status";
+import { fundsActionFeedback } from "../../shared/funds-access";
 import DashboardPage from "../../client/src/pages/dashboard";
 import AccountsPage from "../../client/src/pages/accounts-page";
 import { accountStatementCsv } from "../../client/src/lib/account-statement";
@@ -21,21 +22,41 @@ const schedule = {
   id: 1, version: 1, name: "Fixture service plan", currency: "CAD" as const,
   total: "363.64", components: DEFAULT_FEE_COMPONENTS, terms: DEFAULT_FEE_TERMS, createdAt: "2030-01-01T12:00:00Z",
 };
+it("explains existing locks without inventing debt, payment or admin confirmation", () => {
+  const access = { locked:true, requiresPayment:true, paymentRecorded:false,
+    totalOwed:"50.00", paymentAccountId:901, paymentAccountName:"Synthetic Brokerage" };
+  const before = structuredClone(access);
+  for (const confirmed of [undefined, false, true]) {
+    assert.equal(fundsActionFeedback(true, {...access,debtRestrictionConfirmed:confirmed})?.message,
+      "Transfers and investing are blocked until your account debt is cleared.");
+  }
+  assert.equal(fundsActionFeedback(false, access),null);
+  assert.equal(fundsActionFeedback(true,{...access,totalOwed:"0.00"})?.title,"Payment verification required");
+  assert.equal(fundsActionFeedback(true,access,true)?.retry,true);
+  assert(!fundsActionFeedback(true,access,true)?.message.includes("debt"));
+  assert.equal(fundsActionFeedback(true)?.title,"Checking access");
+  assert.equal(fundsActionFeedback(true,{...access,requiresPayment:false})?.title,"Access restricted");
+  for (const amount of ["NaN","Infinity","","-1"]) {
+    assert.equal(fundsActionFeedback(true,{...access,totalOwed:amount})?.retry,true);
+  }
+  assert.deepEqual(access,before);
+});
+
 it("separates confirmed debt restrictions from debt, failed evidence, generic freezes and liquidation", () => {
   const access = { locked:true, requiresPayment:true, paymentRecorded:false,
     totalOwed:"50.00", paymentAccountId:901, paymentAccountName:"Synthetic Brokerage" };
   for (const props of [
     {requiresPayment:false},
     {requiresPayment:true, data:{...access,locked:false,debtRestrictionConfirmed:true}},
+    {requiresPayment:true,data:access},
+    {requiresPayment:true,data:{...access,debtRestrictionConfirmed:false}},
   ]) assert.equal(render(DebtRestrictionStatus,props,[]),"");
   for (const props of [
     {requiresPayment:true},
-    {requiresPayment:true,data:access},
-    {requiresPayment:true,data:{...access,debtRestrictionConfirmed:false}},
     {requiresPayment:true,error:true,data:{...access,debtRestrictionConfirmed:true}},
   ]) {
     const html=render(DebtRestrictionStatus,props,[]);
-    assert(html.includes("unavailable"));
+    assert(html.includes("Checking access") || html.includes("Please retry"));
     assert(!html.includes("Your administrator"));
   }
   const confirmed=render(DebtRestrictionStatus,{requiresPayment:true,
@@ -54,7 +75,7 @@ it("separates confirmed debt restrictions from debt, failed evidence, generic fr
     assert(!html.includes("Your administrator has restricted"),condition);
     assert.equal(displayedValue(html,"debt-account-amount-901"),"CAD $50.00");
     if(condition==="failed access") for(const action of ["transfer","invest","wire"]) {
-      assert(html.match(new RegExp(`<button[^>]*data-testid="button-quick-${action}"[^>]*>`))?.[0].includes("disabled"));
+      assert(html.match(new RegExp(`<button[^>]*data-testid="button-quick-${action}"[^>]*>`))?.[0].includes("data-funds-action"));
     }
   }
 });
@@ -186,10 +207,10 @@ it("shows a normal named GBP debt card below the funded balance without changing
     "negative cash ledger", "unpaid assessments", "No interest is added"]) assert(!notice.includes(removed),removed);
   for (const action of ["transfer","invest","wire"]) {
     const button=html.match(new RegExp(`<button[^>]*data-testid="button-quick-${action}"[^>]*>`))?.[0];
-    assert(button?.includes("disabled"),`${action} must remain locked`);
+    assert(button?.includes("data-funds-action") && !button.includes("disabled"),`${action} must provide guarded feedback`);
   }
   assert(html.indexOf('data-testid="text-total-balance"')<html.indexOf('data-testid="debt-account-summary"'));
-  assert(html.includes("Restriction details unavailable"));
+  assert(!html.includes("Restriction details unavailable"));
   assert(!html.includes("restricted by your administrator"));
   assert(!html.includes("CAD") && !html.includes("GBP") && !html.includes("Account #"));
   assert(!html.includes("Total balance · £"));

@@ -211,7 +211,7 @@ export default function AccountsPage() {
           {[
             { cat: 'cash', label: 'Cash & Deposits', value: cashTotal, Icon: Landmark, sub: 'Available liquidity' },
             { cat: 'investment', label: 'Investments', value: investTotal, Icon: TrendingUp },
-            { cat: 'business', label: 'Business & Trust', value: bizTotal, Icon: ShieldCheck, sub: 'Fiduciary accounts' },
+            { cat: 'business', label: 'Business & Trust', value: bizTotal, Icon: ShieldCheck, sub: 'Trust and business accounts' },
           ].map(({ cat, label, value, Icon, sub }) => (
             <div key={label} data-testid={`account-summary-${cat}`} className="flex items-center justify-between gap-4 px-4 py-3 xl:block xl:px-6 xl:py-5">
               <div className="min-w-0">

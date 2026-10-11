@@ -32,3 +32,9 @@ Error-recovery browser tests must allow normal background polling to recover aft
 **Why:** A restored history endpoint recovered automatically before a test clicked Retry, making a working interface look broken.
 
 **How to apply:** Assert the failure and Retry control while the failure remains mocked. After restoring the endpoint, allow either the user retry or automatic recovery; do not assume the error persists across screenshots.
+
+Recheck active-button contrast when replacing a disabled financial control with clickable blocked-action feedback.
+
+**Why:** The existing readability checks excluded disabled controls. Making debt-blocked investment buttons clickable exposed an unreadable active color that those earlier checks could not detect.
+
+**How to apply:** Verify enabled feedback controls and popup text at relevant widths, alongside tests proving blocked clicks never submit financial requests. A server-blocked action still needs readable, keyboard-accessible client feedback.

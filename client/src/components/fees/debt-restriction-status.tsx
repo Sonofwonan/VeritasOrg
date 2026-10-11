@@ -5,10 +5,10 @@ export function DebtRestrictionStatus({ requiresPayment, data, error, retry }: {
 }) {
   if (!requiresPayment) return null;
   // Failures or legacy policies lacking admin provenance do not establish a reason.
-  if (error || !data || (data.locked && data.debtRestrictionConfirmed !== true)) {
+  if (error || !data) {
     return <div role="status" data-testid="debt-restriction-unavailable"
       className="border border-border/60 px-4 py-3 text-xs text-muted-foreground">
-      {error || !data ? "Funds access status unavailable." : "Restriction details unavailable."}
+      {error ? "We couldn't check access to your funds. Please retry." : "Checking access to your funds…"}
       {error && <button type="button" onClick={retry} className="ml-2 min-h-11 underline">Retry</button>}
     </div>;
   }

@@ -1,4 +1,4 @@
-import { test, expect, login, verifyHeadline } from "./fixtures";
+import { test, expect, login, verifyHeadline, assertFundsActionBlocked } from "./fixtures";
 
 test("unsupported performance is omitted without inventing returns or changing financial records", async ({ page, identity, db }) => {
   test.setTimeout(120000);
@@ -84,19 +84,19 @@ test("unsupported performance is omitted without inventing returns or changing f
   expect(await snapshot()).toEqual(before);
 });
 
-test("hiding unsupported performance does not hide failed access checks or unlock funds", async ({page,identity,db}) => {
+test("hiding unsupported performance retains blocked-action feedback and access restrictions", async ({page,identity,db}) => {
   await db.query("UPDATE users SET display_currency='GBP',debt_clearance_required=true,debt_payment_account_id=$2 WHERE id=$1",
     [identity.userId,identity.debt]);
   await login(page,identity);
   await verifyHeadline(page,"£2,003,900.25");
-  await expect(page.getByTestId("button-quick-transfer")).toBeDisabled();
-  await expect(page.getByTestId("button-quick-invest")).toBeDisabled();
-  await expect(page.getByTestId("debt-restriction-unavailable")).toBeVisible();
+  await assertFundsActionBlocked(page,"button-quick-transfer");
+  await assertFundsActionBlocked(page,"button-quick-invest");
+  await expect(page.getByTestId("debt-restriction-unavailable")).toHaveCount(0);
   await expect(page.getByTestId("text-performance-explanation")).toHaveCount(0);
   await expect(page.getByTestId("text-day-performance")).toHaveCount(0);
   await expect(page.getByTestId("text-ytd-performance")).toHaveCount(0);
   await page.goto("/investments");
-  await expect(page.getByRole("button",{name:"Buy Stock",exact:true})).toBeDisabled();
+  await assertFundsActionBlocked(page,page.getByRole("button",{name:"Buy Stock",exact:true}));
   await expect(page.getByRole("heading",{name:"Investments",exact:true})).toBeVisible();
   await page.screenshot({path:test.info().outputPath("restricted-investments.png"),animations:"disabled"});
 });

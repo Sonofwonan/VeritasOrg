@@ -116,3 +116,9 @@ Use plain-language overdraft highlights on account detail and account summary sc
 **Why:** The user again rejected the account-page notice: “the notice should simply highlight an overdraft” and “all that jargons there is unnecessary”.
 
 **How to apply:** Identify the named account and amount owed clearly. Omit zero-fee lines and duplicate overdraft figures, while keeping genuinely unpaid fees distinct and preserving all financial balances and access restrictions.
+
+Explain an existing debt restriction in a short popup when a client deliberately clicks Transfer or Invest, rather than leaving an unexplained disabled entry control.
+
+**Why:** The user requested “Transfers and investing are blocked until your account debt is cleared,” and rejected persistent “Review accounts” prompts and unconfirmed restriction-detail placeholders.
+
+**How to apply:** Do not infer a new hold or an administrator's decision from debt alone. Keep payment-verification-only locks distinct from outstanding debt, and failed access checks blocked without claiming an unsupported debt reason.

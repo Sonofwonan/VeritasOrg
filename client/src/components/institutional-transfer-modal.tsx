@@ -224,7 +224,8 @@ function TransferForm({
 
       <Button
         className="w-full"
-        disabled={access.blocked || !portfolioId.trim() || (holderType === "other" && !holderName.trim()) || isPending}
+        data-funds-action=""
+        disabled={isPending || (!access.blocked && (!portfolioId.trim() || (holderType === "other" && !holderName.trim())))}
         onClick={() => onSubmit({
           institutionName: institution.name,
           institutionAccountNumber: portfolioId,

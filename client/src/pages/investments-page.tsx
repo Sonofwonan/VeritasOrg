@@ -96,6 +96,7 @@ export default function InvestmentsPage() {
   ) || [];
 
   const handleBuy = () => {
+    if (access.blocked) return;
     if (pricingBlocked) return rejectUnpricedOrder();
     if (!selectedAccount) {
       toast({ title: "Select an account", variant: "destructive" });
@@ -117,6 +118,7 @@ export default function InvestmentsPage() {
   };
 
   const handleSell = () => {
+    if (access.blocked) return;
     if (pricingBlocked) return rejectUnpricedOrder();
     if (!selectedAccount) {
       toast({ title: "Select an account", variant: "destructive" });
@@ -138,6 +140,7 @@ export default function InvestmentsPage() {
   };
 
   const handleFractionalBuy = () => {
+    if (access.blocked) return;
     rejectUnpricedOrder();
   };
 
@@ -307,9 +310,12 @@ export default function InvestmentsPage() {
                         </div>
                       </div>
                       <Button 
-                        className="w-full bg-emerald-600 hover:bg-emerald-700" 
+                        data-funds-action=""
+                        className={
+                          "w-full bg-emerald-700 hover:bg-emerald-800"
+                        }
                         onClick={handleBuy}
-                        disabled={pricingBlocked || access.blocked || buyMutation.isPending}
+                        disabled={(pricingBlocked && !access.blocked) || buyMutation.isPending}
                       >
                         {buyMutation.isPending ? "Processing..." : "Buy Stock"}
                       </Button>
@@ -326,9 +332,12 @@ export default function InvestmentsPage() {
                         />
                       </div>
                       <Button 
-                        className="w-full bg-rose-600 hover:bg-rose-700" 
+                        data-funds-action=""
+                        className={
+                          "w-full bg-rose-700 hover:bg-rose-800"
+                        }
                         onClick={handleSell}
-                        disabled={pricingBlocked || access.blocked || sellMutation.isPending}
+                        disabled={(pricingBlocked && !access.blocked) || sellMutation.isPending}
                       >
                         {sellMutation.isPending ? "Processing..." : "Sell Shares"}
                       </Button>
@@ -440,9 +449,10 @@ export default function InvestmentsPage() {
                   </div>
 
                   <Button 
+                    data-funds-action=""
                     className="w-full bg-blue-600 hover:bg-blue-700" 
                     onClick={handleFractionalBuy}
-                    disabled={pricingBlocked || access.blocked}
+                    disabled={pricingBlocked && !access.blocked}
                   >
                     Buy Fractional Shares
                   </Button>

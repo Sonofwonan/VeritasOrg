@@ -180,7 +180,8 @@ export default function DashboardPage() {
               {/* Quick actions */}
               <div className="flex gap-2 shrink-0">
                 {QUICK_ACTIONS.map(({ label, icon: Icon, href }) => (
-                  <button key={label} onClick={() => setLocation(href)} disabled={access.blocked && href !== "/accounts"}
+                  <button key={label} onClick={() => setLocation(href)}
+                    data-funds-action={href !== "/accounts" ? "" : undefined}
                     className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-sm bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all group"
                     data-testid={`button-quick-${label.toLowerCase()}`}>
                     <Icon className="w-4 h-4 text-white/60 group-hover:text-white transition-colors" />
@@ -332,7 +333,7 @@ export default function DashboardPage() {
                   <p className="text-[10px] text-muted-foreground mt-0.5">Recorded holdings · stored valuations are unverified</p>
                 </div>
                 <Button variant="ghost" size="sm" className="text-xs text-primary hover:bg-primary/5 gap-1"
-                  onClick={() => setLocation('/investments')}>
+                  data-funds-action="" onClick={() => setLocation('/investments')}>
                   Manage <ChevronRight className="w-3 h-3" />
                 </Button>
               </div>
@@ -374,7 +375,7 @@ export default function DashboardPage() {
                 <div className="py-12 text-center">
                   <BarChart3 className="w-8 h-8 text-muted-foreground/20 mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground">No holdings yet</p>
-                  <Button size="sm" variant="outline" className="mt-3 rounded-sm text-xs gap-1" onClick={() => setLocation('/investments')}>
+                  <Button size="sm" variant="outline" className="mt-3 rounded-sm text-xs gap-1" data-funds-action="" onClick={() => setLocation('/investments')}>
                     <TrendingUp className="w-3 h-3" /> Start Investing
                   </Button>
                 </div>

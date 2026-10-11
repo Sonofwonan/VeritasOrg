@@ -5,6 +5,26 @@ import { writeFile } from "node:fs/promises";
 import { DEFAULT_FEE_COMPONENTS, OVERDRAFT_FEE_TERMS } from "../../shared/fees";
 
 export const HEADLINE = "CAD $2,003,900.25";
+
+export async function assertFundsActionBlocked(page: Page, target: string | import("@playwright/test").Locator) {
+  const url = page.url();
+  const requests: string[] = [];
+  const record = (request: import("@playwright/test").Request) => {
+    if (["POST", "PATCH", "DELETE"].includes(request.method()) &&
+        new URL(request.url()).pathname.startsWith("/api/")) requests.push(request.url());
+  };
+  page.on("request", record);
+  try {
+    await (typeof target === "string" ? page.getByTestId(target) : target).click();
+    const dialog = page.getByTestId("funds-action-dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText(/blocked|check access|Please wait/);
+    await dialog.getByRole("button", { name: "Close", exact: true }).first().click();
+    await expect(dialog).toHaveCount(0);
+    expect(page.url()).toBe(url);
+    expect(requests, "Blocked click cannot submit a financial request").toEqual([]);
+  } finally { page.off("request", record); }
+}
 export type Identity = {
   userId: number; ref: string; password: string; debt: number; funded: number;
   extra: number; sixth: number; assessment: number; deposit: number;

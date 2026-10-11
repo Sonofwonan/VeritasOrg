@@ -1,4 +1,4 @@
-import { test, expect, login, verifyHeadline } from "./fixtures";
+import { test, expect, login, verifyHeadline, assertFundsActionBlocked } from "./fixtures";
 
 test.use({ expectedHttpFailures: { "/api/funds-access": 503 } });
 
@@ -44,8 +44,8 @@ test("normal debt card stays separate from admin provenance and preserves locked
   await db.query("UPDATE users SET debt_clearance_required=true,debt_payment_account_id=$2 WHERE id=$1",
     [identity.userId,identity.debt]);
   await page.reload();
-  await expect(page.getByTestId("debt-restriction-unavailable")).toContainText("Restriction details unavailable");
-  await expect(page.getByTestId("button-quick-transfer")).toBeDisabled();
+  await expect(page.getByText("Restriction details unavailable.",{exact:true})).toHaveCount(0);
+  await assertFundsActionBlocked(page,"button-quick-transfer");
   const financialSnapshot = async () => {
     const accounts=await db.query("SELECT id,balance FROM accounts WHERE user_id=$1 ORDER BY id",[identity.userId]);
     const assessment=await db.query("SELECT total,status FROM fee_assessments WHERE id=$1",[identity.assessment]);
@@ -63,7 +63,7 @@ test("normal debt card stays separate from admin provenance and preserves locked
   await expect(page.getByTestId("debt-restriction-status")).not.toContainText("sign in");
   await expect(page.getByTestId("debt-restriction-status")).not.toContainText("1,614.39");
   await verifyHeadline(page, "£2,003,900.25");
-  await expect(page.getByTestId("button-quick-invest")).toBeDisabled();
+  await assertFundsActionBlocked(page,"button-quick-invest");
   for (const [endpoint,data] of [
     ["/api/transactions/transfer",{fromAccountId:identity.funded,toAccountId:identity.extra,amount:"1.00"}],
     ["/api/investments/buy",{accountId:identity.funded,symbol:"TEST",amount:"1.00"}],
@@ -76,16 +76,16 @@ test("normal debt card stays separate from admin provenance and preserves locked
   expect(await financialSnapshot()).toEqual(before);
   await page.route("**/api/funds-access", route=>route.fulfill({status:503,json:{message:"Synthetic missing access evidence"}}));
   await page.reload();
-  await expect(page.getByTestId("debt-restriction-unavailable")).toContainText("Funds access status unavailable");
+  await expect(page.getByTestId("debt-restriction-unavailable")).toContainText("We couldn't check access");
   await expect(page.getByTestId("debt-restriction-status")).toHaveCount(0);
-  await expect(page.getByTestId("button-quick-transfer")).toBeDisabled();
+  await assertFundsActionBlocked(page,"button-quick-transfer");
   await page.unroute("**/api/funds-access");
   await page.getByTestId("debt-restriction-unavailable").getByRole("button",{name:"Retry"}).click();
   await expect(page.getByTestId("debt-restriction-status")).toBeVisible();
   expect((await page.request.post(path,{headers:admin,data:{confirmed:false,reason:"Synthetic notice withdrawn, lock retained"}})).status()).toBe(200);
   await page.reload();
   await expect(page.getByTestId("debt-restriction-status")).toHaveCount(0);
-  await expect(page.getByTestId("button-quick-transfer")).toBeDisabled();
+  await assertFundsActionBlocked(page,"button-quick-transfer");
   expect(await financialSnapshot()).toEqual(before);
   // Even a zero ledger is not verified separate payment.
   await db.query("UPDATE accounts SET balance=0 WHERE id=$1 AND user_id=$2",[identity.debt,identity.userId]);
@@ -117,8 +117,8 @@ test("normal debt card stays separate from admin provenance and preserves locked
   expect(renewed).toMatchObject({locked:true,paymentRecorded:true,debtRestrictionConfirmed:false});
   await page.reload();
   await expect(page.getByTestId("debt-restriction-status")).toHaveCount(0);
-  await expect(page.getByTestId("debt-restriction-unavailable")).toContainText("Restriction details unavailable");
-  await expect(page.getByTestId("button-quick-transfer")).toBeDisabled();
+  await expect(page.getByText("Restriction details unavailable.",{exact:true})).toHaveCount(0);
+  await assertFundsActionBlocked(page,"button-quick-transfer");
   expect((await page.request.post(path,{headers:admin,data:{confirmed:true,reason:"Synthetic administrator reviews renewed debt"}})).status()).toBe(200);
   await page.reload();
   await expect(page.getByTestId("debt-restriction-status")).toBeVisible();
@@ -154,7 +154,7 @@ test("admin notice controls record provenance without changing generic holds or 
     await expect(panel).toContainText("admin debt reason not yet confirmed");
     await page.reload();
     await expect(page.getByTestId("debt-restriction-status")).toHaveCount(0);
-    await expect(page.getByTestId("button-quick-invest")).toBeDisabled();
+    await assertFundsActionBlocked(page,"button-quick-invest");
   } finally { await context.close(); }
   // A generic compliance freeze is not debt-restriction evidence; the actual
   // freeze gate stays effective on this disposable identity.
@@ -217,7 +217,7 @@ test("clearance after partial payment and waived fees cannot revive an old notic
     .toMatchObject({locked:true,debtRestrictionConfirmed:false,paymentRecorded:true});
   await page.reload();
   await expect(page.getByTestId("debt-restriction-status")).toHaveCount(0);
-  await expect(page.getByTestId("button-quick-transfer")).toBeDisabled();
+  await assertFundsActionBlocked(page,"button-quick-transfer");
   await confirm();
   await page.reload();
   await expect(page.getByTestId("debt-restriction-status")).toBeVisible();
@@ -266,7 +266,7 @@ test("settling an unpaid fee invalidates the notice while another overdraft keep
   expect(Number(ledger.balance)).toBe(-1250.75);
   await page.reload();
   await expect(page.getByTestId("debt-restriction-status")).toHaveCount(0);
-  await expect(page.getByTestId("button-quick-transfer")).toBeDisabled();
+  await assertFundsActionBlocked(page,"button-quick-transfer");
   await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("CAD $1,250.75");
   await expect(page.getByTestId(`debt-account-${identity.funded}`)).toHaveCount(0);
   await confirm();

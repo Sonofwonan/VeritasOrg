@@ -2,6 +2,9 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useInactivityLogout } from "@/hooks/use-inactivity-logout";
 import { useActiveLiquidation } from "@/hooks/use-liquidation-status";
+import { useFundsAccess } from "@/hooks/use-funds-access";
+import { fundsActionFeedback } from "@shared/funds-access";
+import { FundsActionDialog } from "@/components/fees/funds-action-dialog";
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -106,6 +109,21 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [topNavigationOpen, setTopNavigationOpen] = useState(false);
+  const access = useFundsAccess();
+  const [fundsDialogOpen, setFundsDialogOpen] = useState(false);
+  const fundsActionOrigin = useRef<HTMLElement | null>(null);
+  const feedback = fundsActionFeedback(access.blocked, access.data, access.isError);
+
+  // Capture marked entry actions before navigation or any submit handler runs.
+  const guardFundsAction = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target instanceof Element
+      ? event.target.closest<HTMLElement>("[data-funds-action]") : null;
+    if (!target || !access.blocked) return;
+    event.preventDefault();
+    event.stopPropagation();
+    fundsActionOrigin.current = target;
+    setFundsDialogOpen(true);
+  };
 
   const handleAutoLogout = useCallback(() => {
     logout.mutate();
@@ -146,7 +164,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       style={style as React.CSSProperties}
     >
       <ResetSidebarOnRouteChange location={location} />
-      <div className="flex h-screen w-full overflow-hidden bg-background">
+      <div onClickCapture={guardFundsAction} className="flex h-screen w-full overflow-hidden bg-background">
         <Sidebar collapsible="offcanvas" className="wealth-panel border-r border-border/50 bg-zinc-950 text-zinc-100">
           <SidebarPanel>
           <SidebarHeader className="h-20 flex-row items-center justify-between gap-2 px-4 border-b border-white/5">
@@ -198,6 +216,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                             : "text-white/50 hover:bg-white/5 hover:text-white"
                         )}
                         onClick={() => setLocation(item.href)}
+                         data-funds-action={["/transfers", "/investments"].includes(item.href) ? "" : undefined}
                       >
                         <item.icon className={cn(
                           "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
@@ -327,6 +346,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           </main>
         </SidebarInset>
       </div>
+
+      <FundsActionDialog open={fundsDialogOpen} onOpenChange={setFundsDialogOpen}
+        title={feedback?.title ?? "Access updated"}
+        message={feedback?.message ?? "Your access has changed. Close this message and try again."}
+        retry={feedback?.retry ? () => void access.refetch() : undefined}
+        onCloseAutoFocus={event => {
+          event.preventDefault();
+          if (fundsActionOrigin.current?.isConnected) fundsActionOrigin.current.focus();
+        }} />
 
       {/* Inactivity warning dialog */}
       <Dialog open={showWarning} onOpenChange={(open) => { if (!open) dismiss(); }}>
