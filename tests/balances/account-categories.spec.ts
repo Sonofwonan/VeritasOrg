@@ -57,8 +57,14 @@ test("named funded trusts and brokerage stay in their presentation groups withou
   for (const account of accounts) {
     const group = account.account_type === "Trust Account" ? trustGroup : investmentGroup;
     const other = account.account_type === "Trust Account" ? investmentGroup : trustGroup;
-    await expect(group.getByTestId(`account-row-${account.id}`)).toContainText(account.display_name);
-    await expect(group.getByTestId(`balance-${account.id}`)).toHaveText(`CAD ${money(Number(account.balance))}`);
+    const row = group.getByTestId(`account-row-${account.id}`);
+    const ledgerBalance = Number(account.balance);
+    await expect(row).toContainText(account.display_name);
+    // An overdraft is presented as the amount owed; totals and stored balances stay signed.
+    await expect(row.getByTestId(`balance-${account.id}`)).toHaveText(`CAD ${money(ledgerBalance < 0 ? Math.abs(ledgerBalance) : ledgerBalance)}`);
+    if (ledgerBalance < 0) {
+      await expect(row.getByText("Overdraft", { exact: true })).toBeVisible();
+    }
     await expect(other.getByTestId(`account-row-${account.id}`)).toHaveCount(0);
   }
   await page.screenshot({ path: info.outputPath("named-account-categories.png"), fullPage: true });
