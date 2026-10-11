@@ -55,7 +55,7 @@ test("unsupported performance is omitted without inventing returns or changing f
       await expect(page.locator("main").last()).not.toContainText("GBP");
     }
     await page.goto("/accounts");
-    await expect(page.getByTestId("text-total-balance")).toHaveText(currency === "GBP" ? "£1,999,785.86" : "CAD $1,999,785.86");
+    await expect(page.getByTestId("text-total-balance")).toHaveText(currency === "GBP" ? "£2,003,900.25" : "CAD $2,003,900.25");
     await noUnsupportedPerformance();
     await expect(page.getByTestId("text-ytd-performance")).toHaveCount(0);
     for (const id of [identity.funded, identity.debt, identity.sixth]) {

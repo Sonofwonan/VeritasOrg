@@ -88,10 +88,10 @@ test("blocked entry actions show a short popup without navigation or financial m
   await expect(page.getByText("Review accounts",{exact:true})).toHaveCount(0);
   await expect(page.getByText("Fiduciary accounts",{exact:true})).toHaveCount(0);
   // The fixture has both unpaid fees and overdraft: no reviewed-state shortcut.
-  await expect(page.getByTestId("text-total-fee-debt")).toContainText("£1,614.39");
+  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toContainText("£1,614.39");
   await page.getByTestId(`account-row-${identity.debt}`).click();
   await page.goto("/accounts");
-  await expect(page.getByTestId("text-total-fee-debt")).toContainText("£1,614.39");
+  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toContainText("£1,614.39");
   for (const [endpoint,data] of [
     ["/api/transactions/transfer",{fromAccountId:identity.funded,toAccountId:identity.extra,amount:"1.00"}],
     ["/api/investments/buy",{accountId:identity.funded,symbol:"TEST",amount:"1.00"}],

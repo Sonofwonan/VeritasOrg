@@ -101,7 +101,7 @@ export default function DashboardPage() {
 
   return (
     <LayoutShell>
-      <div className="flex flex-col gap-3">
+      <div className="flex min-w-0 flex-col gap-3">
         <DebtRestrictionStatus requiresPayment={access.requiresPayment} data={access.data}
           error={access.isError} retry={() => void access.refetch()} />
 
@@ -169,11 +169,11 @@ export default function DashboardPage() {
                 </p>}
               </div>
               {/* Quick actions */}
-              <div className="flex gap-2 shrink-0">
+              <div className="grid grid-cols-4 gap-1.5 w-full md:w-auto md:flex md:gap-2 shrink-0">
                 {QUICK_ACTIONS.map(({ label, icon: Icon, href }) => (
                   <button key={label} onClick={() => setLocation(href)}
                     data-funds-action={href !== "/accounts" ? "" : undefined}
-                    className="flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-sm bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all group"
+                    className="min-w-0 flex flex-col items-center gap-1.5 px-1.5 md:px-4 py-2.5 rounded-sm bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all group"
                     data-testid={`button-quick-${label.toLowerCase()}`}>
                     <Icon className="w-4 h-4 text-white/60 group-hover:text-white transition-colors" />
                     <span className="text-[9px] uppercase tracking-widest text-white/40 group-hover:text-white/70 transition-colors font-semibold">{label}</span>
@@ -310,13 +310,13 @@ export default function DashboardPage() {
         })()}
 
         {/* ── Main Grid ───────────────────────────────────────────────────── */}
-        <div className="grid gap-3 lg:grid-cols-[1fr_360px]">
+        <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">
 
           {/* Left column: Holdings + Transactions */}
-          <div className="flex flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3">
 
             {/* Holdings table */}
-            <div className="border border-border/60 rounded-sm overflow-hidden">
+            <div className="min-w-0 border border-border/60 rounded-sm overflow-hidden">
               <div className="px-5 py-3 border-b border-border/60 flex items-center justify-between bg-muted/20">
                 <div>
                   <p className="font-semibold text-sm">Holdings</p>
@@ -329,7 +329,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Table header */}
-              <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-5 py-2 border-b border-border/40 bg-muted/10">
+              <div className="hidden sm:grid grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] gap-2 px-3 sm:px-5 py-2 border-b border-border/40 bg-muted/10">
                 {['Security', 'Shares', 'Avg Cost', 'Stored Value'].map(h => (
                   <p key={h} className="label-caps text-muted-foreground/60 text-right first:text-left">{h}</p>
                 ))}
@@ -337,28 +337,40 @@ export default function DashboardPage() {
 
               {investmentsLoading ? (
                 <div className="p-4 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
+              ) : investmentsError ? (
+                <div role="alert" className="px-4 py-6 text-center text-sm text-destructive">
+                  <p>Holdings could not be loaded.</p>
+                  <Button size="sm" variant="outline" className="mt-3" onClick={() => void refetchInvestments()}>Retry holdings</Button>
+                </div>
               ) : investments && investments.length > 0 ? (
                 <div className="divide-y divide-border/40">
                   {investments.map((inv: any) => {
                     const mktVal = Number(inv.shares) * Number(inv.currentPrice ?? inv.purchasePrice);
                     return (
-                      <div key={inv.id} className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-5 py-3.5 hover:bg-muted/30 transition-colors items-center"
+                      <div key={inv.id} className="grid min-w-0 grid-cols-2 sm:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] gap-x-3 gap-y-2 px-3 sm:px-5 py-3.5 hover:bg-muted/30 transition-colors items-center"
                         data-testid={`holding-row-${inv.id}`}>
-                        <div>
-                          <p className="font-bold text-sm">{inv.symbol}</p>
+                        <div className="col-span-2 sm:col-span-1 min-w-0">
+                          <p className="font-bold text-sm [overflow-wrap:anywhere]">{inv.symbol}</p>
                         </div>
-                        <p className="font-mono text-xs text-right text-muted-foreground">{Number(inv.shares).toFixed(4)}</p>
-                        <p className="font-mono text-xs text-right font-semibold">{fmt(Number(inv.purchasePrice))}</p>
-                        <p className="font-mono text-xs text-right font-semibold">{fmt(mktVal)}</p>
+                        <div className="min-w-0 sm:text-right">
+                          <p className="label-caps text-muted-foreground sm:hidden mb-1">Shares</p>
+                          <p className="font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">{Number(inv.shares).toFixed(4)}</p>
+                        </div>
+                        <div className="min-w-0 sm:text-right">
+                          <p className="label-caps text-muted-foreground sm:hidden mb-1">Avg Cost</p>
+                          <p className="font-mono text-xs font-semibold [overflow-wrap:anywhere]">{fmt(Number(inv.purchasePrice))}</p>
+                        </div>
+                        <div className="min-w-0 sm:text-right">
+                          <p className="label-caps text-muted-foreground sm:hidden mb-1">Stored Value</p>
+                          <p className="font-mono text-xs font-semibold [overflow-wrap:anywhere]">{fmt(mktVal)}</p>
+                        </div>
                       </div>
                     );
                   })}
                   {/* Totals row */}
-                  <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-2 px-5 py-3 bg-muted/20 items-center border-t border-border">
+                  <div className="grid min-w-0 grid-cols-2 sm:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] gap-2 px-3 sm:px-5 py-3 bg-muted/20 items-center border-t border-border">
                     <p className="label-caps text-muted-foreground">Total</p>
-                    <p className="text-right" />
-                    <p className="text-right" />
-                    <p className="font-mono text-sm font-bold text-right">{fmt(investValue)}</p>
+                    <p className="font-mono text-sm font-bold text-right [overflow-wrap:anywhere] sm:col-start-4">{fmt(investValue)}</p>
                   </div>
                 </div>
               ) : (
@@ -373,7 +385,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Recent transactions */}
-            <div className="border border-border/60 rounded-sm overflow-hidden">
+            <div className="min-w-0 border border-border/60 rounded-sm overflow-hidden">
               <div className="px-5 py-3 border-b border-border/60 flex items-center justify-between bg-muted/20">
                 <div>
                   <p className="font-semibold text-sm">Transaction history</p>
@@ -385,7 +397,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
               </div>
-              <div className="divide-y divide-border/40 max-h-[320px] overflow-y-auto custom-scrollbar">
+              <div className="min-w-0 divide-y divide-border/40 max-h-[320px] overflow-y-auto custom-scrollbar">
                 {txnLoading ? (
                   <div className="p-4 space-y-2">{[1,2,3,4].map(i => <Skeleton key={i} className="h-12" />)}</div>
                 ) : txnError ? (
@@ -397,7 +409,7 @@ export default function DashboardPage() {
                   const isIn = Boolean(incomingAccount && !outgoingAccount);
                   const isPending = txn.status === 'pending';
                   return (
-                    <div key={txn.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/30 transition-colors cursor-pointer group"
+                    <div key={txn.id} className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 sm:px-5 py-3.5 hover:bg-muted/30 transition-colors cursor-pointer group"
                       onClick={() => setSelectedTxn(txn)} data-testid={`txn-row-${txn.id}`}>
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={cn('w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
@@ -410,8 +422,8 @@ export default function DashboardPage() {
                           }
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate">{transactionDescription(txn.description,currency,txn.transactionType)}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono">
+                          <p className="text-sm font-semibold whitespace-normal [overflow-wrap:anywhere]">{transactionDescription(txn.description,currency,txn.transactionType)}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono whitespace-normal [overflow-wrap:anywhere]">
                             {transactionDate(txn.createdAt)} · {incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : "Account details unavailable"} ·{' '}
                             <span className={cn('font-bold capitalize',
                               isPending ? 'text-amber-800 dark:text-amber-300' : 'text-muted-foreground')}>
@@ -420,8 +432,8 @@ export default function DashboardPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <p className={cn('font-mono text-sm font-bold',
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto max-w-full">
+                        <p className={cn('font-mono text-sm font-bold [overflow-wrap:anywhere]',
                           isPending ? 'text-amber-800 dark:text-amber-300' : internal ? 'text-muted-foreground' : isIn ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400')}>
                           {internal ? '↔ ' : isIn ? '+' : '-'}{fmt(Number(txn.amount))}
                         </p>
@@ -444,10 +456,10 @@ export default function DashboardPage() {
           </div>
 
           {/* Right column */}
-          <div className="flex flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3">
 
             {/* Account summary */}
-            <div className="border border-border/60 rounded-sm overflow-hidden">
+            <div className="min-w-0 border border-border/60 rounded-sm overflow-hidden">
               <div className="px-5 py-3 border-b border-border/60 bg-muted/20 flex items-center justify-between">
                 <p className="font-semibold text-sm">Accounts</p>
                 <button className="text-[10px] label-caps text-primary hover:underline" onClick={() => setLocation('/accounts')}>
@@ -455,7 +467,12 @@ export default function DashboardPage() {
                 </button>
               </div>
               <div className="divide-y divide-border/40">
-                {accounts?.slice(0, 5).map(acc => {
+                {accountsError ? (
+                  <div role="alert" className="px-4 py-6 text-center text-sm text-destructive">
+                    <p>Accounts could not be loaded.</p>
+                    <Button size="sm" variant="outline" className="mt-3" onClick={() => void refetchAccounts()}>Retry accounts</Button>
+                  </div>
+                ) : accounts?.length ? accounts.slice(0, 5).map(acc => {
                   const cat = categoryOf(acc.accountType);
                   const overdrawn = Number(acc.balance) < 0;
                   const unpaid = Number(feeSummary.data?.accounts.find(item => item.accountId === acc.id)?.unpaidTotal || 0);
@@ -480,15 +497,17 @@ export default function DashboardPage() {
                       </div>
                       <div className="mt-1 pl-[38px]">
                         <p className={cn("font-mono text-xs font-bold tabular-nums", overdrawn && "text-rose-700 dark:text-rose-400")}>
-                          <span className="whitespace-nowrap" data-testid={`dash-account-balance-${acc.id}`}>{fmt(overdrawn ? Math.abs(Number(acc.balance)) : acc.balance)}</span>{" "}{overdrawn ? "overdraft" : "cash"}
+                          <span className="[overflow-wrap:anywhere]" data-testid={`dash-account-balance-${acc.id}`}>{fmt(overdrawn ? Math.abs(Number(acc.balance)) : acc.balance)}</span>{" "}{overdrawn ? "overdraft" : "cash"}
                         </p>
                         {unpaid > 0 && <p className="mt-1 text-xs text-rose-700 dark:text-rose-400">
-                          Unpaid fees: <span className="whitespace-nowrap">{fmt(unpaid)}</span>
+                          Unpaid fees: <span className="[overflow-wrap:anywhere]">{fmt(unpaid)}</span>
                         </p>}
                       </div>
                     </button>
                   );
-                })}
+                }) : (
+                  <div className="px-4 py-8 text-center text-sm text-muted-foreground">No accounts to display</div>
+                )}
               </div>
             </div>
 
@@ -496,7 +515,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Footer */}
-        <div className="pt-2 pb-1 border-t border-border/40 flex items-center justify-between text-[10px] text-muted-foreground/40">
+        <div className="pt-2 pb-1 border-t border-border/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[10px] text-muted-foreground/40">
           <span className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> CDIC member · CIPF protected</span>
           <span>{currency === "GBP" ? "Last updated" : `Account figures in ${balanceCurrencyLabel(currency)} · Data as of`} {format(new Date(), 'MMM d, yyyy')}</span>
         </div>

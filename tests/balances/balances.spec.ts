@@ -242,7 +242,8 @@ test("pending deposits, internal transfer, and institutional status/navigation c
       await evidence(page, info, "funds-in-transit-retain-funded-headline");
     }
     if (["approved", "liquidating", "transfer_out"].includes(status)) {
-      await expect(page.getByText("CAD $9,000,000.00 pending · Transfer locked", { exact: true })).toBeVisible();
+      // Pending credits stay separate; a transfer status does not post the cash.
+      await expect(page.getByText("CAD $9,000,000.00 pending · Transfer on hold", { exact: true })).toBeVisible();
     }
     await page.goto("/transfers");
     if (status === "rejected") {
@@ -316,14 +317,14 @@ test("existing accounts privacy control masks cash, fee debt and named ledger de
   await login(page, identity);
   await verifyHeadline(page);
   await page.getByTestId("button-quick-accounts").click();
-  await expect(page.getByTestId("text-total-fee-debt")).toHaveText("CAD $1,614.39");
+  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("CAD $1,614.39");
   await page.getByTestId("button-toggle-balances").click();
   await expect(page.getByTestId("text-total-balance")).not.toContainText("$");
-  await expect(page.getByTestId("text-total-fee-debt")).toHaveText("••••••");
+  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("••••••");
   await expect(page.getByTestId(`balance-${identity.debt}`)).not.toContainText("$");
   await expect(page.getByTestId(`balance-${identity.sixth}`)).not.toContainText("$");
-  await expect(page.getByRole("region", { name: "Outstanding service fees" })).not.toContainText("$");
-  await expect(page.getByTestId(`text-account-overdraft-${identity.debt}`)).not.toContainText("$");
+  await expect(page.getByRole("region", { name: "Account balances", exact: true })).not.toContainText("$");
+  await expect(page.getByTestId(`account-row-${identity.debt}`)).not.toContainText("1,250.75");
   await evidence(page, info, "accounts-privacy-masks-balances-and-debt");
   await page.getByTestId("button-toggle-balances").click();
   await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText("CAD $1,250.75");
@@ -373,7 +374,8 @@ test("preconfigured pound exception preserves amounts and consistent detail/debt
   await page.getByTestId("button-quick-accounts").click();
   await expect(page.getByTestId(`balance-${identity.sixth}`)).toHaveText("£125.00");
   await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText("£1,250.75");
-  await page.getByRole("link", { name: "Fee Reserve Trust", exact: true }).click();
+  await expect(page.getByTestId(`debt-account-details-${identity.debt}`)).toHaveAttribute("href", `/accounts/${identity.debt}`);
+  await page.getByTestId(`debt-account-details-${identity.debt}`).click();
   const debt = page.getByRole("region", { name: "Outstanding service fees" });
   await expect(debt).toContainText("£1,614.39");
   await expect(debt).not.toContainText("CAD");

@@ -99,14 +99,14 @@ test("plain overdrafts and fee descriptions preserve records, currencies and dis
         await page.getByRole("dialog").getByRole("button", { name: "Close", exact: true }).first().click();
       }
       await page.goto("/accounts");
-      if (state.total) await expect(page.getByTestId("text-total-fee-debt")).toHaveText(money(state.total));
-      else await expect(page.getByRole("region", { name: "Outstanding service fees" })).toHaveCount(0);
+      if (state.total) await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText(money(state.total));
+      else await expect(page.getByTestId("debt-account-summary")).toHaveCount(0);
       if (state.kind === "overdraft") {
         const accountRow = page.getByTestId(`account-row-${identity.debt}`);
         await expect(accountRow).toContainText("Overdraft");
         expect((await accountRow.innerText()).split(money("1,250.75")).length - 1).toBe(1);
         await page.getByTestId("button-toggle-balances").click();
-        await expect(page.getByTestId("text-total-fee-debt")).toHaveText("••••••");
+        await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("••••••");
         await expect(accountRow).not.toContainText("1,250.75");
       }
       await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute("aria-expanded", "false");

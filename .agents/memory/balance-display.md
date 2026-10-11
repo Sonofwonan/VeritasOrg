@@ -75,11 +75,11 @@ For discretionary management, an annual minimum must continue after investments 
 
 **How to apply:** Model contract termination separately from zero holdings. Confirm exact CAD pricing, annual AUM rate, and whether the minimum is additional to monthly fees before posting new charges; do not infer overdraft interest.
 
-Show current funded balances as the main balance on client summary screens, with overdraft debt separately. An investment-account type does not turn negative cash into an investment; exclude debt from investment/asset summaries.
+Show current funded balances as the main balance on client summary screens, with overdraft debt separately. An investment-account type does not turn cash into investment holdings; exclude debt from investment/asset summaries.
 
 **Why:** The user rejected netting the overdraft against available balances and later flagged the Accounts page showing the Brokerage overdraft as Investments.
 
-**How to apply:** Include all remaining positive cash balances across accounts and current holdings, not only the inheritance account or original deposit, separately from named account liabilities. Preserve the negative account ledger and its debt breakdown without subtracting it from the main funded-balance headline. Distinguish an original deposit transaction from the account's changing current balance.
+**How to apply:** Include all remaining positive cash balances across accounts and current holdings, not only the inheritance account or original deposit, separately from named account liabilities. Cash held in Brokerage or retirement accounts remains cash; investment summaries must use holdings, not account types. Account-type groups may summarize funded cash, but must label it as cash. Preserve the negative account ledger and its debt breakdown without subtracting it or unpaid assessments from the main funded-balance headline. Distinguish an original deposit transaction from the account's changing current balance.
 
 For the inheritance deposit, show its date and amount in transaction history; on the dashboard show current balances and the total rather than a separate original-deposit figure.
 

@@ -119,7 +119,7 @@ test("client palette stays readable without changing money or collapsed navigati
     await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("£1,614.39");
     await page.screenshot({ path: info.outputPath(`dashboard-${width}.png`), animations: "disabled" });
     await page.goto("/accounts");
-    await expect(page.getByTestId("text-total-balance")).toHaveText("£1,999,785.86");
+    await expect(page.getByTestId("text-total-balance")).toHaveText("£2,003,900.25");
     await assertReadable(page, "main,header", info, `accounts-${width}`);
     await expect(page.getByTestId("text-total-balance")).toHaveCSS("white-space", "nowrap");
     await page.screenshot({ path: info.outputPath(`accounts-${width}.png`), animations: "disabled" });

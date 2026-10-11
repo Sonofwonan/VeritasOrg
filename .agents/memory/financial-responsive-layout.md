@@ -9,6 +9,12 @@ Verify monetary layouts at tablet/sidebar transition widths, not only phone and 
 
 **How to apply:** In responsive financial UI changes, include intermediate widths with navigation visible. Check full-number line count, clipping, adjacent controls and sideways scrolling using the isolated normal-login browser harness.
 
+Mobile information must fit horizontally at normal 100% browser zoom. Vertical scrolling is expected; zooming out to reveal amounts or columns is not.
+
+**Why:** The user showed a dashboard where 50% zoom exposed fields that were cut off at 100%. Hiding horizontal overflow concealed the problem rather than fixing the layout.
+
+**How to apply:** Check rendered text bounds against clipping ancestors, not only document scroll width. Let financial tables and activity rows reflow on narrow screens, keep every field available, and preserve readable amounts instead of scaling the entire page down.
+
 Bound financial admin dialogs to the visible viewport and allow long identity text to wrap anywhere; percentage widths alone may not prevent mobile overflow.
 
 **Why:** The currency dialog sometimes exceeded a 360-pixel viewport even after animations had settled. Waiting longer did not fix the containment failure.

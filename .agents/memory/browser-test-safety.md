@@ -21,6 +21,12 @@ Playwright array-valued option fixtures need its explicit tuple wrapper in test.
 
 **How to apply:** Configure rejection evidence by exact endpoint and status, and still assert the response message and unchanged financial records in the test.
 
+A running browser suite may keep pre-edit test assertions. Its error message can describe an old assertion while the displayed source excerpt reflects newer edits.
+
+**Why:** During a long regression run, both browser projects retained old assertions after the test files changed, and the reported source lines no longer matched the actual errors.
+
+**How to apply:** Use the recorded error and page snapshot to identify what ran. After assertion-only changes, finish the running suite and rerun affected cases; do not restore obsolete financial wording or behavior to satisfy cached tests.
+
 Wait for final layout geometry when testing responsive disclosure controls; an updated aria state does not mean an offcanvas or height transition has finished.
 
 **Why:** Browser regressions intermittently measured the header partway through a sidebar transition, despite the correct final collapsed state.

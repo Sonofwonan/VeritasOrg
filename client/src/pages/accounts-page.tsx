@@ -1,13 +1,14 @@
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { accountLabel } from "@shared/account-display";
-import { FeeLiability, AccountFeeBalance } from "@/components/fees/fee-liability";
+import { AccountFeeBalance } from "@/components/fees/fee-liability";
+import { DebtAccountSummary } from "@/components/fees/debt-account-summary";
 import { useState } from "react";
 import {
   Plus, ArrowRight, ChevronRight, TrendingUp,
   ShieldCheck, Landmark, Briefcase, PiggyBank, Eye, EyeOff,
   CheckCircle2, AlertCircle, MoreHorizontal, Lock, Building2
 } from "lucide-react";
-import { useAccounts, useCreateAccount, useAccountTransactions } from "@/hooks/use-finances";
+import { useAccounts, useInvestments, useCreateAccount, useAccountTransactions } from "@/hooks/use-finances";
 import { useQuery } from "@tanstack/react-query";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ function categoryOf(type: string): keyof typeof CATEGORY_META {
 
 const CATEGORY_META = {
   cash:       { label: 'Cash & Deposits',        Icon: Landmark,  color: 'text-sky-800 dark:text-sky-300' },
-  investment: { label: 'Investment & Retirement', Icon: TrendingUp, color: 'text-emerald-800 dark:text-emerald-300' },
+  investment: { label: 'Brokerage & Retirement', Icon: TrendingUp, color: 'text-emerald-800 dark:text-emerald-300' },
   business:   { label: 'Business & Trust',        Icon: Briefcase, color: 'text-amber-800 dark:text-amber-300' },
 };
 
@@ -48,7 +49,8 @@ const ACCOUNT_TYPE_OPTIONS = [
 ];
 
 export default function AccountsPage() {
-  const { data: accounts, isLoading } = useAccounts();
+  const { data: accounts, isLoading, isError: accountsError, refetch: refetchAccounts } = useAccounts();
+  const { data: investments, isLoading: investmentsLoading, isError: investmentsError, refetch: refetchInvestments } = useInvestments();
   const primaryAccount = accounts?.find(a => a.accountType === 'Brokerage Account') || accounts?.[0];
   const { data: transactions } = useAccountTransactions(primaryAccount?.id || 0);
   const createAccount = useCreateAccount();
@@ -82,11 +84,19 @@ export default function AccountsPage() {
       return t.toAccountId === primaryAccount?.id ? sum + amt : sum - amt;
     }, 0) || 0;
 
-  const totalBalance = (accounts?.reduce((s, a) => s + Number(a.balance), 0) || 0) - Number(feeSummary.data?.totalUnpaid || 0);
-  const transmittedDebt = (accounts?.reduce((s, a) => s + Math.min(0, Number(a.balance)), 0) || 0) - Number(feeSummary.data?.totalUnpaid || 0);
-  const cashTotal = accounts?.filter(a => categoryOf(a.accountType) === 'cash').reduce((s, a) => s + Number(a.balance), 0) || 0;
-  const investTotal = accounts?.filter(a => categoryOf(a.accountType) === 'investment').reduce((s, a) => s + Number(a.balance), 0) || 0;
-  const bizTotal = accounts?.filter(a => categoryOf(a.accountType) === 'business').reduce((s, a) => s + Number(a.balance), 0) || 0;
+  // Account balances are cash, even in a Brokerage account. Debt is not an asset.
+  const cashTotal = accounts?.reduce((sum, account) => sum + Math.max(0, Number(account.balance)), 0) ?? 0;
+  const investTotal = investments?.reduce((sum, holding) =>
+    sum + Number(holding.shares) * Number(holding.currentPrice ?? holding.purchasePrice), 0) ?? 0;
+  const cashUnavailable = accountsError || !accounts || accounts.some(account => !Number.isFinite(Number(account.balance)));
+  const investmentsUnavailable = investmentsError || !investments || investments.some(holding =>
+    !Number.isFinite(Number(holding.shares)) || Number(holding.shares) < 0 ||
+    !Number.isFinite(Number(holding.currentPrice ?? holding.purchasePrice)) ||
+    Number(holding.currentPrice ?? holding.purchasePrice) < 0) || !Number.isFinite(investTotal);
+  const totalBalance = cashTotal + investTotal;
+  const balanceLoading = isLoading || investmentsLoading;
+  const balanceUnavailable = cashUnavailable || investmentsUnavailable || !Number.isFinite(totalBalance);
+  const retryBalances = () => { void refetchAccounts(); void refetchInvestments(); };
 
   const fmt = (n: number) => hideBalances ? '••••••' : money(n);
 
@@ -163,26 +173,25 @@ export default function AccountsPage() {
       </Dialog>
 
       {/* ── Portfolio Summary Header ──────────────────────────────── */}
-      <FeeLiability summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading} error={feeSummary.isError} retry={() => void feeSummary.refetch()} hidden={hideBalances} currency={currency} />
-
       <div className="bg-[#0B2218] wealth-panel rounded-sm overflow-hidden">
         {/* Top bar */}
         <div className="px-4 py-5 xl:px-8 xl:pt-8 xl:pb-6 border-b border-white/10">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-4">
             <div className="min-w-0">
-              <p className="label-caps text-white/40 mb-2">Net Account Balance · After Unpaid Fees</p>
+              <p className="label-caps text-white/40 mb-2">Total balance</p>
               <div className="flex min-w-0 flex-wrap items-end gap-x-4 gap-y-1">
-                  <span className={`whitespace-nowrap font-serif text-[clamp(1.45rem,7vw,3rem)] tracking-tight tabular-nums ${totalBalance < 0 ? "text-red-300" : isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
-                  {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : fmt(isTransmitting ? transmittedDebt : totalBalance)}
+                  <span className={`whitespace-nowrap font-serif text-[clamp(1.45rem,7vw,3rem)] tracking-tight tabular-nums ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
+                  {balanceLoading ? "Loading…" : balanceUnavailable ? "Unavailable" : fmt(totalBalance)}
                 </span>
-                {isTransmitting && (
-                  <span className="text-white/30 text-sm font-mono mb-1.5 line-through">{fmt(totalBalance)}</span>
-                )}
               </div>
               {isTransmitting
                 ? <p className="text-violet-300/60 text-xs mt-1.5 font-mono">Funds in transit to {activeTransfer?.institutionName}</p>
                 : <p className="text-white/30 text-xs mt-1.5 font-mono">{currency === "GBP" ? "Updated" : `${balanceCurrencyLabel(currency)} · As of`} {new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
               }
+               {!balanceLoading && balanceUnavailable && <p role="alert" className="text-red-300 text-xs mt-2">
+                 Current balances could not be loaded.
+                 <button className="ml-2 underline" onClick={retryBalances}>Retry</button>
+               </p>}
             </div>
             <div className="flex w-full items-center justify-end gap-2 xl:w-auto xl:mt-1">
               <button
@@ -207,33 +216,29 @@ export default function AccountsPage() {
         </div>
 
         {/* Category breakdown */}
-        <div className="grid grid-cols-1 divide-y divide-white/10 xl:grid-cols-3 xl:divide-x xl:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-white/10 xl:grid-cols-2 xl:divide-x xl:divide-y-0">
           {[
-            { cat: 'cash', label: 'Cash & Deposits', value: cashTotal, Icon: Landmark, sub: 'Available liquidity' },
-            { cat: 'investment', label: 'Investments', value: investTotal, Icon: TrendingUp },
-            { cat: 'business', label: 'Business & Trust', value: bizTotal, Icon: ShieldCheck, sub: 'Trust and business accounts' },
-          ].map(({ cat, label, value, Icon, sub }) => (
+            { cat: 'cash', label: 'Cash balances', value: cashTotal, Icon: Landmark, sub: 'Across your accounts', loading: isLoading, unavailable: cashUnavailable },
+            { cat: 'investment', label: 'Recorded investments', value: investTotal, Icon: TrendingUp, sub: 'Holdings only', loading: investmentsLoading, unavailable: investmentsUnavailable },
+          ].map(({ cat, label, value, Icon, sub, loading, unavailable }) => (
             <div key={label} data-testid={`account-summary-${cat}`} className="flex items-center justify-between gap-4 px-4 py-3 xl:block xl:px-6 xl:py-5">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 sm:mb-2">
                   <Icon className="w-3.5 h-3.5 shrink-0 text-white/30" />
                   <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">{label}</span>
                 </div>
-                {(isTransmitting || sub) && <p className="hidden text-white/25 text-[10px] mt-0.5 xl:block">{isTransmitting ? "Clearing" : sub}</p>}
+                <p className="hidden text-white/25 text-[10px] mt-0.5 xl:block">{sub}</p>
               </div>
-              {isTransmitting ? (
-                <div>
-                    <p data-testid={`account-summary-balance-${cat}`} className="whitespace-nowrap font-mono text-sm xl:text-xl text-violet-300 tracking-tight tabular-nums">{fmt(accounts?.filter(a => categoryOf(a.accountType) === cat).reduce((sum, a) => sum + Math.min(0, Number(a.balance)), 0) || 0)}</p>
-                   <p className="whitespace-nowrap font-mono text-[10px] text-white/20 line-through mt-0.5 tabular-nums">{fmt(value)}</p>
-                </div>
-              ) : (
-                  <p data-testid={`account-summary-balance-${cat}`} className="whitespace-nowrap font-mono text-sm xl:text-xl text-amber-400 tracking-tight tabular-nums">{fmt(value)}</p>
-              )}
-              {(isTransmitting || sub) && <p className="sr-only sm:hidden">{isTransmitting ? "Clearing" : sub}</p>}
+              <p data-testid={`account-summary-balance-${cat}`} className="whitespace-nowrap font-mono text-sm xl:text-xl text-amber-400 tracking-tight tabular-nums">{loading ? "Loading…" : unavailable ? "Unavailable" : fmt(value)}</p>
+              <p className="sr-only sm:hidden">{sub}</p>
             </div>
           ))}
         </div>
       </div>
+
+      <DebtAccountSummary summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading || isLoading}
+        error={feeSummary.isError || accountsError} retry={() => { void feeSummary.refetch(); void refetchAccounts(); }}
+        hidden={hideBalances} currency={currency} />
 
       {/* ── Transfer Lock Banner ──────────────────────────────────── */}
       {activeTransfer && (
@@ -285,21 +290,27 @@ export default function AccountsPage() {
             <div key={i} className="h-16 bg-muted/40 rounded-sm animate-pulse" />
           ))}
         </div>
+      ) : cashUnavailable ? (
+        <p role="alert" className="mt-4 text-sm text-red-700">
+          Account balances could not be loaded. <button className="underline" onClick={() => void refetchAccounts()}>Retry</button>
+        </p>
       ) : (
         <div className="space-y-6 mt-2">
           {grouped.map(({ cat, items }) => {
             const { label, Icon, color } = CATEGORY_META[cat as keyof typeof CATEGORY_META];
-            const catTotal = items.reduce((s, a) => s + Number(a.balance), 0);
+            const catTotal = items.reduce((s, a) => s + Math.max(0, Number(a.balance)), 0);
             return (
                <div key={cat} data-testid={`account-group-${cat}`}>
                 {/* Group header */}
-                <div className="flex items-center justify-between mb-1 pb-2 border-b border-border">
+                <div className="flex flex-col gap-1 mb-1 pb-2 border-b border-border sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-2">
                     <Icon className={cn('w-3.5 h-3.5', color)} />
                     <span className="label-caps text-muted-foreground">{label}</span>
                     <span className="text-[10px] text-muted-foreground/50 font-mono ml-1">({items.length})</span>
                   </div>
-                    <span data-testid={`account-group-balance-${cat}`} className="whitespace-nowrap text-right font-mono text-xs tabular-nums text-foreground/70 sm:text-sm">{fmt(catTotal)}</span>
+                    <span className="whitespace-nowrap text-right text-xs text-foreground/70 sm:text-sm">
+                      Cash <span data-testid={`account-group-balance-${cat}`} className="font-mono tabular-nums">{fmt(catTotal)}</span>
+                    </span>
                 </div>
 
                 {/* Account rows */}
@@ -357,22 +368,9 @@ export default function AccountsPage() {
                             <p className="label-caps text-muted-foreground/50 mb-0.5" data-testid={`account-balance-label-${account.id}`}>
                               {Number(account.balance) < 0 ? "Overdraft" : "Cash balance"}
                             </p>
-                            {isTransmitting ? (
-                              <div>
-                                <p className="whitespace-nowrap font-mono text-[clamp(.82rem,4vw,1rem)] font-semibold text-violet-400 tabular-nums xl:text-base" data-testid={`balance-${account.id}`}>
-                                   {fmt(Math.abs(Math.min(0, Number(account.balance))))}
-                                </p>
-                                {Number(account.balance) > 0 && (
-                                  <p className="whitespace-nowrap font-mono text-[10px] text-muted-foreground/40 line-through tabular-nums">
-                                    {fmt(Number(account.balance))}
-                                  </p>
-                                )}
-                              </div>
-                            ) : (
-                                <p className="whitespace-nowrap font-mono text-[clamp(.82rem,4vw,1rem)] font-semibold tabular-nums text-foreground xl:text-base" data-testid={`balance-${account.id}`}>
+                                <p className={cn("whitespace-nowrap font-mono text-[clamp(.82rem,4vw,1rem)] font-semibold tabular-nums xl:text-base", isTransmitting ? "text-violet-400" : "text-foreground")} data-testid={`balance-${account.id}`}>
                                 {fmt(Number(account.balance) < 0 ? Math.abs(Number(account.balance)) : Number(account.balance))}
                               </p>
-                            )}
                             <AccountFeeBalance cash={account.balance}
                               unpaid={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.unpaidTotal}
                               overdraft={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.overdraft} hidden={hideBalances} currency={currency} showOverdraft={false} />
