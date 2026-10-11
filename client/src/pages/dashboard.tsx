@@ -126,7 +126,7 @@ export default function DashboardPage() {
             </DialogHeader>
             <div className="space-y-0 divide-y divide-white/10 py-2">
               {[
-                { label: 'Description', val: transactionDescription(selectedTxn?.description,currency) },
+                { label: 'Description', val: transactionDescription(selectedTxn?.description,currency,selectedTxn?.transactionType) },
                 { label: 'Amount', val: fmt(Number(selectedTxn?.amount)), accent: true },
                 { label: 'Status', val: selectedTxn?.status, badge: true },
                 { label: 'Type', val: selectedTxn?.transactionType },
@@ -419,7 +419,7 @@ export default function DashboardPage() {
                           }
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate">{transactionDescription(txn.description,currency)}</p>
+                          <p className="text-sm font-semibold truncate">{transactionDescription(txn.description,currency,txn.transactionType)}</p>
                           <p className="text-[10px] text-muted-foreground font-mono">
                             {transactionDate(txn.createdAt)} · {incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : "Account details unavailable"} ·{' '}
                             <span className={cn('font-bold capitalize',

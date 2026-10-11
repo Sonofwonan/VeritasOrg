@@ -88,7 +88,8 @@ test("staff can deliberately change a client display and see named masked balanc
     await expect(panel).toContainText("actual transfer settlement");
     await expect(panel.getByText("Funded Brokerage", { exact: true })).toBeVisible();
     await expect(panel).toContainText("CAD $2,000,000.25");
-    await expect(panel).toContainText("Fee Reserve Trust: overdraft");
+    await expect(panel).toContainText("Fee Reserve Trust");
+    await expect(panel).toContainText("Overdraft");
     await panel.getByRole("button", { name: "Hide balances" }).click();
     await expect(panel).not.toContainText("2,000,000.25");
     await expect(panel).not.toContainText("1,250.75");
@@ -107,7 +108,7 @@ test("staff can deliberately change a client display and see named masked balanc
     await row.getByRole("button", { name: "Display & accounts" }).click();
     panel = page.getByRole("dialog", { name: "Client display currency" });
     await expect(panel).toContainText("£2,000,000.25");
-    await expect(panel).toContainText("Cash ledger overdraft -£1,250.75");
+    await expect(panel).toContainText("Overdraft £1,250.75");
     await expect(panel).toContainText("Synthetic administrator presentation designation");
     await expect(panel).toContainText("CAD → £");
     const shot = info.outputPath("staff-pound-display.png");

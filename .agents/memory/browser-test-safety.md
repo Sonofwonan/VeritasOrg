@@ -26,3 +26,9 @@ Wait for final layout geometry when testing responsive disclosure controls; an u
 **Why:** Browser regressions intermittently measured the header partway through a sidebar transition, despite the correct final collapsed state.
 
 **How to apply:** Poll the expected final bounds rather than asserting one immediate bounding-box sample or adding arbitrary sleeps.
+
+Error-recovery browser tests must allow normal background polling to recover after a mocked failure is removed.
+
+**Why:** A restored history endpoint recovered automatically before a test clicked Retry, making a working interface look broken.
+
+**How to apply:** Assert the failure and Retry control while the failure remains mocked. After restoring the endpoint, allow either the user retry or automatic recovery; do not assume the error persists across screenshots.

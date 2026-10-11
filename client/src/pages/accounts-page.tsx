@@ -163,7 +163,7 @@ export default function AccountsPage() {
       </Dialog>
 
       {/* ── Portfolio Summary Header ──────────────────────────────── */}
-      <FeeLiability summary={feeSummary.data} accounts={accounts} error={feeSummary.isError} retry={() => void feeSummary.refetch()} hidden={hideBalances} currency={currency} />
+      <FeeLiability summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading} error={feeSummary.isError} retry={() => void feeSummary.refetch()} hidden={hideBalances} currency={currency} />
 
       <div className="bg-[#0B2218] wealth-panel rounded-sm overflow-hidden">
         {/* Top bar */}
@@ -323,7 +323,7 @@ export default function AccountsPage() {
                             <Icon className={cn('w-4 h-4', color)} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground truncate">{accountLabel(account)}</p>
+                            <p className="text-sm font-semibold text-foreground [overflow-wrap:anywhere]">{accountLabel(account)}</p>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                               <span className="font-mono text-[10px] text-muted-foreground">{accountNumber(account.id)}</span>
                               {isPending && (
@@ -354,24 +354,28 @@ export default function AccountsPage() {
                         <div className="flex min-w-0 items-center justify-between gap-3 xl:justify-end xl:gap-4 xl:shrink-0">
                           {/* Balance */}
                           <div className="min-w-0 text-right xl:min-w-[140px]">
-                            <p className="label-caps text-muted-foreground/50 mb-0.5">Cash balance</p>
+                            <p className="label-caps text-muted-foreground/50 mb-0.5" data-testid={`account-balance-label-${account.id}`}>
+                              {Number(account.balance) < 0 ? "Overdraft" : "Cash balance"}
+                            </p>
                             {isTransmitting ? (
                               <div>
                                 <p className="whitespace-nowrap font-mono text-[clamp(.82rem,4vw,1rem)] font-semibold text-violet-400 tabular-nums xl:text-base" data-testid={`balance-${account.id}`}>
-                                   {fmt(Math.min(0, Number(account.balance)))}
+                                   {fmt(Math.abs(Math.min(0, Number(account.balance))))}
                                 </p>
-                                <p className="whitespace-nowrap font-mono text-[10px] text-muted-foreground/40 line-through tabular-nums">
-                                   {fmt(Number(account.balance))}
-                                </p>
+                                {Number(account.balance) > 0 && (
+                                  <p className="whitespace-nowrap font-mono text-[10px] text-muted-foreground/40 line-through tabular-nums">
+                                    {fmt(Number(account.balance))}
+                                  </p>
+                                )}
                               </div>
                             ) : (
                                 <p className="whitespace-nowrap font-mono text-[clamp(.82rem,4vw,1rem)] font-semibold tabular-nums text-foreground xl:text-base" data-testid={`balance-${account.id}`}>
-                                {fmt(Number(account.balance))}
+                                {fmt(Number(account.balance) < 0 ? Math.abs(Number(account.balance)) : Number(account.balance))}
                               </p>
                             )}
                             <AccountFeeBalance cash={account.balance}
                               unpaid={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.unpaidTotal}
-                              overdraft={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.overdraft} hidden={hideBalances} currency={currency} />
+                              overdraft={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.overdraft} hidden={hideBalances} currency={currency} showOverdraft={false} />
                           </div>
 
                           <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />

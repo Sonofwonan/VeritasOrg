@@ -12,7 +12,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ClientFees } from "@/components/fees/client-fees";
-import { balanceCurrencyLabel, transactionDescription, clientBalanceCurrency, formatBalance, type BalanceCurrency } from "@shared/balance-currency";
+import { transactionDescription, clientBalanceCurrency, formatBalance, type BalanceCurrency } from "@shared/balance-currency";
 import { useAuth } from "@/hooks/use-auth";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { FeeLiability } from "@/components/fees/fee-liability";
@@ -40,15 +40,15 @@ export default function AccountDetailPage() {
   const money = (value: string | number) => formatBalance(value,currency);
   const params = useParams();
   const [, setLocation] = useLocation();
-  const { data: accounts, isLoading: accountsLoading } = useAccounts();
+  const { data: accounts, isLoading: accountsLoading, isError: accountsError, refetch: refetchAccounts } = useAccounts();
   const feeSummary = useClientFeeSummary();
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
   
   const accountId = parseInt(params.id as string);
   const account = accounts?.find(a => a.id === accountId);
-  const { data: transactions, isLoading: transactionsLoading } = useAccountTransactions(accountId);
+  const { data: transactions, isLoading: transactionsLoading, isError: transactionsError, refetch: refetchTransactions } = useAccountTransactions(accountId);
 
-  if (accountsLoading || transactionsLoading) {
+  if (accountsLoading) {
     return (
       <LayoutShell>
         <div className="mb-8">
@@ -63,6 +63,13 @@ export default function AccountDetailPage() {
     );
   }
 
+  if (accountsError) {
+    return <LayoutShell><div role="alert" className="border border-red-300 bg-red-50 p-4 text-red-950">
+      Account details could not be loaded.
+      <Button variant="outline" className="ml-3" onClick={() => void refetchAccounts()}>Retry</Button>
+    </div></LayoutShell>;
+  }
+
   if (!account) {
     return (
       <LayoutShell>
@@ -75,8 +82,13 @@ export default function AccountDetailPage() {
   }
 
   const accountBalance = Number(account.balance);
-  const unpaidFees = feeSummary.data?.accounts.find(item => item.accountId === accountId)?.unpaidTotal;
-  const netBalance = accountBalance - Number(unpaidFees || 0);
+  const accountFees = feeSummary.data?.accounts.find(item => item.accountId === accountId);
+  const unpaidFees = Number(accountFees?.unpaidTotal || 0);
+  const overdraft = accountFees?.overdraft === undefined ? Math.max(0, -accountBalance) : Number(accountFees.overdraft);
+  const amountOwed = accountFees?.amountOwed === undefined ? overdraft + unpaidFees : Number(accountFees.amountOwed);
+  const balanceError = feeSummary.isError || !Number.isFinite(accountBalance) ||
+    !Number.isFinite(unpaidFees) || unpaidFees < 0 || !Number.isFinite(overdraft) ||
+    overdraft < 0 || !Number.isFinite(amountOwed) || amountOwed < 0;
 
   return (
     <LayoutShell>
@@ -100,26 +112,56 @@ export default function AccountDetailPage() {
 
       {/* Account Summary */}
       <div className="grid gap-6 md:grid-cols-3 mb-8">
-        <Card className="md:col-span-2">
+        <Card className="min-w-0 md:col-span-2" data-testid="account-detail-balance">
           <CardHeader>
-            <CardTitle>Net Account Balance</CardTitle>
+            <CardTitle>Account balance</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">Account ledger cash less unpaid assessments · {balanceCurrencyLabel(currency)}</p>
-              <p className={cn("break-words font-mono text-[clamp(1.75rem,7vw,3rem)] font-bold tabular-nums", netBalance < 0 ? "text-red-700 dark:text-red-300" : "text-primary")}>
-                {feeSummary.isError ? "Unavailable" : feeSummary.isLoading ? "Loading…" : money(netBalance)}
-              </p>
-                <p className="mt-2 text-sm">Cash ledger balance: <span className={cn("font-mono font-semibold tabular-nums", accountBalance < 0 ? "text-red-700 dark:text-red-300" : "")}>{money(accountBalance)}</span>{accountBalance < 0 && <span className="ml-2 text-xs text-red-700 dark:text-red-300">posted fee overdraft / negative cash</span>}</p>
-              <FeeLiability summary={unpaidFees !== undefined ? {
-                totalUnpaid: unpaidFees, totalOverdraft: feeSummary.data!.accounts.find(item => item.accountId === accountId)?.overdraft,
-                totalOwed: feeSummary.data!.accounts.find(item => item.accountId === accountId)?.amountOwed,
-                accounts: feeSummary.data!.accounts.filter(item => item.accountId === accountId),
-              } : undefined} error={feeSummary.isError} retry={() => void feeSummary.refetch()} currency={currency} accounts={[account]} />
-              <p className="mt-2 max-w-xl text-xs leading-relaxed text-muted-foreground">
-                This is the account ledger balance used to determine whether a fee assessment is payable. It is separate from the market value of investment holdings; holdings are not used or sold to pay service fees.
-              </p>
-            </div>
+          <CardContent>
+            {feeSummary.isLoading ? (
+              <FeeLiability loading currency={currency} accounts={[account]} />
+            ) : balanceError ? (
+              <FeeLiability error retry={() => void feeSummary.refetch()} currency={currency} accounts={[account]} />
+            ) : overdraft > 0 ? (
+              <FeeLiability
+                summary={{
+                  totalUnpaid: String(unpaidFees),
+                  totalOverdraft: String(overdraft),
+                  totalOwed: String(amountOwed),
+                  accounts: [{
+                    accountId,
+                    accountName: accountLabel(account),
+                    unpaidTotal: String(unpaidFees),
+                    unpaidCount: accountFees?.unpaidCount || 0,
+                    overdraft: String(overdraft),
+                    amountOwed: String(amountOwed),
+                  }],
+                }}
+                currency={currency}
+                accounts={[account]}
+                accountLinks={false}
+              />
+            ) : (
+              <div className="space-y-3">
+                <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <p className="text-sm text-muted-foreground">{unpaidFees > 0 ? "Cash balance" : "Account balance"}</p>
+                  <p data-testid="text-account-cash-balance" className={cn("whitespace-nowrap font-mono text-xl font-semibold tabular-nums sm:text-2xl", accountBalance < 0 ? "text-red-700 dark:text-red-300" : "text-primary")}>
+                    {money(accountBalance)}
+                  </p>
+                </div>
+                {unpaidFees > 0 && <>
+                  <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t pt-3">
+                    <p className="text-sm text-muted-foreground">Net account balance</p>
+                    <p data-testid="text-account-net-balance" className={cn("whitespace-nowrap font-mono text-xl font-semibold tabular-nums sm:text-2xl", accountBalance - unpaidFees < 0 ? "text-red-700 dark:text-red-300" : "text-primary")}>
+                      {money(accountBalance - unpaidFees)}
+                    </p>
+                  </div>
+                  <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <p className="text-sm text-muted-foreground">Unpaid fees</p>
+                    <p className="whitespace-nowrap font-mono font-semibold tabular-nums" data-testid="text-total-fee-debt">{money(unpaidFees)}</p>
+                  </div>
+                </>}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -147,19 +189,27 @@ export default function AccountDetailPage() {
             <CardTitle>Transaction History</CardTitle>
             <CardDescription>Recent account activity</CardDescription>
           </div>
-           <Button variant="outline" size="sm" className="gap-2" onClick={() => exportStatement(account, transactions || [], currency)}>
+           <Button data-testid="button-export-statement" variant="outline" size="sm" className="gap-2" disabled={transactionsLoading || transactionsError} onClick={() => exportStatement(account, transactions || [], currency)}>
             <Download className="w-4 h-4" />
             Export
           </Button>
         </CardHeader>
         <CardContent>
           <div className="max-h-[min(65vh,720px)] space-y-1 overflow-y-auto overscroll-contain pr-1" aria-label="Scrollable account transaction history">
-            {transactions && transactions.length > 0 ? (
+            {transactionsLoading ? (
+              <p role="status" className="p-3 text-sm text-muted-foreground">Loading transaction history…</p>
+            ) : transactionsError ? (
+              <p role="alert" className="p-3 text-sm text-red-700">
+                Transaction history could not be loaded.
+                <button data-testid="button-retry-transactions" className="ml-2 underline" onClick={() => void refetchTransactions()}>Retry</button>
+              </p>
+            ) : transactions && transactions.length > 0 ? (
               transactions.map((transaction) => {
                 const isIncoming = transaction.toAccountId === accountId;
                 return (
                   <div 
                     key={transaction.id} 
+                    data-testid={`account-txn-row-${transaction.id}`}
                     className="flex flex-col gap-3 border-b p-3 transition-colors hover:bg-muted/50 last:border-0 cursor-pointer group sm:flex-row sm:items-center sm:justify-between sm:p-4"
                     onClick={() => setSelectedTxn(transaction)}
                   >
@@ -177,7 +227,7 @@ export default function AccountDetailPage() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium group-hover:text-primary transition-colors">{transactionDescription(transaction.description,currency)}</p>
+                        <p className="font-medium group-hover:text-primary transition-colors">{transactionDescription(transaction.description,currency,transaction.transactionType)}</p>
                         <p className="text-sm text-muted-foreground">{transactionDate(transaction.createdAt)}</p>
                       </div>
                     </div>
@@ -216,7 +266,7 @@ export default function AccountDetailPage() {
               <div className="space-y-4 py-4">
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                   <span className="text-zinc-400 text-sm">Description</span>
-                  <span className="font-bold">{transactionDescription(selectedTxn?.description,currency)}</span>
+                  <span className="font-bold">{transactionDescription(selectedTxn?.description,currency,selectedTxn?.transactionType)}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                   <span className="text-zinc-400 text-sm">Amount</span>

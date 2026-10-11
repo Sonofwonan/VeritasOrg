@@ -18,9 +18,15 @@ export function balanceText(text: string | null | undefined, currency: BalanceCu
   return currency === "GBP" ? (text || "").replace(/\b(?:CAD|GBP)\b/g, "£") : text || "";
 }
 
-// Fee descriptions may start with a stored currency label, not an amount.
-// Omit that label in pound views; keep symbols attached to actual numbers.
-export function transactionDescription(text: string | null | undefined, currency: BalanceCurrency): string {
+// Clean only the known generated fee format, never arbitrary references or dates.
+// This is presentation only: the original assessment/audit description stays stored.
+export function transactionDescription(text: string | null | undefined, currency: BalanceCurrency, transactionType?: string): string {
+  const generatedFee = (text || "").match(/^\s*(?:(?:CAD|GBP|£)\s+)?(monthly service fee|annual discretionary-management fee|annual management fee)( refund)?(?:\s*·\s*(?:\d{4}-\d{2}-\d{2}\s*·\s*)?Assessment \d+(?:\s*·\s*(?:Authorized fee overdraft|Available cash))?)?\s*$/i);
+  if (generatedFee && (transactionType === undefined || transactionType === "fee" || transactionType === "fee_refund")) {
+    const label = /^monthly/i.test(generatedFee[1]) ? "Monthly service fee" : "Annual management fee";
+    return `${label}${generatedFee[2] ? " refund" : ""}`;
+  }
+  // Omit stray currency prefixes in pound views; retain actual monetary amounts.
   const presented = balanceText(text, currency);
   return currency === "GBP" ? presented.replace(/^\s*£\s*(?=[A-Za-z])/, "") : presented;
 }
