@@ -104,3 +104,9 @@ In dashboard account previews, show an overdrawn account's full name and the ove
 **Why:** The user approved “Brokerage Account — £12,398.48 overdraft” once after the duplicate debt note crowded the account name out of view.
 
 **How to apply:** Keep the actual negative ledger balance unchanged. Display its magnitude with an explicit overdraft label in the preview; retain distinct unpaid fees when present and full details on the account page.
+
+Use plain-language overdraft highlights on account detail and account summary screens too, without technical ledger explanations or repeated amounts.
+
+**Why:** The user again rejected the account-page notice: “the notice should simply highlight an overdraft” and “all that jargons there is unnecessary”.
+
+**How to apply:** Identify the named account and amount owed clearly. Omit zero-fee lines and duplicate overdraft figures, while keeping genuinely unpaid fees distinct and preserving all financial balances and access restrictions.
