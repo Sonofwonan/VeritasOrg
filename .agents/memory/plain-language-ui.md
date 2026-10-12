@@ -20,3 +20,9 @@ Account detail pages should prioritize balances and compact transaction history.
 **Why:** The user asked for a standard bank-style account page, rejected login details there, requested account details in a popup or separate page, and said fee-management sections were not important on the main screen.
 
 **How to apply:** Keep fee offers, material terms and contract controls accessible through a deliberate Account services action. Actual fee debits remain in ordinary history with simple descriptions; simplifying presentation must not cancel contracts, delete charges or change access restrictions. Never invent bank account numbers to fill missing details.
+
+The user wants permanent application-wide account identifiers, not official bank-issued payment details.
+
+**Why:** When asked whether identifiers should be internal or official, the user clarified, “Not official butt something that can be used to identify all accounts across the entire project in that sense”.
+
+**How to apply:** Persist consistent application account numbers rather than deriving inconsistent placeholders from database IDs. Do not present generated identifiers as officially assigned IBANs/routing numbers or external payment instructions.
