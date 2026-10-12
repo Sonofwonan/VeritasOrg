@@ -20,3 +20,18 @@ Exception: the owner-authorized fictional scenario follows [Fictional test recor
 **Why:** The owner confirmed the scenario is fictional and requested a matching forward ledger. Legacy demo flags alone do not establish that authorization.
 
 **How to apply:** Require explicit scenario-specific authorization in addition to fictional flags, and never generalize this exception to real-client records.
+
+## Effective dates and original fictional evidence
+
+Owner-authorized corrections to a fictional transaction date must preserve the
+original accepted evidence. Changing the displayed date is not authorization
+to change account opening dates, billing dates, amounts or access conditions.
+
+**Why:** A deposit-date correction was requested after its historical balances
+had already been accepted as immutable synthetic evidence. Rewriting that
+source would erase its provenance and make repeat imports unsafe.
+
+**How to apply:** Keep the original source stable, audit the effective date
+separately, and use that effective date consistently in client history and new
+reconciliation boundaries. Exact retries of an accepted source still refer to
+its original evidence; they must not create another cash movement.

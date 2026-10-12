@@ -52,6 +52,22 @@ export async function initializeHistoricalBalances(pool: Pool) {
       BEGIN
         RAISE EXCEPTION 'Historical balance evidence is immutable';
       END; $$ LANGUAGE plpgsql;
+      CREATE TABLE IF NOT EXISTS transaction_date_corrections (
+        id BIGSERIAL PRIMARY KEY,
+        transaction_id INTEGER NOT NULL UNIQUE REFERENCES transactions(id),
+        account_id INTEGER NOT NULL REFERENCES accounts(id),
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        original_at TIMESTAMPTZ NOT NULL,
+        effective_at TIMESTAMPTZ NOT NULL CHECK (effective_at <> original_at),
+        historical_import_id UUID NOT NULL REFERENCES historical_balance_imports(id),
+        original_fingerprint TEXT NOT NULL,
+        authorization_detail JSONB NOT NULL CHECK (authorization_detail->>'synthetic' IS NOT NULL AND authorization_detail->>'synthetic'='true'),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+      );
+      DROP TRIGGER IF EXISTS transaction_date_corrections_immutable ON transaction_date_corrections;
+      CREATE TRIGGER transaction_date_corrections_immutable
+        BEFORE UPDATE OR DELETE ON transaction_date_corrections
+        FOR EACH ROW EXECUTE FUNCTION protect_historical_balance_evidence();
       DROP TRIGGER IF EXISTS historical_balance_imports_immutable ON historical_balance_imports;
       CREATE TRIGGER historical_balance_imports_immutable
         BEFORE UPDATE OR DELETE ON historical_balance_imports

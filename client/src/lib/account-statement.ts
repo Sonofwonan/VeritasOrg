@@ -15,7 +15,7 @@ export function accountStatementCsv(accountId: number, accountNumber: string, tr
     return `"${safe.replaceAll('"','""')}"`;
   };
   const rows = [
-    ["Transaction ID","Account number","Recorded timestamp (ISO 8601)","Category","Description","Transaction type","Status",`Amount (${balanceCurrencyLabel(currency)})`,`Balance after (${balanceCurrencyLabel(currency)})`,"Date (America/Toronto)"],
+    ["Transaction ID","Account number","Transaction timestamp (ISO 8601)","Category","Description","Transaction type","Status",`Amount (${balanceCurrencyLabel(currency)})`,`Balance after (${balanceCurrencyLabel(currency)})`,"Date (America/Toronto)"],
     ...transactions.map(t => {
       const kind = `${t.transactionType} ${t.description || ""}`;
       const category = /management/i.test(kind) ? "Management fee"

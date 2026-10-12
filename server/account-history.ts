@@ -92,7 +92,7 @@ export async function ownedCashHistory(pool: Pool, userId: number, ledger: Trans
   const { rows } = await pool.query(`
     SELECT p.transaction_id AS "transactionId",a.id AS "accountId",
       COALESCE(a.display_name,a.account_type) AS "accountName", a.account_number AS "accountNumber",
-      p.balance_after::text AS "balanceAfter"
+      p.balance_after::text AS "balanceAfter", d.effective_at AS "effectiveAt"
     FROM (
       SELECT transaction_id,account_id,balance_after,id,0 AS source_order FROM account_cash_changes WHERE transaction_id IS NOT NULL
       UNION ALL
@@ -102,21 +102,26 @@ export async function ownedCashHistory(pool: Pool, userId: number, ledger: Trans
         (SELECT 1 FROM account_cash_changes live WHERE live.transaction_id=h.transaction_id AND live.account_id=h.account_id)
     ) p JOIN accounts a ON a.id=p.account_id
       JOIN transactions t ON t.id=p.transaction_id
+      LEFT JOIN transaction_date_corrections d ON d.transaction_id=t.id
+        AND d.account_id=a.id AND d.user_id=a.user_id
     WHERE a.user_id=$1 AND t.status='completed'
       AND ($2::integer IS NULL OR a.id=$2)
     ORDER BY p.source_order,p.id`, [userId, accountId ?? null]);
   const byTransaction = new Map<number, typeof rows>();
-  for (const { transactionId, ...posting } of rows) {
+  const dates = new Map<number, Date>();
+  for (const { transactionId, effectiveAt, ...posting } of rows) {
+    if (effectiveAt) dates.set(transactionId, effectiveAt);
     const items = byTransaction.get(transactionId) ?? [];
     items.push(posting);
     byTransaction.set(transactionId, items);
   }
   return ledger.map(t => ({
     ...t,
+    createdAt: dates.get(t.id) ?? t.createdAt,
     // Old generated descriptions exposed database keys. Keep stored history
     // intact, but never present those keys as customer account numbers.
     description: /^Transfer from Account #\d+ to Account #\d+$/.test(t.description ?? "")
       ? "Account transfer" : t.description,
     cashPostings: t.status === "completed" ? byTransaction.get(t.id) ?? [] : [],
-  }));
+  })).sort((a,b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime() || b.id-a.id);
 }

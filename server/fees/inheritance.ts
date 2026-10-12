@@ -3,12 +3,19 @@ import { billingToday, DEFAULT_FEE_COMPONENTS, OVERDRAFT_FEE_TERMS } from "../..
 import { maryOriginalAccounts } from "./fictional-history";
 
 export const INHERITANCE = {
+  // Immutable original fixture evidence and fee schedule. Display corrections
+  // are separate metadata and must never change opening or charge dates.
   amount: "1622886.00", date: "2026-10-08",
   // Noon Toronto (EDT) on the approved date. Stored as an unambiguous UTC instant.
   timestamp: "2026-10-08T16:00:00Z",
   description: "Inheritance — family farm sale proceeds",
   displayName: "Inheritance Trust Account",
   firstChargeDate: "2026-11-08", monthlyFee: "363.64",
+} as const;
+export const INHERITANCE_DATE_CORRECTION = {
+  date: "2026-10-12", timestamp: "2026-10-12T16:00:00.000Z",
+  action: "fictional_inheritance_date_corrected",
+  authorization: "Project owner explicitly requested that the existing fictional 1,622,886.00 inheritance deposit be dated October 12, 2026. Date metadata only; no new deposit, cash movement, fee change or external settlement claim.",
 } as const;
 const MARKER = "fictional_inheritance_account_created";
 
@@ -29,7 +36,18 @@ async function existing(c: PoolClient, userId: number) {
     e.total !== INHERITANCE.monthlyFee || e.funding !== "fee_overdraft") {
     throw new Error("Inheritance records changed or are missing; refusing to recreate or overwrite them");
   }
-  return { ...detail, currentBalance: a.balance };
+  const { rows: [metadata] } = await c.query("SELECT to_regclass('transaction_date_corrections') AS available");
+  const correction = metadata.available
+    ? (await c.query("SELECT * FROM transaction_date_corrections WHERE transaction_id=$1", [t.id])).rows[0]
+    : undefined;
+  if (correction && (correction.account_id !== a.id || correction.user_id !== userId ||
+    new Date(correction.original_at).toISOString() !== new Date(INHERITANCE.timestamp).toISOString() ||
+    new Date(correction.effective_at).toISOString() !== INHERITANCE_DATE_CORRECTION.timestamp ||
+    correction.authorization_detail.synthetic !== true)) {
+    throw new Error("Inheritance date correction provenance changed; refusing a fixture replay");
+  }
+  return { ...detail, currentBalance: a.balance,
+    effectiveDate: correction ? INHERITANCE_DATE_CORRECTION.date : INHERITANCE.date };
 }
 
 // Explicit fixture operation only; never called by startup, migrations, deployment or jobs.

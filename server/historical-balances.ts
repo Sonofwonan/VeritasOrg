@@ -23,6 +23,11 @@ function normalizedInput(body: unknown): HistoryImportInput {
 }
 
 async function readSnapshot(c: PoolClient, input: HistoryImportInput, locking = false): Promise<HistorySnapshot> {
+  // An exact retry of an immutable accepted source is validated against that
+  // source's original dates. New evidence must use the audited effective dates.
+  const { rows: [retry] } = await c.query(`SELECT id FROM historical_balance_imports
+    WHERE account_id=$1 AND fingerprint=$2`, [input.accountId,hash(input)]);
+  const replay = retry?.id ?? null;
   const { rows: [account] } = await c.query(`
     SELECT id,user_id,account_number,account_type,display_name,balance::text,created_at,is_demo,
       EXISTS (SELECT 1 FROM fee_audit f WHERE f.actor='test_fixture'
@@ -39,10 +44,15 @@ async function readSnapshot(c: PoolClient, input: HistoryImportInput, locking = 
     ...input.nonPostingTransactions.map(t => t.transactionId),
   ].filter((id): id is number => typeof id === "number"))];
   const { rows: transactions } = await c.query(`
-    SELECT id,from_account_id,to_account_id,amount::text,status,cash_debit_deferred,created_at,is_demo
-    FROM transactions WHERE
-      ((from_account_id=$1 OR to_account_id=$1) AND created_at >= $2::timestamptz AND created_at < $3::timestamptz)
-      OR id=ANY($4::integer[]) ORDER BY id`, [input.accountId,input.start,input.end,ids]);
+    SELECT t.id,t.from_account_id,t.to_account_id,t.amount::text,t.status,t.cash_debit_deferred,
+      CASE WHEN d.historical_import_id=$5::uuid THEN t.created_at ELSE COALESCE(d.effective_at,t.created_at) END AS created_at,t.is_demo
+    FROM transactions t LEFT JOIN transaction_date_corrections d ON d.transaction_id=t.id
+      AND d.account_id=$1 AND d.user_id=$6
+    WHERE ((t.from_account_id=$1 OR t.to_account_id=$1) AND
+      (CASE WHEN d.historical_import_id=$5::uuid THEN t.created_at ELSE COALESCE(d.effective_at,t.created_at) END) >= $2::timestamptz AND
+      (CASE WHEN d.historical_import_id=$5::uuid THEN t.created_at ELSE COALESCE(d.effective_at,t.created_at) END) < $3::timestamptz)
+      OR t.id=ANY($4::integer[]) ORDER BY t.id`,
+      [input.accountId,input.start,input.end,ids,replay,input.userId]);
   // Include actual postings of backdated rows as well as chronological cash changes.
   const relevantIds = [...new Set([...ids,...transactions.map(t => t.id)])];
   const { rows: live } = await c.query(`
@@ -51,11 +61,19 @@ async function readSnapshot(c: PoolClient, input: HistoryImportInput, locking = 
       (transaction_id=ANY($4::integer[]) OR (posted_at >= $2::timestamptz AND posted_at < $3::timestamptz))
     ORDER BY id`, [input.accountId,input.start,input.end,relevantIds]);
   const { rows: previous } = await c.query(`
-    SELECT id,start_at,end_at,opening_balance::text,closing_balance::text,fingerprint
-    FROM historical_balance_imports WHERE account_id=$1 ORDER BY start_at,id`, [input.accountId]);
+    SELECT i.id,
+      CASE WHEN i.id=$2::uuid THEN i.start_at ELSE LEAST(i.start_at,MIN(d.effective_at)) END AS start_at,
+      CASE WHEN i.id=$2::uuid THEN i.end_at ELSE GREATEST(i.end_at,MAX(d.effective_at)+interval '1 millisecond') END AS end_at,
+      i.opening_balance::text,i.closing_balance::text,i.fingerprint
+    FROM historical_balance_imports i LEFT JOIN transaction_date_corrections d ON d.historical_import_id=i.id
+      AND d.account_id=i.account_id AND d.user_id=i.user_id
+    WHERE i.account_id=$1 GROUP BY i.id ORDER BY start_at,i.id`, [input.accountId,replay]);
   const { rows: historical } = await c.query(`
-    SELECT transaction_id,balance_after::text,occurred_at FROM historical_balance_postings
-    WHERE account_id=$1 AND transaction_id=ANY($2::integer[]) ORDER BY id`, [input.accountId,relevantIds]);
+    SELECT h.transaction_id,h.balance_after::text,
+      CASE WHEN h.import_id=$3::uuid THEN h.occurred_at ELSE COALESCE(d.effective_at,h.occurred_at) END AS occurred_at
+    FROM historical_balance_postings h LEFT JOIN transaction_date_corrections d
+      ON d.transaction_id=h.transaction_id AND d.account_id=h.account_id AND d.historical_import_id=h.import_id
+    WHERE h.account_id=$1 AND h.transaction_id=ANY($2::integer[]) ORDER BY h.id`, [input.accountId,relevantIds,replay]);
   return {
     account: { ...account, created_at: asDate(account.created_at)! },
     transactions: transactions.map(t => ({ ...t, created_at: asDate(t.created_at) })),

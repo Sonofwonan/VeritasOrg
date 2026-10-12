@@ -1,3 +1,56 @@
+# Audited inheritance date correction
+
+The owner's approved fictional inheritance date is **October 12, 2026**,
+at noon in Toronto (`2026-10-12T16:00:00.000Z`). The original October 8
+transaction, accepted source, preview, import fingerprint and balance posting
+remain immutable. An append-only `transaction_date_corrections` record links
+the original transaction and accepted import to the effective date, with a
+matching fixture audit entry. This is not external settlement evidence.
+
+The client history APIs apply the effective date before sorting. Dashboard,
+account and full history, date filters and CSV statements therefore use the
+same date. The supported balance after the deposit remains **£1,622,886.00**.
+Statement columns call this the transaction timestamp, not the original
+recorded timestamp.
+
+Reconciliation uses effective transaction/posting dates and effective import
+boundaries for new evidence. An exact retry of an already accepted immutable
+source uses only that source's original dates and fingerprint; it returns the
+existing import, never another posting. A replacement overlapping source is
+rejected. A subsequent import can start at the corrected closing boundary.
+No immutable evidence trigger is bypassed.
+
+Deliberate main-record procedure (never startup, migration, post-merge or billing):
+
+```
+npx tsx script/correct-mary-inheritance-date.ts
+npx tsx script/correct-mary-inheritance-date.ts --apply-fictional-date-correction --confirm-main-environment
+npx tsx script/correct-mary-inheritance-date.ts
+```
+
+The operation verifies the owner, fictional scenario audit, trust account,
+deposit, explicitly authorized synthetic source and original fee provenance.
+It refuses changed or ambiguous originals, intervening trust activity and
+missing balance evidence. Protected-row fingerprints are compared inside the
+transaction, including account/transaction balances, credentials and security
+settings, identifiers, holdings, fee contracts/assessments, processing controls
+and immutable history. Only the correction and its audit are inserted.
+Repeating it validates the existing correction and makes no further writes.
+The trust's opening date and November 8 first charge date are **not** moved.
+
+Applied deliberately to the verified main fictional record on October 12,
+2026. A second invocation returned `alreadyApplied: true`. Read-only verification
+confirmed one correction and one matching audit, the effective October 12
+client-history date, retained October 8 source evidence, unchanged £1,622,886.00
+trust balance and -£12,398.48 brokerage balance. Shared-client credentials were
+not used for browser verification; signed-in UI/CSV checks used disposable
+accounts only.
+
+`tests/balances/inheritance-date.spec.ts` verifies normal-login mobile/desktop
+history and CSV dates, ordering across accounts, the muted resulting balance,
+immutability, unauthorized-source rejection, original-source retry and later
+effective-boundary import/retry. All test records are isolated and disposable.
+
 # Account history evidence
 
 ## Owner report
