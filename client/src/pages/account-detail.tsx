@@ -2,7 +2,7 @@ import { useAccounts, useAccountTransactions } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Download, TrendingUp, TrendingDown, Wallet, CreditCard, Briefcase, Clock, Info } from "lucide-react";
+import { ArrowLeft, Download, TrendingUp, TrendingDown, Clock, Info, ChevronDown } from "lucide-react";
 import { useLocation } from "wouter";
 import { useParams } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,10 +18,6 @@ import { useClientFeeSummary } from "@/hooks/use-fees";
 import { FeeLiability } from "@/components/fees/fee-liability";
 import { accountStatementCsv } from "@/lib/account-statement";
 import { accountLabel, transactionDate } from "@shared/account-display";
-
-type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' | '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
-
-const INVESTMENT_ACCOUNT_TYPES = ['Brokerage Account', 'Traditional IRA', 'Roth IRA', '401(k) / 403(b)', '529 Savings Plan'];
 
 function exportStatement(account: { id: number; accountType: string }, transactions: any[] = [], currency: BalanceCurrency = "CAD") {
   const csv = accountStatementCsv(account.id,transactions,currency);
@@ -43,6 +39,7 @@ export default function AccountDetailPage() {
   const { data: accounts, isLoading: accountsLoading, isError: accountsError, refetch: refetchAccounts } = useAccounts();
   const feeSummary = useClientFeeSummary();
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
+  const [servicesOpen, setServicesOpen] = useState(false);
   
   const accountId = parseInt(params.id as string);
   const account = accounts?.find(a => a.id === accountId);
@@ -103,16 +100,15 @@ export default function AccountDetailPage() {
         </Button>
         
         <div className="space-y-2">
-          <h2 className="text-3xl font-bold font-display">
+          <h2 className="break-words text-3xl font-bold font-display">
             {accountLabel(account)}
           </h2>
-          <p className="text-muted-foreground">Account ID: {account.id}</p>
         </div>
       </div>
 
       {/* Account Summary */}
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
-        <Card className="min-w-0 md:col-span-2" data-testid="account-detail-balance">
+      <div className="mb-8 grid min-w-0 gap-6 md:grid-cols-[1.2fr_0.8fr]">
+        <Card className="min-w-0" data-testid="account-detail-balance">
           <CardHeader>
             <CardTitle>Account balance</CardTitle>
           </CardHeader>
@@ -165,31 +161,43 @@ export default function AccountDetailPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0" data-testid="account-detail-details">
           <CardHeader>
             <CardTitle>Account Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">Type</p>
-              <p className="font-semibold">{accountLabel(account)}</p>
+          <CardContent className="divide-y text-sm">
+            <div className="flex min-w-0 flex-col gap-1 py-3 first:pt-0 sm:flex-row sm:justify-between sm:gap-4">
+              <p className="shrink-0 text-muted-foreground">Account type</p>
+              <p className="break-words font-medium sm:text-right">{account.accountType}</p>
             </div>
-            <div>
-              <p className="text-muted-foreground">Status</p>
-              <Badge className="mt-1">Active</Badge>
+            <div className="flex min-w-0 flex-col gap-1 py-3 sm:flex-row sm:justify-between sm:gap-4">
+              <p className="shrink-0 text-muted-foreground">Account holder</p>
+              <p className="break-words font-medium sm:text-right">{user?.name || "—"}</p>
             </div>
+            {user?.clientRef && (
+              <div className="flex min-w-0 flex-col gap-1 py-3 sm:flex-row sm:justify-between sm:gap-4">
+                <p className="shrink-0 text-muted-foreground">Client reference</p>
+                <p className="break-all font-mono font-medium sm:text-right">{user.clientRef}</p>
+              </div>
+            )}
+            {account.createdAt && Number.isFinite(new Date(account.createdAt).getTime()) && (
+              <div className="flex min-w-0 flex-col gap-1 py-3 last:pb-0 sm:flex-row sm:justify-between sm:gap-4">
+                <p className="shrink-0 text-muted-foreground">Opened</p>
+                <p className="font-medium sm:text-right">{transactionDate(account.createdAt)}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Transaction History */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <div>
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <CardTitle>Transaction History</CardTitle>
             <CardDescription>Recent account activity</CardDescription>
           </div>
-           <Button data-testid="button-export-statement" variant="outline" size="sm" className="gap-2" disabled={transactionsLoading || transactionsError} onClick={() => exportStatement(account, transactions || [], currency)}>
+           <Button data-testid="button-export-statement" variant="outline" size="sm" className="w-full gap-2 sm:w-auto" disabled={transactionsLoading || transactionsError} onClick={() => exportStatement(account, transactions || [], currency)}>
             <Download className="w-4 h-4" />
             Export
           </Button>
@@ -197,21 +205,34 @@ export default function AccountDetailPage() {
         <CardContent>
           <div className="max-h-[min(65vh,720px)] space-y-1 overflow-y-auto overscroll-contain pr-1" aria-label="Scrollable account transaction history">
             {transactionsLoading ? (
-              <p role="status" className="p-3 text-sm text-muted-foreground">Loading transaction history…</p>
+              <div role="status" className="space-y-3 p-3">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
             ) : transactionsError ? (
-              <p role="alert" className="p-3 text-sm text-red-700">
+              <div role="alert" className="p-3 text-sm text-red-700">
                 Transaction history could not be loaded.
                 <button data-testid="button-retry-transactions" className="ml-2 underline" onClick={() => void refetchTransactions()}>Retry</button>
-              </p>
+              </div>
             ) : transactions && transactions.length > 0 ? (
               transactions.map((transaction) => {
                 const isIncoming = transaction.toAccountId === accountId;
                 return (
-                  <div 
+                  <div
                     key={transaction.id} 
                     data-testid={`account-txn-row-${transaction.id}`}
-                    className="flex flex-col gap-3 border-b p-3 transition-colors hover:bg-muted/50 last:border-0 cursor-pointer group sm:flex-row sm:items-center sm:justify-between sm:p-4"
+                    role="button"
+                    tabIndex={0}
+                    aria-haspopup="dialog"
+                    className="group flex min-w-0 cursor-pointer flex-col gap-3 border-b p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary last:border-0 sm:flex-row sm:items-center sm:justify-between sm:p-4"
                     onClick={() => setSelectedTxn(transaction)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedTxn(transaction);
+                      }
+                    }}
                   >
                       <div className="flex min-w-0 items-center gap-3 sm:gap-4 flex-1">
                       <div className={cn(
@@ -226,14 +247,14 @@ export default function AccountDetailPage() {
                           <TrendingDown className="w-5 h-5" />
                         )}
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium group-hover:text-primary transition-colors">{transactionDescription(transaction.description,currency,transaction.transactionType)}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words font-medium transition-colors group-hover:text-primary">{transactionDescription(transaction.description,currency,transaction.transactionType)}</p>
                         <p className="text-sm text-muted-foreground">{transactionDate(transaction.createdAt)}</p>
                       </div>
                     </div>
-                      <div className="flex items-center justify-between gap-3 text-right sm:block">
+                      <div className="flex min-w-0 items-center justify-between gap-3 sm:block sm:text-right">
                       <p className={cn(
-                        "font-bold text-lg",
+                        "whitespace-nowrap font-mono text-lg font-bold tabular-nums",
                          transaction.status === 'pending' ? 'text-red-700 dark:text-red-300' : (isIncoming ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
                       )}>
                          {isIncoming ? '+' : '-'}{money(transaction.amount)}
@@ -246,61 +267,82 @@ export default function AccountDetailPage() {
                 );
               })
             ) : (
-              <div className="text-center py-8">
+              <div className="py-10 text-center">
                 <p className="text-muted-foreground">No transactions yet</p>
               </div>
             )}
           </div>
 
           <Dialog open={!!selectedTxn} onOpenChange={(open) => !open && setSelectedTxn(null)}>
-            <DialogContent className="sm:max-w-md border-primary/20 bg-zinc-950 text-white">
+            <DialogContent className="max-h-[90dvh] max-w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-md">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Info className="w-5 h-5 text-primary" />
                   Transaction Details
                 </DialogTitle>
-                <DialogDescription className="text-zinc-400">
-                  Ref: TXN-{selectedTxn?.id}
+                <DialogDescription>
+                  Review the recorded transaction details.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="flex justify-between items-center py-2 border-b border-white/5">
-                  <span className="text-zinc-400 text-sm">Description</span>
-                  <span className="font-bold">{transactionDescription(selectedTxn?.description,currency,selectedTxn?.transactionType)}</span>
+              <div className="min-w-0 space-y-1 py-2">
+                <div className="flex min-w-0 flex-col gap-1 border-b py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <span className="shrink-0 text-sm text-muted-foreground">Description</span>
+                  <span className="break-words font-medium sm:text-right">{transactionDescription(selectedTxn?.description,currency,selectedTxn?.transactionType)}</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-white/5">
-                  <span className="text-zinc-400 text-sm">Amount</span>
-                  <span className={cn("font-black text-lg", selectedTxn?.status === 'pending' ? "text-red-300" : (selectedTxn?.toAccountId === accountId ? "text-emerald-300" : "text-red-300"))}>
-                    {money(selectedTxn?.amount ?? 0)}
+                <div className="flex min-w-0 flex-col gap-1 border-b py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <span className="shrink-0 text-sm text-muted-foreground">Amount</span>
+                  <span className={cn("whitespace-nowrap font-mono text-lg font-semibold tabular-nums sm:text-right", selectedTxn?.status === 'pending' ? "text-red-700 dark:text-red-300" : (selectedTxn?.toAccountId === accountId ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"))}>
+                    {selectedTxn && `${selectedTxn.toAccountId === accountId ? "+" : "-"}${money(selectedTxn.amount)}`}
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-white/5">
-                  <span className="text-zinc-400 text-sm">Status</span>
+                <div className="flex min-w-0 flex-col gap-1 border-b py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <span className="shrink-0 text-sm text-muted-foreground">Status</span>
                   <Badge variant={selectedTxn?.status === 'completed' ? 'default' : 'destructive'} className="capitalize">
                     {selectedTxn?.status}
                   </Badge>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-white/5">
-                  <span className="text-zinc-400 text-sm">Date</span>
-                  <span className="font-medium">{selectedTxn?.createdAt && transactionDate(selectedTxn.createdAt,true)}</span>
+                <div className="flex min-w-0 flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <span className="shrink-0 text-sm text-muted-foreground">Date</span>
+                  <span className="font-medium sm:text-right">{selectedTxn?.createdAt && transactionDate(selectedTxn.createdAt,true)}</span>
                 </div>
                 {selectedTxn?.status === 'pending' && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                    <p className="text-[10px] text-red-400 uppercase tracking-widest font-black mb-1">Security Notice</p>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                  <div className="mt-2 border border-destructive/30 bg-destructive/5 p-3">
+                    <p className="mb-1 text-xs font-bold uppercase tracking-widest text-destructive">Security Notice</p>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
                       This transaction is currently undergoing institutional verification and will remain PENDING until final settlement in June 2026.
                     </p>
                   </div>
                 )}
               </div>
-              <Button onClick={() => setSelectedTxn(null)} className="w-full bg-primary hover:bg-primary/90 text-white font-bold rounded-xl h-11">
+              <Button onClick={() => setSelectedTxn(null)} className="w-full">
                 Close
               </Button>
             </DialogContent>
           </Dialog>
         </CardContent>
       </Card>
-      <ClientFees accountId={accountId} cashBalance={account.balance} />
+      <section className="mt-8 border-t pt-6" aria-labelledby="account-services-heading">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h3 id="account-services-heading" className="font-semibold">Account services</h3>
+            <p className="text-sm text-muted-foreground">Fee arrangements and available account services.</p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            aria-expanded={servicesOpen}
+            aria-controls="account-services-content"
+            onClick={() => setServicesOpen((open) => !open)}
+            className="w-full justify-between sm:w-auto"
+          >
+            {servicesOpen ? "Hide account services" : "Account services"}
+            <ChevronDown className={cn("ml-3 h-4 w-4 transition-transform", servicesOpen && "rotate-180")} />
+          </Button>
+        </div>
+        <div id="account-services-content" hidden={!servicesOpen} className="mt-5 min-w-0">
+          {servicesOpen && <ClientFees accountId={accountId} cashBalance={account.balance} />}
+        </div>
+      </section>
     </LayoutShell>
   );
 }

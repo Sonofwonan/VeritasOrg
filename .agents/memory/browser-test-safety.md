@@ -33,6 +33,12 @@ Advancing frozen browser time does not settle network responses or synchronize i
 
 **How to apply:** Wait for each required financial state independently. When testing natural polling with a paused clock, advance virtual time during the wait so in-flight requests can finish and subsequent intervals can run. Keep the exact status and balance assertions; do not reload or weaken them to mask stale data.
 
+Do not overlap managed and manually launched browser suites unless their report and artifact directories are isolated.
+
+**Why:** Concurrent runs caused missing trace/network artifacts during context teardown even though the financial assertions passed; one run cleaned another run's output.
+
+**How to apply:** Check for an active browser workflow before launching another suite. Wait for it to finish, or use distinct per-run output/report locations. Distinguish artifact collisions from application failures without suppressing assertion or teardown checks.
+
 Wait for final layout geometry when testing responsive disclosure controls; an updated aria state does not mean an offcanvas or height transition has finished.
 
 **Why:** Browser regressions intermittently measured the header partway through a sidebar transition, despite the correct final collapsed state.
