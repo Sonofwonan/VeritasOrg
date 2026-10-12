@@ -32,3 +32,9 @@ Remove the dashboard's bottom Last updated line and account-figures currency foo
 **Why:** The user specifically marked these captions as unnecessary in dashboard and Accounts screenshots.
 
 **How to apply:** Preserve recorded transaction dates, account-type names, monetary currency symbols, and cash terminology in accepted fee terms or financial rules. Show supported balances after transactions under the amounts on both dashboard and account histories, including older accounts and historical transactions as the user explicitly requested; do not invent missing history.
+
+Use a consistent stacked transaction figure layout for all account types: signed transaction amount on the right, with a smaller muted supported balance immediately underneath.
+
+**Why:** The user supplied a banking screenshot and said, “You must make sure the balance shows like this for alll accounts”.
+
+**How to apply:** Keep description/date/status on the left and both figures right-aligned, compact and readable at normal mobile zoom. Preserve source-account attribution for internal transfers and do not copy the example's pending-balance behavior without evidence.
