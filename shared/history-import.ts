@@ -12,7 +12,7 @@ export const historyImportSchema = z.object({
   openingBalance: evidenceDecimal,
   closingBalance: evidenceDecimal,
   source: z.object({
-    kind: z.enum(["statement", "ledger_export"]),
+    kind: z.enum(["statement", "ledger_export", "synthetic_fixture"]),
     reference: z.string().trim().min(3).max(240),
     sha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
     reviewedBy: z.string().trim().min(3).max(120),

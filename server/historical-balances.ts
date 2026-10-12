@@ -24,9 +24,13 @@ function normalizedInput(body: unknown): HistoryImportInput {
 
 async function readSnapshot(c: PoolClient, input: HistoryImportInput, locking = false): Promise<HistorySnapshot> {
   const { rows: [account] } = await c.query(`
-    SELECT id,user_id,account_number,account_type,display_name,balance::text,created_at
+    SELECT id,user_id,account_number,account_type,display_name,balance::text,created_at,is_demo,
+      EXISTS (SELECT 1 FROM fee_audit f WHERE f.actor='test_fixture'
+        AND f.action='fictional_balance_history_authorized' AND f.detail->>'synthetic'='true'
+        AND f.detail->>'accountId'=accounts.id::text AND f.detail->>'userId'=accounts.user_id::text
+        AND f.detail->>'sourceSha256'=$2) AS fictional_history_authorized
     FROM accounts WHERE id=$1 AND EXISTS (SELECT 1 FROM users u WHERE u.id=accounts.user_id)
-    ${locking ? "FOR UPDATE" : ""}`, [input.accountId]);
+    ${locking ? "FOR UPDATE" : ""}`, [input.accountId,input.source.sha256]);
   if (!account || account.user_id !== input.userId) {
     throw new HistoricalBalanceError(404, "The account was not found for the selected owner.");
   }
@@ -35,7 +39,7 @@ async function readSnapshot(c: PoolClient, input: HistoryImportInput, locking = 
     ...input.nonPostingTransactions.map(t => t.transactionId),
   ].filter((id): id is number => typeof id === "number"))];
   const { rows: transactions } = await c.query(`
-    SELECT id,from_account_id,to_account_id,amount::text,status,cash_debit_deferred,created_at
+    SELECT id,from_account_id,to_account_id,amount::text,status,cash_debit_deferred,created_at,is_demo
     FROM transactions WHERE
       ((from_account_id=$1 OR to_account_id=$1) AND created_at >= $2::timestamptz AND created_at < $3::timestamptz)
       OR id=ANY($4::integer[]) ORDER BY id`, [input.accountId,input.start,input.end,ids]);

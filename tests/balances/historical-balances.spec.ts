@@ -3,9 +3,56 @@ import { randomUUID, createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { formatBalance } from "../../shared/balance-currency";
 import type { HistoryImportInput } from "../../shared/history-import";
+import { fictionalBalanceInput } from "../../server/fees/fictional-balances";
 
 const admin = () => ({ "x-admin-key": process.env.BALANCE_E2E_ADMIN! });
 const date = "2024-01-02T00:00:00.000Z";
+
+test("owner-authorized fictional history supplies muted balances without changing funds",async ({page,db,identity})=>{
+  const a=(await db.query(`INSERT INTO accounts(user_id,account_type,balance,is_demo,created_at)
+    VALUES($1,'Brokerage Account',-12.5,true,'2024-01-01') RETURNING *`,[identity.userId])).rows[0];
+  const ids:number[]=[];
+  for(const [amount,incoming,at] of [
+    ["100",true,"2024-01-02"],["100",false,"2024-02-02"],["12.5",false,"2024-03-02"],
+  ] as const) {
+    ids.push((await db.query(`INSERT INTO transactions(from_account_id,to_account_id,amount,description,
+      transaction_type,status,is_demo,created_at) VALUES($1,$2,$3,'Account activity','transfer','completed',true,$4) RETURNING id`,
+    [incoming?null:a.id,incoming?a.id:null,amount,at])).rows[0].id);
+  }
+  await db.query("UPDATE users SET display_currency='GBP' WHERE id=$1",[identity.userId]);
+  const transactions=(await db.query("SELECT * FROM transactions WHERE id=ANY($1) ORDER BY created_at,id",[ids])).rows;
+  const input=fictionalBalanceInput(a,transactions,"-12.5");
+  const before=await financialSnapshot(db,identity.userId);
+  const unauthorized=await preview(page,input);
+  expect(unauthorized.canApply).toBe(false);
+  expect(unauthorized.issues.some((i:any)=>i.code==="NOT_FICTIONAL")).toBe(true);
+  await db.query(`INSERT INTO fee_audit(actor,action,detail)
+    VALUES('test_fixture','fictional_balance_history_authorized',$1::jsonb)`,
+    [JSON.stringify({synthetic:true,userId:identity.userId,accountId:a.id,sourceSha256:input.source.sha256})]);
+  const p=await preview(page,input);
+  expect(p.canApply).toBe(true);
+  expect((await apply(page,p.previewId)).status()).toBe(200);
+  expect((await (await apply(page,p.previewId)).json()).applied).toBe(false);
+  expect(await financialSnapshot(db,identity.userId)).toEqual(before);
+  await login(page,identity);
+  const api=await (await page.request.get(`/api/accounts/${a.id}/transactions`)).json();
+  expect(api.find((t:any)=>t.id===ids[2]).cashPostings[0].balanceAfter).toBe("-12.5");
+  for (const width of [320,390,768,1024,1440]) {
+    await page.setViewportSize({width,height:900});
+    for(const [url,testId] of [
+      ["/dashboard",`txn-row-${ids[2]}`],
+      [`/accounts/${a.id}`,`account-txn-row-${ids[2]}`],
+      ["/transactions",`transaction-row-${ids[2]}`],
+    ]) {
+      await page.goto(url);
+      const row=page.getByTestId(testId);
+      await expect(row.locator("[data-balance-after]")).toContainText(formatBalance("-12.5","GBP"));
+      await assertStack(row);
+      await expect(row).not.toContainText(/\bCAD\b|\bGBP\b/);
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    }
+  }
+});
 const source = () => ({
   kind: "statement" as const, reference: "Disposable synthetic source statement",
   sha256: createHash("sha256").update("Isolated synthetic statement contents").digest("hex"),

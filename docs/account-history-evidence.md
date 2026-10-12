@@ -32,7 +32,28 @@ The owner-filtered API forwards evidence when present. Each of the dashboard, ac
 
 **Blocking source inputs:** the original complete Brokerage Account opening-to-closing ledger from its January 2024 opening, including deposits, distributions, monthly/annual charges and any adjustments/reservations/refunds; and the Inheritance Trust Account opening ledger and deposit record for October 8, 2026, including any subsequent movements. Each needs independently documented opening and closing balances and chronological source references. No such statement, CSV/JSON ledger, spreadsheet or PDF has been supplied in the workspace attachments. Existing fixture scripts and today's account balances are not independent source evidence.
 
-Request these source records from the owner, reconcile them through the existing preview workflow, and obtain explicit authorization before applying shared-account historical evidence. Until then, these specific rows remain blocked, not fixed. No deployment or financial write was performed during diagnosis.
+This was the initial diagnosis before the owner's subsequent clarification that these are fictional records. The owner then expressly requested internally documented fictional history that totals the existing account balance. That changes the applicable source policy for this scenario only; it does not authorize fabricated history for real customers.
+
+### Owner-authorized fictional scenario
+
+Fictional history uses the distinct `synthetic_fixture` source kind, never `statement` or `ledger_export`. It is not bank evidence or verified external settlement. The original zero opening, timestamp/transaction-ID posting order and existing fictional movements are explicitly declared. No opening balance is derived backwards from current funds, and no adjustment is invented to make the arithmetic match.
+
+The service requires a source-specific internal authorization audit in addition to fictional account and transaction flags. Flags alone are insufficient because legacy defaults can mark ordinary accounts as demo records. Closing values must match unchanged current balances; missing transactions, conflicting live evidence and changes after preview still block apply.
+
+The manual operation is narrowly restricted to the existing authorized fictional Mary scenario and its inheritance provenance. It inserts history metadata only. Never add it to startup, schema migrations, post-merge setup, scheduled processing or publish commands:
+
+```sh
+# Preview only; does not authorize or apply the scenario.
+npx tsx script/apply-mary-history-balances.ts
+# Owner-authorized main-environment metadata application only.
+npx tsx script/apply-mary-history-balances.ts --apply-fictional-balances --confirm-main-environment
+```
+
+The existing 37 Brokerage movements reconcile from zero to −12,398.48; the Trust deposit reconciles from zero to 1,622,886.00. Deposits remain cash movements, not investment returns. Client screens retain normal account presentation and nominal £ symbols; internal import/audit records retain fictional provenance.
+
+The owner-authorized main-environment metadata application succeeded on October 12, 2026. A subsequent read-only coverage check found all 37 Brokerage rows and the single Trust deposit supported. Before/after financial snapshots were identical, including amounts, statuses, holdings, fee enrollments/contracts/assessments, cash captures, currency, debt access controls and processing settings. No password or other credential was written.
+
+Isolated normal-login browser checks verified the synthetic balance lines on dashboard, account detail and full history at widths 320, 390, 768, 1024 and 1440, including provenance authorization, idempotence and unchanged financial snapshots. Shared Mary's signed-in UI was not directly inspected; her imported data was checked read-only. The separate password/two-factor work is not part of this change.
 
 ## Supported values from now on
 

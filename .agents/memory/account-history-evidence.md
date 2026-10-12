@@ -14,3 +14,9 @@ Historical restoration must use independently reviewed, owner-authorized source 
 **Why:** Legacy pending requests may already have reserved cash, while completed generated rows may never have moved it. Replaying rows or rounding intermediate balances can produce plausible but false histories without changing the visible transaction total.
 
 **How to apply:** Source references, digests and staff attestations support an audit but cannot independently prove a fabricated list; retain and actually review the original source. Reject gaps and conflicts rather than relaxing checks to fill every row.
+
+Exception: the owner-authorized fictional scenario follows [Fictional test records](fictional-test-records.md). It may use explicitly synthetic history, not purported bank evidence.
+
+**Why:** The owner confirmed the scenario is fictional and requested a matching forward ledger. Legacy demo flags alone do not establish that authorization.
+
+**How to apply:** Require explicit scenario-specific authorization in addition to fictional flags, and never generalize this exception to real-client records.

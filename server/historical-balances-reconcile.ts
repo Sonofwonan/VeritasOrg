@@ -1,8 +1,8 @@
 import { evidenceUnits, evidenceText, type HistoryImportInput, type HistoryIssue, type HistoryPreviewRow } from "@shared/history-import";
 
 export type HistorySnapshot = {
-  account: { id: number; user_id: number; account_number: string; account_type: string; display_name: string | null; balance: string; created_at: string };
-  transactions: { id: number; from_account_id: number | null; to_account_id: number | null; amount: string; status: string; cash_debit_deferred: boolean; created_at: string | null }[];
+  account: { id: number; user_id: number; account_number: string; account_type: string; display_name: string | null; balance: string; created_at: string; is_demo?: boolean; fictional_history_authorized?: boolean };
+  transactions: { id: number; from_account_id: number | null; to_account_id: number | null; amount: string; status: string; cash_debit_deferred: boolean; created_at: string | null; is_demo?: boolean }[];
   live: { id: string; transaction_id: number | null; balance_before: string; balance_after: string; posted_at: string }[];
   previous: { id: string; start_at: string; end_at: string; opening_balance: string; closing_balance: string; fingerprint: string }[];
   historical: { transaction_id: number | null; balance_after: string; occurred_at: string }[];
@@ -16,6 +16,15 @@ export function reconcileHistoricalBalances(input: HistoryImportInput, snapshot:
   if (!input.source.complete) add("INCOMPLETE_SOURCE", "Provide the complete source movement history, including adjustments and reserved or returned payments.");
   if (!input.source.attested) add("SOURCE_NOT_REVIEWED", "A staff reviewer must attest that the opening, closing and all movements were checked against the actual source document.");
   if (!input.source.ownerAuthorized) add("OWNER_AUTHORIZATION_MISSING", "Confirm the account owner's authorization for this evidence import.");
+  if (input.source.kind === "synthetic_fixture") {
+    if (snapshot.account.is_demo !== true || snapshot.account.fictional_history_authorized !== true ||
+      snapshot.transactions.some(t => t.is_demo !== true)) {
+      add("NOT_FICTIONAL", "Synthetic history requires explicit internal authorization for this exact scenario, plus fictional account and transaction markers.");
+    }
+    if (evidenceUnits(snapshot.account.balance) !== evidenceUnits(input.closingBalance)) {
+      add("FIXTURE_BALANCE_CHANGED", "The fictional closing balance must match the unchanged account balance.");
+    }
+  }
   const duplicate = snapshot.previous.find(p => p.fingerprint === fingerprint);
   for (const p of snapshot.previous) {
     if (p.fingerprint === fingerprint) continue;
