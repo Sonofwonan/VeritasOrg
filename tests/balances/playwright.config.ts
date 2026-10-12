@@ -1,18 +1,24 @@
 import { defineConfig } from "@playwright/test";
+import { resolve, sep } from "node:path";
 
 if (!process.env.BALANCE_E2E_URL || !process.env.BALANCE_E2E_DATABASE) {
   throw new Error("Run npm run test:balances:browser; never point these tests at a shared server.");
 }
 
+const evidence = process.env.BALANCE_E2E_EVIDENCE;
+if (!evidence || !resolve(evidence).startsWith(resolve("test-results/balances") + sep)) {
+  throw new Error("Each test run must have its own output directory under test-results/balances. Use the isolated runner.");
+}
+
 export default defineConfig({
   testDir: ".",
   testMatch: "*.spec.ts",
-  outputDir: "../../test-results/balances/runs",
+  outputDir: resolve(evidence, "runs"),
   workers: 1,
   retries: 0,
   timeout: 60000,
   expect: { timeout: 10000 },
-  reporter: [["list"], ["html", { outputFolder: "playwright-report/balances", open: "never" }]],
+  reporter: [["list"], ["html", { outputFolder: resolve(evidence, "report"), open: "never" }]],
   use: {
     baseURL: process.env.BALANCE_E2E_URL,
     browserName: "chromium",

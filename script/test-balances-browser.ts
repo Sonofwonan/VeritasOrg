@@ -1,7 +1,7 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { mkdtemp, rm, open, writeFile, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { createServer } from "node:net";
 import { randomBytes } from "node:crypto";
 import pg from "pg";
@@ -33,8 +33,11 @@ if (process.env.BALANCE_E2E_CHROMIUM) {
 }
 const scratch = await mkdtemp(join(tmpdir(), "veritas-balance-e2e-"));
 const dataDir = join(scratch, "pgdata");
-const evidence = resolve("test-results/balances");
+// Playwright clears its output directory at startup. Each invocation must own
+// a distinct directory, even if a workflow and validation run overlap.
+const evidence = resolve("test-results/balances", basename(scratch));
 await import("node:fs/promises").then(fs => fs.mkdir(evidence, { recursive: true }));
+console.info(`Isolated browser evidence: ${evidence}`);
 const log = await open(join(evidence, "server.log"), "w");
 let app: ChildProcess | undefined;
 let started = false;
@@ -107,6 +110,7 @@ try {
     VITE_API_URL: "/api",
     BALANCE_E2E_URL: `http://127.0.0.1:${appPort}`,
     BALANCE_E2E_DATABASE: database,
+    BALANCE_E2E_EVIDENCE: evidence,
     BALANCE_E2E_ADMIN: "",
   };
   env.BALANCE_E2E_ADMIN = env.ADMIN_PASSWORD;
@@ -121,7 +125,7 @@ try {
   app = spawn(resolve("node_modules/.bin/tsx"), ["server/index.ts"], { cwd: workspace, env, stdio: ["ignore", log.fd, log.fd] });
   let ready = false;
   for (let i = 0; i < 120; i++) {
-    if (app.exitCode !== null) throw new Error("Isolated app exited; inspect test-results/balances/server.log");
+    if (app.exitCode !== null) throw new Error(`Isolated app exited; inspect ${join(evidence, "server.log")}`);
     try {
       const response = await fetch(`${env.BALANCE_E2E_URL}/api/user`);
       if (response.status === 401) { ready = true; break; }

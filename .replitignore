@@ -1,2 +1,3 @@
 /test-results/
 /playwright-report/
+/tests/balances/playwright-report/

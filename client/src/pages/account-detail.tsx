@@ -245,7 +245,7 @@ export default function AccountDetailPage() {
                       </div>
                     </div>
                     <TransactionAmountBalance
-                      amount={`${isIncoming ? "+" : "−"}${money(transaction.amount)}`}
+                      amount={`${isIncoming ? "+" : "-"}${money(transaction.amount)}`}
                       currency={currency}
                       postings={(transaction.cashPostings as CashPosting[] | undefined)?.filter(posting => posting.accountId === accountId) || []}
                       amountClassName={cn("text-lg font-bold", transaction.status === 'pending' ? 'text-red-700 dark:text-red-300' : (isIncoming ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'))}

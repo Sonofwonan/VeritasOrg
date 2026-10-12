@@ -37,7 +37,7 @@ Do not overlap managed and manually launched browser suites unless their report 
 
 **Why:** Concurrent runs caused missing trace/network artifacts during context teardown even though the financial assertions passed; one run cleaned another run's output.
 
-**How to apply:** Check the current browser workflow before each standalone run; an earlier stop does not prove it is still stopped. A named shell task's completion does not account for managed workflows. Wait for all runners to finish, or use distinct per-run output/report locations. Distinguish artifact collisions from application failures without suppressing assertion or teardown checks.
+**How to apply:** Check the current browser workflow before each standalone run; an earlier stop does not prove it is still stopped. A named shell task's completion does not account for managed workflows. Give every invocation distinct output/report locations, including validation runs; scheduling alone cannot protect evidence when another runner starts later. Distinguish artifact collisions from application failures without suppressing assertion or teardown checks.
 
 Wait for final layout geometry when testing responsive disclosure controls; an updated aria state does not mean an offcanvas or height transition has finished.
 

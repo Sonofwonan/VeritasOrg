@@ -67,3 +67,5 @@ npm run test:balances:browser -- historical-balances.spec.ts account-postings.sp
 ```
 
 The browser runner owns a temporary local PostgreSQL cluster and uses normal login with disposable accounts. It never inherits shared database/admin credentials or writes to Mary or other shared clients. Tests cover all account types, CAD and nominal £ display, old and live postings, both transfer sides, owner privacy, conflict/retry/attestation guards, exact fractional amounts, unchanged financial and policy snapshots, staff preview/apply/audit, statements and normal-zoom phone/tablet/desktop containment.
+
+Each runner invocation also owns a separate output directory under `test-results/balances/`, containing its server log, isolation record, browser artifacts and HTML report. The runner prints that directory at startup. Overlapping workflows or validation runs cannot clean another run's traces.
