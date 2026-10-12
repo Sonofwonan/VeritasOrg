@@ -87,6 +87,11 @@ export function log(message: string, source = "express") {
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
+  // Dedicated security responses can contain one-time enrollment material.
+  if (path.startsWith("/api/security/")) {
+    res.setHeader("Cache-Control", "no-store");
+    return next();
+  }
   const redactResponseBody = /^\/api\/admin\/applications\/\d+\/approve$/.test(path)
     || path.startsWith("/api/admin/fees") || path.startsWith("/api/admin/history") || path.startsWith("/api/fees") || /^\/api\/accounts\/\d+\/fees$/.test(path)
     || path === "/api/login" || path === "/api/user";

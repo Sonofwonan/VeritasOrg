@@ -105,6 +105,7 @@ try {
     DATABASE_URL: database,
     SUPABASE_DATABASE_URL: database,
     SESSION_SECRET: randomBytes(32).toString("hex"),
+    MFA_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
     ADMIN_PASSWORD: randomBytes(32).toString("hex"),
     // Vite .env.local must not redirect browser traffic to a real backend.
     VITE_API_URL: "/api",

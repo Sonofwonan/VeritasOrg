@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { SecuritySettings } from "@/components/security-settings";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -41,7 +42,6 @@ export default function SettingsPage() {
     phoneNumber: user?.phoneNumber || "",
     marketingEmails: user?.marketingEmails ?? true,
     securityAlerts: user?.securityAlerts ?? true,
-    twoFactorEnabled: user?.twoFactorEnabled ?? false,
   });
 
   const handleSave = () => {
@@ -146,27 +146,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Enhance your account security with two-factor authentication.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Two-Factor Authentication</Label>
-                  <p className="text-sm text-muted-foreground">Add an extra layer of security to your account.</p>
-                </div>
-                <Switch 
-                  checked={formData.twoFactorEnabled} 
-                  onCheckedChange={(checked) => setFormData({...formData, twoFactorEnabled: checked})} 
-                />
-              </div>
-              <div className="pt-4 border-t">
-                <Button variant="outline">Change Password</Button>
-              </div>
-            </CardContent>
-          </Card>
+          <SecuritySettings />
         </TabsContent>
 
         <TabsContent value="notifications">

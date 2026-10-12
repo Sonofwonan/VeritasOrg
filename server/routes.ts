@@ -18,6 +18,10 @@ import { registerDisplayCurrencyRoutes } from "./display-currency";
 import { MARKET_UNAVAILABLE } from "@shared/market";
 import { ownedCashHistory } from "./account-history";
 import { registerHistoricalBalanceRoutes } from "./historical-balances-routes";
+import { audit, initializeSecurity, rateLimit, revokeSessions, safeUser, withSecurity } from "./security/store";
+import { digest, encryptionConfigured, SecurityError } from "./security/crypto";
+import { registerSecurityRoutes, securityHandler, securityOrigin } from "./security/routes";
+import { destroySession, finishLogin, regenerateSession, saveSession } from "./security/session";
 
 // Twilio Notification Setup (SMS/WhatsApp)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -62,6 +66,9 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  await initializeSecurity();
+  console.log(encryptionConfigured() ? "Authenticator encryption is configured." :
+    "Authenticator setup is disabled until MFA_ENCRYPTION_KEY is configured.");
   const { hashPassword } = setupAuth(app);
 
   // Ensure new columns exist (safe on every startup)
@@ -164,41 +171,60 @@ export async function registerRoutes(
   registerDebtRestrictionNoticeRoutes(app, pool, requireAdmin);
 
   // Auth Routes
+  registerSecurityRoutes(app);
   app.post(api.auth.register.path, (_req, res) => {
     res.status(410).json({
       message: "Direct registration is disabled. Submit an application and wait for approval.",
     });
   });
 
-  app.post(api.auth.login.path, (req, res, next) => {
-    const nextAuth = (err: any, user: any, info: any) => {
-        if (err) return next(err);
-        if (!user) return res.status(401).json({ message: info?.message || "Invalid credentials" });
-        req.logIn(user, (err) => {
-            if (err) return next(err);
-            (req.session as any).lastActivity = Date.now();
-            return res.status(200).json(user);
-        });
-    };
-    return passport.authenticate("local", nextAuth)(req, res, next);
-  });
-
-  app.post(api.auth.logout.path, (req, res) => {
-    req.logout((err) => {
-      if (err) return res.status(500).json({ message: "Logout failed" });
-      res.status(200).send();
+  app.post(api.auth.login.path, securityOrigin, securityHandler(async (req, res) => {
+    const credentials = api.auth.login.input.parse(req.body);
+    await rateLimit(`password-login-ip:${req.ip}`, 300);
+    await rateLimit(`password-login-user:${credentials.userId.trim().toLowerCase()}`, 10);
+    const user = await new Promise<User>((resolve, reject) => {
+      passport.authenticate("local", (error: unknown, found: User | false, info: { message?: string }) => {
+        if (error) return reject(error);
+        if (!found) return reject(new SecurityError(401, info?.message || "Invalid credentials"));
+        resolve(found);
+      })(req, res, (error: unknown) => reject(error || new Error("Authentication failed")));
     });
-  });
+    const state = await withSecurity(user.id, async (client, security, current) => {
+      if (user.password !== current.password) throw new SecurityError(401, "Please sign in again.");
+      await audit(client, user.id, security.mfa_enabled ? "password_verified_for_mfa" : "password_sign_in");
+      return security;
+    });
+    if (state.mfa_enabled) {
+      await regenerateSession(req);
+      req.session.pendingMfa = {
+        userId: user.id, version: state.version, passwordStamp: digest(user.password),
+        expiresAt: Date.now() + 5 * 60 * 1000, attempts: 0,
+      };
+      await saveSession(req);
+      return void res.status(202).json({ mfaRequired: true });
+    }
+    await finishLogin(req, user, state.version, false);
+    res.json(await safeUser(user));
+  }));
 
-  app.get(api.auth.me.path, (req, res) => {
+  app.post(api.auth.logout.path, securityHandler(async (req, res) => {
+    await destroySession(req);
+    res.clearCookie("connect.sid", { path: "/" });
+    res.status(200).send();
+  }));
+
+  app.get(api.auth.me.path, securityHandler(async (req, res) => {
     if (req.isAuthenticated()) {
-      res.status(200).json(req.user);
+      res.status(200).json(await safeUser(req.user as User));
     } else {
       res.status(401).send();
     }
-  });
+  }));
 
   app.patch("/api/user", requireAuth, requireNoLiquidation, async (req, res) => {
+    if (Object.keys(req.body).some(key => /password|two.?factor|mfa|secret|recovery|authVersion/i.test(key))) {
+      return res.status(403).json({ message: "Use Security settings to change your password or two-factor authentication." });
+    }
     if (["debtClearanceRequired", "debtPaymentAccountId", "debtPaymentConfirmedAt"].some(key => key in req.body)) {
       return res.status(403).json({ message: "Funds access policy cannot be changed by the client" });
     }
@@ -209,7 +235,7 @@ export async function registerRoutes(
     }
     try {
       const user = await storage.updateUser((req.user as User).id, req.body);
-      res.json(user);
+      res.json(await safeUser(user));
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Failed to update profile" });
     }
@@ -646,6 +672,12 @@ export async function registerRoutes(
       }
 
       const userId = tokenResult.rows[0].user_id;
+      await client.query("INSERT INTO client_security(user_id) VALUES($1) ON CONFLICT DO NOTHING", [userId]);
+      const securityResult = await client.query("SELECT mfa_enabled FROM client_security WHERE user_id=$1 FOR UPDATE", [userId]);
+      if (securityResult.rows[0].mfa_enabled) {
+        await client.query("ROLLBACK");
+        return res.status(403).json({ message: "Please sign in and use Security settings to change your password." });
+      }
       const updateResult = await client.query(
         "UPDATE users SET password = $1 WHERE id = $2 RETURNING client_ref",
         [passwordHash, userId],
@@ -659,6 +691,9 @@ export async function registerRoutes(
         "UPDATE account_setup_tokens SET consumed_at = NOW() WHERE user_id = $1 AND consumed_at IS NULL",
         [userId],
       );
+      await client.query("INSERT INTO client_security(user_id) VALUES($1) ON CONFLICT DO NOTHING", [userId]);
+      await client.query("UPDATE client_security SET version=version+1,pending_secret=NULL,pending_expires=NULL,pending_session=NULL WHERE user_id=$1", [userId]);
+      await revokeSessions(client, userId);
       await client.query("COMMIT");
       return res.json({ ok: true, clientRef: updateResult.rows[0].client_ref });
     } catch (err: any) {
@@ -666,7 +701,7 @@ export async function registerRoutes(
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0]?.message || "Invalid password" });
       }
-      console.error("Account activation failed:", err);
+      console.error("Account activation failed.");
       return res.status(500).json({ message: "Unable to complete account setup right now." });
     } finally {
       client?.release();

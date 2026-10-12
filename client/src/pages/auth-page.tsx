@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
-import { Loader2, Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 
@@ -309,16 +309,22 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
 }
 
 export default function AuthPage() {
-  const { login, user, isLoading } = useAuth();
+  const { login, verifyMfa, logout, user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [view, setView] = useState<"login" | "apply">("login");
   const [showPw, setShowPw] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaError, setMfaError] = useState<string | null>(null);
+  const [passwordChanged, setPasswordChanged] = useState(false);
 
   const {
     register,
     handleSubmit,
+    reset,
+    setValue,
     formState: { errors },
   } = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -329,6 +335,13 @@ export default function AuthPage() {
     if (user) setLocation("/dashboard");
   }, [user, setLocation]);
 
+  useEffect(() => {
+    if (window.location.search.includes("passwordChanged=1")) {
+      setPasswordChanged(true);
+      window.history.replaceState({}, "", "/auth");
+    }
+  }, []);
+
   if (isLoading || user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream">
@@ -337,20 +350,55 @@ export default function AuthPage() {
     );
   }
 
-  const onLogin = handleSubmit(data => {
+  const onLogin = handleSubmit(async data => {
+    if (login.isPending) return;
     setLoginError(null);
-    login.mutate({ userId: data.userId, password: data.password } as any, {
-      onError: (err: any) => {
-        const raw = err?.message || "";
-        const msg = raw.replace(/^\d+:\s*/, "");
-        if (msg === "ACCOUNT_FROZEN") {
-          setLoginError("Your account is on hold. Please contact your advisor at veritaswealth@accountant.com for help.");
-        } else {
-          setLoginError(msg || "Please check your Client ID and password and try again.");
-        }
-      },
-    });
+    try {
+      const result = await login.mutateAsync({ userId: data.userId, password: data.password });
+      login.reset();
+      if ("mfaRequired" in result) {
+        setValue("password", "");
+        setMfaCode("");
+        setMfaError(null);
+        setMfaRequired(true);
+      }
+    } catch (err: any) {
+      const raw = err?.message || "";
+      const msg = raw.replace(/^\d+:\s*/, "");
+      if (msg === "ACCOUNT_FROZEN") {
+        setLoginError("Your account is on hold. Please contact your advisor at veritaswealth@accountant.com for help.");
+      } else {
+        setLoginError(msg || "Please check your Client ID and password and try again.");
+      }
+    }
   });
+
+  const submitMfa = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!mfaCode.trim() || verifyMfa.isPending) return;
+    setMfaError(null);
+    try {
+      await verifyMfa.mutateAsync({ code: mfaCode.trim() });
+      setMfaCode("");
+    } catch (err: any) {
+      setMfaCode("");
+      setMfaError((err?.message || "").replace(/^\d+:\s*/, "") || "That code could not be verified. Check it and try again.");
+    }
+  };
+
+  const cancelMfa = async () => {
+    if (logout.isPending) return;
+    setMfaError(null);
+    try {
+      await logout.mutateAsync();
+      setMfaRequired(false);
+      setMfaCode("");
+      setLoginError(null);
+      reset({ userId: "", password: "" });
+    } catch (err: any) {
+      setMfaError((err?.message || "").replace(/^\d+:\s*/, "") || "We could not safely end this sign-in. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-cream">
@@ -403,55 +451,109 @@ export default function AuthPage() {
             <div className="space-y-10">
               <div>
                 <p className="label-caps text-muted-foreground mb-4">Secure client portal</p>
-                <h2 className="font-serif text-display-md">Welcome back.</h2>
+                <h2 className="font-serif text-display-md">{mfaRequired ? "One more step." : "Welcome back."}</h2>
               </div>
 
-              <form onSubmit={onLogin} className="space-y-7">
-                <Field label="Client Reference" error={errors.userId?.message}>
-                  <TextInput reg={register("userId")} placeholder="e.g. VW-440FR" autoComplete="username" />
-                </Field>
-                <Field label="Password" error={errors.password?.message}>
-                  <div className="relative">
-                    <TextInput
-                      reg={register("password")}
-                      type={showPw ? "text" : "password"}
-                      autoComplete="current-password"
-                    />
-                    <button type="button" onClick={() => setShowPw(v => !v)}
-                      className="absolute right-0 bottom-2.5 text-muted-foreground hover:text-foreground transition-colors">
-                      {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {passwordChanged && !mfaRequired && (
+                <div role="status" className="border border-primary/20 bg-primary/5 px-4 py-3 text-sm leading-relaxed">
+                  Your password has changed. For your security, sign in again with your new password.
+                </div>
+              )}
+
+              {mfaRequired ? (
+                <div className="space-y-6">
+                  <div className="flex items-start gap-3 border border-border bg-background/60 p-4">
+                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      Enter the six-digit code from your authenticator app, or use one of your recovery codes.
+                    </p>
+                  </div>
+                  <form onSubmit={submitMfa} className="space-y-6">
+                    <div className="space-y-2">
+                      <label htmlFor="mfa-login-code" className="label-caps text-muted-foreground">Authenticator or recovery code</label>
+                      <input
+                        id="mfa-login-code"
+                        name="code"
+                        type="text"
+                        inputMode="text"
+                        autoComplete="one-time-code"
+                        autoFocus
+                        value={mfaCode}
+                        onChange={event => setMfaCode(event.target.value)}
+                        className="vw-input text-foreground min-h-11"
+                        aria-describedby={mfaError ? "mfa-login-error" : undefined}
+                        data-testid="mfa-login-code"
+                        required
+                      />
+                    </div>
+                    {mfaError && <div id="mfa-login-error" role="alert" className="auth-error-copy border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm leading-relaxed">{mfaError}</div>}
+                    <button
+                      type="submit"
+                      disabled={verifyMfa.isPending || !mfaCode.trim()}
+                      data-testid="mfa-login-submit"
+                      className="login-submit w-full flex items-center justify-center gap-2 py-3.5 text-sm disabled:opacity-60"
+                    >
+                      {verifyMfa.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                      Verify and sign in
+                    </button>
+                    <button type="button" onClick={cancelMfa} disabled={logout.isPending}
+                      className="label-caps text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors disabled:opacity-60">
+                      {logout.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowLeft className="h-3.5 w-3.5" />}
+                      Back to password
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <>
+                  <form onSubmit={onLogin} className="space-y-7">
+                    <Field label="Client Reference" error={errors.userId?.message}>
+                      <TextInput reg={register("userId")} placeholder="e.g. VW-440FR" autoComplete="username" />
+                    </Field>
+                    <Field label="Password" error={errors.password?.message}>
+                      <div className="relative">
+                        <TextInput
+                          reg={register("password")}
+                          type={showPw ? "text" : "password"}
+                          autoComplete="current-password"
+                        />
+                        <button type="button" onClick={() => setShowPw(v => !v)}
+                          aria-label={showPw ? "Hide password" : "Show password"}
+                          className="absolute right-0 bottom-2.5 text-muted-foreground hover:text-foreground transition-colors">
+                          {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </Field>
+
+                    {loginError && (
+                      <div role="alert" className="auth-error-copy border border-destructive/40 bg-destructive/5 rounded px-4 py-3 text-sm leading-relaxed">
+                        {loginError}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={login.isPending}
+                      data-testid="button-sign-in"
+                      className="login-submit w-full flex items-center justify-center gap-2 py-3.5 text-sm"
+                    >
+                      {login.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                      Sign in to Veritas
+                    </button>
+                  </form>
+
+                  <div className="pt-2 border-t border-border space-y-4">
+                    <p className="text-sm text-muted-foreground">Not yet a client?</p>
+                    <button
+                      onClick={() => setView("apply")}
+                      data-testid="button-open-application"
+                      className="w-full flex items-center justify-between border border-border px-5 py-3.5 text-sm hover:border-primary hover:text-primary transition-colors group"
+                    >
+                      <span>Open an investment account</span>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </button>
                   </div>
-                </Field>
-
-                {loginError && (
-                  <div className="auth-error-copy border border-destructive/40 bg-destructive/5 rounded px-4 py-3 text-sm leading-relaxed">
-                    {loginError}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={login.isPending}
-                  data-testid="button-sign-in"
-                  className="login-submit w-full flex items-center justify-center gap-2 py-3.5 text-sm"
-                >
-                  {login.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Sign in to Veritas
-                </button>
-              </form>
-
-              <div className="pt-2 border-t border-border space-y-4">
-                <p className="text-sm text-muted-foreground">Not yet a client?</p>
-                <button
-                  onClick={() => setView("apply")}
-                  data-testid="button-open-application"
-                  className="w-full flex items-center justify-between border border-border px-5 py-3.5 text-sm hover:border-primary hover:text-primary transition-colors group"
-                >
-                  <span>Open an investment account</span>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                </button>
-              </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-8">

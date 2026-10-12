@@ -3,27 +3,16 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
+import { randomBytes } from "crypto";
 import { pool } from "./db";
 import { storage } from "./storage";
 import { User } from "@shared/schema";
+import { comparePasswords, hashPassword } from "./security/crypto";
+import { getSecurity } from "./security/store";
+import { destroySession } from "./security/session";
 
-const scryptAsync = promisify(scrypt);
 const PgSession = connectPg(session);
-
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
-
-async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedPasswordBuf = Buffer.from(hashed, "hex");
-  const suppliedPasswordBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedPasswordBuf, suppliedPasswordBuf);
-}
+const dummyPasswordHash = hashPassword(randomBytes(32).toString("hex"));
 
 const INACTIVITY_LIMIT_MS = 25 * 60 * 1000; // 25 minutes
 
@@ -39,14 +28,15 @@ function isPollingRequest(req: Request): boolean {
 }
 
 export function setupAuth(app: Express) {
+  if (!process.env.SESSION_SECRET) throw new Error("SESSION_SECRET is required.");
   const sessionSettings: session.SessionOptions = {
     store: new PgSession({ 
       pool, 
       createTableIfMissing: true, 
       tableName: 'session'
     }),
-    secret: process.env.SESSION_SECRET || "default_secret",
-    resave: true,
+    secret: process.env.SESSION_SECRET,
+    resave: false,
     saveUninitialized: false,
     rolling: false,
     proxy: true,
@@ -63,12 +53,29 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Track genuine user activity — skip background polling requests
-  app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (req.session && (req.session as any).passport?.user && !isPollingRequest(req)) {
-      (req.session as any).lastActivity = Date.now();
+  // Every client route, including independently registered fee/funds routes,
+  // must reject revoked sessions and sessions missing a verified second factor.
+  app.use(async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.path.startsWith("/api/") || !req.isAuthenticated() ||
+        ["/api/login", "/api/logout"].includes(req.path) || req.path.startsWith("/api/admin/")) return next();
+    try {
+      const user = req.user as User;
+      const security = await getSecurity(user.id);
+      const expired = req.session.lastActivity && Date.now() - req.session.lastActivity > INACTIVITY_LIMIT_MS;
+      if ((req.session.authVersion ?? 0) !== security.version ||
+          (security.mfa_enabled && req.session.mfaVerified !== true) || expired) {
+        await destroySession(req);
+        return void res.status(401).json({ message: "Please sign in again." });
+      }
+      // Existing route-specific freeze/funds guards retain their semantics.
+      // In particular, the profile and access-status endpoints must still let
+      // an already signed-in client see the normal account-on-hold screen.
+      // Check expiry before updating activity, never after a background poll.
+      if (!isPollingRequest(req)) req.session.lastActivity = Date.now();
+      next();
+    } catch {
+      res.status(503).json({ message: "We couldn’t verify your session. Please try again." });
     }
-    next();
   });
 
   // Set trust proxy for cross-domain cookies
@@ -82,10 +89,11 @@ export function setupAuth(app: Express) {
         // Try alphanumeric client reference first, then fall back to numeric id
         let user = await storage.getUserByClientRef(userId.trim());
         if (!user) {
-          const id = parseInt(userId, 10);
-          if (!isNaN(id)) user = await storage.getUser(id);
+          const id = /^\d+$/.test(userId) ? Number(userId) : NaN;
+          if (Number.isSafeInteger(id)) user = await storage.getUser(id);
         }
-        if (!user || !(await comparePasswords(password, user.password))) {
+        const valid = await comparePasswords(password, user?.password || await dummyPasswordHash);
+        if (!user || !valid) {
           return done(null, false, { message: "Invalid credentials" });
         }
         if ((user as any).accountFrozen) {

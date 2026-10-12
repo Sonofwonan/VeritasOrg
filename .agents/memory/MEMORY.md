@@ -11,3 +11,4 @@
 - [Diagnostic runtime safety](diagnostic-runtime-safety.md) — One-off language commands can add unwanted runtimes; use the project's existing runtime for diagnostics.
 - [Plain-language interface](plain-language-ui.md) — Simple client wording, real transaction-history links and advisor-directed payment popups; preserve terms and access rules.
 - [Historical cash evidence](account-history-evidence.md) — Legacy completed rows may not represent cash movements; never infer historical balances from today's balance.
+- [Authenticator key rotation](security-key-rotation.md) — Re-encrypt authenticator secrets before replacing their encryption root; session-key rotation must not lock clients out.

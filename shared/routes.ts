@@ -3,6 +3,7 @@ import { marketUnavailableSchema } from './market';
 import { insertUserSchema, insertAccountSchema, insertTransactionSchema, insertInvestmentSchema, users, accounts, transactions, investments } from './schema';
 
 export * from './schema';
+export type PublicUser = Omit<typeof users.$inferSelect, "password">;
 
 export const errorSchemas = {
   validation: z.object({
@@ -24,16 +25,16 @@ export const api = {
       path: '/api/register',
       input: insertUserSchema,
       responses: {
-        201: z.custom<typeof users.$inferSelect>(),
+        201: z.custom<PublicUser>(),
         400: errorSchemas.validation,
       },
     },
     login: {
       method: 'POST' as const,
       path: '/api/login',
-      input: z.object({ email: z.string().email(), password: z.string() }),
+      input: z.object({ userId: z.string().min(1).max(128), password: z.string().min(1).max(128) }),
       responses: {
-        200: z.custom<typeof users.$inferSelect>(),
+        200: z.custom<PublicUser>(),
         401: errorSchemas.validation,
       },
     },
@@ -48,7 +49,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/user',
       responses: {
-        200: z.custom<typeof users.$inferSelect>(),
+        200: z.custom<PublicUser>(),
         401: z.void(),
       },
     },
