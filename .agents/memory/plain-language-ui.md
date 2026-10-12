@@ -31,4 +31,4 @@ Remove the dashboard's bottom Last updated line and account-figures currency foo
 
 **Why:** The user specifically marked these captions as unnecessary in dashboard and Accounts screenshots.
 
-**How to apply:** Preserve recorded transaction dates, account-type names, monetary currency symbols, and cash terminology in accepted fee terms or financial rules. Show supported balances after transactions under the amounts on both dashboard and account histories; do not invent missing history.
+**How to apply:** Preserve recorded transaction dates, account-type names, monetary currency symbols, and cash terminology in accepted fee terms or financial rules. Show supported balances after transactions under the amounts on both dashboard and account histories, including older accounts and historical transactions as the user explicitly requested; do not invent missing history.
