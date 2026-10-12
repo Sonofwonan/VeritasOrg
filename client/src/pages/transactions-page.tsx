@@ -116,13 +116,6 @@ export default function TransactionsPage() {
         </div>
 
         <div className="overflow-hidden rounded-sm border border-border/70 bg-card">
-          <div className="hidden grid-cols-[minmax(13rem,1.7fr)_minmax(10rem,1fr)_minmax(8rem,0.8fr)_minmax(8rem,0.75fr)] gap-4 border-b border-border/60 bg-muted/25 px-5 py-3 xl:grid">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Description</span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Account</span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Date</span>
-            <span className="text-right text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Amount</span>
-          </div>
-
           {accountsLoading || transactionsLoading ? (
             <div className="space-y-0 divide-y divide-border/50" data-testid="transactions-loading" role="status" aria-label="Loading transaction history">
               {Array.from({ length: 5 }, (_, index) => (
@@ -201,7 +194,7 @@ export default function TransactionsPage() {
                       key={transaction.id}
                       role="listitem"
                       data-testid={`transaction-row-${transaction.id}`}
-                      className="grid gap-3 px-4 py-4 transition-colors hover:bg-muted/20 xl:grid-cols-[minmax(13rem,1.7fr)_minmax(10rem,1fr)_minmax(8rem,0.8fr)_minmax(8rem,0.75fr)] xl:items-center xl:gap-4 sm:px-5"
+                      className="flex min-w-0 items-start justify-between gap-3 px-4 py-4 transition-colors hover:bg-muted/20 sm:px-5"
                     >
                       <div className="flex min-w-0 items-start gap-3">
                         <span className={cn(
@@ -212,16 +205,14 @@ export default function TransactionsPage() {
                         )}>
                           <Icon className="h-4 w-4" aria-hidden="true" />
                         </span>
-                        <div className="min-w-0">
-                          <p className="break-words text-sm font-semibold text-foreground">{description || "Transaction"}</p>
-                          <p className="mt-1 text-xs text-muted-foreground xl:hidden">{accountText}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="break-words text-sm font-semibold text-foreground [overflow-wrap:anywhere]">{description || "Transaction"}</p>
+                          <p className="mt-1 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">{accountText}</p>
                           <p className="mt-1 text-xs text-muted-foreground">{formattedDate}</p>
                           <p className={cn("mt-0.5 text-xs font-semibold capitalize", isPending ? "text-amber-800" : "text-muted-foreground")}>{transaction.status}</p>
                         </div>
                       </div>
-                      <p className="hidden min-w-0 break-words text-sm text-muted-foreground xl:block">{accountText}</p>
-                      <p className="hidden text-sm text-muted-foreground xl:block">{formattedDate}</p>
-                      <div className="flex min-w-0 max-w-full items-start justify-end border-t border-border/40 pt-2 xl:border-0 xl:pt-0">
+                      <div className="flex min-w-0 max-w-[60%] shrink-0 flex-col items-end text-right">
                         <div className="min-w-0 max-w-full">
                           <TransactionAmountBalance
                             amount={`${amountPrefix}${formatBalance(transaction.amount, currency)}`}

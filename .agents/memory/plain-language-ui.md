@@ -38,3 +38,13 @@ Use a consistent stacked transaction figure layout for all account types: signed
 **Why:** The user supplied a banking screenshot and said, “You must make sure the balance shows like this for alll accounts”.
 
 **How to apply:** Keep description/date/status on the left and both figures right-aligned, compact and readable at normal mobile zoom. Preserve source-account attribution for internal transfers and do not copy the example's pending-balance behavior without evidence.
+
+The full transaction-history page opened from the dashboard must use that same
+side-by-side row arrangement, not move the amount/balance block below the
+description or switch to separate account/date columns.
+
+**Why:** The user reiterated that full history should match dashboard history,
+with descriptions and their figures on the same row.
+
+**How to apply:** Check the dashboard-to-history link and row geometry at phone,
+tablet and desktop widths, including long descriptions and full CAD/£ amounts.

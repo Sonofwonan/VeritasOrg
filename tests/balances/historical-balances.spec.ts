@@ -8,6 +8,55 @@ import { fictionalBalanceInput } from "../../server/fees/fictional-balances";
 const admin = () => ({ "x-admin-key": process.env.BALANCE_E2E_ADMIN! });
 const date = "2024-01-02T00:00:00.000Z";
 
+for(const currency of ["CAD","GBP"] as const) test(`full history keeps descriptions beside transaction figures at every viewport in ${currency}`,async ({page,db,identity})=>{
+  const a=(await db.query(`INSERT INTO accounts(user_id,account_type,display_name,balance,is_demo,created_at)
+    VALUES($1,'Trust Account','Historical Trust Account',1622522.36,true,'2024-01-01') RETURNING *`,[identity.userId])).rows[0];
+  const ids:number[]=[];
+  for(const [incoming,amount,description,at] of [
+    [true,"1622886","Inheritance — family farm sale proceeds","2024-01-02"],
+    [false,"363.64","Monthly service fee for the historical trust account","2024-02-02"],
+  ] as const){
+    ids.push((await db.query(`INSERT INTO transactions(from_account_id,to_account_id,amount,description,
+      transaction_type,status,is_demo,created_at) VALUES($1,$2,$3,$4,'transfer','completed',true,$5) RETURNING id`,
+      [incoming?null:a.id,incoming?a.id:null,amount,description,at])).rows[0].id);
+  }
+  await db.query("UPDATE users SET display_currency=$2 WHERE id=$1",[identity.userId,currency]);
+  const rows=(await db.query("SELECT * FROM transactions WHERE id=ANY($1) ORDER BY created_at,id",[ids])).rows;
+  const input=fictionalBalanceInput(a,rows,"1622522.36");
+  await db.query(`INSERT INTO fee_audit(actor,action,detail)
+    VALUES('test_fixture','fictional_balance_history_authorized',$1::jsonb)`,
+    [JSON.stringify({synthetic:true,userId:identity.userId,accountId:a.id,sourceSha256:input.source.sha256})]);
+  const p=await preview(page,input);
+  expect(p.canApply).toBe(true);
+  expect((await apply(page,p.previewId)).status()).toBe(200);
+  const before=await financialSnapshot(db,identity.userId);
+  await login(page,identity);
+  await page.goto("/dashboard");
+  await page.getByTestId("view-transaction-history").click();
+  await expect(page).toHaveURL(/\/transactions$/);
+  for(const width of [320,390,768,1024,1440]){
+    await page.setViewportSize({width,height:900});
+    for(const [index,id] of ids.entries()){
+      const row=page.getByTestId(`transaction-row-${id}`);
+      await expect(row).toBeVisible();
+      await assertStack(row);
+      const geometry=await row.evaluate((element:HTMLElement)=>{
+        const description=element.querySelector("p")!.getBoundingClientRect();
+        const balance=element.querySelector("[data-balance-after]")!;
+        const amount=balance.previousElementSibling!.getBoundingClientRect();
+        return {descriptionTop:description.top,descriptionRight:description.right,
+          amountTop:amount.top,amountLeft:amount.left};
+      });
+      expect(Math.abs(geometry.descriptionTop-geometry.amountTop)).toBeLessThanOrEqual(6);
+      expect(geometry.descriptionRight).toBeLessThan(geometry.amountLeft);
+      await expect(row.locator("[data-balance-after]")).toContainText(formatBalance(index===0?"1622886":"1622522.36",currency));
+    }
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    if(width===390) await page.screenshot({path:`${process.env.BALANCE_E2E_EVIDENCE}/history-aligned-${currency}-${test.info().project.name}.jpg`,fullPage:true});
+  }
+  expect(await financialSnapshot(db,identity.userId)).toEqual(before);
+});
+
 test("owner-authorized fictional history supplies muted balances without changing funds",async ({page,db,identity})=>{
   const a=(await db.query(`INSERT INTO accounts(user_id,account_type,balance,is_demo,created_at)
     VALUES($1,'Brokerage Account',-12.5,true,'2024-01-01') RETURNING *`,[identity.userId])).rows[0];
