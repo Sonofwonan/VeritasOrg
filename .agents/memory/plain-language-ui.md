@@ -26,3 +26,9 @@ The user wants permanent application-wide account identifiers, not official bank
 **Why:** When asked whether identifiers should be internal or official, the user clarified, “Not official butt something that can be used to identify all accounts across the entire project in that sense”.
 
 **How to apply:** Persist consistent application account numbers rather than deriving inconsistent placeholders from database IDs. Do not present generated identifiers as officially assigned IBANs/routing numbers or external payment instructions.
+
+Remove the dashboard's bottom Last updated line and account-figures currency footer captions. Remove Cash prefixes/suffixes from account figures and use Balance instead of Cash balance on individual account cards.
+
+**Why:** The user specifically marked these captions as unnecessary in dashboard and Accounts screenshots.
+
+**How to apply:** Preserve recorded transaction dates, account-type names, monetary currency symbols, and cash terminology in accepted fee terms or financial rules. Show supported balances after transactions under the amounts on both dashboard and account histories; do not invent missing history.

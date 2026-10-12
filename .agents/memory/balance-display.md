@@ -79,7 +79,7 @@ Show current funded balances as the main balance on client summary screens, with
 
 **Why:** The user rejected netting the overdraft against available balances and later flagged the Accounts page showing the Brokerage overdraft as Investments.
 
-**How to apply:** Include all remaining positive cash balances across accounts and current holdings, not only the inheritance account or original deposit, separately from named account liabilities. Cash held in Brokerage or retirement accounts remains cash; investment summaries must use holdings, not account types. Account-type groups may summarize funded cash, but must label it as cash. Preserve the negative account ledger and its debt breakdown without subtracting it or unpaid assessments from the main funded-balance headline. Distinguish an original deposit transaction from the account's changing current balance.
+**How to apply:** Include all remaining positive cash balances across accounts and current holdings, not only the inheritance account or original deposit, separately from named account liabilities. Cash held in Brokerage or retirement accounts remains cash; investment summaries must use holdings, not account types. Individual account balances and displayed account-type group totals use signed actual cash balances, separately from the funded headline; do not clamp a debt-only group to zero. Preserve the negative account ledger and its debt breakdown without subtracting it or unpaid assessments from the main funded-balance headline. Distinguish an original deposit transaction from the account's changing current balance.
 
 For the inheritance deposit, show its date and amount in transaction history; on the dashboard show current balances and the total rather than a separate original-deposit figure.
 
@@ -105,11 +105,11 @@ An administrative debt notice is not a permanent user designation. A payment, cr
 
 **How to apply:** Bind confirmation to its clearance evidence and retire it when clearance is observed. Qualifying payment/fee history changes only the notice's validity; it must never independently release funds or modify debt.
 
-In dashboard account previews, show an overdrawn account's full name and the overdraft amount once, rather than repeating the negative cash balance in a second debt note.
+In dashboard account previews and Accounts cards, show an overdrawn account's full name and signed negative account balance once, rather than a positive magnitude with an overdraft suffix or a duplicate debt note.
 
-**Why:** The user approved “Brokerage Account — £12,398.48 overdraft” once after the duplicate debt note crowded the account name out of view.
+**Why:** The user first rejected duplicate debt figures, then explicitly requested the minus sign like a normal bank balance and objected to an overdrawn account appearing as £0.00.
 
-**How to apply:** Keep the actual negative ledger balance unchanged. Display its magnitude with an explicit overdraft label in the preview; retain distinct unpaid fees when present and full details on the account page.
+**How to apply:** Keep the actual negative ledger balance unchanged and display it with its minus sign. Keep genuinely unpaid fees separate and preserve the separate top-summary overdraft identification; never make the funded total negative by netting debt into it.
 
 Use plain-language overdraft highlights on account detail and account summary screens too, without technical ledger explanations or repeated amounts.
 
