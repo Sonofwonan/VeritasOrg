@@ -3,6 +3,7 @@ import cors from "cors";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { isTrustedOrigin } from "./security/origins";
 
 const app = express();
 const httpServer = createServer(app);
@@ -40,38 +41,13 @@ app.use(
 app.use(express.urlencoded({ extended: false }));
 
 // Configure CORS to allow the frontend (Vercel) to call the API and include cookies
-const corsOptions: cors.CorsOptions = {
-  credentials: true,
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    if (!origin) {
-      callback(null, true);
-      return;
-    }
-
-    // In development, allow all origins
-    if (process.env.NODE_ENV !== "production") {
-      callback(null, true);
-      return;
-    }
-
-    // In production, allow specific domains
-    const replitDomains = (process.env.REPLIT_DOMAINS || "").split(",").map(d => `https://${d.trim()}`);
-    const allowedOrigins = [
-      process.env.CLIENT_URL,
-      "https://veritaswealth.vercel.app",
-      "https://veritas-wealth.vercel.app",
-      ...replitDomains,
-    ].filter(Boolean);
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.error(`CORS blocked origin: ${origin}. Allowed: ${allowedOrigins.join(", ")}`);
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
-    }
-  },
-};
-app.use(cors(corsOptions));
+const trustedCors = cors({ credentials: true, origin: true });
+app.use((req, res, next) => {
+  if (!isTrustedOrigin(req.get("origin"), req)) {
+    return res.status(403).json({ message: "This address is not allowed to access the application." });
+  }
+  return trustedCors(req, res, next);
+});
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

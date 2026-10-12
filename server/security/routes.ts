@@ -9,6 +9,7 @@ import { securityPaths } from "@shared/security";
 import { comparePasswords, decryptSecret, digest, encryptSecret, generateSecret, hashPassword, newRecoveryCodes, recoveryDigest, SecurityError, verifyTotp } from "./crypto";
 import { audit, consumeFactor, getSecurity, rateLimit, revokeSessions, safeUser, withSecurity } from "./store";
 import { destroySession, finishLogin } from "./session";
+import { isTrustedOrigin } from "./origins";
 
 const reauthentication = z.object({
   currentPassword: z.string().min(1, "Enter your current password.").max(128, "Use no more than 128 characters."),
@@ -18,10 +19,7 @@ const reauthentication = z.object({
 // Browsers must make sensitive writes from an explicitly trusted origin using JSON.
 export function securityOrigin(req: Request, res: Response, next: NextFunction) {
   const origin = req.get("origin");
-  const allowed = (process.env.CLIENT_URL || "").split(",").filter(Boolean);
-  let sameOrigin = false;
-  try { sameOrigin = !!origin && new URL(origin).host === req.get("host"); } catch { /* reject */ }
-  if ((origin && !sameOrigin && !allowed.includes(origin)) || !req.is("application/json")) {
+  if (!isTrustedOrigin(origin, req) || !req.is("application/json")) {
     return void res.status(403).json({ message: "This security request could not be verified." });
   }
   next();

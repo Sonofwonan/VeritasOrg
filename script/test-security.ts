@@ -1,6 +1,22 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { comparePasswords, decryptSecret, encryptSecret, generateSecret, hashPassword, verifyTotp } from "../server/security/crypto";
+import { isTrustedOrigin } from "../server/security/origins";
+
+const requestHost = { get: (_name: string) => "api.example" } as Parameters<typeof isTrustedOrigin>[1];
+for (const NODE_ENV of ["production", "development"]) {
+  const env = { NODE_ENV, CLIENT_URL: " https://configured.example/ ", REPLIT_DOMAINS: "owned.replit.dev" };
+  for (const origin of [undefined, "https://api.example", "https://configured.example",
+    "https://veritaswealth.vercel.app", "https://veritas-wealth.vercel.app", "https://owned.replit.dev"]) {
+    assert.ok(isTrustedOrigin(origin, requestHost, env), `Trusted origin rejected: ${origin}`);
+  }
+  for (const origin of ["null", "", "https://attacker.invalid", "https://attacker.replit.dev",
+    "https://attacker.vercel.app", "https://api.example.attacker.invalid", "https://api.example/path",
+    "https://user@api.example", "https://api.example:8443"]) {
+    assert.ok(!isTrustedOrigin(origin, requestHost, env), `Untrusted origin accepted: ${origin}`);
+  }
+  assert.equal(isTrustedOrigin("http://api.example", requestHost, env), NODE_ENV !== "production");
+}
 
 // Pure cryptographic checks: no database access and only generated test material.
 process.env.MFA_ENCRYPTION_KEY = randomBytes(32).toString("base64");

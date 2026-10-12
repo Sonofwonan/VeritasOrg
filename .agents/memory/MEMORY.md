@@ -12,3 +12,4 @@
 - [Plain-language interface](plain-language-ui.md) — Simple client wording, real transaction-history links and advisor-directed payment popups; preserve terms and access rules.
 - [Historical cash evidence](account-history-evidence.md) — Legacy completed rows may not represent cash movements; never infer historical balances from today's balance.
 - [Authenticator key rotation](security-key-rotation.md) — Re-encrypt authenticator secrets before replacing their encryption root; session-key rotation must not lock clients out.
+- [Cross-origin security](browser-origin-policy.md) — Same-origin passes do not prove deployed sign-in works; verify credentialed flows from every approved frontend.

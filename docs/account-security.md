@@ -48,12 +48,24 @@ verified account-recovery process.
 
 ## Verification
 
+CORS and sensitive browser writes share an explicit trusted-origin policy.
+It includes both existing Vercel frontends, configured CLIENT_URL origins,
+configured Replit development domains, and the request's own HTTPS origin.
+Only development permits the request's own HTTP origin. Do not permit arbitrary
+Vercel/Replit subdomains or all development origins. An untrusted Origin is
+rejected with 403 before handlers run; approved preflights retain credentialed
+CORS headers. Non-browser requests without an Origin still require the same
+authentication, JSON validation and second-factor checks.
+
 `npm run test:security` checks password hashing, authenticated encryption,
-account-bound ciphertext, RFC TOTP vectors, expiration, replay protection and
+account-bound ciphertext, trusted-origin boundaries, RFC TOTP vectors, expiration, replay protection and
 fail-closed missing-key handling, without accessing a database.
 
 `npm run test:balances:browser -- security.spec.ts` runs desktop/mobile security
 flows using disposable identities and a temporary local database. The runner
 generates its own encryption, session, and administration keys; it does not
-enroll or change passwords for Mary or other shared clients. Security tests do
+enroll or change passwords for Mary or other shared clients. It covers credentialed
+preflights, login and second-factor verification from each supported frontend,
+including rejection of an untrusted frontend without consuming recovery codes.
+Security tests do
 not retain traces or screenshots containing enrollment material.

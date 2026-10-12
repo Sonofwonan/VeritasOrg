@@ -98,6 +98,53 @@ test("security rejects preference bypasses, cross-origin writes and legacy flags
   await expect(page.getByTestId("security-setup-two-factor")).toBeVisible();
 });
 
+for (const origin of ["https://veritaswealth.vercel.app", "https://veritas-wealth.vercel.app", "https://isolated-app.replit.dev"]) {
+  test(`security trusted frontend ${origin} supports credentialed login and MFA`, async ({ page, identity, playwright }) => {
+    await login(page, identity);
+    await page.close(); // API checks must not race deliberately revoked dashboard sessions.
+    const headers = { origin };
+    const preflight = await page.request.fetch("/api/login", { method: "OPTIONS", headers: {
+      origin, "access-control-request-method": "POST", "access-control-request-headers": "content-type",
+    } });
+    expect(preflight.status()).toBe(204);
+    expect(preflight.headers()["access-control-allow-origin"]).toBe(origin);
+    expect(preflight.headers()["access-control-allow-credentials"]).toBe("true");
+    const setup = await page.request.post("/api/security/two-factor/setup", {
+      headers, data: { currentPassword: identity.password },
+    });
+    expect(setup.status()).toBe(200);
+    const enrollment = await page.request.post("/api/security/two-factor/confirm", {
+      headers, data: { code: await generate({ secret: (await setup.json()).secret }) },
+    });
+    expect(enrollment.status()).toBe(200);
+    const codes: string[] = (await enrollment.json()).recoveryCodes;
+    const api = await playwright.request.newContext({ baseURL: process.env.BALANCE_E2E_URL });
+    try {
+      const challenge = await api.post("/api/login", { headers, data: {
+        userId: identity.ref, password: identity.password,
+      } });
+      expect(challenge.status()).toBe(202);
+      expect(challenge.headers()["access-control-allow-origin"]).toBe(origin);
+      expect((await api.get("/api/accounts", { headers })).status()).toBe(401);
+      const rejected = await api.post("/api/security/two-factor/challenge", {
+        headers: { origin: "https://untrusted.replit.dev" }, data: { code: codes[0] },
+      });
+      expect(rejected.status()).toBe(403);
+      expect(rejected.headers()["access-control-allow-origin"]).toBeUndefined();
+      const verified = await api.post("/api/security/two-factor/challenge", { headers, data: { code: codes[0] } });
+      expect(verified.status()).toBe(200);
+      expect(verified.headers()["access-control-allow-origin"]).toBe(origin);
+      expect((await api.get("/api/accounts", { headers })).status()).toBe(200);
+      const status = await api.get("/api/security/status", { headers });
+      expect(status.status()).toBe(200);
+      const disabled = await api.post("/api/security/two-factor/disable", {
+        headers, data: { currentPassword: identity.password, code: codes[1] },
+      });
+      expect(disabled.status()).toBe(200);
+    } finally { await api.dispose(); }
+  });
+}
+
 test("security setup, recovery sign-in and password change work through compact client dialogs", async ({ page, identity }) => {
   await login(page, identity);
   await page.goto("/settings");
