@@ -14,6 +14,26 @@ Specific evidence gaps found:
 
 No historical values were reverse-calculated from today's balance. Matching a sum of completed rows to today's balance is not sufficient evidence because the rows may be fabricated, incomplete, backdated, or omit adjustments.
 
+### Published-screen investigation — October 12, 2026
+
+The published application is healthy and already includes the balance-after renderer, reads `cashPostings`, and includes the reviewed historical-import workflow. Its public stylesheet matches the workspace build. Its JavaScript asset differs from the workspace's latest build; republishing alone does not create missing historical evidence.
+
+Published request logs establish a **missing evidence/data** cause for these specific completed rows:
+
+| Account | Transaction | Recorded date | Recorded amount | Returned balance evidence |
+| --- | --- | --- | --- | --- |
+| Brokerage Account | 575 · monthly service fee | October 1, 2026 | 363.64 debit | `cashPostings: []` |
+| Brokerage Account | 574 · monthly service fee | September 1, 2026 | 363.64 debit | `cashPostings: []` |
+| Inheritance Trust Account | 578 · inheritance deposit | October 8, 2026 | 1,622,886.00 credit | `cashPostings: []` |
+
+The logs include the start of additional brokerage rows, but truncate the response; they do not establish a complete transaction-by-transaction inventory. The supplied screenshots additionally show April–July 2026 fees without a resulting-balance line. Those screenshots do not themselves supply the missing historical balances.
+
+The owner-filtered API forwards evidence when present. Each of the dashboard, account-detail and full-history views renders that evidence directly beneath the amount. With an empty evidence array there is no muted balance element to style or reveal. This investigation has not imported evidence, altered shared records, or asserted that older rows are repaired.
+
+**Blocking source inputs:** the original complete Brokerage Account opening-to-closing ledger from its January 2024 opening, including deposits, distributions, monthly/annual charges and any adjustments/reservations/refunds; and the Inheritance Trust Account opening ledger and deposit record for October 8, 2026, including any subsequent movements. Each needs independently documented opening and closing balances and chronological source references. No such statement, CSV/JSON ledger, spreadsheet or PDF has been supplied in the workspace attachments. Existing fixture scripts and today's account balances are not independent source evidence.
+
+Request these source records from the owner, reconcile them through the existing preview workflow, and obtain explicit authorization before applying shared-account historical evidence. Until then, these specific rows remain blocked, not fixed. No deployment or financial write was performed during diagnosis.
+
 ## Supported values from now on
 
 Actual balance changes capture exact PostgreSQL decimal before/after amounts and deterministic posting sequence inside the posting transaction. Transfers, verified deposits, purchases/sales in the storage layer, monthly/annual fee debits, and fee refunds explicitly associate that evidence with the genuine transaction. Both sides of an internal transfer have their own recorded cash balance.
