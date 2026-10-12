@@ -10,7 +10,7 @@ import {
   Users, ArrowLeftRight, Clock, TrendingUp, CheckCircle2,
   XCircle, ShieldCheck, LogOut, Wallet, Eye, EyeOff,
   RefreshCw, DollarSign, Activity, FileText, ChevronDown, ChevronUp, Building2,
-  Lock, Unlock, Snowflake, Copy
+  Lock, Unlock, Snowflake, Copy, History
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog as ShadDialog, DialogContent as ShadDialogContent, DialogHeader as ShadDialogHeader, DialogTitle as ShadDialogTitle, DialogFooter as ShadDialogFooter } from "@/components/ui/dialog";
@@ -19,6 +19,7 @@ import { formatCAD } from "@shared/fees";
 import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { ClientCurrencyPanel } from "@/components/admin/client-currency-panel";
 import { DebtRestrictionPanel } from "@/components/admin/debt-restriction-panel";
+import { HistoricalBalances } from "@/components/admin/historical-balances";
 
 const SESSION_KEY = "vw_admin_key";
 
@@ -443,7 +444,7 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
       }).then(r => r.json()),
     onSuccess: (_, vars) => {
       toast({
-        title: vars.frozen ? "🔒 Account Frozen" : "✓ Account Unfrozen",
+        title: vars.frozen ? "Account Frozen" : "Account Unfrozen",
         description: vars.frozen
           ? "All sessions terminated. Client cannot log in."
           : "Account has been restored to normal access.",
@@ -520,6 +521,10 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
             </TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
               Users
+            </TabsTrigger>
+            <TabsTrigger value="historical-balances" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
+              <History className="w-3.5 h-3.5 mr-1.5" />
+              Historical Balances
             </TabsTrigger>
             <TabsTrigger value="inst-transfers" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
               <Building2 className="w-3.5 h-3.5 mr-1.5" />
@@ -975,6 +980,11 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+          <TabsContent value="historical-balances" className="mt-4">
+            <HistoricalBalances adminKey={adminKey} users={(allUsers as any[]).map(user => ({
+              id: user.id, name: user.name, email: user.email,
+            }))} />
           </TabsContent>
           {/* ── Institutional Transfers ── */}
           <TabsContent value="inst-transfers" className="mt-4">

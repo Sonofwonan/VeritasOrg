@@ -20,6 +20,7 @@ import { useClientFeeSummary } from "@/hooks/use-fees";
 import { DebtAccountSummary } from "@/components/fees/debt-account-summary";
 import { DebtRestrictionStatus } from "@/components/fees/debt-restriction-status";
 import { accountLabel, transactionDate, maskAccountNumber, type CashPosting } from "@shared/account-display";
+import { TransactionAmountBalance } from "@/components/transaction-amount-balance";
 
 // ── Quick actions ─────────────────────────────────────────────────────────────
 const QUICK_ACTIONS = [
@@ -415,9 +416,9 @@ export default function DashboardPage() {
                   const isIn = Boolean(incomingAccount && !outgoingAccount);
                   const isPending = txn.status === 'pending';
                   return (
-                    <div key={txn.id} className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 sm:px-5 py-3.5 hover:bg-muted/30 transition-colors cursor-pointer group"
+                    <div key={txn.id} className="flex min-w-0 items-start justify-between gap-3 px-3 sm:px-5 py-3.5 hover:bg-muted/30 transition-colors cursor-pointer group"
                       onClick={() => setSelectedTxn(txn)} data-testid={`txn-row-${txn.id}`}>
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
                         <div className={cn('w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
                           isPending ? 'bg-amber-100 dark:bg-amber-900/30' : isIn ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-rose-100 dark:bg-rose-900/30')}>
                           {isPending
@@ -429,29 +430,23 @@ export default function DashboardPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-semibold whitespace-normal [overflow-wrap:anywhere]">{transactionDescription(txn.description,currency,txn.transactionType)}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono whitespace-normal [overflow-wrap:anywhere]">
-                            {transactionDate(txn.createdAt)} · {internal
-                              ? `${accountLabel(outgoingAccount!)} → ${accountLabel(incomingAccount!)}`
-                              : incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : "Account details unavailable"} ·{' '}
-                            <span className={cn('font-bold capitalize',
-                              isPending ? 'text-amber-800 dark:text-amber-300' : 'text-muted-foreground')}>
-                              {txn.status}
-                            </span>
-                          </p>
+                          <p className="text-[10px] text-muted-foreground font-mono whitespace-normal [overflow-wrap:anywhere]">{transactionDate(txn.createdAt)}</p>
+                          {!internal && <p className="text-[10px] text-muted-foreground whitespace-normal [overflow-wrap:anywhere]">
+                            {incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : "Account details unavailable"}
+                          </p>}
+                          <p className={cn('mt-0.5 text-[10px] font-semibold capitalize',
+                            isPending ? 'text-amber-800 dark:text-amber-300' : 'text-muted-foreground')}>{txn.status}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto max-w-full">
-                        <p className={cn('font-mono text-sm font-bold [overflow-wrap:anywhere]',
-                          isPending ? 'text-amber-800 dark:text-amber-300' : internal ? 'text-muted-foreground' : isIn ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400')}>
-                          {internal ? '↔ ' : isIn ? '+' : '-'}{fmt(Number(txn.amount))}
-                        </p>
-                        <div className="text-right">
-                          {(txn.cashPostings as CashPosting[] | undefined)?.map(posting => (
-                            <p key={posting.accountId} className="text-[10px] leading-relaxed text-muted-foreground">
-                              Balance after transaction · {posting.accountName}: <span className="font-mono tabular-nums">{fmt(posting.balanceAfter)}</span>
-                            </p>
-                          ))}
-                        </div>
+                      <div className="flex min-w-0 max-w-[60%] shrink-0 flex-col items-end gap-0.5">
+                        <TransactionAmountBalance
+                          amount={`${internal ? "↔ " : isIn ? "+" : "−"}${fmt(Number(txn.amount))}`}
+                          currency={currency}
+                          postings={(txn.cashPostings as CashPosting[] | undefined) || []}
+                          amountClassName={cn('font-bold',
+                            isPending ? 'text-amber-800 dark:text-amber-300' : internal ? 'text-muted-foreground' : isIn ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400')}
+                          showAccountNames={internal}
+                        />
                         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                       </div>
                     </div>

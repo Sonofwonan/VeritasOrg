@@ -28,4 +28,42 @@ Schema setup provisions application account numbers and evidence structures only
 
 Application account numbers identify records within Veritas. They are not bank-issued IBANs, national routing numbers, payment-card numbers, or external payment instructions.
 
-Historical balances can be added later only after documented opening/closing evidence and all relevant postings reconcile. An owner-authorized evidence-import process is needed; missing values must never be manufactured.
+Historical balances can be added only after documented opening/closing evidence and all relevant postings reconcile. The owner-authorized staff import workflow below records that evidence; missing values must never be manufactured.
+
+## Restore older balances from source records
+
+The **Historical Balances** tab in the administrator portal accepts reviewed JSON evidence for one account and an inclusive opening / exclusive closing timestamp range. It provides a blank downloadable template and an input guide. No actual shared-client history has been imported automatically.
+
+Required records:
+
+- The account owner and application account number, documented opening and closing balances, and every actual cash movement in the range.
+- The original statement or complete authoritative ledger export, its reference and SHA-256 digest, staff reviewer identity, review notes, confirmation that the source is complete, and the owner's authorization.
+- A chronological source sequence and distinct source line reference for each movement. Equal timestamps use the documented source sequence, not database transaction IDs.
+- Completed transaction matches must agree with the recorded account, timestamp, direction and exact amount. Source-only adjustments are retained as evidence without creating transactions.
+- Legacy reservations and returned payments require their source movements and related outgoing request references. Recorded rows proven not to have moved cash require explicit non-posting explanations; they remain visible without a balance.
+
+The source file selector computes its digest locally. It does not upload or retain the original source document. **Staff must retain that original document securely under the business's record-retention policy**; a digest or checked box alone cannot verify a fabricated list of application rows. Uploading JSON does not pre-approve review attestations.
+
+Preview lists exact per-movement resulting balances, unmatched transactions, reservation ambiguities, conflicts, closing differences and missing records. The report can be downloaded for the owner. Decimal input supports up to 30 integer digits and 18 decimal places, with no floating-point reconciliation or rounding to cents. Invalid input identifies the fields that need correction.
+
+Apply requires a reviewed, gap-free preview and explicit confirmation. The server expires previews after 30 minutes; the UI requests a fresh review after five minutes. Changes to the account/history since preview require a new preview. Imports are transactional, audited and idempotent. Overlapping replacements, disagreement with captured evidence or adjacent accepted periods, missing ownership/authorization and incomplete sources are refused. Original amounts, timestamps, statuses, balances, holdings, fees and access controls are never updated.
+
+Historical evidence is stored separately from immutable live cash-change captures. Each history surface and CSV statement merges supported values with owner filtering; live captures take precedence. Both sides of an owned transfer retain distinct named account balances. Pending or unsupported rows do not receive fabricated balances or unavailable placeholders.
+
+Client transaction rows use the same compact layout across account types: description/date/status on the left and the signed amount on the right, with a smaller muted resulting account balance directly underneath. Statements preserve source decimal digits even when the UI uses ordinary two-decimal currency display.
+
+## Verification
+
+Run the focused pure reconciliation checks with:
+
+```sh
+npx tsx --test server/historical-balances-reconcile.test.ts
+```
+
+Run the isolated browser/API checks with:
+
+```sh
+npm run test:balances:browser -- historical-balances.spec.ts account-postings.spec.ts
+```
+
+The browser runner owns a temporary local PostgreSQL cluster and uses normal login with disposable accounts. It never inherits shared database/admin credentials or writes to Mary or other shared clients. Tests cover all account types, CAD and nominal £ display, old and live postings, both transfer sides, owner privacy, conflict/retry/attestation guards, exact fractional amounts, unchanged financial and policy snapshots, staff preview/apply/audit, statements and normal-zoom phone/tablet/desktop containment.

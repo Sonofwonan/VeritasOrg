@@ -93,11 +93,18 @@ export async function ownedCashHistory(pool: Pool, userId: number, ledger: Trans
     SELECT p.transaction_id AS "transactionId",a.id AS "accountId",
       COALESCE(a.display_name,a.account_type) AS "accountName", a.account_number AS "accountNumber",
       p.balance_after::text AS "balanceAfter"
-    FROM account_cash_changes p JOIN accounts a ON a.id=p.account_id
+    FROM (
+      SELECT transaction_id,account_id,balance_after,id,0 AS source_order FROM account_cash_changes WHERE transaction_id IS NOT NULL
+      UNION ALL
+      SELECT h.transaction_id,h.account_id,h.balance_after,h.id,1 AS source_order
+      FROM historical_balance_postings h
+      WHERE h.transaction_id IS NOT NULL AND NOT EXISTS
+        (SELECT 1 FROM account_cash_changes live WHERE live.transaction_id=h.transaction_id AND live.account_id=h.account_id)
+    ) p JOIN accounts a ON a.id=p.account_id
       JOIN transactions t ON t.id=p.transaction_id
     WHERE a.user_id=$1 AND t.status='completed'
       AND ($2::integer IS NULL OR a.id=$2)
-    ORDER BY p.id`, [userId, accountId ?? null]);
+    ORDER BY p.source_order,p.id`, [userId, accountId ?? null]);
   const byTransaction = new Map<number, typeof rows>();
   for (const { transactionId, ...posting } of rows) {
     const items = byTransaction.get(transactionId) ?? [];

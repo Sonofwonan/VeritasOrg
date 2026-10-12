@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { accountStatementCsv } from "@/lib/account-statement";
 import { accountLabel, transactionDate, type CashPosting } from "@shared/account-display";
+import { TransactionAmountBalance } from "@/components/transaction-amount-balance";
 
 function exportStatement(account: { id: number; accountType: string; accountNumber?: string }, transactions: any[] = [], currency: BalanceCurrency = "CAD") {
   const number = account.accountNumber || "account-number-unavailable";
@@ -213,7 +214,7 @@ export default function AccountDetailPage() {
                     role="button"
                     tabIndex={0}
                     aria-haspopup="dialog"
-                    className="group flex min-w-0 cursor-pointer flex-col gap-3 border-b p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary last:border-0 sm:flex-row sm:items-center sm:justify-between sm:p-4"
+                    className="group flex min-w-0 cursor-pointer items-start justify-between gap-3 border-b p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary last:border-0 sm:p-4"
                     onClick={() => setSelectedTxn(transaction)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
@@ -222,7 +223,7 @@ export default function AccountDetailPage() {
                       }
                     }}
                   >
-                      <div className="flex min-w-0 items-center gap-3 sm:gap-4 flex-1">
+                      <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
                       <div className={cn(
                         "p-2 rounded-full",
                         transaction.status === 'pending' ? 'bg-red-100 text-red-700' : (isIncoming ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')
@@ -238,26 +239,18 @@ export default function AccountDetailPage() {
                       <div className="min-w-0 flex-1">
                         <p className="break-words font-medium transition-colors group-hover:text-primary">{transactionDescription(transaction.description,currency,transaction.transactionType)}</p>
                         <p className="text-sm text-muted-foreground">{transactionDate(transaction.createdAt)}</p>
+                        <p className={cn("mt-0.5 text-xs font-semibold capitalize", transaction.status === "pending" ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground")}>
+                          {transaction.status}
+                        </p>
                       </div>
                     </div>
-                      <div className="flex min-w-0 items-center justify-between gap-3 sm:block sm:text-right">
-                        <div className="sm:text-right">
-                          <p className={cn(
-                            "whitespace-nowrap font-mono text-lg font-bold tabular-nums",
-                             transaction.status === 'pending' ? 'text-red-700 dark:text-red-300' : (isIncoming ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
-                          )}>
-                             {isIncoming ? '+' : '-'}{money(transaction.amount)}
-                          </p>
-                          {(transaction.cashPostings as CashPosting[] | undefined)?.filter(posting => posting.accountId === accountId).map(posting => (
-                            <p key={posting.accountId} className="mt-1 text-[10px] text-muted-foreground">
-                              Balance after transaction: <span className="font-mono tabular-nums">{money(posting.balanceAfter)}</span>
-                            </p>
-                          ))}
-                          <Badge variant={transaction.status === 'completed' ? 'default' : 'destructive'} className="text-xs mt-1 capitalize">
-                            {transaction.status}
-                          </Badge>
-                        </div>
-                    </div>
+                    <TransactionAmountBalance
+                      amount={`${isIncoming ? "+" : "−"}${money(transaction.amount)}`}
+                      currency={currency}
+                      postings={(transaction.cashPostings as CashPosting[] | undefined)?.filter(posting => posting.accountId === accountId) || []}
+                      amountClassName={cn("text-lg font-bold", transaction.status === 'pending' ? 'text-red-700 dark:text-red-300' : (isIncoming ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'))}
+                      showAccountNames={false}
+                    />
                   </div>
                 );
               })

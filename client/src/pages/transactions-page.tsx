@@ -9,6 +9,7 @@ import { Search, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Clock, RotateCcw }
 import { cn } from "@/lib/utils";
 import { clientBalanceCurrency, formatBalance, transactionDescription } from "@shared/balance-currency";
 import { accountLabel, transactionDate, type CashPosting } from "@shared/account-display";
+import { TransactionAmountBalance } from "@/components/transaction-amount-balance";
 
 const PAGE_SIZE = 20;
 type Transaction = {
@@ -214,33 +215,27 @@ export default function TransactionsPage() {
                         <div className="min-w-0">
                           <p className="break-words text-sm font-semibold text-foreground">{description || "Transaction"}</p>
                           <p className="mt-1 text-xs text-muted-foreground xl:hidden">{accountText}</p>
-                          <p className="mt-1 text-xs text-muted-foreground xl:hidden">{formattedDate}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{formattedDate}</p>
+                          <p className={cn("mt-0.5 text-xs font-semibold capitalize", isPending ? "text-amber-800" : "text-muted-foreground")}>{transaction.status}</p>
                         </div>
                       </div>
                       <p className="hidden min-w-0 break-words text-sm text-muted-foreground xl:block">{accountText}</p>
                       <p className="hidden text-sm text-muted-foreground xl:block">{formattedDate}</p>
-                      <div className="flex min-w-0 items-center justify-between gap-3 border-t border-border/40 pt-2 xl:flex-col xl:items-end xl:justify-end xl:border-0 xl:pt-0">
-                        <span className={cn(
-                          "rounded-sm px-2 py-1 text-[10px] font-semibold capitalize",
-                          isPending ? "bg-amber-100 text-amber-900" :
-                            transaction.status === "completed" ? "bg-emerald-100 text-emerald-900" : "bg-muted text-muted-foreground"
-                        )} aria-label={`Status: ${transaction.status}`}>
-                          {transaction.status}
-                        </span>
-                        <div className="min-w-0 text-right">
-                          <span className={cn(
-                            "whitespace-nowrap text-right font-mono text-sm font-semibold tabular-nums",
-                            isPending ? "text-amber-800" :
-                              direction === "incoming" ? "text-emerald-800" :
-                                direction === "outgoing" ? "text-rose-800" : "text-foreground"
-                          )}>
-                            {amountPrefix}{formatBalance(transaction.amount, currency)}
-                          </span>
-                          {transaction.cashPostings?.map(posting => (
-                            <p key={posting.accountId} className="mt-1 max-w-full text-[10px] leading-relaxed text-muted-foreground">
-                              Balance after transaction · {posting.accountName}: <span className="font-mono tabular-nums">{formatBalance(posting.balanceAfter, currency)}</span>
-                            </p>
-                          ))}
+                      <div className="flex min-w-0 max-w-full items-start justify-end border-t border-border/40 pt-2 xl:border-0 xl:pt-0">
+                        <div className="min-w-0 max-w-full">
+                          <TransactionAmountBalance
+                            amount={`${amountPrefix}${formatBalance(transaction.amount, currency)}`}
+                            currency={currency}
+                            postings={(transaction.cashPostings || []).filter(posting =>
+                              accountFilter === "all" || posting.accountId === Number(accountFilter)
+                            )}
+                            amountClassName={cn(
+                              isPending ? "text-amber-800" :
+                                direction === "incoming" ? "text-emerald-800" :
+                                  direction === "outgoing" ? "text-rose-800" : "text-foreground"
+                            )}
+                            showAccountNames={isInternal && accountFilter === "all"}
+                          />
                         </div>
                       </div>
                     </article>

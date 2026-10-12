@@ -19,6 +19,16 @@ if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", "loopback, linklocal, uniquelocal");
 }
 
+// Bounded evidence documents can exceed the standard API's 100 kB limit.
+// Handle this route's parse errors without propagating them to the crash handler.
+const historyJson = express.json({ limit: "1mb" });
+app.use("/api/admin/history", (req, res, next) => {
+  historyJson(req, res, error => {
+    if (error) return res.status(error.status || 400).json({ message: "History evidence must be valid JSON and no larger than 1 MB." });
+    next();
+  });
+});
+
 app.use(
   express.json({
     verify: (req, _res, buf) => {
@@ -78,7 +88,7 @@ app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   const redactResponseBody = /^\/api\/admin\/applications\/\d+\/approve$/.test(path)
-    || path.startsWith("/api/admin/fees") || path.startsWith("/api/fees") || /^\/api\/accounts\/\d+\/fees$/.test(path)
+    || path.startsWith("/api/admin/fees") || path.startsWith("/api/admin/history") || path.startsWith("/api/fees") || /^\/api\/accounts\/\d+\/fees$/.test(path)
     || path === "/api/login" || path === "/api/user";
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 

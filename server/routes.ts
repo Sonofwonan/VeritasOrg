@@ -17,6 +17,7 @@ import { accountLabel } from "@shared/account-display";
 import { registerDisplayCurrencyRoutes } from "./display-currency";
 import { MARKET_UNAVAILABLE } from "@shared/market";
 import { ownedCashHistory } from "./account-history";
+import { registerHistoricalBalanceRoutes } from "./historical-balances-routes";
 
 // Twilio Notification Setup (SMS/WhatsApp)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -158,6 +159,7 @@ export async function registerRoutes(
   };
 
   await registerFeeRoutes(app, pool, requireAdmin);
+  await registerHistoricalBalanceRoutes(app, pool, requireAdmin);
   await registerDisplayCurrencyRoutes(app, pool, requireAdmin);
   registerDebtRestrictionNoticeRoutes(app, pool, requireAdmin);
 
