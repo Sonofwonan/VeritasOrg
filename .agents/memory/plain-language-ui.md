@@ -15,8 +15,8 @@ Do not add a separate Wire action to the dashboard.
 
 **How to apply:** Use Transfer as the dashboard entry for transfers. This does not authorize removing wire-transfer capabilities elsewhere.
 
-Account detail pages should prioritize balances, recorded account details and ordinary transaction history, not persistent fee-enrollment and management panels.
+Account detail pages should prioritize balances and compact transaction history. Keep account details behind a deliberate button, and do not include login details on the account page. Fee-enrollment and management panels should not dominate the main screen.
 
-**Why:** The user asked for a standard bank-style account page and said the monthly fee, enrollment, management and valuation sections were not important on that main screen.
+**Why:** The user asked for a standard bank-style account page, rejected login details there, requested account details in a popup or separate page, and said fee-management sections were not important on the main screen.
 
 **How to apply:** Keep fee offers, material terms and contract controls accessible through a deliberate Account services action. Actual fee debits remain in ordinary history with simple descriptions; simplifying presentation must not cancel contracts, delete charges or change access restrictions. Never invent bank account numbers to fill missing details.
