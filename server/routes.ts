@@ -16,6 +16,7 @@ import { approvePayment, FundsAccessError, fundsAccess, fundsAccessGuard, regist
 import { accountLabel } from "@shared/account-display";
 import { registerDisplayCurrencyRoutes } from "./display-currency";
 import { MARKET_UNAVAILABLE } from "@shared/market";
+import { ownedCashHistory } from "./account-history";
 
 // Twilio Notification Setup (SMS/WhatsApp)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -24,49 +25,6 @@ const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
 const adminWhatsappNumber = "+1-478-416-5940";
 
 const twilioClient = accountSid && authToken ? twilio(accountSid, authToken) : null;
-
-// Helper to generate historical transactions for a new account
-async function generateHistoricalTransactions(accountId: number) {
-  const startDate = new Date("2025-01-01");
-  const endDate = new Date("2025-07-31");
-  const oneDay = 24 * 60 * 60 * 1000;
-
-  const transactionDescriptions = [
-    "Venture Capital Distribution",
-    "Quarterly Portfolio Rebalancing",
-    "Private Equity Capital Call",
-    "Institutional Asset Transfer",
-    "Dividend Reinvestment",
-    "Real Estate Investment Trust Distribution",
-    "Hedge Fund Liquidity Event",
-    "Merger & Acquisition Proceeds",
-    "Tax-Loss Harvesting Sell",
-    "Strategic Equity Buy"
-  ];
-
-  const types = ["transfer", "buy", "sell", "payment", "withdrawal"] as const;
-
-  let currentDate = new Date(startDate);
-  while (currentDate <= endDate) {
-    if (Math.random() > 0.7) {
-      const amount = (Math.random() * 500000 + 50000).toFixed(2);
-      const description = transactionDescriptions[Math.floor(Math.random() * transactionDescriptions.length)];
-      const type = types[Math.floor(Math.random() * types.length)];
-      
-      await db.insert(transactions).values({
-        fromAccountId: type === "sell" ? null : accountId,
-        toAccountId: type === "buy" ? null : accountId,
-        amount,
-        description: `${description} - ${currentDate.toLocaleDateString()}`,
-        transactionType: type,
-        status: "completed",
-        isDemo: false,
-        createdAt: new Date(currentDate)
-      });
-    }
-    currentDate = new Date(currentDate.getTime() + oneDay);
-  }
-}
 
 // Send notification for external transfers (not internal transfers between same user's accounts)
 async function sendTransferNotification(transactionId: number, userName: string, amount: string, fromAccount: string, toAccountInfo: string) {
@@ -263,7 +221,7 @@ export async function registerRoutes(
         .where(sql`EXISTS (SELECT 1 FROM accounts a WHERE a.user_id=${userId}
           AND (a.id=${transactions.fromAccountId} OR a.id=${transactions.toAccountId}))`)
         .orderBy(desc(transactions.createdAt),desc(transactions.id));
-      res.json(ledger);
+      res.json(await ownedCashHistory(pool, userId, ledger));
     } catch {
       res.status(500).json({ message:"Failed to fetch portfolio transactions" });
     }
@@ -285,9 +243,9 @@ export async function registerRoutes(
             eq(transactions.toAccountId, accountId)
           )
         )
-        .orderBy(desc(transactions.createdAt));
+        .orderBy(desc(transactions.createdAt), desc(transactions.id));
       
-      res.json(allTransactions);
+      res.json(await ownedCashHistory(pool, (req.user as User).id, allTransactions, accountId));
     } catch (err: any) {
       res.status(500).json({ message: err.message || "Failed to fetch transactions" });
     }
@@ -317,9 +275,6 @@ export async function registerRoutes(
         balance: input.balance,
         isDemo: input.isDemo ?? false,
       });
-      
-      // Generate default history for any newly created account too
-      await generateHistoricalTransactions(account.id);
       
       res.status(201).json(account);
     } catch (err) {
@@ -588,7 +543,7 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Unauthorized account" });
       }
 
-      // Record external payment (deduct balance and record transaction)
+      // A request is not a posting. Cash moves only after trusted approval.
       if (moneyToCents(amount) <= 0n) throw new Error("Amount must be positive");
       const transaction = await db.transaction(async (tx) => {
         const [acc] = await tx.select().from(accounts).where(eq(accounts.id, fromAccountId)).for("update");
@@ -599,10 +554,6 @@ export async function registerRoutes(
         const [payee] = await tx.select().from(payees).where(eq(payees.id, payeeId));
         const payeeName = payee ? payee.name.split(' ')[0] : `Payee #${payeeId}`;
 
-        await tx.update(accounts)
-          .set({ balance: sql`${accounts.balance} - ${amount}` })
-          .where(eq(accounts.id, fromAccountId));
-
         const [t] = await tx.insert(transactions).values({
           fromAccountId,
           payeeId,
@@ -610,6 +561,7 @@ export async function registerRoutes(
           description: description || `Payment to ${payeeName}`,
           transactionType: 'payment',
           status: 'pending',
+          cashDebitDeferred: true,
           isDemo: false,
         }).returning();
 
@@ -950,13 +902,12 @@ export async function registerRoutes(
   app.post("/api/admin/transactions/:id/reject", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const [txn] = await db.select().from(transactions).where(eq(transactions.id, id));
-      if (!txn) return res.status(404).json({ message: "Transaction not found" });
-      if (txn.status !== "pending") return res.status(400).json({ message: "Only pending transactions can be rejected" });
-
       await db.transaction(async (tx) => {
+        const [txn] = await tx.select().from(transactions).where(eq(transactions.id, id)).for("update");
+        if (!txn) throw new FundsAccessError("Transaction not found",404);
+        if (txn.status !== "pending") throw new FundsAccessError("Only pending transactions can be rejected",400);
         // Refund source account if balance was deducted
-        if (txn.fromAccountId) {
+        if (txn.fromAccountId && !txn.cashDebitDeferred) {
           await tx.update(accounts)
             .set({ balance: sql`${accounts.balance} + ${txn.amount}` })
             .where(eq(accounts.id, txn.fromAccountId));
@@ -968,7 +919,7 @@ export async function registerRoutes(
 
       res.json({ ok: true, message: "Transaction rejected" });
     } catch (err: any) {
-      res.status(500).json({ message: err.message });
+      res.status(err instanceof FundsAccessError ? err.status : 500).json({ message: err.message });
     }
   });
 

@@ -5,17 +5,15 @@ import { motion } from "framer-motion";
 
 interface MetallicCardProps {
   userName: string;
-  balance: number;
   accountType: string;
-  lastFour: string;
+  accountNumber: string;
   className?: string;
 }
 
 export function MetallicCard({
   userName,
-  balance,
   accountType,
-  lastFour,
+  accountNumber,
   className
 }: MetallicCardProps) {
   return (
@@ -45,51 +43,23 @@ export function MetallicCard({
                 <p className="text-[10px] tracking-[0.2em] font-medium text-white/50">WEALTH MANAGEMENT</p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-[10px] tracking-[0.2em] font-bold text-primary mb-1">PREMIUM</p>
-              <div className="flex gap-1 justify-end">
-                <div className="w-8 h-6 rounded-sm bg-amber-500/20 border border-amber-500/30 flex items-center justify-center overflow-hidden">
-                   <div className="w-full h-[1px] bg-amber-500/40 rotate-12 scale-150" />
-                   <div className="w-full h-[1px] bg-amber-500/40 -rotate-12 scale-150" />
-                </div>
-              </div>
-            </div>
+            <p className="text-[9px] tracking-[0.18em] font-semibold text-white/55 text-right">APPLICATION ACCOUNT</p>
           </div>
 
           <div className="space-y-1">
-            <p className="text-[10px] tracking-[0.3em] font-medium text-white/40 uppercase">Card Number</p>
-            <div className="flex gap-4 text-2xl font-mono tracking-widest text-white/90 drop-shadow-md">
-              <span>****</span>
-              <span>****</span>
-              <span>****</span>
-              <span className="text-white">{lastFour}</span>
-            </div>
+            <p className="text-[10px] tracking-[0.3em] font-medium text-white/55 uppercase">Application account number</p>
+            <p className="font-mono text-xl tracking-[0.18em] text-white/90 drop-shadow-md">{accountNumber}</p>
+            <p className="text-[9px] leading-relaxed text-white/55">Veritas account identification only—not a payment card or external payment instruction.</p>
           </div>
 
           <div className="flex justify-between items-end">
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div className="space-y-1">
                 <p className="text-[8px] tracking-[0.2em] font-medium text-white/40 uppercase">Account Holder</p>
                 <p className="font-bold tracking-tight text-lg uppercase text-white/90">{userName}</p>
               </div>
-              <div className="flex gap-8">
-                <div className="space-y-0.5">
-                  <p className="text-[8px] tracking-[0.2em] font-medium text-white/40 uppercase">Expires</p>
-                  <p className="font-mono text-xs font-bold text-white/80">12 / 29</p>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-[8px] tracking-[0.2em] font-medium text-white/40 uppercase">Type</p>
-                  <p className="text-[10px] font-bold text-white/80 uppercase">{accountType.split(' ')[0]}</p>
-                </div>
-              </div>
             </div>
-            <div className="relative">
-              <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                 <div className="w-10 h-10 rounded-full bg-red-600/60 blur-[1px] -mr-4" />
-                 <div className="w-10 h-10 rounded-full bg-amber-500/60 blur-[1px]" />
-              </div>
-              <p className="absolute bottom-0 right-0 text-[8px] font-bold tracking-tighter italic text-white/40">WORLD ELITE</p>
-            </div>
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-white/65">{accountType}</p>
           </div>
         </div>
         

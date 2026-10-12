@@ -1,7 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, numeric, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 export const accountTypeEnum = pgEnum('account_type', [
   // Investment/Retirement accounts only
@@ -54,6 +54,7 @@ export const clientDisplayCurrencyAudit = pgTable("client_display_currency_audit
 
 export const accounts = pgTable("accounts", {
   id: serial("id").primaryKey(),
+  accountNumber: text("account_number").notNull().unique().default(sql`'VW-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 16))`),
   userId: integer("user_id").notNull(),
   accountType: text("account_type").notNull(),
   displayName: text("display_name"),
@@ -71,6 +72,7 @@ export const transactions = pgTable("transactions", {
   description: text("description"),
   transactionType: transactionTypeEnum("transaction_type").notNull(),
   status: transactionStatusEnum("status").notNull().default('completed'),
+  cashDebitDeferred: boolean("cash_debit_deferred").notNull().default(false),
   isDemo: boolean("is_demo").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -214,9 +216,9 @@ export const insertUserSchema = createInsertSchema(users, {
 export const insertAccountSchema = createInsertSchema(accounts, {
   userId: z.number().optional(),
   balance: z.string().min(1, "Initial deposit is required").refine((val) => Number.isFinite(Number(val)) && Number(val) >= 0, "Initial deposit must be a finite amount of at least 0"),
-}).omit({ id: true, createdAt: true });
+}).omit({ id: true, createdAt: true, accountNumber: true });
 export const insertPayeeSchema = createInsertSchema(payees).omit({ id: true, createdAt: true });
-export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true });
+export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true, createdAt: true, cashDebitDeferred: true });
 export const insertInvestmentSchema = createInsertSchema(investments).omit({ id: true, createdAt: true });
 
 export type User = typeof users.$inferSelect;

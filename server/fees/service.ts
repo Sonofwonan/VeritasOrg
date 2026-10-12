@@ -357,6 +357,7 @@ export class FeeService {
           VALUES($1,$2,$3,'fee','completed',false) RETURNING id`,
           [e.account_id, assessment.total, `CAD ${assessment.kind === "management" ? "annual discretionary-management fee" : "monthly service fee"} · ${assessment.due_date} · Assessment ${assessment.id} · ${assessment.funding === "fee_overdraft" ? "Authorized fee overdraft" : "Available cash"}`]);
         transactionId = transaction.id; status = "paid"; message = "";
+        await c.query("SELECT record_cash_posting($1::integer,$2::integer)", [transaction.id, e.account_id]);
       }
     }
     const { rows: [row] } = await c.query(`UPDATE fee_assessments SET status=$2,reason=$3,transaction_id=$4 WHERE id=$1 RETURNING *`,
@@ -432,6 +433,7 @@ export class FeeService {
       const { rows: [t] } = await c.query(`INSERT INTO transactions(to_account_id,amount,description,transaction_type,status,is_demo)
         VALUES($1,$2,$3,'fee_refund','completed',false) RETURNING id`,
         [a.account_id, a.total, `CAD ${a.kind === "management" ? "annual management" : "monthly service"} fee refund · Assessment ${id}`]);
+      await c.query("SELECT record_cash_posting($1::integer,$2::integer)", [t.id, a.account_id]);
       const { rows: [row] } = await c.query("UPDATE fee_assessments SET status='refunded',reason=$2,refund_transaction_id=$3 WHERE id=$1 RETURNING *", [id, reason, t.id]);
       await this.audit(c, "admin", "assessment_refunded", { reason, refundTransactionId: t.id, originalTransactionId: a.transaction_id, total: a.total }, a.enrollment_id ?? undefined, id, a.contract_id ?? undefined);
       return camel(row);

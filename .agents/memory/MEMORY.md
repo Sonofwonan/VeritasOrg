@@ -10,3 +10,4 @@
 - [Navigation collapse](navigation-collapse.md) — Client side menu and top settings bar start collapsed; only deliberate user actions open them.
 - [Diagnostic runtime safety](diagnostic-runtime-safety.md) — One-off language commands can add unwanted runtimes; use the project's existing runtime for diagnostics.
 - [Plain-language interface](plain-language-ui.md) — Simple client wording, real transaction-history links and advisor-directed payment popups; preserve terms and access rules.
+- [Historical cash evidence](account-history-evidence.md) — Legacy completed rows may not represent cash movements; never infer historical balances from today's balance.

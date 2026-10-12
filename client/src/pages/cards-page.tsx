@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CreditCard, Shield, Zap, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { maskAccountNumber } from "@shared/account-display";
 
 export default function CardsPage() {
   const { user } = useAuth();
@@ -32,11 +33,15 @@ export default function CardsPage() {
                 <MetallicCard 
                   key={account.id}
                   userName={user?.name || "Premium Member"}
-                  balance={Number(account.balance)}
                   accountType={account.accountType}
-                  lastFour={String((account.id * 1337) % 9000 + 1000)}
+                  accountNumber={maskAccountNumber(account.accountNumber)}
                 />
               ))}
+              {accounts && !accounts.some(acc => acc.accountType === "Checking Account") && (
+                <p className="border border-border/50 px-4 py-5 text-sm text-muted-foreground">
+                  No checking account identification is available.
+                </p>
+              )}
               
               {/* Virtual Cards Section */}
               {accounts?.some(acc => acc.accountType !== "Checking Account") && (
@@ -65,14 +70,6 @@ export default function CardsPage() {
                 </div>
               )}
 
-              {(!accounts || accounts.length === 0) && (
-                <MetallicCard 
-                  userName={user?.name || "Premium Member"}
-                  balance={0}
-                  accountType="Premium Member"
-                  lastFour="8888"
-                />
-              )}
             </div>
             
             <Card className="max-w-md border-border/50">

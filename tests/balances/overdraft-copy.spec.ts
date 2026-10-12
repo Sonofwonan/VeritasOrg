@@ -36,21 +36,19 @@ test("plain overdrafts and fee descriptions preserve records, currencies and dis
       const balance = page.getByTestId("account-detail-balance");
       await expect(balance).toBeVisible();
       await expect(balance).not.toContainText(/ledger|assessments|No interest|posted fee/i);
-      if (state.total) await expect(balance.getByTestId("text-total-fee-debt")).toHaveText(money(state.total));
+      if (["mixed", "unpaid"].includes(state.kind)) await expect(balance.getByTestId("text-total-fee-debt")).toHaveText(money("363.64"));
       else await expect(balance.getByTestId("text-total-fee-debt")).toHaveCount(0);
       if (state.kind === "overdraft") {
-        await expect(balance).toContainText("Brokerage Account");
-        await expect(balance).toContainText("Overdraft");
-        await expect(balance).toContainText("owed");
+        await expect(balance.getByTestId("text-account-cash-balance")).toHaveText(currency === "GBP" ? "-£1,250.75" : "CAD -$1,250.75");
         await expect(balance).not.toContainText("Unpaid fees");
-        expect((await balance.innerText()).split(money("1,250.75")).length - 1).toBe(1);
+        expect((await balance.innerText()).split(currency === "GBP" ? "-£1,250.75" : "CAD -$1,250.75").length - 1).toBe(1);
       } else if (state.kind === "mixed") {
-        await expect(balance.getByTestId(`text-account-overdraft-${identity.debt}`)).toHaveText(`Overdraft ${money("1,250.75")}`);
-        await expect(balance.getByTestId(`text-account-unpaid-fees-${identity.debt}`)).toHaveText(`Unpaid fees ${money("363.64")}`);
+        await expect(balance.getByTestId("text-account-cash-balance")).toHaveText(currency === "GBP" ? "-£1,250.75" : "CAD -$1,250.75");
+        await expect(balance.getByTestId("text-total-fee-debt")).toHaveText(money("363.64"));
       } else {
         await expect(balance).not.toContainText("Overdraft");
         await expect(balance.getByTestId("text-account-cash-balance")).toHaveText(money(state.kind === "zero" ? "0.00" : "100.00"));
-        if (state.kind === "unpaid") await expect(balance.getByTestId("text-account-net-balance")).toHaveText(currency === "GBP" ? "-£263.64" : "CAD -$263.64");
+        if (state.kind === "unpaid") await expect(balance.getByTestId("text-total-fee-debt")).toHaveText(money("363.64"));
       }
       if (currency === "GBP") await expect(balance).not.toContainText(/\bCAD\b|\bGBP\b/);
       const row = page.getByTestId(`account-txn-row-${fee.id}`);
@@ -64,7 +62,7 @@ test("plain overdrafts and fee descriptions preserve records, currencies and dis
           await page.setViewportSize({ width, height: 1000 });
           await page.evaluate(() => document.fonts.ready);
           await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-          const amount = balance.getByTestId("text-total-fee-debt");
+          const amount = balance.getByTestId("text-account-cash-balance");
           const geometry = await amount.evaluate(element => {
             const range = document.createRange(); range.selectNodeContents(element);
             const rects = Array.from(range.getClientRects());
@@ -103,8 +101,8 @@ test("plain overdrafts and fee descriptions preserve records, currencies and dis
       else await expect(page.getByTestId("debt-account-summary")).toHaveCount(0);
       if (state.kind === "overdraft") {
         const accountRow = page.getByTestId(`account-row-${identity.debt}`);
-        await expect(accountRow).toContainText("Overdraft");
-        expect((await accountRow.innerText()).split(money("1,250.75")).length - 1).toBe(1);
+        await expect(accountRow).toContainText(currency === "GBP" ? "-£1,250.75" : "CAD -$1,250.75");
+        expect((await accountRow.innerText()).split(currency === "GBP" ? "-£1,250.75" : "CAD -$1,250.75").length - 1).toBe(1);
         await page.getByTestId("button-toggle-balances").click();
         await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("••••••");
         await expect(accountRow).not.toContainText("1,250.75");
@@ -124,18 +122,19 @@ test("loading, account fee failures and failed history remain explicit without z
   await page.route("**/api/fees/summary", async route => { await held; await route.continue(); });
   await page.goto(`/accounts/${identity.debt}`);
   const balance = page.getByTestId("account-detail-balance");
-  await expect(balance.getByRole("status")).toContainText("Checking account balances and fees");
+  await expect(balance.getByRole("status", { name: "Loading unpaid fees" })).toContainText("Unpaid fees");
   await expect(balance.getByTestId("text-total-fee-debt")).toHaveCount(0);
   release();
-  await expect(balance.getByTestId("text-total-fee-debt")).toHaveText("CAD $1,614.39");
+  await expect(balance.getByTestId("text-total-fee-debt")).toHaveText("CAD $363.64");
+  await expect(balance.getByTestId("text-account-cash-balance")).toHaveText("CAD -$1,250.75");
   await page.unroute("**/api/fees/summary");
   await page.route("**/api/fees/summary", route => route.fulfill({ status: 503, json: { message: "Synthetic fee failure" } }));
   await page.reload();
-  await expect(balance.getByRole("alert")).toContainText("Account fee details could not be loaded");
+  await expect(balance.getByRole("alert")).toContainText("Unpaid fee details are unavailable");
   await expect(balance.getByTestId("text-total-fee-debt")).toHaveCount(0);
   await page.unroute("**/api/fees/summary");
   await balance.getByRole("button", { name: "Retry" }).click();
-  await expect(balance.getByTestId("text-total-fee-debt")).toHaveText("CAD $1,614.39");
+  await expect(balance.getByTestId("text-total-fee-debt")).toHaveText("CAD $363.64");
   await page.route(`**/api/accounts/${identity.debt}/transactions`, route => route.fulfill({ status: 503, json: { message: "Synthetic history failure" } }));
   await page.reload();
   await expect(page.getByRole("alert").filter({ hasText: "Transaction history could not be loaded" })).toBeVisible();

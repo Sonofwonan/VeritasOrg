@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Clock, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { clientBalanceCurrency, formatBalance, transactionDescription } from "@shared/balance-currency";
-import { accountLabel, transactionDate } from "@shared/account-display";
+import { accountLabel, transactionDate, type CashPosting } from "@shared/account-display";
 
 const PAGE_SIZE = 20;
 type Transaction = {
@@ -20,6 +20,7 @@ type Transaction = {
   transactionType?: string;
   status: string;
   createdAt: string | Date | null;
+  cashPostings?: CashPosting[];
 };
 
 function dateSortValue(value: string | Date | null) {
@@ -226,14 +227,21 @@ export default function TransactionsPage() {
                         )} aria-label={`Status: ${transaction.status}`}>
                           {transaction.status}
                         </span>
-                        <span className={cn(
-                          "whitespace-nowrap text-right font-mono text-sm font-semibold tabular-nums",
-                          isPending ? "text-amber-800" :
-                            direction === "incoming" ? "text-emerald-800" :
-                              direction === "outgoing" ? "text-rose-800" : "text-foreground"
-                        )}>
-                          {amountPrefix}{formatBalance(transaction.amount, currency)}
-                        </span>
+                        <div className="min-w-0 text-right">
+                          <span className={cn(
+                            "whitespace-nowrap text-right font-mono text-sm font-semibold tabular-nums",
+                            isPending ? "text-amber-800" :
+                              direction === "incoming" ? "text-emerald-800" :
+                                direction === "outgoing" ? "text-rose-800" : "text-foreground"
+                          )}>
+                            {amountPrefix}{formatBalance(transaction.amount, currency)}
+                          </span>
+                          {transaction.cashPostings?.map(posting => (
+                            <p key={posting.accountId} className="mt-1 max-w-full text-[10px] leading-relaxed text-muted-foreground">
+                              Balance after transaction · {posting.accountName}: <span className="font-mono tabular-nums">{formatBalance(posting.balanceAfter, currency)}</span>
+                            </p>
+                          ))}
+                        </div>
                       </div>
                     </article>
                   );

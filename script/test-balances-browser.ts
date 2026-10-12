@@ -110,6 +110,14 @@ try {
     BALANCE_E2E_ADMIN: "",
   };
   env.BALANCE_E2E_ADMIN = env.ADMIN_PASSWORD;
+  if (process.argv.includes("--server-checks")) {
+    const checks = spawnSync(resolve("node_modules/.bin/tsx"),
+      ["--test", "server/fees/fees.test.ts", "server/funds-access.test.ts"],
+      { cwd: workspace, env, encoding: "utf8" });
+    process.stdout.write(checks.stdout ?? "");
+    process.stderr.write(checks.stderr ?? "");
+    if (checks.status !== 0) throw new Error("Isolated server checks failed");
+  }
   app = spawn(resolve("node_modules/.bin/tsx"), ["server/index.ts"], { cwd: workspace, env, stdio: ["ignore", log.fd, log.fd] });
   let ready = false;
   for (let i = 0; i < 120; i++) {
@@ -127,7 +135,7 @@ try {
   }, null, 2));
   const result = await new Promise<number>(done => {
     const tests = spawn(resolve("node_modules/.bin/playwright"),
-      ["test", "--config", "tests/balances/playwright.config.ts", ...process.argv.slice(2)], { cwd: workspace, env, stdio: "inherit" });
+      ["test", "--config", "tests/balances/playwright.config.ts", ...process.argv.slice(2).filter(arg => arg !== "--server-checks")], { cwd: workspace, env, stdio: "inherit" });
     tests.on("exit", code => done(code ?? 1));
     tests.on("error", error => { console.error(error.message); done(1); });
   });

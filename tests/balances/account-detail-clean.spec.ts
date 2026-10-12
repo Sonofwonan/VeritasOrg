@@ -20,12 +20,22 @@ test("account details are clean, truthful and responsive without changing fees o
   await login(page, identity);
   await page.goto(`/accounts/${identity.debt}`);
   const balance = page.getByTestId("account-detail-balance");
-  await expect(balance).toContainText("£1,614.39");
+  await expect(balance).toContainText("-£1,250.75");
+  await expect(balance).toContainText("£363.64");
   await expect(page.getByText("Account ID:", { exact: false })).toHaveCount(0);
-  const details = page.getByTestId("account-detail-details");
+  const detailsButton = page.getByRole("button", { name: "Account details", exact: true });
+  await detailsButton.focus();
+  await page.keyboard.press("Enter");
+  const details = page.getByRole("dialog");
   await expect(details.getByText("Balance Test Client", { exact: true })).toBeVisible();
-  await expect(details.getByText(identity.ref, { exact: true })).toBeVisible();
+  await expect(page.getByText(identity.ref, { exact: true })).toHaveCount(0);
   await expect(details.getByText("January 1, 2024", { exact: true })).toBeVisible();
+  const { rows: [account] } = await db.query("SELECT account_number FROM accounts WHERE id=$1", [identity.debt]);
+  await expect(details).toContainText(account.account_number);
+  await expect(details).not.toContainText("IBAN");
+  await expect(details).not.toContainText("routing");
+  await page.keyboard.press("Escape");
+  await expect(detailsButton).toBeFocused();
   for (const phrase of ["Monthly service fees", "Enrollment status", "Discretionary management", "Fee history", "PROCESSING CURRENTLY DISABLED"]) {
     await expect(page.getByText(phrase, { exact: false })).toHaveCount(0);
   }

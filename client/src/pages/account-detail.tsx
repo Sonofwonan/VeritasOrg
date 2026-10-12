@@ -8,24 +8,23 @@ import { useParams } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useState } from "react";
-import { format } from "date-fns";
+import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ClientFees } from "@/components/fees/client-fees";
 import { transactionDescription, clientBalanceCurrency, formatBalance, type BalanceCurrency } from "@shared/balance-currency";
 import { useAuth } from "@/hooks/use-auth";
 import { useClientFeeSummary } from "@/hooks/use-fees";
-import { FeeLiability } from "@/components/fees/fee-liability";
 import { accountStatementCsv } from "@/lib/account-statement";
-import { accountLabel, transactionDate } from "@shared/account-display";
+import { accountLabel, transactionDate, type CashPosting } from "@shared/account-display";
 
-function exportStatement(account: { id: number; accountType: string }, transactions: any[] = [], currency: BalanceCurrency = "CAD") {
-  const csv = accountStatementCsv(account.id,transactions,currency);
+function exportStatement(account: { id: number; accountType: string; accountNumber?: string }, transactions: any[] = [], currency: BalanceCurrency = "CAD") {
+  const number = account.accountNumber || "account-number-unavailable";
+  const csv = accountStatementCsv(account.id, number, transactions, currency);
   const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `veritas-account-${account.id}-statement.csv`;
+  anchor.download = `veritas-account-${number.replace(/[^a-zA-Z0-9_-]/g, "")}-statement.csv`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
@@ -40,6 +39,8 @@ export default function AccountDetailPage() {
   const feeSummary = useClientFeeSummary();
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const detailsTriggerRef = useRef<HTMLButtonElement>(null);
   
   const accountId = parseInt(params.id as string);
   const account = accounts?.find(a => a.id === accountId);
@@ -81,11 +82,8 @@ export default function AccountDetailPage() {
   const accountBalance = Number(account.balance);
   const accountFees = feeSummary.data?.accounts.find(item => item.accountId === accountId);
   const unpaidFees = Number(accountFees?.unpaidTotal || 0);
-  const overdraft = accountFees?.overdraft === undefined ? Math.max(0, -accountBalance) : Number(accountFees.overdraft);
-  const amountOwed = accountFees?.amountOwed === undefined ? overdraft + unpaidFees : Number(accountFees.amountOwed);
-  const balanceError = feeSummary.isError || !Number.isFinite(accountBalance) ||
-    !Number.isFinite(unpaidFees) || unpaidFees < 0 || !Number.isFinite(overdraft) ||
-    overdraft < 0 || !Number.isFinite(amountOwed) || amountOwed < 0;
+  const balanceError = !Number.isFinite(accountBalance) ||
+    !Number.isFinite(unpaidFees) || unpaidFees < 0;
 
   return (
     <LayoutShell>
@@ -103,92 +101,82 @@ export default function AccountDetailPage() {
           <h2 className="break-words text-3xl font-bold font-display">
             {accountLabel(account)}
           </h2>
+          <Button ref={detailsTriggerRef} type="button" variant="outline" size="sm" className="mt-3"
+            aria-haspopup="dialog" aria-controls="account-details-dialog" onClick={() => setDetailsOpen(true)}>
+            Account details
+          </Button>
         </div>
       </div>
 
       {/* Account Summary */}
-      <div className="mb-8 grid min-w-0 gap-6 md:grid-cols-[1.2fr_0.8fr]">
-        <Card className="min-w-0" data-testid="account-detail-balance">
+      <div className="mb-6 max-w-3xl">
+        <Card className="min-w-0 border-primary/15 bg-primary/[0.035]" data-testid="account-detail-balance">
           <CardHeader>
-            <CardTitle>Account balance</CardTitle>
+            <CardTitle>Balance</CardTitle>
           </CardHeader>
           <CardContent>
-            {feeSummary.isLoading ? (
-              <FeeLiability loading currency={currency} accounts={[account]} />
-            ) : balanceError ? (
-              <FeeLiability error retry={() => void feeSummary.refetch()} currency={currency} accounts={[account]} />
-            ) : overdraft > 0 ? (
-              <FeeLiability
-                summary={{
-                  totalUnpaid: String(unpaidFees),
-                  totalOverdraft: String(overdraft),
-                  totalOwed: String(amountOwed),
-                  accounts: [{
-                    accountId,
-                    accountName: accountLabel(account),
-                    unpaidTotal: String(unpaidFees),
-                    unpaidCount: accountFees?.unpaidCount || 0,
-                    overdraft: String(overdraft),
-                    amountOwed: String(amountOwed),
-                  }],
-                }}
-                currency={currency}
-                accounts={[account]}
-                accountLinks={false}
-              />
+            {balanceError ? (
+              <div role="alert" className="text-sm text-destructive">Balance details are unavailable.</div>
             ) : (
               <div className="space-y-3">
                 <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <p className="text-sm text-muted-foreground">{unpaidFees > 0 ? "Cash balance" : "Account balance"}</p>
+                  <p className="text-sm text-muted-foreground">Balance</p>
                   <p data-testid="text-account-cash-balance" className={cn("whitespace-nowrap font-mono text-xl font-semibold tabular-nums sm:text-2xl", accountBalance < 0 ? "text-red-700 dark:text-red-300" : "text-primary")}>
                     {money(accountBalance)}
                   </p>
                 </div>
-                {unpaidFees > 0 && <>
-                  <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t pt-3">
-                    <p className="text-sm text-muted-foreground">Net account balance</p>
-                    <p data-testid="text-account-net-balance" className={cn("whitespace-nowrap font-mono text-xl font-semibold tabular-nums sm:text-2xl", accountBalance - unpaidFees < 0 ? "text-red-700 dark:text-red-300" : "text-primary")}>
-                      {money(accountBalance - unpaidFees)}
-                    </p>
+                {feeSummary.isLoading ? (
+                  <div role="status" aria-label="Loading unpaid fees" className="flex items-center justify-between gap-4 border-t pt-3">
+                    <p className="text-sm text-muted-foreground">Unpaid fees</p>
+                    <Skeleton className="h-4 w-20" />
                   </div>
-                  <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                ) : feeSummary.isError ? (
+                  <div role="alert" className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-sm">
+                    <span className="text-muted-foreground">Unpaid fee details are unavailable.</span>
+                    <button type="button" className="underline underline-offset-4" onClick={() => void feeSummary.refetch()}>Retry</button>
+                  </div>
+                ) : unpaidFees > 0 ? (
+                  <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t pt-3">
                     <p className="text-sm text-muted-foreground">Unpaid fees</p>
                     <p className="whitespace-nowrap font-mono font-semibold tabular-nums" data-testid="text-total-fee-debt">{money(unpaidFees)}</p>
                   </div>
-                </>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="min-w-0" data-testid="account-detail-details">
-          <CardHeader>
-            <CardTitle>Account Details</CardTitle>
-          </CardHeader>
-          <CardContent className="divide-y text-sm">
-            <div className="flex min-w-0 flex-col gap-1 py-3 first:pt-0 sm:flex-row sm:justify-between sm:gap-4">
-              <p className="shrink-0 text-muted-foreground">Account type</p>
-              <p className="break-words font-medium sm:text-right">{account.accountType}</p>
-            </div>
-            <div className="flex min-w-0 flex-col gap-1 py-3 sm:flex-row sm:justify-between sm:gap-4">
-              <p className="shrink-0 text-muted-foreground">Account holder</p>
-              <p className="break-words font-medium sm:text-right">{user?.name || "—"}</p>
-            </div>
-            {user?.clientRef && (
-              <div className="flex min-w-0 flex-col gap-1 py-3 sm:flex-row sm:justify-between sm:gap-4">
-                <p className="shrink-0 text-muted-foreground">Client reference</p>
-                <p className="break-all font-mono font-medium sm:text-right">{user.clientRef}</p>
-              </div>
-            )}
-            {account.createdAt && Number.isFinite(new Date(account.createdAt).getTime()) && (
-              <div className="flex min-w-0 flex-col gap-1 py-3 last:pb-0 sm:flex-row sm:justify-between sm:gap-4">
-                <p className="shrink-0 text-muted-foreground">Opened</p>
-                <p className="font-medium sm:text-right">{transactionDate(account.createdAt)}</p>
+                ) : null}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent id="account-details-dialog" className="w-[calc(100%-2rem)] max-h-[min(85dvh,38rem)] overflow-y-auto sm:max-w-md"
+          onCloseAutoFocus={event => {
+            event.preventDefault();
+            detailsTriggerRef.current?.focus();
+          }}>
+          <DialogHeader>
+            <DialogTitle>Account details</DialogTitle>
+            <DialogDescription>
+              Recorded account information. The application account number identifies this account within Veritas; it is not an external payment instruction.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="divide-y text-sm">
+            {[
+              ["Application account number", account.accountNumber || "Account number unavailable"],
+              ["Account name", accountLabel(account)],
+              ["Account type", account.accountType],
+              ["Account holder", user?.name || "—"],
+              ...(account.createdAt && Number.isFinite(new Date(account.createdAt).getTime())
+                ? [["Opened", transactionDate(account.createdAt)]] : []),
+            ].map(([label, value]) => (
+              <div key={label} className="flex flex-col gap-1 py-3 first:pt-0 sm:flex-row sm:justify-between sm:gap-4">
+                <span className="shrink-0 text-muted-foreground">{label}</span>
+                <span className={cn("break-words font-medium sm:text-right", label === "Application account number" && "font-mono")}>{value}</span>
+              </div>
+            ))}
+          </div>
+          <Button onClick={() => setDetailsOpen(false)} className="w-full">Close</Button>
+        </DialogContent>
+      </Dialog>
 
       {/* Transaction History */}
       <Card>
@@ -253,15 +241,22 @@ export default function AccountDetailPage() {
                       </div>
                     </div>
                       <div className="flex min-w-0 items-center justify-between gap-3 sm:block sm:text-right">
-                      <p className={cn(
-                        "whitespace-nowrap font-mono text-lg font-bold tabular-nums",
-                         transaction.status === 'pending' ? 'text-red-700 dark:text-red-300' : (isIncoming ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
-                      )}>
-                         {isIncoming ? '+' : '-'}{money(transaction.amount)}
-                      </p>
-                      <Badge variant={transaction.status === 'completed' ? 'default' : 'destructive'} className="text-xs mt-1 capitalize">
-                        {transaction.status}
-                      </Badge>
+                        <div className="sm:text-right">
+                          <p className={cn(
+                            "whitespace-nowrap font-mono text-lg font-bold tabular-nums",
+                             transaction.status === 'pending' ? 'text-red-700 dark:text-red-300' : (isIncoming ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300')
+                          )}>
+                             {isIncoming ? '+' : '-'}{money(transaction.amount)}
+                          </p>
+                          {(transaction.cashPostings as CashPosting[] | undefined)?.filter(posting => posting.accountId === accountId).map(posting => (
+                            <p key={posting.accountId} className="mt-1 text-[10px] text-muted-foreground">
+                              Balance after transaction: <span className="font-mono tabular-nums">{money(posting.balanceAfter)}</span>
+                            </p>
+                          ))}
+                          <Badge variant={transaction.status === 'completed' ? 'default' : 'destructive'} className="text-xs mt-1 capitalize">
+                            {transaction.status}
+                          </Badge>
+                        </div>
                     </div>
                   </div>
                 );
@@ -295,6 +290,12 @@ export default function AccountDetailPage() {
                     {selectedTxn && `${selectedTxn.toAccountId === accountId ? "+" : "-"}${money(selectedTxn.amount)}`}
                   </span>
                 </div>
+                {(selectedTxn?.cashPostings as CashPosting[] | undefined)?.filter(posting => posting.accountId === accountId).map(posting => (
+                  <div key={posting.accountId} className="flex min-w-0 flex-col gap-1 border-b py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <span className="shrink-0 text-sm text-muted-foreground">Balance after transaction</span>
+                    <span className="font-mono text-sm font-semibold tabular-nums sm:text-right">{money(posting.balanceAfter)}</span>
+                  </div>
+                ))}
                 <div className="flex min-w-0 flex-col gap-1 border-b py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <span className="shrink-0 text-sm text-muted-foreground">Status</span>
                   <Badge variant={selectedTxn?.status === 'completed' ? 'default' : 'destructive'} className="capitalize">

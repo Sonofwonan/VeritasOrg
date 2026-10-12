@@ -122,6 +122,7 @@ export class DatabaseStorage implements IStorage {
 
   async transferFunds(fromAccountId: number, toAccountId: number, amount: string): Promise<Transaction> {
     if (moneyToCents(amount) <= 0n) throw new Error("Amount must be positive");
+    if (fromAccountId === toAccountId) throw new Error("Choose two different accounts");
     return await db.transaction(async (tx) => {
       // 1. Deduct from sender
       // Lock before checking: a fee worker may be spending the same cash.
@@ -132,15 +133,14 @@ export class DatabaseStorage implements IStorage {
       if (!fromAccount) throw new Error("Source account not found");
       if (Number(fromAccount.balance) < Number(amount)) throw new Error("Insufficient funds");
 
-      await tx.update(accounts)
-        .set({ balance: sql`${accounts.balance} - ${amount}` })
-        .where(eq(accounts.id, fromAccountId));
-
       // 2. Add to receiver if it's an internal transfer (same user)
       const toAccount = lockedAccounts.find(a => a.id === toAccountId);
       const status = (toAccount && toAccount.userId === fromAccount.userId) ? 'completed' : 'pending';
 
       if (status === 'completed' && toAccount) {
+        await tx.update(accounts)
+          .set({ balance: sql`${accounts.balance} - ${amount}` })
+          .where(eq(accounts.id, fromAccountId));
         await tx.update(accounts)
           .set({ balance: sql`${accounts.balance} + ${amount}` })
           .where(eq(accounts.id, toAccountId));
@@ -151,11 +151,16 @@ export class DatabaseStorage implements IStorage {
         fromAccountId,
         toAccountId,
         amount,
-        description: `Transfer from Account #${fromAccountId} to Account #${toAccountId}`,
+        description: status === 'completed' ? "Transfer between your accounts" : "Transfer request",
         transactionType: 'transfer',
         status: status,
+        cashDebitDeferred: status === 'pending',
         isDemo: false,
       }).returning();
+      if (status === 'completed') {
+        await tx.execute(sql`SELECT record_cash_posting(${transaction.id}::integer,${fromAccountId}::integer)`);
+        await tx.execute(sql`SELECT record_cash_posting(${transaction.id}::integer,${toAccountId}::integer)`);
+      }
 
       return transaction;
     });
@@ -163,6 +168,7 @@ export class DatabaseStorage implements IStorage {
 
   async buyAsset(accountId: number, symbol: string, amount: string, price: number): Promise<Investment> {
     if (moneyToCents(amount) <= 0n) throw new Error("Amount must be positive");
+    if (!Number.isFinite(price) || price <= 0) throw new Error("Invalid price");
     return await db.transaction(async (tx) => {
       // 1. Check balance
       const [account] = await tx.select().from(accounts).where(eq(accounts.id, accountId)).for("update");
@@ -214,13 +220,16 @@ export class DatabaseStorage implements IStorage {
         status: 'completed',
         isDemo: false,
       }).returning();
-
+      await tx.execute(sql`SELECT record_cash_posting(${transaction.id}::integer,${accountId}::integer)`);
       return investment;
     });
   }
 
   async sellAsset(accountId: number, symbol: string, shares: string, price: number): Promise<Investment> {
+    if (!Number.isFinite(Number(shares)) || Number(shares) <= 0 || !Number.isFinite(price) || price <= 0) throw new Error("Invalid sale");
     return await db.transaction(async (tx) => {
+      const [account] = await tx.select().from(accounts).where(eq(accounts.id, accountId)).for("update");
+      if (!account) throw new Error("Account not found");
       // 1. Check shares
       const [existing] = await tx.select().from(investments)
         .where(and(eq(investments.accountId, accountId), eq(investments.symbol, symbol)));
@@ -251,14 +260,15 @@ export class DatabaseStorage implements IStorage {
       }
 
       // 4. Record transaction
-      await tx.insert(transactions).values({
+      const [transaction] = await tx.insert(transactions).values({
         toAccountId: accountId, // Used as destination for 'sell' proceeds
         amount,
         description: `Sale of ${shares} shares of ${symbol}`,
         transactionType: 'sell',
         status: 'completed',
         isDemo: false,
-      });
+      }).returning();
+      await tx.execute(sql`SELECT record_cash_posting(${transaction.id}::integer,${accountId}::integer)`);
 
       return investment;
     });

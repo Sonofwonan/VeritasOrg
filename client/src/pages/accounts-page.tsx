@@ -1,12 +1,11 @@
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { accountLabel } from "@shared/account-display";
-import { AccountFeeBalance } from "@/components/fees/fee-liability";
 import { DebtAccountSummary } from "@/components/fees/debt-account-summary";
 import { useState } from "react";
 import {
-  Plus, ArrowRight, ChevronRight, TrendingUp,
-  ShieldCheck, Landmark, Briefcase, PiggyBank, Eye, EyeOff,
-  CheckCircle2, AlertCircle, MoreHorizontal, Lock, Building2
+  Plus, ChevronRight, TrendingUp,
+  Landmark, Briefcase, Eye, EyeOff,
+  CheckCircle2, AlertCircle, Lock, Building2
 } from "lucide-react";
 import { useAccounts, useInvestments, useCreateAccount, useAccountTransactions } from "@/hooks/use-finances";
 import { useQuery } from "@tanstack/react-query";
@@ -21,15 +20,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { balanceCurrencyLabel, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { maskAccountNumber } from "@shared/account-display";
 
 type AccountType = 'Brokerage Account' | 'Traditional IRA' | 'Roth IRA' |
   '401(k) / 403(b)' | '529 Savings Plan' | 'Trust Account';
-
-function accountNumber(id: number) {
-  const n = ((id * 48271 + 13) % 900000 + 100000).toString();
-  return `••••${n.slice(-4)}`;
-}
 
 function categoryOf(type: string): keyof typeof CATEGORY_META {
   // Presentation only: trusts still support investment operations.
@@ -184,10 +179,7 @@ export default function AccountsPage() {
                   {balanceLoading ? "Loading…" : balanceUnavailable ? "Unavailable" : fmt(totalBalance)}
                 </span>
               </div>
-              {isTransmitting
-                ? <p className="text-violet-300/60 text-xs mt-1.5 font-mono">Funds in transit to {activeTransfer?.institutionName}</p>
-                : <p className="text-white/30 text-xs mt-1.5 font-mono">{currency === "GBP" ? "Updated" : `${balanceCurrencyLabel(currency)} · As of`} {new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-              }
+              {isTransmitting && <p className="text-violet-300/60 text-xs mt-1.5 font-mono">Funds in transit to {activeTransfer?.institutionName}</p>}
                {!balanceLoading && balanceUnavailable && <p role="alert" className="text-red-300 text-xs mt-2">
                  Current balances could not be loaded.
                  <button className="ml-2 underline" onClick={retryBalances}>Retry</button>
@@ -298,7 +290,7 @@ export default function AccountsPage() {
         <div className="space-y-6 mt-2">
           {grouped.map(({ cat, items }) => {
             const { label, Icon, color } = CATEGORY_META[cat as keyof typeof CATEGORY_META];
-            const catTotal = items.reduce((s, a) => s + Math.max(0, Number(a.balance)), 0);
+            const catTotal = items.reduce((s, a) => s + Number(a.balance), 0);
             return (
                <div key={cat} data-testid={`account-group-${cat}`}>
                 {/* Group header */}
@@ -309,7 +301,7 @@ export default function AccountsPage() {
                     <span className="text-[10px] text-muted-foreground/50 font-mono ml-1">({items.length})</span>
                   </div>
                     <span className="whitespace-nowrap text-right text-xs text-foreground/70 sm:text-sm">
-                      Cash <span data-testid={`account-group-balance-${cat}`} className="font-mono tabular-nums">{fmt(catTotal)}</span>
+                      Balance <span data-testid={`account-group-balance-${cat}`} className="font-mono tabular-nums">{fmt(catTotal)}</span>
                     </span>
                 </div>
 
@@ -317,6 +309,7 @@ export default function AccountsPage() {
                 <div className="divide-y divide-border/50">
                   {items.map((account) => {
                     const isPending = account.id === primaryAccount?.id && pendingBalance !== 0;
+                    const unpaidFees = Number(feeSummary.data?.accounts.find(item => item.accountId === account.id)?.unpaidTotal || 0);
                     return (
                       <div
                         key={account.id}
@@ -336,7 +329,7 @@ export default function AccountsPage() {
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground [overflow-wrap:anywhere]">{accountLabel(account)}</p>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
-                              <span className="font-mono text-[10px] text-muted-foreground">{accountNumber(account.id)}</span>
+                              <span className="font-mono text-[10px] text-muted-foreground">{maskAccountNumber(account.accountNumber)}</span>
                               {isPending && (
                                 <span className="text-[9px] text-amber-800 dark:text-amber-300 font-bold uppercase tracking-wide bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-sm border border-amber-200 dark:border-amber-800/40">
                                   Pending: {fmt(Math.abs(pendingBalance))}
@@ -366,14 +359,14 @@ export default function AccountsPage() {
                           {/* Balance */}
                           <div className="min-w-0 text-right xl:min-w-[140px]">
                             <p className="label-caps text-muted-foreground/50 mb-0.5" data-testid={`account-balance-label-${account.id}`}>
-                              {Number(account.balance) < 0 ? "Overdraft" : "Cash balance"}
+                              Balance
                             </p>
                                 <p className={cn("whitespace-nowrap font-mono text-[clamp(.82rem,4vw,1rem)] font-semibold tabular-nums xl:text-base", isTransmitting ? "text-violet-400" : "text-foreground")} data-testid={`balance-${account.id}`}>
-                                {fmt(Number(account.balance) < 0 ? Math.abs(Number(account.balance)) : Number(account.balance))}
+                                {fmt(Number(account.balance))}
                               </p>
-                            <AccountFeeBalance cash={account.balance}
-                              unpaid={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.unpaidTotal}
-                              overdraft={feeSummary.data?.accounts.find(item => item.accountId === account.id)?.overdraft} hidden={hideBalances} currency={currency} showOverdraft={false} />
+                            {unpaidFees > 0 && <p className="mt-1 text-xs text-rose-800 dark:text-rose-300">
+                              Unpaid fees <span className="font-mono tabular-nums" data-testid={`account-unpaid-fees-${account.id}`}>{fmt(unpaidFees)}</span>
+                            </p>}
                           </div>
 
                           <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
@@ -389,9 +382,8 @@ export default function AccountsPage() {
       )}
 
       {/* ── Footer note ─────────────────────────────────────────────── */}
-      <div className="mt-8 pt-4 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground/40">
-        <span className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> CDIC insured · Accounts protected up to eligible limits</span>
-        <span>Account figures in {balanceCurrencyLabel(currency)}</span>
+      <div className="mt-8 pt-4 border-t border-border/50 text-[10px] text-muted-foreground/40">
+        <span>CDIC insured · Accounts protected up to eligible limits</span>
       </div>
 
     </LayoutShell>

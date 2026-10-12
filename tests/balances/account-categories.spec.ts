@@ -32,6 +32,8 @@ test("named funded trusts and brokerage stay in their presentation groups withou
     .reduce((sum, a) => sum + Math.max(0, Number(a.balance)), 0);
   const trustTotal = accounts.filter(a => a.account_type === "Trust Account")
     .reduce((sum, a) => sum + Math.max(0, Number(a.balance)), 0);
+  const signedTrustTotal = accounts.filter(a => a.account_type === "Trust Account")
+    .reduce((sum, a) => sum + Number(a.balance), 0);
   const cashTotal = investmentTotal + trustTotal;
   const holdingsTotal = before[2].reduce((sum, holding) => sum + Number(holding.shares) * Number(holding.current_price ?? holding.purchase_price), 0);
 
@@ -40,13 +42,13 @@ test("named funded trusts and brokerage stay in their presentation groups withou
   await verifyHeadline(page, "$2,004,000.25");
   await expect(page.getByTestId(`debt-account-name-${identity.debt}`)).toHaveText("Fee Reserve Trust");
   await expect(page.getByTestId(`debt-account-details-${identity.debt}`)).toBeVisible();
-  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("CAD $1,250.75 overdraft");
+  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("CAD -$1,250.75");
   await page.goto("/accounts");
   await expect(page.getByTestId("text-total-balance")).toHaveText(`CAD ${money(cashTotal + holdingsTotal)}`);
   for (const [cat, total] of [["cash", cashTotal], ["investment", holdingsTotal]] as const) {
     await expect(page.getByTestId(`account-summary-balance-${cat}`)).toHaveText(`CAD ${money(total)}`);
   }
-  for (const [cat, total] of [["investment", investmentTotal], ["business", trustTotal]] as const) {
+  for (const [cat, total] of [["investment", investmentTotal], ["business", signedTrustTotal]] as const) {
     await expect(page.getByTestId(`account-group-balance-${cat}`)).toHaveText(`CAD ${money(total)}`);
   }
   await expect(page.getByTestId("account-summary-investment")).toContainText("Recorded investments");
@@ -63,9 +65,9 @@ test("named funded trusts and brokerage stay in their presentation groups withou
     const ledgerBalance = Number(account.balance);
     await expect(row).toContainText(account.display_name);
     // Liabilities remain signed in storage, but never reduce funded summaries.
-    await expect(row.getByTestId(`balance-${account.id}`)).toHaveText(`CAD ${money(ledgerBalance < 0 ? Math.abs(ledgerBalance) : ledgerBalance)}`);
+    await expect(row.getByTestId(`balance-${account.id}`)).toHaveText(`CAD ${money(ledgerBalance)}`);
     if (ledgerBalance < 0) {
-      await expect(row.getByText("Overdraft", { exact: true })).toBeVisible();
+      await expect(row.getByText("Balance", { exact: true })).toBeVisible();
     }
     await expect(other.getByTestId(`account-row-${account.id}`)).toHaveCount(0);
   }
@@ -107,11 +109,11 @@ test("inheritance cash and Brokerage overdraft stay separate, including during t
   await expect(page.getByTestId("text-total-balance")).toHaveText("£1,622,886.00");
   await expect(page.getByTestId("account-summary-balance-cash")).toHaveText("£1,622,886.00");
   await expect(page.getByTestId("account-summary-balance-investment")).toHaveText("£0.00");
-  await expect(page.getByTestId("account-group-balance-investment")).toHaveText("£0.00");
+  await expect(page.getByTestId("account-group-balance-investment")).toHaveText("-£12,398.48");
   await expect(page.getByTestId("account-group-balance-business")).toHaveText("£1,622,886.00");
   await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("£12,398.48");
   await expect(page.getByTestId("debt-account-summary")).not.toContainText("Inheritance Trust Account");
-  await expect(page.getByTestId(`account-row-${identity.funded}`)).toContainText("Overdraft");
+  await expect(page.getByTestId(`account-row-${identity.funded}`)).toContainText("-£12,398.48");
   await expect(page.locator("main.overflow-y-auto")).not.toContainText(/£1,610,487.52|Net Account Balance · After Unpaid Fees|\bCAD\b|\bGBP\b/);
   for (const width of [320, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 });

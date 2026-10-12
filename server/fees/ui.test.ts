@@ -110,7 +110,7 @@ it("presents generated fees plainly without altering stored descriptions or mone
   assert.equal(transactionDescription(description, "CAD", "transfer"), description);
   assert.equal(transactionDescription("Inheritance — family farm sale proceeds", "GBP"), "Inheritance — family farm sale proceeds");
   const transaction = {id:65,toAccountId:null,amount:"363.64",description,transactionType:"fee",status:"completed",createdAt:"2026-09-01T14:00:00Z"};
-  const csv = accountStatementCsv(25,[transaction],"GBP");
+  const csv = accountStatementCsv(25,"VW-TEST-0025",[transaction],"GBP");
   assert(csv.includes('"Monthly service fee"'));
   assert(csv.includes('"September 1, 2026"'));
   assert(!csv.includes("Assessment") && !csv.includes("Authorized fee overdraft"));
@@ -145,9 +145,9 @@ it("cleans only generated fee metadata and preserves refunds, unrelated referenc
     assert.equal(transactionDescription(null, currency, "fee"), "");
     const rows = [{id:61,toAccountId:null,amount:"363.64",description:"CAD monthly service fee refund · Assessment 61",transactionType:"fee_refund",status:"completed",createdAt:"2026-05-01T14:00:00Z"}];
     const before = JSON.stringify(rows);
-    const csv = accountStatementCsv(900, rows, currency);
+    const csv = accountStatementCsv(900, "VW-TEST-0900", rows, currency);
     assert(csv.includes('"Monthly service fee refund"'));
-    assert(csv.includes('"61","2026-05-01T14:00:00.000Z"'));
+    assert(csv.includes('"61","VW-TEST-0900","2026-05-01T14:00:00.000Z"'));
     assert(csv.includes('"-363.64"') && csv.includes('"May 1, 2026"'));
     assert.equal(JSON.stringify(rows), before);
   }
@@ -200,9 +200,9 @@ it("shows a normal named GBP debt card below the funded balance without changing
   const card=html.match(/<button[^>]*data-testid="dash-account-25"[^>]*>[\s\S]*?<\/button>/)?.[0];
   assert(card);
   assert.equal(displayedValue(card,"dash-account-name-25"),"Brokerage Account");
-  assert.equal(displayedValue(card,"dash-account-balance-25"),"£12,398.48");
+  assert.equal(displayedValue(card,"dash-account-balance-25"),"-£12,398.48");
   assert.equal(card.match(/£12,398\.48/g)?.length,1);
-  assert(card.includes("overdraft"));
+  assert.equal(displayedValue(html,"text-overdraft"),"£12,398.48");
   assert(!card.includes("Cash ledger overdraft") && !card.includes("truncate"));
   for (const removed of ["Payment is required", "A separate payment", "Overdrafts and unpaid fees",
     "negative cash ledger", "unpaid assessments", "No interest is added"]) assert(!notice.includes(removed),removed);
@@ -217,7 +217,7 @@ it("shows a normal named GBP debt card below the funded balance without changing
   assert(!html.includes("CAD") && !html.includes("GBP") && !html.includes("Account #"));
   assert(!html.includes("Total balance · £"));
   assert(!html.includes("Account figures in £"));
-  assert(html.includes("Last updated"));
+  assert(!html.includes("Last updated"));
 });
 it("shows Mary's service terms and fees without CAD while preserving stored pricing",()=>{
   const fees={settings:{enabled:false},enrollments:[{...enrollment,accountId:25}],assessments:[],contracts:[]};
@@ -315,7 +315,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
         assert.equal(displayedValue(html,"debt-account-name-25"),"Brokerage Account");
         assert.equal(displayedValue(html,"debt-account-amount-25"),"CAD $12,398.48");
       } else {
-        assert(html.includes("Brokerage Account") && html.includes("Overdraft"));
+        assert(html.includes("Brokerage Account") && html.includes("Balance"));
         assert.equal(displayedValue(html,"debt-account-amount-25"),"CAD $12,398.48");
       }
       assert(!html.includes("Account #25"));
@@ -347,12 +347,12 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     assert(!html.includes("Total balance · £"));
     assert(html.includes("Total balance"));
     assert(!html.includes("Account figures in £"));
-    assert(html.includes("Last updated"));
+    assert(!html.includes("Last updated"));
     assert.equal(JSON.stringify(data),before);
     const accountsHtml=render(AccountsPage,{},data);
     assert.equal(displayedValue(accountsHtml,"text-total-balance"),"£1,622,886.00");
     assert.equal(displayedValue(accountsHtml,"account-summary-balance-investment"),"£0.00");
-    assert.equal(displayedValue(accountsHtml,"account-group-balance-investment"),"£0.00");
+    assert.equal(displayedValue(accountsHtml,"account-group-balance-investment"),"-£12,398.48");
     assert(!accountsHtml.includes("£1,610,487.52"));
     assert(!accountsHtml.includes("GBP"));
     assert(!accountsHtml.includes("CAD $"));
@@ -367,7 +367,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     assert(!hidden.includes("12,398.48"));
     const hiddenAccount=render(AccountFeeBalance,{cash:"-12398.48",currency:"GBP",hidden:true},[]);
     assert(!hiddenAccount.includes("12,398.48"));
-    const csv=accountStatementCsv(26,[{id:578,toAccountId:26,amount:"1622886.001",
+    const csv=accountStatementCsv(26,"VW-TEST-0026",[{id:578,toAccountId:26,amount:"1622886.001",
       description:"Inheritance — family farm sale proceeds",transactionType:"transfer",status:"completed",createdAt:"2026-10-08T16:00:00Z"}],"GBP");
     assert(csv.includes("Amount (£)"));
     assert(csv.includes('"1622886.001"'));
@@ -408,7 +408,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       assert(dashboard.includes("Inheritance — family farm sale proceeds"));
       assert(dashboard.includes(transactionDate(deposit.createdAt)));
     }
-    const statement=accountStatementCsv(26,[deposit]);
+    const statement=accountStatementCsv(26,"VW-TEST-0026",[deposit]);
     for (const text of ["1622886.00","2026-10-08T16:00:00.000Z","America/Toronto","October 8, 2026",deposit.description]) assert(statement.includes(text),text);
     // A UTC date just after midnight still belongs to the previous Toronto date.
     assert.equal(transactionDate("2026-10-09T00:15:00Z"),"October 8, 2026");
@@ -420,7 +420,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       {id:3,toAccountId:24,amount:"381.00",description:"CAD annual management fee refund",transactionType:"fee_refund",status:"completed",createdAt:"2026-10-01T14:00:00Z"},
       {id:4,toAccountId:24,amount:"1000.000001",description:"=untrusted description",transactionType:"sell",status:"completed",createdAt:"2026-10-01T14:00:00Z"},
     ];
-    const csv = accountStatementCsv(24,rows);
+    const csv = accountStatementCsv(24,"VW-TEST-0024",rows);
     for(const text of ["Amount (CAD)","Service fee","Management fee",'"-363.64"','"-381.00"','"381.00"','"1000.000001"',"'=untrusted description"]) assert(csv.includes(text),text);
   });
   it("keeps the zero-funded dashboard headline separate from unpaid fees and preserves net account balances", () => {
@@ -448,11 +448,12 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       if(Component===DashboardPage) {
         assert.equal(displayedValue(html,"text-total-balance"),"CAD $0.00");
         assert.equal(displayedValue(html,"dash-account-balance-24"),"CAD $0.00");
-        assert(html.includes("Unpaid fees:"));
+        assert(html.includes("Unpaid fees"));
       } else {
         assert(!html.includes("32 unpaid fees"));
-        assert(html.includes("CAD -$11,636.48"));
-        assert(html.includes("Net account balance"));
+        assert(html.includes("CAD $11,636.48"));
+        assert(html.includes("Unpaid fees"));
+        assert(!html.includes("Net account balance"));
       }
       assert(!html.includes("demo profile"));
     }

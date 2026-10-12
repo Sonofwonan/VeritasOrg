@@ -89,10 +89,10 @@ test("dashboard account previews show complete names and one overdraft amount", 
     await page.request.post("/api/logout");
     await login(page,identity);
     const card=page.getByTestId(`dash-account-${identity.debt}`);
-    const money=currency==="GBP"?"£1,250.75":"CAD $1,250.75";
+    const money=currency==="GBP"?"-£1,250.75":"CAD -$1,250.75";
     await expect(page.getByTestId(`dash-account-balance-${identity.debt}`)).toHaveText(money);
-    await expect(card).toContainText(`${money} overdraft`);
-    await expect(card).toContainText("Unpaid fees:");
+    await expect(card).toContainText(money);
+    await expect(card).not.toContainText(" cash");
     await expect(card).not.toContainText("Cash ledger overdraft");
     expect((await card.innerText()).split(money).length-1).toBe(1);
     for (const width of [320,390,768,1024,1280,1440]) {
@@ -148,14 +148,14 @@ test("normal login, funded headline, named debt, negative accounts and sixth pos
   const headlineBox = await page.getByTestId("text-total-balance").boundingBox();
   const debtBox = await debt.boundingBox();
   expect(debtBox!.y).toBeGreaterThan(headlineBox!.y);
-  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("$1,250.75 overdraft");
-  await expect(page.getByTestId(`dash-account-${identity.extra}`)).toContainText("$500.00 cash");
+  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("CAD -$1,250.75");
+  await expect(page.getByTestId(`dash-account-${identity.extra}`)).toContainText("$500.00");
   await evidence(page, info, "signed-in-funded-balance-and-debt");
   // The sixth account is not in the dashboard's five-row preview but must count.
   await page.getByTestId("button-quick-accounts").click();
   await expect(page.getByTestId(`balance-${identity.sixth}`)).toHaveText("CAD $125.00");
-  await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText("CAD $1,250.75");
-  await expect(page.getByTestId(`account-balance-label-${identity.debt}`)).toHaveText("Overdraft");
+  await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText("CAD -$1,250.75");
+  await expect(page.getByTestId(`account-balance-label-${identity.debt}`)).toHaveText("Balance");
   await page.getByTestId(`balance-${identity.debt}`).scrollIntoViewIfNeeded();
   await expect(page.getByTestId(`balance-${identity.debt}`)).toBeVisible();
   await evidence(page, info, "negative-individual-account-balance");
@@ -164,7 +164,7 @@ test("normal login, funded headline, named debt, negative accounts and sixth pos
   await link.click();
   await expect(page).toHaveURL(new RegExp(`/accounts/${identity.debt}$`));
   await expect(page.getByRole("heading", { name: "Fee Reserve Trust", exact: true })).toBeVisible();
-  await expect(page.getByTestId(`text-account-overdraft-${identity.debt}`)).toHaveText("Overdraft CAD $1,250.75");
+  await expect(page.getByTestId("text-account-cash-balance")).toHaveText("CAD -$1,250.75");
   await page.goto("/dashboard");
   await verifyHeadline(page);
   await page.reload();
@@ -191,14 +191,14 @@ test("fee retry/refund and account/holding polling refresh without netting debt"
   expect(settings.ok()).toBeTruthy();
   await feeAction("retry");
   await page.clock.runFor(31000);
-  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("$1,614.39 overdraft");
+  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("CAD -$1,614.39");
   await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("CAD $1,614.39");
   await verifyHeadline(page);
   await evidence(page, info, "fee-posted-to-negative-ledger");
   await feeAction("refund");
   await page.clock.runFor(31000);
   await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("CAD $1,250.75");
-  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("$1,250.75 overdraft");
+  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("CAD -$1,250.75");
   await verifyHeadline(page);
   await db.query("UPDATE accounts SET balance=balance+10 WHERE id=$1 AND user_id=$2", [identity.extra, identity.userId]);
   await db.query("UPDATE investments SET current_price=251 WHERE account_id=$1", [identity.funded]);
@@ -222,7 +222,7 @@ test("pending deposits, internal transfer, and institutional status/navigation c
   });
   expect(transfer.status(), await transfer.text()).toBe(201);
   await page.clock.runFor(31000);
-  await expect(page.getByTestId(`dash-account-${identity.extra}`)).toContainText("$600.00 cash");
+  await expect(page.getByTestId(`dash-account-${identity.extra}`)).toContainText("$600.00");
   await verifyHeadline(page);
   const request = await page.request.post("/api/institutional-transfers", { data: {
     institutionName: "Isolated Test Institution", institutionAccountNumber: "TEST-NOT-REAL",
@@ -333,7 +333,7 @@ test("existing accounts privacy control masks cash, fee debt and named ledger de
   await expect(page.getByTestId(`account-row-${identity.debt}`)).not.toContainText("1,250.75");
   await evidence(page, info, "accounts-privacy-masks-balances-and-debt");
   await page.getByTestId("button-toggle-balances").click();
-  await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText("CAD $1,250.75");
+  await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText("CAD -$1,250.75");
   await expect(page.getByTestId(`balance-${identity.sixth}`)).toHaveText("CAD $125.00");
   await page.goto("/dashboard");
   await verifyHeadline(page, HEADLINE);
@@ -354,7 +354,7 @@ test("clients cannot relabel CAD ledgers through profile updates", async ({ page
   await verifyHeadline(page);
   await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("CAD $1,614.39");
   await page.getByTestId(`debt-account-details-${identity.debt}`).click();
-  await expect(page.getByTestId(`text-account-overdraft-${identity.debt}`)).toHaveText("Overdraft CAD $1,250.75");
+  await expect(page.getByTestId("text-account-cash-balance")).toHaveText("CAD -$1,250.75");
   await expect(page.getByTestId("account-detail-balance")).not.toContainText("ledger");
 });
 
@@ -375,18 +375,19 @@ test("preconfigured pound exception preserves amounts and consistent detail/debt
   await expect(page.getByTestId("text-liquid-cash")).toHaveText("£2,001,400.25");
   await expect(page.getByTestId("text-investment-value")).toHaveText("£2,500.00");
   await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("£1,614.39");
-  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("£1,250.75 overdraft");
+  await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("-£1,250.75");
   await evidence(page, info, "preconfigured-pound-exception-funded-balance-and-debt");
   await page.getByTestId("button-quick-accounts").click();
   await expect(page.getByTestId(`balance-${identity.sixth}`)).toHaveText("£125.00");
-  await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText("£1,250.75");
+  await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText("-£1,250.75");
   await expect(page.getByTestId(`debt-account-details-${identity.debt}`)).toHaveAttribute("href", `/accounts/${identity.debt}`);
   await page.getByTestId(`debt-account-details-${identity.debt}`).click();
-  const debt = page.getByRole("region", { name: "Outstanding service fees" });
-  await expect(debt).toContainText("£1,614.39");
+  const debt = page.getByTestId("account-detail-balance");
+  await expect(debt).toContainText("-£1,250.75");
+  await expect(debt).toContainText("£363.64");
   await expect(debt).not.toContainText("CAD");
   await expect(debt).not.toContainText("GBP");
-  await expect(page.getByTestId(`text-account-overdraft-${identity.debt}`)).toHaveText("Overdraft £1,250.75");
+  await expect(page.getByTestId("text-account-cash-balance")).toHaveText("-£1,250.75");
   await evidence(page, info, "pound-account-detail-consistent-debt-and-ledger");
   await page.goto(`/accounts/${identity.funded}`);
   const download = page.waitForEvent("download");

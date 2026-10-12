@@ -1,5 +1,6 @@
 import type { Pool } from "pg";
 import { DEFAULT_FEE_COMPONENTS, DEFAULT_FEE_TERMS } from "../../shared/fees";
+import { initializeAccountHistory } from "../account-history";
 
 export async function initializeFeeTables(pool: Pool) {
   // New enum values must commit before they can be used in ledger inserts.
@@ -119,4 +120,5 @@ export async function initializeFeeTables(pool: Pool) {
     await client.query("ROLLBACK");
     throw error;
   } finally { client.release(); }
+  await initializeAccountHistory(pool);
 }

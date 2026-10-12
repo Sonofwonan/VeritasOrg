@@ -136,10 +136,17 @@ export async function approvePayment(pool: Pool, transactionId: number) {
     if (!txn) throw new FundsAccessError("Transaction not found",404);
     if (txn.status !== "pending") throw new FundsAccessError("Only pending transactions can be approved",400);
     if (!Number.isFinite(Number(txn.amount)) || Number(txn.amount) <= 0) throw new FundsAccessError("Invalid transaction amount",400);
+    await client.query("SELECT id FROM accounts WHERE id=ANY($1::integer[]) ORDER BY id FOR UPDATE",
+      [[txn.from_account_id, txn.to_account_id].filter(id => id != null)]);
     if (txn.from_account_id) {
       const { rows: [source] } = await client.query("SELECT user_id FROM accounts WHERE id=$1",[txn.from_account_id]);
       if (!source) throw new FundsAccessError("Source account unavailable",400);
       if ((await fundsAccess(client,source.user_id)).locked) throw new FundsAccessError("DEBT_PAYMENT_REQUIRED",423);
+      if (txn.cash_debit_deferred) {
+        const result = await client.query("UPDATE accounts SET balance=balance-$2::numeric WHERE id=$1 AND balance >= $2::numeric RETURNING id",
+          [txn.from_account_id, txn.amount]);
+        if (!result.rows.length) throw new FundsAccessError("Insufficient funds",400);
+      }
     }
     if (txn.to_account_id) {
       const { rows: [destination] } = await client.query(`
@@ -156,6 +163,12 @@ export async function approvePayment(pool: Pool, transactionId: number) {
       }
     }
     await client.query("UPDATE transactions SET status='completed' WHERE id=$1",[transactionId]);
+    if (txn.from_account_id && txn.cash_debit_deferred) {
+      await client.query("SELECT record_cash_posting($1::integer,$2::integer)",[transactionId,txn.from_account_id]);
+    }
+    if (txn.to_account_id) {
+      await client.query("SELECT record_cash_posting($1::integer,$2::integer)",[transactionId,txn.to_account_id]);
+    }
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");

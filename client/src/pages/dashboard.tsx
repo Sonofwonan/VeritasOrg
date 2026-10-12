@@ -3,7 +3,6 @@ import { useLocation } from "wouter";
 import { LayoutShell } from "@/components/layout-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -13,14 +12,14 @@ import { useQuery } from "@tanstack/react-query";
 import {
   TrendingUp, ArrowUpRight, ArrowDownRight,
   ArrowLeftRight, Clock, Info, ChevronRight, Landmark,
-  ShieldCheck, Briefcase, BarChart3, Building2, Lock
+  Briefcase, BarChart3, Building2, Lock
 } from "lucide-react";
-import { balanceCurrencyLabel, transactionDescription, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
+import { transactionDescription, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { useFundsAccess } from "@/hooks/use-funds-access";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { DebtAccountSummary } from "@/components/fees/debt-account-summary";
 import { DebtRestrictionStatus } from "@/components/fees/debt-restriction-status";
-import { accountLabel, transactionDate } from "@shared/account-display";
+import { accountLabel, transactionDate, maskAccountNumber, type CashPosting } from "@shared/account-display";
 
 // ── Quick actions ─────────────────────────────────────────────────────────────
 const QUICK_ACTIONS = [
@@ -72,6 +71,8 @@ export default function DashboardPage() {
   const investValue    = investments?.reduce((s, i) => s + Number(i.shares) * Number(i.currentPrice ?? i.purchasePrice), 0) ?? 0;
   // Current funded assets, not net worth. Other accounts' debt stays below.
   const cashTotal      = accounts?.reduce((s, a) => s + Math.max(0, Number(a.balance)), 0) ?? 0;
+  const overdraftTotal = accounts?.reduce((s, a) => s + Math.max(0, -Number(a.balance)), 0) ?? 0;
+  const unpaidFeesTotal = Number(feeSummary.data?.totalUnpaid ?? 0);
   const totalBalance   = cashTotal + investValue;
   const cashUnavailable = accountsError || !accounts || accounts.some(a => !Number.isFinite(Number(a.balance)));
   const investmentsUnavailable = investmentsError || !investments || !Number.isFinite(investValue);
@@ -135,6 +136,12 @@ export default function DashboardPage() {
                   )}
                 </div>
               ))}
+              {(selectedTxn?.cashPostings as CashPosting[] | undefined)?.map(posting => (
+                <div key={posting.accountId} className="flex items-center justify-between gap-3 py-3 text-sm">
+                  <span className="label-caps text-white/40">Balance after transaction · {posting.accountName}</span>
+                  <span className="font-mono font-semibold text-amber-400">{fmt(posting.balanceAfter)}</span>
+                </div>
+              ))}
             </div>
             {selectedTxn?.status === 'pending' && (
               <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-sm mb-2">
@@ -153,14 +160,12 @@ export default function DashboardPage() {
               {/* Current funded balance; liabilities are shown separately below */}
               <div className="min-w-0">
                 <p className="label-caps text-white/40 mb-1">{getGreeting()}, {user?.name?.split(' ')[0]} · Portfolio Overview</p>
+                <p className="text-xs text-white/60 mb-1">Total balance · Funded accounts and holdings</p>
                 <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
                   <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
                     {balanceUnavailable ? "Unavailable" : fmt(totalBalance)}
                   </span>
                 </div>
-                <p className="text-white/30 text-xs font-mono mt-1">
-                  Total balance{currency === "CAD" ? " · CAD" : ""} · {format(new Date(), 'MMMM d, yyyy')}
-                </p>
                 {isTransmitting && <p className="text-violet-300 text-xs mt-2">Funds in transit to {activeTransfer?.institutionName}</p>}
                 {balanceUnavailable && <p role="alert" className="text-red-300 text-xs mt-2">
                   Current balances could not be loaded.
@@ -183,16 +188,18 @@ export default function DashboardPage() {
           </div>
 
           {/* KPI strip */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
             {[
               { label: 'Liquid Cash',    val: cashUnavailable ? "Unavailable" : fmt(cashTotal), sub: access.blocked ? 'Contact your advisor' : pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending${cashLocked ? " · Transfer on hold" : ""}` : cashLocked ? 'Transfer on hold' : 'Available now', icon: Landmark },
               { label: 'Investments',    val: investmentsUnavailable ? "Unavailable" : fmt(investTotal), sub: 'Recorded investment value', icon: BarChart3 },
+              { label: 'Overdraft', val: cashUnavailable ? "Unavailable" : fmt(overdraftTotal), sub: 'Negative cash balances', icon: ArrowDownRight },
+              { label: 'Unpaid fees', val: feeSummary.isLoading ? "Loading…" : feeSummary.isError ? "Unavailable" : fmt(unpaidFeesTotal), sub: 'Outstanding assessments', icon: Clock },
             ].map(({ label, val, sub, icon: Icon }) => (
               <div key={label} className="px-4 sm:px-6 py-4 flex items-center gap-3 min-w-0">
                 <Icon className="w-4 h-4 text-white/20 shrink-0" />
                 <div className="min-w-0">
                   <p className="label-caps text-white/30 mb-0.5">{label}</p>
-                  <p className="font-mono text-white font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]" data-testid={label === 'Liquid Cash' ? "text-liquid-cash" : label === 'Investments' ? "text-investment-value" : undefined}>{val}</p>
+                  <p className="font-mono text-white font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]" data-testid={label === 'Liquid Cash' ? "text-liquid-cash" : label === 'Investments' ? "text-investment-value" : label === 'Overdraft' ? "text-overdraft" : "text-unpaid-fees"}>{val}</p>
                   <p className="text-white/25 text-[10px] mt-0.5">{sub}</p>
                 </div>
               </div>
@@ -401,7 +408,7 @@ export default function DashboardPage() {
                   <div className="p-4 space-y-2">{[1,2,3,4].map(i => <Skeleton key={i} className="h-12" />)}</div>
                 ) : txnError ? (
                   <p role="alert" className="p-4 text-sm text-red-700">Transaction history could not be loaded.</p>
-                ) : transactions && transactions.length > 0 ? transactions.slice(0, 12).map((txn: any) => {
+                ) : transactions && transactions.length > 0 ? transactions.map((txn: any) => {
                   const incomingAccount = accounts?.find(a => a.id === txn.toAccountId);
                   const outgoingAccount = accounts?.find(a => a.id === txn.fromAccountId);
                   const internal = Boolean(incomingAccount && outgoingAccount);
@@ -423,7 +430,9 @@ export default function DashboardPage() {
                         <div className="min-w-0">
                           <p className="text-sm font-semibold whitespace-normal [overflow-wrap:anywhere]">{transactionDescription(txn.description,currency,txn.transactionType)}</p>
                           <p className="text-[10px] text-muted-foreground font-mono whitespace-normal [overflow-wrap:anywhere]">
-                            {transactionDate(txn.createdAt)} · {incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : "Account details unavailable"} ·{' '}
+                            {transactionDate(txn.createdAt)} · {internal
+                              ? `${accountLabel(outgoingAccount!)} → ${accountLabel(incomingAccount!)}`
+                              : incomingAccount || outgoingAccount ? accountLabel((incomingAccount || outgoingAccount)!) : "Account details unavailable"} ·{' '}
                             <span className={cn('font-bold capitalize',
                               isPending ? 'text-amber-800 dark:text-amber-300' : 'text-muted-foreground')}>
                               {txn.status}
@@ -436,6 +445,13 @@ export default function DashboardPage() {
                           isPending ? 'text-amber-800 dark:text-amber-300' : internal ? 'text-muted-foreground' : isIn ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400')}>
                           {internal ? '↔ ' : isIn ? '+' : '-'}{fmt(Number(txn.amount))}
                         </p>
+                        <div className="text-right">
+                          {(txn.cashPostings as CashPosting[] | undefined)?.map(posting => (
+                            <p key={posting.accountId} className="text-[10px] leading-relaxed text-muted-foreground">
+                              Balance after transaction · {posting.accountName}: <span className="font-mono tabular-nums">{fmt(posting.balanceAfter)}</span>
+                            </p>
+                          ))}
+                        </div>
                         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                       </div>
                     </div>
@@ -474,7 +490,6 @@ export default function DashboardPage() {
                 ) : accounts?.length ? accounts.slice(0, 5).map(acc => {
                   const cat = categoryOf(acc.accountType);
                   const overdrawn = Number(acc.balance) < 0;
-                  const unpaid = Number(feeSummary.data?.accounts.find(item => item.accountId === acc.id)?.unpaidTotal || 0);
                   return (
                     <button type="button" key={acc.id} className="block w-full px-5 py-3.5 text-left hover:bg-muted/30 transition-colors group"
                       onClick={() => setLocation(`/accounts/${acc.id}`)} data-testid={`dash-account-${acc.id}`}>
@@ -488,19 +503,14 @@ export default function DashboardPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold [overflow-wrap:anywhere]" data-testid={`dash-account-name-${acc.id}`}>{accountLabel(acc)}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono">
-                            ••••{((acc.id * 1337) % 9000 + 1000).toString().slice(-4)}
-                          </p>
+                          <p className="text-[10px] text-muted-foreground font-mono">{maskAccountNumber(acc.accountNumber)}</p>
                         </div>
                         <ChevronRight className="mt-1 w-3 h-3 shrink-0 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                       </div>
                       <div className="mt-1 pl-[38px]">
                         <p className={cn("font-mono text-xs font-bold tabular-nums", overdrawn && "text-rose-700 dark:text-rose-400")}>
-                          <span className="[overflow-wrap:anywhere]" data-testid={`dash-account-balance-${acc.id}`}>{fmt(overdrawn ? Math.abs(Number(acc.balance)) : acc.balance)}</span>{" "}{overdrawn ? "overdraft" : "cash"}
+                          <span className="[overflow-wrap:anywhere]" data-testid={`dash-account-balance-${acc.id}`}>{fmt(acc.balance)}</span>
                         </p>
-                        {unpaid > 0 && <p className="mt-1 text-xs text-rose-700 dark:text-rose-400">
-                          Unpaid fees: <span className="[overflow-wrap:anywhere]">{fmt(unpaid)}</span>
-                        </p>}
                       </div>
                     </button>
                   );
@@ -514,9 +524,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Footer */}
-        <div className="pt-2 pb-1 border-t border-border/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[10px] text-muted-foreground/40">
-          <span className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> CDIC member · CIPF protected</span>
-          <span>{currency === "GBP" ? "Last updated" : `Account figures in ${balanceCurrencyLabel(currency)} · Data as of`} {format(new Date(), 'MMM d, yyyy')}</span>
+        <div className="pt-2 pb-1 border-t border-border/40 text-[10px] text-muted-foreground/40">
+          <span>CDIC member · CIPF protected</span>
         </div>
 
       </div>
