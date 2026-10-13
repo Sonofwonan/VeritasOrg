@@ -6,6 +6,118 @@ import type { APIRequestContext } from "@playwright/test";
 // Never retain traces/screenshots containing even disposable enrollment secrets.
 test.use({ trace: "off", screenshot: "off", video: "off" });
 
+async function financialSnapshot(db: import("pg").Pool, userId: number) {
+  return Promise.all([
+    "SELECT * FROM accounts WHERE user_id=$1 ORDER BY id",
+    "SELECT * FROM transactions WHERE from_account_id IN (SELECT id FROM accounts WHERE user_id=$1) OR to_account_id IN (SELECT id FROM accounts WHERE user_id=$1) ORDER BY id",
+    "SELECT * FROM investments WHERE account_id IN (SELECT id FROM accounts WHERE user_id=$1) ORDER BY id",
+    "SELECT * FROM fee_enrollments WHERE user_id=$1 ORDER BY id",
+    "SELECT * FROM fee_assessments WHERE account_id IN (SELECT id FROM accounts WHERE user_id=$1) ORDER BY id",
+    "SELECT * FROM management_contracts WHERE user_id=$1 ORDER BY id",
+    "SELECT account_frozen,login_restricted,display_currency,debt_clearance_required,debt_payment_account_id,debt_payment_confirmed_at FROM users WHERE id=$1",
+  ].map(async sql => (await db.query(sql, [userId])).rows));
+}
+
+test("security past-code grace permits two-step-old enrollment and normal password login without reenrollment", async ({page,identity,db,playwright}) => {
+  await login(page, identity);
+  await page.close();
+  const before = await financialSnapshot(db,identity.userId);
+  const setup = await page.request.post("/api/security/two-factor/setup", {data:{currentPassword:identity.password}});
+  expect(setup.status()).toBe(200);
+  const {secret} = await setup.json();
+  // Use real server time, not an authentication/clock bypass. Leave enough time
+  // to enroll with the oldest accepted step before its real boundary expires.
+  if (Date.now()%30000 > 25000) {
+    await new Promise(resolve => setTimeout(resolve,30000-Date.now()%30000+100));
+  }
+  const step = Math.floor(Date.now()/30000);
+  const enrollment = await page.request.post("/api/security/two-factor/confirm", {
+    data:{code:await generate({secret,epoch:(step-2)*30})},
+  });
+  expect(enrollment.status()).toBe(200);
+  const encrypted = (await db.query("SELECT secret FROM client_security WHERE user_id=$1", [identity.userId])).rows[0].secret;
+  const other = await playwright.request.newContext({baseURL:process.env.BALANCE_E2E_URL});
+  try {
+    expect((await other.post("/api/login", {data:{userId:identity.ref,password:identity.password}})).status()).toBe(202);
+    const code = await generate({secret,epoch:(step-1)*30});
+    // This newer, unused code becomes two steps old when the next period starts.
+    await new Promise(resolve => setTimeout(resolve,Math.max(0,(step+1)*30000-Date.now()+100)));
+    expect((await other.post("/api/security/two-factor/challenge", {data:{code}})).status()).toBe(200);
+    expect((await other.get("/api/accounts")).status()).toBe(200);
+    const state = (await db.query("SELECT secret,last_totp_step FROM client_security WHERE user_id=$1", [identity.userId])).rows[0];
+    expect(state.secret === encrypted).toBe(true);
+    expect(Number(state.last_totp_step)).toBe(step-1);
+    expect((await other.post("/api/login", {data:{userId:identity.ref,password:identity.password}})).status()).toBe(202);
+    expect((await other.post("/api/security/two-factor/challenge", {data:{code}})).status()).toBe(400);
+    expect(await financialSnapshot(db,identity.userId)).toEqual(before);
+  } finally { await other.dispose(); }
+});
+
+test("security 60-second skewed authenticator login is single-use across concurrent sessions and attempt limits remain", async ({page,identity,db,playwright}) => {
+  await login(page, identity);
+  await page.close();
+  const before = await financialSnapshot(db, identity.userId);
+  const setup = await page.request.post("/api/security/two-factor/setup", {data:{currentPassword:identity.password}});
+  expect(setup.status()).toBe(200);
+  const {secret} = await setup.json();
+  expect((await page.request.post("/api/security/two-factor/confirm", {data:{code:await generate({secret})}})).status()).toBe(200);
+  const contexts = await Promise.all([0,1].map(() => playwright.request.newContext({baseURL:process.env.BALANCE_E2E_URL})));
+  try {
+    for (const context of contexts) {
+      expect((await context.post("/api/login", {data:{userId:identity.ref,password:identity.password}})).status()).toBe(202);
+      expect((await context.get("/api/accounts")).status()).toBe(401);
+    }
+    const step = Math.floor(Date.now()/30000)+2;
+    const code = await generate({secret,epoch:step*30});
+    const results = await Promise.all(contexts.map(context => context.post("/api/security/two-factor/challenge", {data:{code}})));
+    expect(results.map(result => result.status()).sort()).toEqual([200,400]);
+    const winner = contexts[results.findIndex(result => result.status() === 200)];
+    const loser = contexts[results.findIndex(result => result.status() === 400)];
+    expect((await winner.get("/api/accounts")).status()).toBe(200);
+    expect((await loser.get("/api/accounts")).status()).toBe(401);
+    expect(Number((await db.query("SELECT last_totp_step FROM client_security WHERE user_id=$1", [identity.userId])).rows[0].last_totp_step)).toBe(step);
+    expect((await winner.post("/api/security/two-factor/recovery", {data:{currentPassword:identity.password,code}})).status()).toBe(400);
+    // The losing pending session has already spent one of its five attempts.
+    for (let attempt=1; attempt<5; attempt++) {
+      expect((await loser.post("/api/security/two-factor/challenge", {data:{code}})).status()).toBe(400);
+    }
+    expect((await loser.post("/api/security/two-factor/challenge", {data:{code}})).status()).toBe(401);
+    expect((await loser.get("/api/accounts")).status()).toBe(401);
+    expect(await financialSnapshot(db,identity.userId)).toEqual(before);
+  } finally { await Promise.all(contexts.map(context => context.dispose())); }
+});
+
+for (const operation of ["password","recovery","disable"] as const) {
+  test(`security 60-second skewed code supports protected ${operation} without changing financial records`, async ({page,identity,db}) => {
+    await login(page, identity);
+    await page.close();
+    const before = await financialSnapshot(db,identity.userId);
+    const setup = await page.request.post("/api/security/two-factor/setup", {data:{currentPassword:identity.password}});
+    expect(setup.status()).toBe(200);
+    const {secret} = await setup.json();
+    expect((await page.request.post("/api/security/two-factor/confirm", {data:{code:await generate({secret})}})).status()).toBe(200);
+    const epoch = (Math.floor(Date.now()/30000)+2)*30;
+    const code = await generate({secret,epoch});
+    const changed = randomBytes(24).toString("hex");
+    const path = operation === "password" ? "/api/security/password" : `/api/security/two-factor/${operation}`;
+    const data = operation === "password"
+      ? {currentPassword:identity.password,newPassword:changed,confirmPassword:changed,code}
+      : {currentPassword:identity.password,code};
+    expect((await page.request.post(path, {data:{...data,currentPassword:"wrong"}})).status()).toBe(400);
+    const result = await page.request.post(path, {data});
+    expect(result.status()).toBe(200);
+    if (operation === "password") {
+      expect((await page.request.get("/api/user")).status()).toBe(401);
+    } else if (operation === "recovery") {
+      expect((await result.json()).recoveryCodes).toHaveLength(10);
+      expect((await page.request.post(path,{data})).status()).toBe(400);
+    } else {
+      expect((await (await page.request.get("/api/security/status")).json()).twoFactorEnabled).toBe(false);
+    }
+    expect(await financialSnapshot(db,identity.userId)).toEqual(before);
+  });
+}
+
 test("security password change verifies current password and revokes all sessions", async ({ page, identity, playwright }) => {
   await login(page, identity);
   // API-only checks keep the authenticated context, but stop dashboard polls

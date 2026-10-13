@@ -56,10 +56,16 @@ export const digest = (value: string) => createHash("sha256").update(value).dige
 export const recoveryDigest = (userId: number, code: string) => digest(`${userId}:${code.replace(/-/g, "").toLowerCase()}`);
 export const newRecoveryCodes = () => Array.from({ length: 10 }, () => randomBytes(10).toString("hex").toUpperCase().match(/.{4}/g)!.join("-"));
 
+const AUTHENTICATOR_PERIOD_SECONDS = 30;
+const AUTHENTICATOR_TOLERANCE_SECONDS = 60;
+
 export async function verifyTotp(secret: string, code: string, afterTimeStep = -1, epoch = Math.floor(Date.now() / 1000)) {
   if (!/^\d{6}$/.test(code)) return null;
-  if (afterTimeStep > Math.floor(epoch / 30) + 1) return null;
-  const result = await verify({ strategy: "totp", secret, token: code, epoch, epochTolerance: 30,
+  // No unused step can exist above this bound. Match the library's seconds-based
+  // window, including its future edge, without resetting consumed-code history.
+  if (afterTimeStep >= Math.floor((epoch + AUTHENTICATOR_TOLERANCE_SECONDS) / AUTHENTICATOR_PERIOD_SECONDS)) return null;
+  const result = await verify({ strategy: "totp", secret, token: code, epoch,
+    period: AUTHENTICATOR_PERIOD_SECONDS, epochTolerance: AUTHENTICATOR_TOLERANCE_SECONDS,
     ...(afterTimeStep >= 0 ? { afterTimeStep } : {}),
   });
   return result.valid && "timeStep" in result ? result.timeStep : null;

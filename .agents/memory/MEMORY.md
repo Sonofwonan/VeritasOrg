@@ -12,5 +12,6 @@
 - [Plain-language interface](plain-language-ui.md) — Simple client wording, real transaction-history links and advisor-directed payment popups; preserve terms and access rules.
 - [Historical cash evidence](account-history-evidence.md) — Legacy completed rows may not represent cash movements; never infer historical balances from today's balance.
 - [Authenticator key rotation](security-key-rotation.md) — Re-encrypt authenticator secrets before replacing their encryption root; session-key rotation must not lock clients out.
+- [Authenticator grace policy](authenticator-grace-policy.md) — User approved 60-second server tolerance; keep 30-second rotation, single-use protections and unchanged challenge lifetimes.
 - [Cross-origin security](browser-origin-policy.md) — Same-origin passes do not prove deployed sign-in works; verify credentialed flows from every approved frontend.
 - [Financial snapshot consistency](financial-snapshot-consistency.md) — Keep dashboard cash and liabilities in one committed snapshot and one cache entry through financial changes.
