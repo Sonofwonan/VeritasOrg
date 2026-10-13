@@ -53,6 +53,20 @@ for(const currency of ["CAD","GBP"] as const){
       await page.setViewportSize({width,height:900});
       await page.goto("/dashboard");
       await verifyHeadline(page,formatBalance("2003900.25",currency));
+      const headline=page.getByTestId("text-total-balance");
+      await expect(headline).toHaveCSS("font-weight","700");
+      await expect(headline).toHaveCSS("font-variant-numeric","tabular-nums");
+      expect(await headline.evaluate(el=>getComputedStyle(el).fontFamily)).toContain("DM Sans");
+      const headlineLayout=await headline.evaluate(el=>{
+        const range=document.createRange();
+        range.selectNodeContents(el);
+        const rects=Array.from(range.getClientRects()).filter(r=>r.width>0);
+        const panel=el.closest(".wealth-panel")!.getBoundingClientRect();
+        return {lines:new Set(rects.map(r=>Math.round(r.top))).size,
+          contained:rects.every(r=>r.left>=panel.left && r.right<=panel.right)};
+      });
+      expect(headlineLayout.lines,`${currency} ${width}px headline wraps`).toBe(1);
+      expect(headlineLayout.contained,`${currency} ${width}px headline clips`).toBe(true);
       const card=page.getByTestId(`debt-account-${identity.debt}`);
       await expect(card.getByTestId(`debt-account-name-${identity.debt}`)).toBeVisible();
       await expect(card).not.toContainText("Amount owed");

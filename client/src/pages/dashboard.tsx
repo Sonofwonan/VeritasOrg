@@ -187,7 +187,7 @@ export default function DashboardPage() {
                 <p className="label-caps text-white/40 mb-1">{getGreeting()}, {user?.name?.split(' ')[0]} · Portfolio Overview</p>
                 <p className="text-xs text-white/60 mb-1">Total balance · Funded accounts and holdings</p>
                 <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-                  <span className={`font-serif text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
+                  <span className={`font-sans font-bold tabular-nums text-[clamp(1.75rem,6vw,3rem)] tracking-tight break-all ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
                     {balanceUnavailable ? "Unavailable" : fmt(totalBalance)}
                   </span>
                 </div>

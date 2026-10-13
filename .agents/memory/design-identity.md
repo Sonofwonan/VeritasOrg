@@ -15,6 +15,12 @@ description: Approved visual system for the platform. Apply to all new pages/com
 - Numbers/data: `DM Mono` with `font-variant-numeric: tabular-nums`
 - Tailwind aliases: `font-serif`, `font-sans`, `font-mono`
 
+**Dashboard balance exception:** The user approved clean, bold sans-serif text for the dashboard's total balance.
+
+**Why:** They requested a different balance font and explicitly selected “Clean, bold text.”
+
+**How to apply:** Preserve this choice during future dashboard styling; it does not authorize changing other headings or every monetary figure.
+
 **Colors**
 - Background: warm cream
 - Primary: softly lightened forest green, not near-black green
