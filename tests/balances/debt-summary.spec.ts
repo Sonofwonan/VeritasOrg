@@ -13,10 +13,10 @@ test("normal debt card stays separate from admin provenance and preserves locked
   await verifyHeadline(page, "£2,003,900.25");
   const card = page.getByTestId(`debt-account-${identity.debt}`);
   await expect(card).toContainText(name);
-  await expect(card).toContainText("Amount owed");
+  await expect(card).not.toContainText("Amount owed");
   await expect(card).not.toContainText("GBP");
   await expect(card).not.toContainText("CAD");
-  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("£1,614.39");
+  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("-£1,614.39");
   expect((await card.innerText()).split("£1,614.39").length - 1).toBe(1);
   await expect(page.getByTestId("debt-restriction-status")).toHaveCount(0);
   await expect(page.getByTestId("debt-restriction-unavailable")).toHaveCount(0);
@@ -267,7 +267,7 @@ test("settling an unpaid fee invalidates the notice while another overdraft keep
   await page.reload();
   await expect(page.getByTestId("debt-restriction-status")).toHaveCount(0);
   await assertFundsActionBlocked(page,"button-quick-transfer");
-  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("CAD $1,250.75");
+  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("CAD -$1,250.75");
   await expect(page.getByTestId(`debt-account-${identity.funded}`)).toHaveCount(0);
   await confirm();
   await page.reload();

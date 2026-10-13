@@ -69,13 +69,39 @@ export default function DashboardPage() {
   const { data: primaryTransactions } = useAccountTransactions(primaryAccount?.id || 0);
   const { data: transactions, isLoading: txnLoading, isError: txnError } = usePortfolioTransactions();
 
+  const fmt = (n: number | string) => formatBalance(n, currency);
   const investValue    = investments?.reduce((s, i) => s + Number(i.shares) * Number(i.currentPrice ?? i.purchasePrice), 0) ?? 0;
   // Current funded assets, not net worth. Other accounts' debt stays below.
   const cashTotal      = accounts?.reduce((s, a) => s + Math.max(0, Number(a.balance)), 0) ?? 0;
   const overdraftTotal = accounts?.reduce((s, a) => s + Math.max(0, -Number(a.balance)), 0) ?? 0;
-  const unpaidFeesTotal = Number(feeSummary.data?.totalUnpaid ?? 0);
+  const verifiedDebtAmount = (value: unknown): number | null => {
+    if ((typeof value !== "string" && typeof value !== "number") || (typeof value === "string" && !value.trim())) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+  };
+  const totalUnpaid = verifiedDebtAmount(feeSummary.data?.totalUnpaid);
+  const totalOverdraft = feeSummary.data?.totalOverdraft === undefined
+    ? accounts && accounts.every(account =>
+      (typeof account.balance === "string" ? account.balance.trim() !== "" : typeof account.balance === "number") &&
+      Number.isFinite(Number(account.balance)))
+      ? accounts.reduce((sum, account) => sum + Math.max(0, -Number(account.balance)), 0)
+      : null
+    : verifiedDebtAmount(feeSummary.data.totalOverdraft);
+  const proposedTotalOwed = feeSummary.data?.totalOwed === undefined
+    ? totalUnpaid !== null && totalOverdraft !== null ? totalUnpaid + totalOverdraft : null
+    : verifiedDebtAmount(feeSummary.data.totalOwed);
+  const suppliedOverdraftInvalid = feeSummary.data?.totalOverdraft !== undefined && totalOverdraft === null;
+  const totalsConsistent = totalUnpaid !== null && totalOverdraft !== null && proposedTotalOwed !== null
+    ? Math.abs(proposedTotalOwed - totalUnpaid - totalOverdraft) < 0.01
+    : true;
+  const totalOwed = totalUnpaid === null || suppliedOverdraftInvalid || !totalsConsistent ? null : proposedTotalOwed;
+  const unpaidFeesValue = totalOwed === null ? "Unavailable" : fmt(totalOwed === 0 ? 0 : -totalOwed);
   const totalBalance   = cashTotal + investValue;
   const cashUnavailable = accountsError || !accounts || accounts.some(a => !Number.isFinite(Number(a.balance)));
+  const overdraftUnavailable = accountsError || !accounts || accounts.some(a =>
+    (typeof a.balance === "string" && !a.balance.trim()) ||
+    (typeof a.balance !== "string" && typeof a.balance !== "number") ||
+    !Number.isFinite(Number(a.balance)));
   const investmentsUnavailable = investmentsError || !investments || !Number.isFinite(investValue);
   const balanceUnavailable = cashUnavailable || investmentsUnavailable || !Number.isFinite(totalBalance);
   const cashLocked = access.blocked || Boolean(activeTransfer && ["approved", "liquidating", "transfer_out"].includes(activeTransfer.status));
@@ -83,8 +109,6 @@ export default function DashboardPage() {
 
   const pendingBalance = primaryTransactions?.filter(t => t.status === 'pending')
     .reduce((s, t) => t.toAccountId === primaryAccount?.id ? s + Number(t.amount) : s - Number(t.amount), 0) || 0;
-
-  const fmt = (n: number | string) => formatBalance(n, currency);
 
   if (accountsLoading || investmentsLoading) {
     return (
@@ -193,22 +217,22 @@ export default function DashboardPage() {
             {[
               { label: 'Liquid Cash',    val: cashUnavailable ? "Unavailable" : fmt(cashTotal), sub: access.blocked ? 'Contact your advisor' : pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending${cashLocked ? " · Transfer on hold" : ""}` : cashLocked ? 'Transfer on hold' : 'Available now', icon: Landmark },
               { label: 'Investments',    val: investmentsUnavailable ? "Unavailable" : fmt(investTotal), sub: 'Recorded investment value', icon: BarChart3 },
-              { label: 'Overdraft', val: cashUnavailable ? "Unavailable" : fmt(overdraftTotal), sub: 'Negative cash balances', icon: ArrowDownRight },
-              { label: 'Unpaid fees', val: feeSummary.isLoading ? "Loading…" : feeSummary.isError ? "Unavailable" : fmt(unpaidFeesTotal), sub: 'Outstanding assessments', icon: Clock },
-            ].map(({ label, val, sub, icon: Icon }) => (
+              { label: 'Overdraft', val: overdraftUnavailable ? "Unavailable" : fmt(overdraftTotal === 0 ? 0 : -overdraftTotal), sub: undefined, debt: true, icon: ArrowDownRight },
+              { label: 'Unpaid fees', val: feeSummary.isLoading ? "Loading…" : feeSummary.isError ? "Unavailable" : unpaidFeesValue, sub: undefined, debt: true, icon: Clock },
+            ].map(({ label, val, sub, debt, icon: Icon }) => (
               <div key={label} className="px-4 sm:px-6 py-4 flex items-center gap-3 min-w-0">
                 <Icon className="w-4 h-4 text-white/20 shrink-0" />
                 <div className="min-w-0">
                   <p className="label-caps text-white/30 mb-0.5">{label}</p>
-                  <p className="font-mono text-white font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]" data-testid={label === 'Liquid Cash' ? "text-liquid-cash" : label === 'Investments' ? "text-investment-value" : label === 'Overdraft' ? "text-overdraft" : "text-unpaid-fees"}>{val}</p>
-                  <p className="text-white/25 text-[10px] mt-0.5">{sub}</p>
+                  <p className={cn("font-mono font-semibold text-xs sm:text-sm [overflow-wrap:anywhere]", debt ? "text-red-300" : "text-white")} data-testid={label === 'Liquid Cash' ? "text-liquid-cash" : label === 'Investments' ? "text-investment-value" : label === 'Overdraft' ? "text-overdraft" : "text-unpaid-fees"}>{val}</p>
+                  {sub && <p className="text-white/25 text-[10px] mt-0.5">{sub}</p>}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <DebtAccountSummary summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading}
+        <DebtAccountSummary summary={feeSummary.data} accounts={accounts} variant="dashboard" loading={feeSummary.isLoading}
           error={feeSummary.isError} retry={() => void feeSummary.refetch()} currency={currency} />
 
         {/* ── Portfolio in Transit Banner ─────────────────────────────────── */}

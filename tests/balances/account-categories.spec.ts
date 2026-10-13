@@ -41,7 +41,7 @@ test("named funded trusts and brokerage stay in their presentation groups withou
   // Positive cash and holdings, not net of the trust's overdraft.
   await verifyHeadline(page, "$2,004,000.25");
   await expect(page.getByTestId(`debt-account-name-${identity.debt}`)).toHaveText("Fee Reserve Trust");
-  await expect(page.getByTestId(`debt-account-details-${identity.debt}`)).toBeVisible();
+  await expect(page.getByTestId(`debt-account-details-${identity.debt}`)).toHaveCount(0);
   await expect(page.getByTestId(`dash-account-${identity.debt}`)).toContainText("CAD -$1,250.75");
   await page.goto("/accounts");
   await expect(page.getByTestId("text-total-balance")).toHaveText(`CAD ${money(cashTotal + holdingsTotal)}`);
@@ -67,7 +67,7 @@ test("named funded trusts and brokerage stay in their presentation groups withou
     // Liabilities remain signed in storage, but never reduce funded summaries.
     await expect(row.getByTestId(`balance-${account.id}`)).toHaveText(`CAD ${money(ledgerBalance)}`);
     if (ledgerBalance < 0) {
-      await expect(row.getByText("Balance", { exact: true })).toBeVisible();
+      await expect(row.getByText("Balance", { exact: true })).toHaveCount(0);
     }
     await expect(other.getByTestId(`account-row-${account.id}`)).toHaveCount(0);
   }
@@ -111,7 +111,7 @@ test("inheritance cash and Brokerage overdraft stay separate, including during t
   await expect(page.getByTestId("account-summary-balance-investment")).toHaveText("£0.00");
   await expect(page.getByTestId("account-group-balance-investment")).toHaveText("-£12,398.48");
   await expect(page.getByTestId("account-group-balance-business")).toHaveText("£1,622,886.00");
-  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("£12,398.48");
+  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("-£12,398.48");
   await expect(page.getByTestId("debt-account-summary")).not.toContainText("Inheritance Trust Account");
   await expect(page.getByTestId(`account-row-${identity.funded}`)).toContainText("-£12,398.48");
   await expect(page.locator("main.overflow-y-auto")).not.toContainText(/£1,610,487.52|Net Account Balance · After Unpaid Fees|\bCAD\b|\bGBP\b/);
@@ -135,14 +135,14 @@ test("inheritance cash and Brokerage overdraft stay separate, including during t
   await page.reload();
   await expect(page.getByTestId("text-total-balance")).toHaveText("£1,622,886.00");
   await expect(page.getByTestId(`balance-${identity.sixth}`)).toHaveText("£1,622,886.00");
-  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("£12,398.48");
+  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("-£12,398.48");
   await page.unroute("**/api/institutional-transfers");
   await page.route("**/api/investments", route => route.fulfill({status:503,contentType:"application/json",body:'{"message":"Synthetic price-history failure"}'}));
   await page.reload();
   await expect(page.getByTestId("text-total-balance")).toHaveText("Unavailable");
   await expect(page.getByTestId("account-summary-balance-cash")).toHaveText("£1,622,886.00");
   await expect(page.getByTestId("account-summary-balance-investment")).toHaveText("Unavailable");
-  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("£12,398.48");
+  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("-£12,398.48");
   await page.unroute("**/api/investments");
   await page.getByRole("button", { name: "Retry", exact: true }).click();
   await expect(page.getByTestId("text-total-balance")).toHaveText("£1,622,886.00");

@@ -228,7 +228,7 @@ export default function AccountsPage() {
         </div>
       </div>
 
-      <DebtAccountSummary summary={feeSummary.data} accounts={accounts} loading={feeSummary.isLoading || isLoading}
+      <DebtAccountSummary summary={feeSummary.data} accounts={accounts} variant="accounts" loading={feeSummary.isLoading || isLoading}
         error={feeSummary.isError || accountsError} retry={() => { void feeSummary.refetch(); void refetchAccounts(); }}
         hidden={hideBalances} currency={currency} />
 
@@ -300,8 +300,8 @@ export default function AccountsPage() {
                     <span className="label-caps text-muted-foreground">{label}</span>
                     <span className="text-[10px] text-muted-foreground/50 font-mono ml-1">({items.length})</span>
                   </div>
-                    <span className="whitespace-nowrap text-right text-xs text-foreground/70 sm:text-sm">
-                      Balance <span data-testid={`account-group-balance-${cat}`} className="font-mono tabular-nums">{fmt(catTotal)}</span>
+                    <span data-testid={`account-group-balance-${cat}`} className={cn("whitespace-nowrap text-right font-mono text-xs tabular-nums sm:text-sm", catTotal < 0 ? "text-red-700 dark:text-red-300" : "text-foreground/70")}>
+                      {fmt(catTotal)}
                     </span>
                 </div>
 
@@ -313,8 +313,16 @@ export default function AccountsPage() {
                     return (
                       <div
                         key={account.id}
-                         className="grid grid-cols-1 gap-2 items-center py-4 px-1 hover:bg-muted/30 transition-colors cursor-pointer group xl:grid-cols-[1fr_auto] xl:gap-4"
+                        role="link"
+                        tabIndex={0}
+                        className="grid grid-cols-1 gap-2 items-center py-4 px-1 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset transition-colors cursor-pointer group xl:grid-cols-[1fr_auto] xl:gap-4"
                         onClick={() => setLocation(`/accounts/${account.id}`)}
+                        onKeyDown={event => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setLocation(`/accounts/${account.id}`);
+                          }
+                        }}
                         data-testid={`account-row-${account.id}`}
                       >
                         {/* Left: name + number */}
@@ -356,12 +364,8 @@ export default function AccountsPage() {
 
                         {/* Right: balance + arrow */}
                         <div className="flex min-w-0 items-center justify-between gap-3 xl:justify-end xl:gap-4 xl:shrink-0">
-                          {/* Balance */}
                           <div className="min-w-0 text-right xl:min-w-[140px]">
-                            <p className="label-caps text-muted-foreground/50 mb-0.5" data-testid={`account-balance-label-${account.id}`}>
-                              Balance
-                            </p>
-                                <p className={cn("whitespace-nowrap font-mono text-[clamp(.82rem,4vw,1rem)] font-semibold tabular-nums xl:text-base", isTransmitting ? "text-violet-400" : "text-foreground")} data-testid={`balance-${account.id}`}>
+                                <p className={cn("whitespace-nowrap font-mono text-[clamp(.82rem,4vw,1rem)] font-semibold tabular-nums xl:text-base", Number(account.balance) < 0 ? "text-red-700 dark:text-red-300" : isTransmitting ? "text-violet-400" : "text-foreground")} data-testid={`balance-${account.id}`}>
                                 {fmt(Number(account.balance))}
                               </p>
                             {unpaidFees > 0 && <p className="mt-1 text-xs text-rose-800 dark:text-rose-300">

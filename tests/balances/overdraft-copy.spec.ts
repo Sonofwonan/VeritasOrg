@@ -97,7 +97,7 @@ test("plain overdrafts and fee descriptions preserve records, currencies and dis
         await page.getByRole("dialog").getByRole("button", { name: "Close", exact: true }).first().click();
       }
       await page.goto("/accounts");
-      if (state.total) await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText(money(state.total));
+      if (state.total) await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText(money(`-${state.total}`));
       else await expect(page.getByTestId("debt-account-summary")).toHaveCount(0);
       if (state.kind === "overdraft") {
         const accountRow = page.getByTestId(`account-row-${identity.debt}`);

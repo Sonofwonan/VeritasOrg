@@ -58,7 +58,7 @@ for (const currency of ["CAD", "GBP"] as const) {
     await expect(row).toContainText(`Renamed Account`);
     await expect(row).toContainText(money("1999990.24"));
     await expect(row).toContainText(money("510.01"));
-    await expect(page.getByTestId("text-overdraft")).toHaveText(money("1249.50"));
+    await expect(page.getByTestId("text-overdraft")).toHaveText(money("-1249.50"));
     await expect(page.getByTestId(`dash-account-balance-${identity.debt}`)).toHaveText(money("-1249.50"));
     const main = page.locator("main").last();
     await expect(main).not.toContainText(/Account figures in|Last updated|Data as of/);

@@ -7,7 +7,7 @@ Every account must be identified by its account name, including debt breakdowns 
 
 **Why:** The user repeatedly corrected the fee-debt display, explicitly rejecting “Account #25” and requiring the specific account name.
 
-**How to apply:** Use the account's display name or account type in client and administrative views. Keep IDs for routing and internal reconciliation, not as substitutes for names.
+**How to apply:** Use the account's display name or account type in client and administrative views. Keep IDs for routing and internal reconciliation, not as substitutes for names. The compact Accounts debt summary is a user-requested exception: names stay accessible but visually hidden, with permanent masked numbers distinguishing multiple owing accounts.
 
 Show balances in full digits, not abbreviated million notation such as "$2.80M".
 
@@ -110,6 +110,18 @@ In dashboard account previews and Accounts cards, show an overdrawn account's fu
 **Why:** The user first rejected duplicate debt figures, then explicitly requested the minus sign like a normal bank balance and objected to an overdrawn account appearing as £0.00.
 
 **How to apply:** Keep the actual negative ledger balance unchanged and display it with its minus sign. Keep genuinely unpaid fees separate and preserve the separate top-summary overdraft identification; never make the funded total negative by netting debt into it.
+
+Use different compact debt captions on the two overview screens: Dashboard keeps the account name without “Amount owed”; Accounts keeps “Amount owed” without a visible account-name heading. Neither debt summary has a details link beneath the figure. Debt figures are negative and red.
+
+**Why:** The user explicitly requested these different captions, removed the links and repeated Balance labels, and asked for red figures with minus signs.
+
+**How to apply:** Preserve normal account names and detail navigation in the account list. Visually simplifying the debt summary must not remove accessible account identification or alter financial records.
+
+The dashboard “Unpaid fees” figure presents total still owed, including debt already posted as overdraft, rather than only assessments awaiting deduction.
+
+**Why:** The user rejected a zero unpaid-fees figure while an overdraft still required payment and asked for the corresponding negative red amount.
+
+**How to apply:** Both dashboard debt figures refer to existing liabilities, not two charges. Preserve the internal distinction between posted overdraft and unposted assessments; never double-count them or deduct debt from funded totals again.
 
 Use plain-language overdraft highlights on account detail and account summary screens too, without technical ledger explanations or repeated amounts.
 
