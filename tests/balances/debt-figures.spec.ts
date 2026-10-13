@@ -34,7 +34,7 @@ async function redUnclipped(figure: Locator, width: number, red = true) {
       right:Math.max(...rects.map(r=>r.right))};
   });
   if(red) expect(metrics.red).toBe(true);
-  else expect(metrics.rgb.slice(0,3)).toEqual([0,0,0]);
+  else expect(metrics.rgb.slice(0,3)).toEqual([255,255,255]);
   expect(metrics.clipped).toBe(false);
   expect(metrics.lines).toBe(1);
   expect(metrics.right).toBeLessThanOrEqual(width);
@@ -84,6 +84,17 @@ for(const currency of ["CAD","GBP"] as const){
       if(width===390) await page.screenshot({path:info.outputPath(`dashboard-${currency}.jpg`)});
       await page.goto("/accounts");
       await expect(page.getByTestId("text-total-balance")).toHaveText(formatBalance("2003900.25",currency));
+      const panel = page.getByTestId("accounts-summary-panel");
+      await expect(panel.getByTestId("debt-account-summary")).toHaveCount(1);
+      await expect(page.getByTestId("debt-account-summary")).toHaveCount(1);
+      await expect(page.getByRole("heading", { name: "Account balances", exact: true })).toHaveCount(0);
+      for (const id of ["text-total-balance", "account-summary-balance-cash", "account-summary-balance-investment", `debt-account-amount-${identity.debt}`]) {
+        const figure = panel.getByTestId(id);
+        expect(await figure.evaluate(el => getComputedStyle(el).fontFamily)).toContain("DM Sans");
+        await expect(figure).toHaveCSS("font-weight", "700");
+        await expect(figure).toHaveCSS("font-style", "normal");
+      }
+      await expect(panel.getByTestId("text-total-balance")).toHaveCSS("white-space", "nowrap");
       await expect(page.getByTestId(`debt-account-name-${identity.debt}`)).toHaveClass("sr-only");
       await expect(page.getByTestId("debt-account-summary")).toContainText("Amount owed");
       await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText(formatBalance("1614.39",currency));
@@ -113,6 +124,43 @@ for(const currency of ["CAD","GBP"] as const){
     expect(await snapshot(db,identity.userId)).toEqual(before);
     expect(await (await page.request.get("/api/funds-access")).json()).toEqual(accessBefore);
   });
+
+  test(`accounts summary fits sidebar-open tablets with readable ${currency} amounts`, async ({page,identity,db},info) => {
+    await db.query("UPDATE users SET display_currency=$2 WHERE id=$1", [identity.userId,currency]);
+    const before = await snapshot(db, identity.userId);
+    await login(page, identity);
+    for (const width of [768,1024]) {
+      await page.setViewportSize({width,height:900});
+      await page.goto("/accounts");
+      await expect(page.getByTestId("text-total-balance")).toHaveText(formatBalance("2003900.25",currency));
+      const toggle = page.getByTestId("sidebar-toggle");
+      if (await toggle.getAttribute("aria-expanded") !== "true") await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-expanded","true");
+      await page.evaluate(async () => {
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        await Promise.all(document.getAnimations()
+          .filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity)
+          .map(animation => animation.finished.catch(() => {})));
+      });
+      for (const id of ["text-total-balance", "account-summary-balance-cash", "account-summary-balance-investment", `debt-account-amount-${identity.debt}`]) {
+        const figure = page.getByTestId(id);
+        await expect(figure).toHaveCSS("white-space","nowrap");
+        const fits = await figure.evaluate(el => {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const bounds = el.closest(".wealth-panel")!.getBoundingClientRect();
+          const rects = Array.from(range.getClientRects()).filter(rect => rect.width > 0);
+          return new Set(rects.map(rect => Math.round(rect.top))).size === 1 &&
+            rects.every(rect => rect.left >= bounds.left && rect.right <= bounds.right);
+        });
+        expect(fits).toBe(true);
+        await assertReadable(page, `[data-testid="${id}"]`, info, `accounts-sidebar-${currency}-${width}-${id}`);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await page.screenshot({path:info.outputPath(`accounts-sidebar-${currency}-${width}.jpg`)});
+    }
+    expect(await snapshot(db,identity.userId)).toEqual(before);
+  });
 }
 
 test("overdraft-only debt mirrors fees owed without duplicate category totals and cleared debt stays zero",async ({page,db,identity})=>{
@@ -130,7 +178,7 @@ test("overdraft-only debt mirrors fees owed without duplicate category totals an
   await page.goto("/accounts");
   await expect(page.locator('[data-testid^="account-group-balance-"]')).toHaveCount(0);
   await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("£12,398.48");
-  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveCSS("color","rgb(0, 0, 0)");
+   await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveCSS("color","rgb(255, 255, 255)");
   await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText("-£12,398.48");
   expect(await snapshot(db,identity.userId)).toEqual(before);
   // Changing only the disposable fixture proves clearance does not fabricate -0.

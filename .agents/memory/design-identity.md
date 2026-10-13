@@ -15,11 +15,11 @@ description: Approved visual system for the platform. Apply to all new pages/com
 - Numbers/data: `DM Mono` with `font-variant-numeric: tabular-nums`
 - Tailwind aliases: `font-serif`, `font-sans`, `font-mono`
 
-**Dashboard balance exception:** The user approved clean, bold sans-serif text for the dashboard's total balance.
+**Overview balance exception:** The dashboard total balance and Accounts overview summary figures use clean, bold, non-italic sans-serif text.
 
-**Why:** They requested a different balance font and explicitly selected “Clean, bold text.”
+**Why:** The user explicitly selected “Clean, bold text” for the dashboard and later rejected the old balance font on the Accounts overview too.
 
-**How to apply:** Preserve this choice during future dashboard styling; it does not authorize changing other headings or every monetary figure.
+**How to apply:** Preserve this choice in both overview panels; it does not authorize changing other headings or every monetary figure.
 
 **Colors**
 - Background: warm cream

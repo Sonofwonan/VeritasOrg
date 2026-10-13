@@ -168,14 +168,14 @@ export default function AccountsPage() {
       </Dialog>
 
       {/* ── Portfolio Summary Header ──────────────────────────────── */}
-      <div className="bg-[#0B2218] wealth-panel rounded-sm overflow-hidden">
+      <div data-testid="accounts-summary-panel" className="bg-[#0B2218] wealth-panel rounded-sm overflow-hidden [container-type:inline-size]">
         {/* Top bar */}
         <div className="px-4 py-5 xl:px-8 xl:pt-8 xl:pb-6 border-b border-white/10">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-4">
             <div className="min-w-0">
               <p className="label-caps text-white/40 mb-2">Total balance</p>
               <div className="flex min-w-0 flex-wrap items-end gap-x-4 gap-y-1">
-                  <span className={`whitespace-nowrap font-serif text-[clamp(1.45rem,7vw,3rem)] tracking-tight tabular-nums ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
+                  <span className={`min-w-0 max-w-full whitespace-nowrap font-sans font-bold not-italic tabular-nums [font-size:clamp(1.25rem,6cqi,3rem)] tracking-tight ${isTransmitting ? "text-violet-300" : "text-white"}`} data-testid="text-total-balance">
                   {balanceLoading ? "Loading…" : balanceUnavailable ? "Unavailable" : fmt(totalBalance)}
                 </span>
               </div>
@@ -221,16 +221,62 @@ export default function AccountsPage() {
                 </div>
                 <p className="hidden text-white/25 text-[10px] mt-0.5 xl:block">{sub}</p>
               </div>
-              <p data-testid={`account-summary-balance-${cat}`} className="whitespace-nowrap font-mono text-sm xl:text-xl text-amber-400 tracking-tight tabular-nums">{loading ? "Loading…" : unavailable ? "Unavailable" : fmt(value)}</p>
+              <p data-testid={`account-summary-balance-${cat}`} className="whitespace-nowrap font-sans font-bold text-sm xl:text-xl text-amber-300 tracking-tight tabular-nums">{loading ? "Loading…" : unavailable ? "Unavailable" : fmt(value)}</p>
               <p className="sr-only sm:hidden">{sub}</p>
             </div>
           ))}
         </div>
-      </div>
 
-      <DebtAccountSummary summary={feeSummary.data} accounts={accounts} variant="accounts" loading={feeSummary.isLoading || isLoading}
-        error={feeSummary.isError || accountsError} retry={() => { void feeSummary.refetch(); void refetchAccounts(); }}
-        hidden={hideBalances} currency={currency} />
+        <div className="accounts-debt-summary border-t border-white/10">
+          <style>{`
+            .accounts-debt-summary > section {
+              border: 0 !important;
+              border-radius: 0 !important;
+              background: transparent !important;
+              color: rgba(255, 255, 255, 0.92);
+            }
+            .accounts-debt-summary h2 {
+              display: none !important;
+            }
+            .accounts-debt-summary > section > div.border-b {
+              display: none !important;
+            }
+            .accounts-debt-summary article {
+              grid-template-columns: minmax(0, 1fr) auto;
+              align-items: center;
+              padding: 0.75rem 1rem;
+            }
+            .accounts-debt-summary article + article {
+              border-color: rgba(255, 255, 255, 0.1) !important;
+            }
+            .accounts-debt-summary article [data-testid^="debt-account-amount-"] {
+              color: #fff !important;
+              font-family: "DM Sans", sans-serif !important;
+              font-style: normal !important;
+              font-size: 1rem !important;
+              font-weight: 700 !important;
+              letter-spacing: -0.025em;
+              font-variant-numeric: tabular-nums;
+              white-space: nowrap !important;
+            }
+            .accounts-debt-summary .text-muted-foreground {
+              color: rgba(255, 255, 255, 0.68) !important;
+            }
+            .accounts-debt-summary [role="alert"] {
+              color: rgba(255, 255, 255, 0.88) !important;
+            }
+            .accounts-debt-summary [role="alert"] button {
+              color: #f3d58a !important;
+            }
+            .accounts-debt-summary [role="status"] > div {
+              background-color: rgba(255, 255, 255, 0.12) !important;
+            }
+          `}</style>
+          <DebtAccountSummary summary={feeSummary.data} accounts={accounts} variant="accounts" loading={feeSummary.isLoading || isLoading}
+            error={feeSummary.isError || accountsError} retry={() => { void feeSummary.refetch(); void refetchAccounts(); }}
+            hidden={hideBalances} currency={currency} />
+        </div>
+      </div>
 
       {/* ── Transfer Lock Banner ──────────────────────────────────── */}
       {activeTransfer && (
