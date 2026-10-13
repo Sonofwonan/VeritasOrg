@@ -1,6 +1,6 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
-  ArrowLeftRight, BookOpen, ChartNoAxesCombined, ChevronDown, ChevronRight,
+  ArrowLeftRight, ChartNoAxesCombined, ChevronDown, ChevronRight,
   CircleHelp, Clock3, LayoutDashboard, LogOut, Mail, Menu, Settings, Wallet, X,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -14,7 +14,6 @@ const accountRoutes = [
   { icon: Clock3, label: "Transaction history", href: "/transactions" },
 ];
 const personalRoutes = [
-  { icon: BookOpen, label: "Education", href: "/education" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 

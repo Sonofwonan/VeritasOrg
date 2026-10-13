@@ -21,6 +21,12 @@ description: Approved visual system for the platform. Apply to all new pages/com
 - Numbers/data: `DM Mono` with `font-variant-numeric: tabular-nums`
 - Tailwind aliases: `font-serif`, `font-sans`, `font-mono`
 
+**Logo transparency:** Keep the supplied logo and browser/home-screen icon artwork background-free; do not add a cream tile behind the emblem.
+
+**Why:** The user requested removal of the image background after approving this logo.
+
+**How to apply:** Preserve the artwork's alpha transparency when producing resized branding assets. Operating systems may still supply their own home-screen icon background.
+
 **Overview balance exception:** The dashboard total balance and Accounts overview summary figures use clean, bold, non-italic sans-serif text.
 
 **Why:** The user explicitly selected “Clean, bold text” for the dashboard and later rejected the old balance font on the Accounts overview too.

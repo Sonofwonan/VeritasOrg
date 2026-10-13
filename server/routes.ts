@@ -22,6 +22,8 @@ import { registerHistoricalBalanceRoutes } from "./historical-balances-routes";
 import { audit, initializeSecurity, rateLimit, revokeSessions, safeUser, withSecurity } from "./security/store";
 import { digest, encryptionConfigured, SecurityError } from "./security/crypto";
 import { registerSecurityRoutes, securityHandler, securityOrigin } from "./security/routes";
+import { registerRecoveryRequests } from "./security/recovery-requests";
+import { registerClientSettings } from "./client-settings";
 import { destroySession, finishLogin, regenerateSession, saveSession } from "./security/session";
 
 // Twilio Notification Setup (SMS/WhatsApp)
@@ -179,6 +181,8 @@ export async function registerRoutes(
 
   // Auth Routes
   registerSecurityRoutes(app);
+  await registerRecoveryRequests(app, requireAuth, requireAdmin);
+  await registerClientSettings(app, requireAuth);
   app.post(api.auth.register.path, (_req, res) => {
     res.status(410).json({
       message: "Direct registration is disabled. Submit an application and wait for approval.",
@@ -240,8 +244,16 @@ export async function registerRoutes(
     if (Object.prototype.hasOwnProperty.call(req.body, "displayCurrency")) {
       return res.status(403).json({ message: "Balance display currency cannot be changed through client profile settings" });
     }
+    if (["email", "phoneNumber", "name"].some(key => key in req.body)) {
+      return res.status(403).json({ message: "Use Personal details to update contact information. Contact your advisor for a legal-name change." });
+    }
     try {
-      const user = await storage.updateUser((req.user as User).id, req.body);
+      const profile = z.object({
+        marketingEmails: z.boolean().optional(),
+        securityAlerts: z.boolean().optional(),
+        theme: z.enum(["light", "dark", "system"]).optional(),
+      }).strict().parse(req.body);
+      const user = await storage.updateUser((req.user as User).id, profile);
       res.json(await safeUser(user));
     } catch (err: any) {
       res.status(400).json({ message: err.message || "Failed to update profile" });

@@ -6,7 +6,7 @@ import { pool } from "../db";
 import { storage } from "../storage";
 import type { User } from "@shared/schema";
 import { securityPaths } from "@shared/security";
-import { comparePasswords, decryptSecret, digest, encryptSecret, generateSecret, hashPassword, newRecoveryCodes, recoveryDigest, SecurityError, verifyTotp } from "./crypto";
+import { comparePasswords, decryptSecret, digest, encryptSecret, generateSecret, hashPassword, recoveryDigest, SecurityError, verifyTotp } from "./crypto";
 import { audit, consumeFactor, getSecurity, rateLimit, revokeSessions, safeUser, withSecurity } from "./store";
 import { destroySession, finishLogin } from "./session";
 import { isTrustedOrigin } from "./origins";
@@ -96,7 +96,8 @@ export function registerSecurityRoutes(app: Express) {
     const { code } = z.object({ code: z.string().trim().regex(/^\d{6}$/, "Enter the six-digit code from your app.") }).strict().parse(req.body);
     const user = req.user as User;
     await rateLimit(`security:${user.id}`);
-    const codes = newRecoveryCodes();
+    // Recovery sets are issued only by an administrator after a client request.
+    const codes: string[] = [];
     const version = await withSecurity(user.id, async (db, state) => {
       if (state.mfa_enabled || !state.pending_secret || !state.pending_expires ||
           state.pending_expires.getTime() <= Date.now() || state.pending_session !== digest(req.sessionID)) {
@@ -115,12 +116,16 @@ export function registerSecurityRoutes(app: Express) {
     res.json({ recoveryCodes: codes });
   }));
 
-  for (const operation of ["disable", "recovery"] as const) {
+  app.post(securityPaths.recovery, ...sensitive, securityHandler(async (_req, res) => {
+    res.status(403).json({ message: "Only an administrator can issue recovery codes. Submit a request in Security settings." });
+  }));
+
+  for (const operation of ["disable"] as const) {
     app.post(securityPaths[operation], ...sensitive, securityHandler(async (req, res) => {
       const input = reauthentication.parse(req.body);
       const user = req.user as User;
       await rateLimit(`security:${user.id}`);
-      const codes = operation === "recovery" ? newRecoveryCodes() : [];
+      const codes: string[] = [];
       const version = await withSecurity(user.id, async (db, state, current) => {
         if (!await comparePasswords(input.currentPassword, current.password)) throw new SecurityError(400, "Your current password is incorrect.");
         await consumeFactor(db, state, input.code || "");
@@ -165,7 +170,7 @@ export function registerSecurityRoutes(app: Express) {
   }));
 }
 
-async function replaceRecoveryCodes(db: import("pg").PoolClient, userId: number, codes: string[]) {
+export async function replaceRecoveryCodes(db: import("pg").PoolClient, userId: number, codes: string[]) {
   await db.query("DELETE FROM client_security_recovery WHERE user_id=$1", [userId]);
   for (const code of codes) await db.query("INSERT INTO client_security_recovery(user_id,digest) VALUES($1,$2)", [userId, recoveryDigest(userId, code)]);
 }

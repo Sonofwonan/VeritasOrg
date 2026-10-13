@@ -7,6 +7,7 @@ test("slide-out menu preserves routes, focus, advisor contact and sign-out", asy
   const panel = page.getByTestId("sidebar-panel");
   await toggle.click();
   await expect(panel).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Education", exact: true })).toHaveCount(0);
   await expect(panel.getByTestId("text-username")).toHaveText("Balance Test Client");
   await expect(panel.getByRole("link", { name: "Contact your advisor", exact: true }))
     .toHaveAttribute("href", "mailto:veritaswealth@accountant.com");
@@ -26,7 +27,7 @@ test("slide-out menu preserves routes, focus, advisor contact and sign-out", asy
   await expect(toggle).toBeFocused();
   for (const [label, route] of [
     ["Accounts", "/accounts"], ["Investments", "/investments"], ["Transfers", "/transfers"],
-    ["Transaction history", "/transactions"], ["Education", "/education"], ["Settings", "/settings"],
+    ["Transaction history", "/transactions"], ["Settings", "/settings"],
     ["Dashboard", "/dashboard"],
   ]) {
     await page.getByTestId("sidebar-toggle").click();

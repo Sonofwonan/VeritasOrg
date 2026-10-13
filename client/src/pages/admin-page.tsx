@@ -20,6 +20,7 @@ import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { ClientCurrencyPanel } from "@/components/admin/client-currency-panel";
 import { DebtRestrictionPanel } from "@/components/admin/debt-restriction-panel";
 import { HistoricalBalances } from "@/components/admin/historical-balances";
+import { AdminRecoveryRequests } from "@/components/admin/recovery-requests";
 
 const SESSION_KEY = "vw_admin_key";
 
@@ -539,6 +540,9 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
               <DollarSign className="w-3.5 h-3.5 mr-1.5" />
               Service Fees
             </TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
+              Recovery requests
+            </TabsTrigger>
             <TabsTrigger value="wire" className="data-[state=active]:bg-primary data-[state=active]:text-white text-slate-400">
               <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" />
               Wire & Beneficiaries
@@ -552,6 +556,9 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
 
           <TabsContent value="fees" className="mt-4">
             <AdminFees adminKey={adminKey} />
+          </TabsContent>
+          <TabsContent value="security" className="mt-4">
+            <AdminRecoveryRequests adminKey={adminKey} />
           </TabsContent>
 
           {/* ── Client Applications ── */}

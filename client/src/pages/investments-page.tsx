@@ -31,20 +31,10 @@ const ROBO_PORTFOLIOS = [
 const RESEARCH_ARTICLES = [
   { title: "Market Volatility: What You Should Know", category: "Market Analysis", date: "Dec 24, 2025" },
   { title: "Diversification Strategy Guide", category: "Strategy", date: "Dec 23, 2025" },
-  { title: "Understanding ETFs vs Mutual Funds", category: "Education", date: "Dec 22, 2025" },
   { title: "Tax-Loss Harvesting Explained", category: "Tax Planning", date: "Dec 21, 2025" },
-  { title: "Options Trading 101: Calls and Puts", category: "Options Education", date: "Dec 25, 2025" },
   { title: "Advanced Order Types Guide", category: "Trading Tools", date: "Dec 24, 2025" },
   { title: "Risk Management Strategies", category: "Risk", date: "Dec 23, 2025" },
   { title: "Technical Analysis Mastery", category: "Technical Analysis", date: "Dec 22, 2025" },
-];
-
-const EDUCATION_COURSES = [
-  { id: 1, title: "Getting Started with Stocks", level: "Beginner", duration: "2 hours", completion: 100 },
-  { id: 2, title: "Advanced Portfolio Management", level: "Advanced", duration: "4 hours", completion: 45 },
-  { id: 3, title: "Options Trading Strategies", level: "Intermediate", duration: "3 hours", completion: 0 },
-  { id: 4, title: "Financial Planning Essentials", level: "Beginner", duration: "1.5 hours", completion: 75 },
-  { id: 5, title: "Tax-Efficient Investing", level: "Intermediate", duration: "2.5 hours", completion: 30 },
 ];
 
 export default function InvestmentsPage() {

@@ -64,7 +64,7 @@ app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   // Dedicated security responses can contain one-time enrollment material.
-  if (path.startsWith("/api/security/")) {
+  if (path.startsWith("/api/security/") || path.startsWith("/api/admin/security/") || path === "/api/client/contact-details") {
     res.setHeader("Cache-Control", "no-store");
     return next();
   }

@@ -2,6 +2,7 @@ import { test, expect, login } from "./fixtures";
 import { generate } from "otplib";
 import { randomBytes } from "node:crypto";
 import type { APIRequestContext } from "@playwright/test";
+import { issueRequestedCodes } from "./recovery-helper";
 
 // Never retain traces/screenshots containing even disposable enrollment secrets.
 test.use({ trace: "off", screenshot: "off", video: "off" });
@@ -76,7 +77,7 @@ test("security 60-second skewed authenticator login is single-use across concurr
     expect((await winner.get("/api/accounts")).status()).toBe(200);
     expect((await loser.get("/api/accounts")).status()).toBe(401);
     expect(Number((await db.query("SELECT last_totp_step FROM client_security WHERE user_id=$1", [identity.userId])).rows[0].last_totp_step)).toBe(step);
-    expect((await winner.post("/api/security/two-factor/recovery", {data:{currentPassword:identity.password,code}})).status()).toBe(400);
+    expect((await winner.post("/api/security/two-factor/recovery", {data:{currentPassword:identity.password,code}})).status()).toBe(403);
     // The losing pending session has already spent one of its five attempts.
     for (let attempt=1; attempt<5; attempt++) {
       expect((await loser.post("/api/security/two-factor/challenge", {data:{code}})).status()).toBe(400);
@@ -87,7 +88,7 @@ test("security 60-second skewed authenticator login is single-use across concurr
   } finally { await Promise.all(contexts.map(context => context.dispose())); }
 });
 
-for (const operation of ["password","recovery","disable"] as const) {
+for (const operation of ["password","disable"] as const) {
   test(`security 60-second skewed code supports protected ${operation} without changing financial records`, async ({page,identity,db}) => {
     await login(page, identity);
     await page.close();
@@ -108,9 +109,6 @@ for (const operation of ["password","recovery","disable"] as const) {
     expect(result.status()).toBe(200);
     if (operation === "password") {
       expect((await page.request.get("/api/user")).status()).toBe(401);
-    } else if (operation === "recovery") {
-      expect((await result.json()).recoveryCodes).toHaveLength(10);
-      expect((await page.request.post(path,{data})).status()).toBe(400);
     } else {
       expect((await (await page.request.get("/api/security/status")).json()).twoFactorEnabled).toBe(false);
     }
@@ -149,7 +147,8 @@ test("security authenticator login gates APIs and one-time codes cannot be repla
   const code = await generate({ secret: enrollment.secret });
   const confirm = await page.request.post("/api/security/two-factor/confirm", { data: { code } });
   expect(confirm.status()).toBe(200);
-  const codes: string[] = (await confirm.json()).recoveryCodes;
+  expect((await confirm.json()).recoveryCodes).toEqual([]);
+  const codes = await issueRequestedCodes(page.request, identity);
   expect(codes.length).toBe(10);
   const stored = (await db.query("SELECT secret FROM client_security WHERE user_id=$1", [identity.userId])).rows[0];
   expect(stored.secret === enrollment.secret).toBe(false);
@@ -229,7 +228,8 @@ for (const origin of ["https://veritaswealth.vercel.app", "https://veritas-wealt
       headers, data: { code: await generate({ secret: (await setup.json()).secret }) },
     });
     expect(enrollment.status()).toBe(200);
-    const codes: string[] = (await enrollment.json()).recoveryCodes;
+    expect((await enrollment.json()).recoveryCodes).toEqual([]);
+    const codes = await issueRequestedCodes(page.request, identity);
     const api = await playwright.request.newContext({ baseURL: process.env.BALANCE_E2E_URL });
     try {
       const challenge = await api.post("/api/login", { headers, data: {
@@ -270,11 +270,9 @@ test("security setup, recovery sign-in and password change work through compact 
   const code = await generate({ secret: secret! });
   await dialog.getByLabel("Six-digit authenticator code").fill(code);
   await dialog.getByRole("button", { name: /turn on|confirm|enable/i }).click();
-  const recoveryDialog = page.getByRole("dialog").filter({ has: page.getByLabel("One-time recovery codes") });
-  await expect(recoveryDialog).toBeVisible();
-  const recoveryCodes = await recoveryDialog.locator("code").allTextContents();
-  expect(recoveryCodes.length).toBe(10);
-  await recoveryDialog.getByRole("button", { name: "Done", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByLabel("One-time recovery codes")).toHaveCount(0);
+  const recoveryCodes = await issueRequestedCodes(page.request, identity);
   await expect(page.getByTestId("security-status")).toContainText("Enabled");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.request.post("/api/logout");
@@ -333,14 +331,15 @@ test("security replacement recovery codes revoke old codes and concurrent reuse 
   const setup = await (await page.request.post("/api/security/two-factor/setup", { data: { currentPassword: identity.password } })).json();
   const confirmation = await page.request.post("/api/security/two-factor/confirm", { data: { code: await generate({ secret: setup.secret }) } });
   expect(confirmation.status()).toBe(200);
-  const original: string[] = (await confirmation.json()).recoveryCodes;
+  expect((await confirmation.json()).recoveryCodes).toEqual([]);
+  const original = await issueRequestedCodes(page.request, identity);
   const other = await playwright.request.newContext({ baseURL: process.env.BALANCE_E2E_URL });
   try {
     await other.post("/api/login", { data: { userId: identity.ref, password: identity.password } });
     expect((await other.post("/api/security/two-factor/challenge", { data: { code: original[0] } })).status()).toBe(200);
     const replacement = await page.request.post("/api/security/two-factor/recovery", { data: { currentPassword: identity.password, code: original[1] } });
-    expect(replacement.status()).toBe(200);
-    const codes: string[] = (await replacement.json()).recoveryCodes;
+    expect(replacement.status()).toBe(403);
+    const codes = await issueRequestedCodes(page.request, identity);
     expect(codes.length).toBe(10);
     expect((await other.get("/api/user")).status()).toBe(401);
     await other.post("/api/login", { data: { userId: identity.ref, password: identity.password } });

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { AlertCircle, Check, Copy, KeyRound, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
+import { AlertCircle, KeyRound, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
+import { recoveryRequestPath, type RecoveryRequest } from "@shared/client-settings";
 import { securityPaths, type RecoveryResult, type SecurityStatus, type SetupResult } from "@shared/security";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -48,9 +49,7 @@ export function SecuritySettings() {
   const [passwordFields, setPasswordFields] = useState<PasswordFields>(emptyPassword);
   const [reauthFields, setReauthFields] = useState<ReauthFields>(emptyReauth);
   const [setupResult, setSetupResult] = useState<SetupResult | null>(null);
-  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
 
   const statusQuery = useQuery<SecurityStatus>({
     queryKey: [securityPaths.status],
@@ -59,6 +58,11 @@ export function SecuritySettings() {
     refetchOnWindowFocus: true,
   });
   const status = statusQuery.data;
+  const requestQuery = useQuery<RecoveryRequest | null>({
+    queryKey: [recoveryRequestPath],
+    queryFn: async () => (await apiRequest("GET", recoveryRequestPath)).json(),
+    refetchInterval: 30000,
+  });
 
   const passwordMutation = useMutation({
     gcTime: 0,
@@ -95,7 +99,6 @@ export function SecuritySettings() {
       setDialog(null);
       setReauthFields(emptyReauth);
       disableMutation.reset();
-      setRecoveryCodes(result.recoveryCodes);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [securityPaths.status] }),
         queryClient.invalidateQueries({ queryKey: ["/api/user"] }),
@@ -117,17 +120,17 @@ export function SecuritySettings() {
     },
     onError: e => setError(messageFrom(e, "Two-factor sign-in could not be turned off. Please try again.")),
   });
-  const recoveryMutation = useMutation<RecoveryResult, Error, ReauthFields>({
+  const recoveryMutation = useMutation<RecoveryRequest, Error, ReauthFields>({
     gcTime: 0,
-    mutationFn: async body => (await apiRequest("POST", securityPaths.recovery, body)).json(),
+    mutationFn: async body => (await apiRequest("POST", recoveryRequestPath, { currentPassword: body.currentPassword })).json(),
     onSuccess: result => {
-      setRecoveryCodes(result.recoveryCodes);
       setDialog(null);
       setReauthFields(emptyReauth);
       recoveryMutation.reset();
       queryClient.invalidateQueries({ queryKey: [securityPaths.status] });
+      queryClient.setQueryData([recoveryRequestPath], result);
     },
-    onError: e => setError(messageFrom(e, "New recovery codes could not be created. Please try again.")),
+    onError: e => setError(messageFrom(e, "Your request could not be submitted. Please try again.")),
   });
 
   const pending = passwordMutation.isPending || setupMutation.isPending || confirmMutation.isPending ||
@@ -139,7 +142,6 @@ export function SecuritySettings() {
     setReauthFields(emptyReauth);
     setSetupResult(null);
     setError("");
-    setCopied(false);
     setupMutation.reset();
     confirmMutation.reset();
     passwordMutation.reset();
@@ -158,23 +160,6 @@ export function SecuritySettings() {
       setupMutation.reset();
     } catch {
       // Error is presented inline by the mutation.
-    }
-  };
-
-  const closeRecoveryCodes = () => {
-    setRecoveryCodes(null);
-    setCopied(false);
-    confirmMutation.reset();
-    recoveryMutation.reset();
-  };
-
-  const copyRecoveryCodes = async () => {
-    if (!recoveryCodes) return;
-    try {
-      await navigator.clipboard.writeText(recoveryCodes.join("\n"));
-      setCopied(true);
-    } catch {
-      setError("Copy is not available here. Select and copy the codes instead.");
     }
   };
 
@@ -259,15 +244,25 @@ export function SecuritySettings() {
                 <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="font-medium">Recovery codes</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Create a new set if you no longer have your codes. This replaces the old set.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Request codes from your administrator. Contact your advisor for identity verification and secure delivery.</p>
+                    {requestQuery.isError ? (
+                      <p role="alert" className="mt-2 text-sm text-destructive">Your request status could not be loaded. <button className="underline" onClick={() => void requestQuery.refetch()}>Try again</button></p>
+                    ) : requestQuery.data ? (
+                      <p role="status" className="mt-2 text-sm font-medium">
+                        {requestQuery.data.status === "pending" ? "Request awaiting administrator review."
+                          : requestQuery.data.status === "issued" ? "Codes issued. Contact your advisor to receive them."
+                          : "Request declined. Contact your advisor or submit a new request."}
+                      </p>
+                    ) : null}
                   </div>
                   <Button
                     variant="outline"
                     className="w-full gap-2 sm:w-auto"
                     data-testid="security-replace-recovery"
+                    disabled={requestQuery.isLoading || requestQuery.isError || requestQuery.data?.status === "pending"}
                     onClick={() => { setError(""); setReauthFields(emptyReauth); setDialog("recovery"); }}
                   >
-                    <RefreshCw className="h-4 w-4" /> Replace codes
+                    <RefreshCw className="h-4 w-4" /> Request recovery codes
                   </Button>
                 </div>
               ) : null}
@@ -408,20 +403,18 @@ export function SecuritySettings() {
           {dialog === "recovery" && (
             <form onSubmit={submitRecovery} className="space-y-5">
               <DialogHeader>
-                <DialogTitle>Replace recovery codes</DialogTitle>
-                <DialogDescription>This creates a new set and immediately makes your old recovery codes unusable. Other signed-in devices will be signed out.</DialogDescription>
+                <DialogTitle>Request recovery codes</DialogTitle>
+                <DialogDescription>An administrator will review your request. Existing codes stay valid until new codes are issued. Confirm your password to submit.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <SecurityField id="security-recovery-password" label="Current password" type="password" autoComplete="current-password"
                   value={reauthFields.currentPassword} onChange={value => setReauthFields(fields => ({ ...fields, currentPassword: value }))} />
-                <SecurityField id="security-recovery-code" label="Authenticator or recovery code" autoComplete="one-time-code" maxLength={64}
-                  value={reauthFields.code} onChange={value => setReauthFields(fields => ({ ...fields, code: value }))} />
               </div>
               {error && <p role="alert" className="flex gap-2 text-sm text-destructive"><AlertCircle className="h-4 w-4 shrink-0" />{error}</p>}
               <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
                 <Button type="button" variant="outline" onClick={resetDialog} disabled={recoveryMutation.isPending}>Cancel</Button>
                 <Button type="submit" disabled={recoveryMutation.isPending}>
-                  {recoveryMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Replace codes
+                  {recoveryMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Submit request
                 </Button>
               </DialogFooter>
             </form>
@@ -429,26 +422,6 @@ export function SecuritySettings() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={recoveryCodes !== null} onOpenChange={open => { if (!open) closeRecoveryCodes(); }}>
-        <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{status?.twoFactorEnabled ? "Save your new recovery codes" : "Save your recovery codes"}</DialogTitle>
-            <DialogDescription>Each code can be used once if you cannot access your authenticator app. Keep them private and store them somewhere safe. You will not be able to see them again.</DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-2 rounded-sm border border-border bg-muted/30 p-3 sm:p-4" aria-label="One-time recovery codes">
-            {recoveryCodes?.map((code, index) => (
-              <code key={`${index}-${code}`} className="break-all rounded-sm bg-background px-2 py-2 text-center font-mono text-sm tracking-wide">{code}</code>
-            ))}
-          </div>
-          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
-            <Button variant="outline" onClick={copyRecoveryCodes} className="gap-2">
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}{copied ? "Copied" : "Copy codes"}
-            </Button>
-            <Button onClick={closeRecoveryCodes}>Done</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

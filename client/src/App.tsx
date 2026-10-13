@@ -16,7 +16,6 @@ import AccountDetailPage from "@/pages/account-detail";
 import InvestmentsPage from "@/pages/investments-page";
 import TransfersPage from "@/pages/transfers-page";
 import TransactionsPage from "@/pages/transactions-page";
-import EducationPage from "@/pages/education-page";
 import CardsPage from "@/pages/cards-page";
 import SettingsPage from "@/pages/settings-page";
 import CompanyPage from "@/pages/company-page";
@@ -72,9 +71,6 @@ function Router() {
       </Route>
       <Route path="/transactions">
         {() => <ProtectedRoute component={TransactionsPage} />}
-      </Route>
-      <Route path="/education">
-        {() => <ProtectedRoute component={EducationPage} />}
       </Route>
       <Route path="/cards">
         {() => <ProtectedRoute component={CardsPage} />}

@@ -49,3 +49,17 @@ mtime_ms = 1791917036981
 storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:fbae4b85-6efb-42af-9c4c-30c8c40979d9/b215251c-0d7e-40f1-853a-55df2227d021/d65687dd-6002-4fde-a4c5-8f863fcc6860"
 storage_version_token = "1791917189740898"
 content_type = "image/png"
+
+[[outputs]]
+id = "47-TN-JzbAyvtziPl1js7"
+uri = "file://client/public/veritas-logo.png"
+type = "image"
+title = "Transparent Veritas logo"
+description = "Your supplied logo with a transparent background, ready to download."
+logical_id = "626b6aae-3c8f-4438-9cfe-73e63f11415b"
+content_hash = "sha256:750a1b6d4ade456a572776411a89126ff62c47c1f47fcf5482a33df4a4159dea"
+size = 204661
+mtime_ms = 1791917036957
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:fbae4b85-6efb-42af-9c4c-30c8c40979d9/626b6aae-3c8f-4438-9cfe-73e63f11415b/595e0ff1-08a4-40e9-a1df-29352d1219ca"
+storage_version_token = "1791917784539424"
+content_type = "image/png"

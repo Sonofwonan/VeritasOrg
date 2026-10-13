@@ -24,6 +24,13 @@ test("account details are clean, truthful and responsive without changing fees o
   await expect(balance).toContainText("£363.64");
   await expect(page.getByText("Account ID:", { exact: false })).toHaveCount(0);
   const detailsButton = page.getByRole("button", { name: "Account details", exact: true });
+  const accountHeader = balance.locator("..");
+  await expect(accountHeader.getByRole("heading")).toBeVisible();
+  await expect(accountHeader.getByRole("button", { name: "Account details", exact: true })).toBeVisible();
+  expect(await detailsButton.evaluate(button => {
+    const masked = button.previousElementSibling;
+    return masked?.tagName === "P" && !!masked.textContent?.includes("••");
+  })).toBe(true);
   await detailsButton.focus();
   await page.keyboard.press("Enter");
   const details = page.getByRole("dialog");
@@ -48,6 +55,11 @@ test("account details are clean, truthful and responsive without changing fees o
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(balance).toBeVisible();
+    if (width >= 768) {
+      const headingBox = await accountHeader.getByRole("heading").boundingBox();
+      const figureBox = await balance.boundingBox();
+      expect(figureBox!.x).toBeGreaterThan(headingBox!.x + headingBox!.width);
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     const overflow = await page.locator("main").last().evaluate((main) => {
       const bad: string[] = [];

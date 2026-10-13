@@ -132,7 +132,7 @@ for (const currency of ["CAD", "GBP"] as const) {
           await singleLine(primary);
           await singleLine(amount);
           await fitsPage(page);
-          await page.getByTestId("sidebar-toggle").click();
+          await page.getByTestId("sidebar-close").click();
         }
         if (width === 390 || width === 1024) await page.screenshot({ path: info.outputPath(`${currency}-${account.name.split(" ")[0]}-${width}.png`), fullPage: true });
       }
