@@ -16,7 +16,7 @@ async function snapshot(db: Pool, userId: number) {
   ].map(async sql=>(await db.query(sql,[userId])).rows));
 }
 
-async function redUnclipped(figure: Locator, width: number) {
+async function redUnclipped(figure: Locator, width: number, red = true) {
   const metrics=await figure.evaluate(element=>{
     const range=document.createRange();
     range.selectNodeContents(element);
@@ -29,11 +29,12 @@ async function redUnclipped(figure: Locator, width: number) {
         if(rects.some(r=>r.left<bounds.left || r.right>bounds.right+0.5)) clipped=true;
       }
     }
-    return {red:rgb[0]>rgb[1] && rgb[0]>rgb[2],clipped,
+    return {red:rgb[0]>rgb[1] && rgb[0]>rgb[2],rgb,clipped,
       lines:new Set(rects.map(r=>Math.round(r.top))).size,
       right:Math.max(...rects.map(r=>r.right))};
   });
-  expect(metrics.red).toBe(true);
+  if(red) expect(metrics.red).toBe(true);
+  else expect(metrics.rgb.slice(0,3)).toEqual([0,0,0]);
   expect(metrics.clipped).toBe(false);
   expect(metrics.lines).toBe(1);
   expect(metrics.right).toBeLessThanOrEqual(width);
@@ -71,9 +72,11 @@ for(const currency of ["CAD","GBP"] as const){
       await expect(page.getByTestId("text-total-balance")).toHaveText(formatBalance("2003900.25",currency));
       await expect(page.getByTestId(`debt-account-name-${identity.debt}`)).toHaveClass("sr-only");
       await expect(page.getByTestId("debt-account-summary")).toContainText("Amount owed");
+      await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText(formatBalance("1614.39",currency));
+      await expect(page.locator('[data-testid^="account-group-balance-"]')).toHaveCount(0);
       await expect(page.locator('[data-testid^="debt-account-details-"],[data-testid^="account-balance-label-"]')).toHaveCount(0);
       for(const id of [`debt-account-amount-${identity.debt}`,`balance-${identity.debt}`]){
-        await redUnclipped(page.getByTestId(id),width);
+        await redUnclipped(page.getByTestId(id),width,id.startsWith("balance-"));
         await assertReadable(page,`[data-testid="${id}"]`,info,`${currency}-accounts-${id}-${width}`);
       }
       await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText(formatBalance("-1250.75",currency));
@@ -98,7 +101,7 @@ for(const currency of ["CAD","GBP"] as const){
   });
 }
 
-test("overdraft-only debt mirrors fees owed, negative groups stay red and cleared debt stays zero",async ({page,db,identity},info)=>{
+test("overdraft-only debt mirrors fees owed without duplicate category totals and cleared debt stays zero",async ({page,db,identity})=>{
   await db.query("UPDATE accounts SET balance=0 WHERE user_id=$1",[identity.userId]);
   await db.query("UPDATE accounts SET account_type='Brokerage Account',balance=-12398.48 WHERE id=$1 AND user_id=$2",[identity.debt,identity.userId]);
   await db.query("UPDATE accounts SET balance=1622886 WHERE id=$1 AND user_id=$2",[identity.sixth,identity.userId]);
@@ -111,10 +114,10 @@ test("overdraft-only debt mirrors fees owed, negative groups stay red and cleare
   await verifyHeadline(page,"£1,622,886.00");
   await assertFundsActionBlocked(page,"button-quick-invest");
   await page.goto("/accounts");
-  const group=page.getByTestId("account-group-balance-investment");
-  await expect(group).toHaveText("-£12,398.48");
-  await redUnclipped(group,page.viewportSize()!.width);
-  await assertReadable(page,'[data-testid="account-group-balance-investment"]',info,"negative-group");
+  await expect(page.locator('[data-testid^="account-group-balance-"]')).toHaveCount(0);
+  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("£12,398.48");
+  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveCSS("color","rgb(0, 0, 0)");
+  await expect(page.getByTestId(`balance-${identity.debt}`)).toHaveText("-£12,398.48");
   expect(await snapshot(db,identity.userId)).toEqual(before);
   // Changing only the disposable fixture proves clearance does not fabricate -0.
   await db.query("UPDATE accounts SET balance=0 WHERE id=$1 AND user_id=$2",[identity.debt,identity.userId]);

@@ -48,9 +48,7 @@ test("named funded trusts and brokerage stay in their presentation groups withou
   for (const [cat, total] of [["cash", cashTotal], ["investment", holdingsTotal]] as const) {
     await expect(page.getByTestId(`account-summary-balance-${cat}`)).toHaveText(`CAD ${money(total)}`);
   }
-  for (const [cat, total] of [["investment", investmentTotal], ["business", signedTrustTotal]] as const) {
-    await expect(page.getByTestId(`account-group-balance-${cat}`)).toHaveText(`CAD ${money(total)}`);
-  }
+  await expect(page.locator('[data-testid^="account-group-balance-"]')).toHaveCount(0);
   await expect(page.getByTestId("account-summary-investment")).toContainText("Recorded investments");
   const investmentGroup = page.getByTestId("account-group-investment");
   const trustGroup = page.getByTestId("account-group-business");
@@ -76,9 +74,7 @@ test("named funded trusts and brokerage stay in their presentation groups withou
   for (const cat of ["cash", "investment"]) {
     await expect(page.getByTestId(`account-summary-balance-${cat}`)).toHaveText("••••••");
   }
-  for (const cat of ["investment", "business"]) {
-    await expect(page.getByTestId(`account-group-balance-${cat}`)).toHaveText("••••••");
-  }
+  await expect(page.locator('[data-testid^="account-group-balance-"]')).toHaveCount(0);
   await page.getByTestId("button-toggle-balances").click();
   await trustGroup.getByTestId(`account-row-${identity.sixth}`).click();
   await expect(page).toHaveURL(new RegExp(`/accounts/${identity.sixth}$`));
@@ -109,9 +105,8 @@ test("inheritance cash and Brokerage overdraft stay separate, including during t
   await expect(page.getByTestId("text-total-balance")).toHaveText("£1,622,886.00");
   await expect(page.getByTestId("account-summary-balance-cash")).toHaveText("£1,622,886.00");
   await expect(page.getByTestId("account-summary-balance-investment")).toHaveText("£0.00");
-  await expect(page.getByTestId("account-group-balance-investment")).toHaveText("-£12,398.48");
-  await expect(page.getByTestId("account-group-balance-business")).toHaveText("£1,622,886.00");
-  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("-£12,398.48");
+  await expect(page.locator('[data-testid^="account-group-balance-"]')).toHaveCount(0);
+  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("£12,398.48");
   await expect(page.getByTestId("debt-account-summary")).not.toContainText("Inheritance Trust Account");
   await expect(page.getByTestId(`account-row-${identity.funded}`)).toContainText("-£12,398.48");
   await expect(page.locator("main.overflow-y-auto")).not.toContainText(/£1,610,487.52|Net Account Balance · After Unpaid Fees|\bCAD\b|\bGBP\b/);
@@ -135,14 +130,14 @@ test("inheritance cash and Brokerage overdraft stay separate, including during t
   await page.reload();
   await expect(page.getByTestId("text-total-balance")).toHaveText("£1,622,886.00");
   await expect(page.getByTestId(`balance-${identity.sixth}`)).toHaveText("£1,622,886.00");
-  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("-£12,398.48");
+  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("£12,398.48");
   await page.unroute("**/api/institutional-transfers");
   await page.route("**/api/investments", route => route.fulfill({status:503,contentType:"application/json",body:'{"message":"Synthetic price-history failure"}'}));
   await page.reload();
   await expect(page.getByTestId("text-total-balance")).toHaveText("Unavailable");
   await expect(page.getByTestId("account-summary-balance-cash")).toHaveText("£1,622,886.00");
   await expect(page.getByTestId("account-summary-balance-investment")).toHaveText("Unavailable");
-  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("-£12,398.48");
+  await expect(page.getByTestId(`debt-account-amount-${identity.funded}`)).toHaveText("£12,398.48");
   await page.unroute("**/api/investments");
   await page.getByRole("button", { name: "Retry", exact: true }).click();
   await expect(page.getByTestId("text-total-balance")).toHaveText("£1,622,886.00");

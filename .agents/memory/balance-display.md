@@ -111,11 +111,11 @@ In dashboard account previews and Accounts cards, show an overdrawn account's fu
 
 **How to apply:** Keep the actual negative ledger balance unchanged and display it with its minus sign. Keep genuinely unpaid fees separate and preserve the separate top-summary overdraft identification; never make the funded total negative by netting debt into it.
 
-Use different compact debt captions on the two overview screens: Dashboard keeps the account name without “Amount owed”; Accounts keeps “Amount owed” without a visible account-name heading. Neither debt summary has a details link beneath the figure. Debt figures are negative and red.
+Use different compact debt captions on the two overview screens: Dashboard keeps the account name without “Amount owed”; Accounts keeps “Amount owed” without a visible account-name heading. Neither debt summary has a details link beneath the figure. Dashboard debt and actual negative account balances are signed and red; Accounts “Amount owed” is positive and black (readable neutral text in dark mode).
 
-**Why:** The user explicitly requested these different captions, removed the links and repeated Balance labels, and asked for red figures with minus signs.
+**Why:** The user initially requested negative red debt figures, then explicitly corrected Accounts “Amount owed” to black without a negative sign and rejected duplicate figures beside category headings.
 
-**How to apply:** Preserve normal account names and detail navigation in the account list. Visually simplifying the debt summary must not remove accessible account identification or alter financial records.
+**How to apply:** Preserve normal account names and detail navigation in the account list. Category headings show names and counts only, not repeated totals; individual account rows retain their actual signed balances. Visually simplifying the debt summary must not remove accessible account identification or alter financial records.
 
 The dashboard “Unpaid fees” figure presents total still owed, including debt already posted as overdraft, rather than only assessments awaiting deduction.
 

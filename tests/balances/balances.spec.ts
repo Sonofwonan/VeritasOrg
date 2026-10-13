@@ -270,7 +270,12 @@ test("pending deposits, internal transfer, and institutional status/navigation c
   // Only ledger posting, not transaction status, changes funded assets.
   await db.query("UPDATE accounts SET balance=balance+9000000 WHERE id=$1 AND user_id=$2", [identity.funded, identity.userId]);
   await db.query("UPDATE transactions SET status='completed' WHERE id=$1 AND to_account_id=$2", [identity.deposit, identity.funded]);
-  await page.clock.runFor(31000);
+  // Let a pre-posting request finish, then advance to the next account poll.
+  // Moving the virtual clock alone does not wait for real network responses.
+  await expect.poll(async () => {
+    await page.clock.runFor(31000);
+    return page.getByTestId("text-total-balance").innerText();
+  }, {timeout:20000,message:"The refreshed accounts must include the posted deposit"}).toBe("CAD $11,003,900.25");
   await verifyHeadline(page, "$11,003,900.25");
   await expect(page.getByTestId(`txn-row-${identity.deposit}`)).toContainText("completed");
 });
@@ -323,7 +328,7 @@ test("existing accounts privacy control masks cash, fee debt and named ledger de
   await login(page, identity);
   await verifyHeadline(page);
   await page.getByTestId("button-quick-accounts").click();
-  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("CAD -$1,614.39");
+  await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("CAD $1,614.39");
   await page.getByTestId("button-toggle-balances").click();
   await expect(page.getByTestId("text-total-balance")).not.toContainText("$");
   await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("••••••");

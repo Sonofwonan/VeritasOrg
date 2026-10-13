@@ -290,7 +290,6 @@ export default function AccountsPage() {
         <div className="space-y-6 mt-2">
           {grouped.map(({ cat, items }) => {
             const { label, Icon, color } = CATEGORY_META[cat as keyof typeof CATEGORY_META];
-            const catTotal = items.reduce((s, a) => s + Number(a.balance), 0);
             return (
                <div key={cat} data-testid={`account-group-${cat}`}>
                 {/* Group header */}
@@ -300,9 +299,6 @@ export default function AccountsPage() {
                     <span className="label-caps text-muted-foreground">{label}</span>
                     <span className="text-[10px] text-muted-foreground/50 font-mono ml-1">({items.length})</span>
                   </div>
-                    <span data-testid={`account-group-balance-${cat}`} className={cn("whitespace-nowrap text-right font-mono text-xs tabular-nums sm:text-sm", catTotal < 0 ? "text-red-700 dark:text-red-300" : "text-foreground/70")}>
-                      {fmt(catTotal)}
-                    </span>
                 </div>
 
                 {/* Account rows */}

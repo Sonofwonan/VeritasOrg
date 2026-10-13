@@ -56,3 +56,9 @@ Recheck active-button contrast when replacing a disabled financial control with 
 **Why:** The existing readability checks excluded disabled controls. Making debt-blocked investment buttons clickable exposed an unreadable active color that those earlier checks could not detect.
 
 **How to apply:** Verify enabled feedback controls and popup text at relevant widths, alongside tests proving blocked clicks never submit financial requests. A server-blocked action still needs readable, keyboard-accessible client feedback.
+
+Responsive financial checks across both browser projects can exceed the foreground shell's five-minute limit, even when every completed test passes.
+
+**Why:** A targeted desktop/mobile run reached the shell timeout after desktop passed and while mobile was starting, leaving the combined run incomplete.
+
+**How to apply:** Use a background shell for long matrices, or run narrowly filtered projects within the foreground limit. Keep completed, unchanged project checks valid; a tool timeout is not evidence of an application defect.

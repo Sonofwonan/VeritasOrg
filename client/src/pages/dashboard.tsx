@@ -420,7 +420,7 @@ export default function DashboardPage() {
               <div className="px-5 py-3 border-b border-border/60 flex items-center justify-between bg-muted/20">
                 <div>
                   <p className="font-semibold text-sm">Transaction history</p>
-                  <p className="text-[10px] text-muted-foreground label-caps mt-0.5">All account activity</p>
+                  <p className="text-[10px] text-muted-foreground label-caps mt-0.5">Recent transactions</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1 text-[9px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-widest">

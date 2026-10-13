@@ -38,7 +38,7 @@ test("unsupported performance is omitted without inventing returns or changing f
       await expect(page.getByTestId(id)).toHaveCount(0);
     }
     await expect(page.getByTestId(`debt-account-amount-${identity.debt}`))
-      .toHaveText(currency === "GBP" ? "£1,614.39" : "CAD $1,614.39");
+      .toHaveText(currency === "GBP" ? "-£1,614.39" : "CAD -$1,614.39");
     // Four supported fields: desktop columns and labeled mobile fields,
     // with no empty P&L header/cells.
     const cells = page.getByTestId(`holding-row-${holding.id}`).locator(":scope > *");

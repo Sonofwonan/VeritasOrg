@@ -100,14 +100,14 @@ it("renders only exact named debt amounts and preserves privacy, unavailable and
   assert.equal(render(DebtAccountSummary,{summary:{totalUnpaid:"0",totalOverdraft:"0",accounts:[]}},[]),"");
   assert.equal(JSON.stringify(props),before);
 });
-it("uses negative red liabilities with distinct dashboard and Accounts captions",()=>{
+it("uses signed red dashboard balances and positive black Amount owed with distinct captions",()=>{
   const summary:ClientFeeSummary={totalUnpaid:"25",totalOverdraft:"100",totalOwed:"125",
     accounts:[{accountId:901,accountName:"Brokerage Account",unpaidTotal:"25",unpaidCount:1,overdraft:"100"}]};
   const accounts=[{id:901,accountType:"Brokerage Account",accountNumber:"VW-SYNTHETIC-1234",balance:"-100"}];
   for(const variant of ["dashboard","accounts"] as const){
     const html=render(DebtAccountSummary,{summary,accounts,variant,currency:"GBP"},[]);
-    assert.equal(displayedValue(html,"debt-account-amount-901"),"-£125.00");
-    assert(html.includes("text-red-700"));
+    assert.equal(displayedValue(html,"debt-account-amount-901"),variant==="dashboard"?"-£125.00":"£125.00");
+    assert(html.includes(variant==="dashboard"?"text-red-700":"text-black dark:text-foreground"));
     assert.equal(html.includes("Amount owed"),variant==="accounts");
     assert.equal(html.includes('class="sr-only"'),variant==="accounts");
     assert(!html.includes("Account details") && !html.includes("/accounts/901"));
@@ -256,6 +256,8 @@ it("shows a normal named GBP debt card below the funded balance without changing
   assert.equal(card.match(/£12,398\.48/g)?.length,1);
   assert.equal(displayedValue(html,"text-overdraft"),"-£12,398.48");
   assert.equal(displayedValue(html,"text-unpaid-fees"),"-£12,398.48");
+  assert(html.includes("Recent transactions"));
+  assert(!html.includes("All account activity"));
   assert(!card.includes("Cash ledger overdraft") && !card.includes("truncate"));
   for (const removed of ["Payment is required", "A separate payment", "Overdrafts and unpaid fees",
     "negative cash ledger", "unpaid assessments", "No interest is added"]) assert(!notice.includes(removed),removed);
@@ -369,7 +371,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
         assert.equal(displayedValue(html,"debt-account-amount-25"),"CAD -$12,398.48");
       } else {
         assert(html.includes("Brokerage Account") && html.includes("Amount owed"));
-        assert.equal(displayedValue(html,"debt-account-amount-25"),"CAD -$12,398.48");
+        assert.equal(displayedValue(html,"debt-account-amount-25"),"CAD $12,398.48");
       }
       assert(!html.includes("Account #25"));
       assert(!html.includes('data-testid="debt-account-details-25"'));
@@ -405,7 +407,8 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     const accountsHtml=render(AccountsPage,{},data);
     assert.equal(displayedValue(accountsHtml,"text-total-balance"),"£1,622,886.00");
     assert.equal(displayedValue(accountsHtml,"account-summary-balance-investment"),"£0.00");
-    assert.equal(displayedValue(accountsHtml,"account-group-balance-investment"),"-£12,398.48");
+    assert(!accountsHtml.includes('data-testid="account-group-balance-investment"'));
+    assert.equal(displayedValue(accountsHtml,"debt-account-amount-25"),"£12,398.48");
     assert(!accountsHtml.includes("£1,610,487.52"));
     assert(!accountsHtml.includes("GBP"));
     assert(!accountsHtml.includes("CAD $"));
@@ -495,7 +498,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
     ];
     for (const Component of [DashboardPage, AccountsPage]) {
       const html = render(Component, {}, data);
-      assert(html.includes("CAD -$11,636.48"), `${Component.name}: signed amount owed`);
+      assert(html.includes(Component===DashboardPage?"CAD -$11,636.48":"CAD $11,636.48"), `${Component.name}: amount owed`);
       assert.equal(html.includes("Amount owed"),Component===AccountsPage);
       if(Component===DashboardPage) {
         assert.equal(displayedValue(html,"text-total-balance"),"CAD $0.00");
@@ -576,7 +579,7 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       } else {
         assert.equal(displayedValue(html,"text-total-balance"),"CAD $0.00");
         assert.equal(displayedValue(html,"account-summary-balance-investment"),"CAD $0.00");
-        for (const id of [24,25]) assert.equal(displayedValue(html,`debt-account-amount-${id}`),"CAD -$12,398.48");
+        for (const id of [24,25]) assert.equal(displayedValue(html,`debt-account-amount-${id}`),"CAD $12,398.48");
       }
       assert(html.includes("CAD -$12,398.48"), `${Component.name}: full-digit account overdraft`);
       if(Component===DashboardPage) {
