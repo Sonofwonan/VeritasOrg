@@ -96,6 +96,15 @@ for (const currency of ["CAD", "GBP"] as const) {
         await page.evaluate(() => document.fonts.ready);
         await expect(page.getByTestId("account-detail-balance").getByText("Balance", { exact: true })).toHaveCount(1);
         await singleLine(primary);
+        if (width < 640) {
+          const identityBounds = await page.locator("main h2").first().boundingBox();
+          const figureBounds = await primary.boundingBox();
+          expect(figureBounds!.x).toBeGreaterThan(identityBounds!.x + identityBounds!.width);
+          expect(figureBounds!.y).toBeLessThan(identityBounds!.y + identityBounds!.height);
+          if (currency === "GBP" && width === 390) {
+            expect(await primary.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+          }
+        }
         const row = page.getByTestId(`account-txn-row-${account.transaction}`);
         await expect(row).toBeVisible();
         const amount = row.locator("p").filter({ hasText: account.id === trust.id ? `+${money("1622886.00")}` : `-${money("12")}` }).first();

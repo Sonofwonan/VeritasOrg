@@ -42,7 +42,7 @@ test("blocked entry actions show a short popup without navigation or financial m
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button",{name:"Manage",exact:true})).toBeFocused();
   await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute("aria-expanded","false");
-  await expect(page.getByTestId("top-navigation-toggle")).toHaveAttribute("aria-expanded","false");
+  await expect(page.getByTestId("profile-button")).toHaveAttribute("aria-label","Open profile");
   for (const width of [320,768,1440]) {
     await page.setViewportSize({width,height:900});
     await page.getByTestId("button-quick-invest").click();

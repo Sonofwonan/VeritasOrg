@@ -15,6 +15,12 @@ Mobile information must fit horizontally at normal 100% browser zoom. Vertical s
 
 **How to apply:** Check rendered text bounds against clipping ancestors, not only document scroll width. Let financial tables and activity rows reflow on narrow screens, keep every field available, and preserve readable amounts instead of scaling the entire page down.
 
+Individual account balances belong to the right of the account name and masked number in the same header, including on phones. The account-details control remains below the masked number.
+
+**Why:** The user repeatedly requested this mobile arrangement; desktop-only alignment did not meet the request.
+
+**How to apply:** Keep a readable two-column account header across supported phone widths, preserving full digits and negative-balance styling rather than placing the amount in a separate card or scaling it excessively.
+
 Bound financial admin dialogs to the visible viewport and allow long identity text to wrap anywhere; percentage widths alone may not prevent mobile overflow.
 
 **Why:** The currency dialog sometimes exceeded a 360-pixel viewport even after animations had settled. Waiting longer did not fix the containment failure.

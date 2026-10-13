@@ -24,7 +24,7 @@ test("unsupported performance is omitted without inventing returns or changing f
     await expect(page.getByTestId("text-performance-explanation")).toHaveCount(0);
     await expect(page.locator("main").last()).not.toContainText(/unavailable|YTD Return|investment gains|not investment returns/i);
     await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute("aria-expanded", "false");
-    await expect(page.getByTestId("top-navigation-toggle")).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByTestId("profile-button")).toHaveAttribute("aria-label", "Open profile");
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth))
       .toBeLessThanOrEqual(page.viewportSize()!.width);
   };

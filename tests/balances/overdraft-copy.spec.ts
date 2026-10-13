@@ -110,7 +110,7 @@ test("plain overdrafts and fee descriptions preserve records, currencies and dis
         await expect(accountRow).not.toContainText("1,250.75");
       }
       await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute("aria-expanded", "false");
-      await expect(page.getByTestId("top-navigation-toggle")).toHaveAttribute("aria-expanded", "false");
+      await expect(page.getByTestId("profile-button")).toHaveAttribute("aria-label", "Open profile");
       expect(await snapshot()).toEqual(before);
     }
   }

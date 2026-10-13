@@ -1,6 +1,6 @@
 import { test, expect, login, verifyHeadline } from "./fixtures";
 
-test("slide-out menu preserves routes, focus, advisor contact and sign-out", async ({ page, identity }, info) => {
+test("slide-out menu preserves routes and focus, while profile owns identity and sign-out", async ({ page, identity }, info) => {
   await login(page, identity);
   await verifyHeadline(page);
   const toggle = page.getByTestId("sidebar-toggle");
@@ -8,7 +8,10 @@ test("slide-out menu preserves routes, focus, advisor contact and sign-out", asy
   await toggle.click();
   await expect(panel).toBeVisible();
   await expect(panel.getByRole("button", { name: "Education", exact: true })).toHaveCount(0);
-  await expect(panel.getByTestId("text-username")).toHaveText("Balance Test Client");
+  await expect(panel.getByTestId("text-username")).toHaveCount(0);
+  await expect(panel.getByText("Balance Test Client", {exact:true})).toHaveCount(0);
+  await expect(panel.getByRole("button", {name:"Sign out",exact:true})).toHaveCount(0);
+  await expect(toggle).toHaveText("");
   await expect(panel.getByRole("link", { name: "Contact your advisor", exact: true }))
     .toHaveAttribute("href", "mailto:veritaswealth@accountant.com");
   for (let i = 0; i < 24; i++) {
@@ -34,12 +37,15 @@ test("slide-out menu preserves routes, focus, advisor contact and sign-out", asy
     await page.getByTestId("sidebar-panel").getByRole("button", { name: label, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`${route}$`));
     await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute("aria-expanded", "false");
-    await expect(page.getByTestId("top-navigation-toggle")).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByTestId("profile-button")).toHaveAttribute("aria-label", "Open profile");
   }
-  await page.getByTestId("sidebar-toggle").click();
+  await page.getByTestId("profile-button").click();
+  await expect(page).toHaveURL(/\/profile$/);
+  await expect(page.getByTestId("text-profile-name")).toHaveText("Balance Test Client");
+  await expect(page.getByRole("heading",{name:"Personal profile",exact:true})).toBeVisible();
   const logoutResponse = page.waitForResponse(response =>
     response.url().endsWith("/api/logout") && response.request().method() === "POST");
-  await page.getByTestId("sidebar-panel").getByRole("button", { name: "Sign out", exact: true }).click();
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
   expect((await logoutResponse).status()).toBe(200);
   await expect(page).toHaveURL(/\/auth$/);
 });
@@ -49,14 +55,16 @@ test("client navigation stays collapsed until deliberately opened", async ({page
   await login(page,identity);
   await verifyHeadline(page);
   const sidebar=page.getByTestId("sidebar-toggle");
-  const top=page.getByTestId("top-navigation-toggle");
+  const top=page.getByTestId("profile-button");
   const gear=page.getByTestId("header-settings-button");
   const nav=page.getByTestId("sidebar-panel");
   const header=page.locator("header").filter({has:top});
   for (const width of [320,390,768,1024,1440]) {
     await page.setViewportSize({width,height:900});
     await expect(sidebar).toHaveAttribute("aria-expanded","false");
-    await expect(top).toHaveAttribute("aria-expanded","false");
+    await expect(top).toHaveAttribute("aria-label","Open profile");
+    await expect(top).toHaveText("");
+    await expect(sidebar).toHaveText("");
     await expect(gear).toHaveCount(0);
     // Responsive offcanvas and header transitions settle after their aria state
     // changes. Check the final layout, not an intermediate animation frame.
@@ -71,17 +79,8 @@ test("client navigation stays collapsed until deliberately opened", async ({page
     }
     await header.hover();
     await page.locator('main.overflow-y-auto').evaluate(el=>el.scrollTop=200);
-    await expect(top).toHaveAttribute("aria-expanded","false");
+    await expect(top).toHaveAttribute("aria-label","Open profile");
     await expect(sidebar).toHaveAttribute("aria-expanded","false");
-    await top.focus();
-    await page.keyboard.press("Enter");
-    await expect(top).toHaveAttribute("aria-expanded","true");
-    await expect(gear).toBeVisible();
-    const settingsBox=await gear.boundingBox();
-    expect(settingsBox!.x+settingsBox!.width).toBeLessThanOrEqual(width);
-    await top.focus();
-    await page.keyboard.press("Space");
-    await expect(top).toHaveAttribute("aria-expanded","false");
     await expect(gear).toHaveCount(0);
     await sidebar.click();
     await expect(page.getByTestId("sidebar-close")).toBeVisible();
@@ -97,10 +96,15 @@ test("client navigation stays collapsed until deliberately opened", async ({page
       await info.attach(`navigation-collapsed-${width}`,{path,contentType:"image/png"});
     }
   }
-  await top.click();
-  await gear.click();
-  await expect(page).toHaveURL(/\/settings$/);
-  await expect(top).toHaveAttribute("aria-expanded","false");
+  await top.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/profile$/);
+  await expect(page.getByRole("heading",{name:"Personal profile",exact:true})).toBeVisible();
+  await expect(page.getByTestId("text-profile-name")).toHaveText("Balance Test Client");
+  await expect(page.getByRole("tab",{name:"Contact details",exact:true})).toBeVisible();
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:info.outputPath("personal-profile-mobile.png"),animations:"disabled"});
+  await expect(top).toHaveAttribute("aria-label","Open profile");
   await expect(sidebar).toHaveAttribute("aria-expanded","false");
   await sidebar.click();
   await nav.getByRole("button",{name:"Dashboard",exact:true}).click();
@@ -110,8 +114,11 @@ test("client navigation stays collapsed until deliberately opened", async ({page
   await top.click();
   await sidebar.click();
   await page.reload();
-  await expect(top).toHaveAttribute("aria-expanded","false");
+  await expect(top).toHaveAttribute("aria-label","Open profile");
   await expect(sidebar).toHaveAttribute("aria-expanded","false");
+  await expect(page).toHaveURL(/\/profile$/);
+  await expect(page.getByRole("heading",{name:"Personal profile",exact:true})).toBeVisible();
+  await page.goto("/dashboard");
   await verifyHeadline(page);
 });
 
@@ -150,7 +157,7 @@ test("dashboard offers three fitting quick actions with unchanged destinations",
     await page.setViewportSize({width,height:900});
     await checkActions(width);
     await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute("aria-expanded","false");
-    await expect(page.getByTestId("top-navigation-toggle")).toHaveAttribute("aria-expanded","false");
+    await expect(page.getByTestId("profile-button")).toHaveAttribute("aria-label","Open profile");
     if (width === 390 || width === 1440) {
       await page.screenshot({path:info.outputPath(`three-dashboard-actions-${width}.png`),animations:"disabled"});
     }

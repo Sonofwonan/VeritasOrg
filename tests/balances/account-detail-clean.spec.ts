@@ -55,7 +55,7 @@ test("account details are clean, truthful and responsive without changing fees o
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(balance).toBeVisible();
-    if (width >= 768) {
+    {
       const headingBox = await accountHeader.getByRole("heading").boundingBox();
       const figureBox = await balance.boundingBox();
       expect(figureBox!.x).toBeGreaterThan(headingBox!.x + headingBox!.width);

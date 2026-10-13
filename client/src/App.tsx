@@ -78,6 +78,9 @@ function Router() {
       <Route path="/settings">
         {() => <ProtectedRoute component={SettingsPage} />}
       </Route>
+      <Route path="/profile">
+        {() => <ProtectedRoute component={SettingsPage} profile />}
+      </Route>
 
       <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />

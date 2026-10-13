@@ -111,7 +111,7 @@ test("client palette stays readable without changing money or collapsed navigati
   await assertFundsActionBlocked(page,"button-quick-transfer");
   await assertFundsActionBlocked(page,"button-quick-invest");
   await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute("aria-expanded", "false");
-  await expect(page.getByTestId("top-navigation-toggle")).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByTestId("profile-button")).toHaveAttribute("aria-label", "Open profile");
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
     await verifyHeadline(page, "£2,003,900.25");
@@ -140,9 +140,11 @@ test("client palette stays readable without changing money or collapsed navigati
     await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute("aria-expanded", "true");
     await assertReadable(page, "#veritas-side-navigation", info, `sidebar-${dark}`);
     await page.getByTestId("sidebar-close").click();
-    await page.getByTestId("top-navigation-toggle").click();
-    await expect(page.getByTestId("top-navigation-toggle")).toHaveAttribute("aria-expanded", "true");
-    await assertReadable(page, "header", info, `expanded-header-${dark}`);
+    await page.getByTestId("profile-button").click();
+    await expect(page).toHaveURL(/\/profile$/);
+    await expect(page.getByTestId("text-profile-name")).toBeVisible();
+    await page.evaluate(value => document.documentElement.classList.toggle("dark", value), dark);
+    await assertReadable(page, "main,header", info, `profile-${dark}`);
   }
   await page.goto("/dashboard");
   await verifyHeadline(page, "£2,003,900.25");

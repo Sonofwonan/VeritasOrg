@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ArrowUpRight, Check, ChevronRight, LockKeyhole, Mail, MapPin, PencilLine, Phone, Shield, UserRound } from "lucide-react";
+import { AlertCircle, ArrowUpRight, Check, ChevronRight, LockKeyhole, LogOut, Mail, MapPin, PencilLine, Phone, Shield, UserRound } from "lucide-react";
 import { contactDetailsPath, contactDetailsSchema, type Address, type ContactDetails } from "@shared/client-settings";
 import { useAuth } from "@/hooks/use-auth";
 import { LayoutShell } from "@/components/layout-shell";
@@ -58,8 +58,8 @@ function AddressFields({ title, address, onChange, errors }: { title: string; ad
   );
 }
 
-export default function SettingsPage() {
-  const { user } = useAuth();
+export default function SettingsPage({ profile = false }: { profile?: boolean } = {}) {
+  const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<ContactDetails>(emptyContact);
@@ -176,7 +176,7 @@ export default function SettingsPage() {
           <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-primary">Veritas Wealth · Client services</p>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Account settings</h1>
+              <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{profile ? "Personal profile" : "Account settings"}</h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Keep your contact details current and manage how we communicate with you.</p>
             </div>
             <div className="flex items-center gap-2 border-l-2 border-primary/60 pl-3 text-sm text-muted-foreground">
@@ -184,6 +184,24 @@ export default function SettingsPage() {
               Private client access
             </div>
           </div>
+          {profile && (
+            <section aria-label="Your profile" className="mt-5 flex min-w-0 flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
+                  <UserRound className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="break-words font-semibold text-foreground" data-testid="text-profile-name">{name}</p>
+                  <p className="text-sm text-muted-foreground">Private client</p>
+                </div>
+              </div>
+              <Button type="button" variant="outline" className="min-h-11 gap-2" disabled={logout.isPending} onClick={() => logout.mutate()}>
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                {logout.isPending ? "Signing out…" : "Sign out"}
+              </Button>
+              {logout.isError && <p role="alert" className="w-full text-sm text-destructive">Couldn’t sign out. Please try again.</p>}
+            </section>
+          )}
         </header>
 
         <Tabs defaultValue="contact" className="space-y-6 sm:space-y-8">

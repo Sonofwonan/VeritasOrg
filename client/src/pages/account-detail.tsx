@@ -85,6 +85,7 @@ export default function AccountDetailPage() {
   const unpaidFees = Number(accountFees?.unpaidTotal || 0);
   const balanceError = !Number.isFinite(accountBalance) ||
     !Number.isFinite(unpaidFees) || unpaidFees < 0;
+  const displayBalance = money(accountBalance);
 
   return (
     <LayoutShell>
@@ -98,7 +99,7 @@ export default function AccountDetailPage() {
           Back to Accounts
         </Button>
         
-        <div className="grid min-w-0 grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,42%)] md:items-end md:gap-8">
+        <div className="grid min-w-0 grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] items-start gap-2 sm:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] sm:gap-5 md:items-end md:gap-8">
           <div className="min-w-0">
             <p className="mb-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Account</p>
             <h2 className="break-words font-serif text-2xl font-medium leading-tight sm:text-3xl">
@@ -110,15 +111,17 @@ export default function AccountDetailPage() {
               Account details
             </Button>
           </div>
-          <div className="min-w-0 [container-type:inline-size] border-t border-primary/20 pt-3 md:border-l md:border-t-0 md:pl-5 md:pt-0" data-testid="account-detail-balance">
+          <div className="min-w-0 [container-type:inline-size] border-l border-primary/20 pl-2 pt-1 text-right sm:pl-4 md:pt-0" data-testid="account-detail-balance">
             {balanceError ? (
               <div role="alert" className="text-sm text-destructive">Balance details are unavailable.</div>
             ) : (
               <div className="space-y-3">
-                <div className="flex min-w-0 flex-col items-start gap-1 md:items-end">
+                <div className="flex min-w-0 flex-col items-end gap-1">
                   <p className="label-caps text-xs text-muted-foreground">Balance</p>
-                  <p data-testid="text-account-cash-balance" className={cn("max-w-full whitespace-nowrap font-sans [font-size:clamp(0.75rem,6cqi,2.25rem)] font-semibold leading-tight tracking-tight tabular-nums", accountBalance < 0 ? "text-red-700 dark:text-red-300" : "text-primary")}>
-                    {money(accountBalance)}
+                  <p data-testid="text-account-cash-balance"
+                    style={{ fontSize: `clamp(12px, ${Math.min(11.5, 170 / displayBalance.length)}cqi, 20px)` }}
+                    className={cn("max-w-full whitespace-nowrap font-sans font-semibold leading-tight tracking-tight tabular-nums", accountBalance < 0 ? "text-red-700 dark:text-red-300" : "text-primary")}>
+                    {displayBalance}
                   </p>
                 </div>
                 {feeSummary.isLoading ? (

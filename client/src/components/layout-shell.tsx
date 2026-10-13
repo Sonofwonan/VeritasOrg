@@ -17,13 +17,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [topNavigationOpen, setTopNavigationOpen] = useState(false);
   const access = useFundsAccess();
   const { isUnderLiquidation, statusUnavailable, isError: liquidationError, refetch: refetchLiquidation } = useActiveLiquidation();
   const [fundsDialogOpen, setFundsDialogOpen] = useState(false);
@@ -49,18 +48,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   const { showWarning, secondsLeft, dismiss } = useInactivityLogout(handleAutoLogout);
 
-  useEffect(() => {
-    setTopNavigationOpen(false);
-  }, [location]);
-
   return (
     <>
       <div onClickCapture={guardFundsAction} className="flex h-screen w-full overflow-hidden bg-background">
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-          <SlideOutNavigation location={location} name={user?.name}
-            open={sidebarOpen} onOpenChange={setSidebarOpen}
-            detailsOpen={topNavigationOpen} onDetailsChange={setTopNavigationOpen}
-            onNavigate={setLocation} onSignOut={() => logout.mutate()} signingOut={logout.isPending} />
+          <SlideOutNavigation location={location}
+            open={sidebarOpen} onOpenChange={setSidebarOpen} onNavigate={setLocation} />
 
           {(user as any)?.accountFrozen && (
             <div className="bg-sky-950 border-b border-sky-500/30 px-6 py-3 flex items-start gap-3">

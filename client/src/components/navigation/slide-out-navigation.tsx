@@ -1,7 +1,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
-  ArrowLeftRight, ChartNoAxesCombined, ChevronDown, ChevronRight,
-  CircleHelp, Clock3, LayoutDashboard, LogOut, Mail, Menu, Settings, Wallet, X,
+  ArrowLeftRight, ChartNoAxesCombined, ChevronRight, CircleHelp, Clock3,
+  LayoutDashboard, Mail, Menu, Settings, UserRound, Wallet, X,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import "./slide-out-navigation.css";
@@ -19,30 +19,22 @@ const personalRoutes = [
 
 type Props = {
   location: string;
-  name?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  detailsOpen: boolean;
-  onDetailsChange: (open: boolean) => void;
   onNavigate: (href: string) => void;
-  onSignOut: () => void;
-  signingOut: boolean;
 };
 
-export function SlideOutNavigation(props: Props) {
-  const { location, name, open, onOpenChange, detailsOpen, onDetailsChange, onNavigate, onSignOut, signingOut } = props;
+export function SlideOutNavigation({ location, open, onOpenChange, onNavigate }: Props) {
   const previousLocation = useRef(location);
-  const detailsToggle = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (previousLocation.current !== location) {
       previousLocation.current = location;
       onOpenChange(false);
-      onDetailsChange(false);
     }
-  }, [location, onOpenChange, onDetailsChange]);
+  }, [location, onOpenChange]);
+
   const navigate = (href: string) => {
     onOpenChange(false);
-    onDetailsChange(false);
     onNavigate(href);
   };
   const links = (routes: typeof accountRoutes) => routes.map(item => {
@@ -57,7 +49,7 @@ export function SlideOutNavigation(props: Props) {
       </button>
     );
   });
-  const pageLabel = [...accountRoutes, ...personalRoutes].find(item =>
+  const pageLabel = location === "/profile" ? "Profile" : [...accountRoutes, ...personalRoutes].find(item =>
     location === item.href || location.startsWith(item.href + "/"))?.label ?? "Client portal";
 
   return (
@@ -65,36 +57,26 @@ export function SlideOutNavigation(props: Props) {
       <header className="qd-topbar">
         <div className="qd-topbar-left">
           <DialogPrimitive.Trigger asChild>
-            <button type="button" className="qd-menu-button" data-testid="sidebar-toggle" aria-label="Open menu" aria-controls="veritas-side-navigation">
-              <Menu size={19} aria-hidden="true" /><span>Menu</span>
+            <button type="button" className="qd-icon-button" data-testid="sidebar-toggle"
+              aria-label="Open menu" aria-controls="veritas-side-navigation">
+              <Menu size={20} aria-hidden="true" />
             </button>
           </DialogPrimitive.Trigger>
-          <div className="qd-breadcrumb">
+          <div className="qd-breadcrumb" aria-label={`Current page: ${pageLabel}`}>
             <span className="qd-breadcrumb-label">VERITAS WEALTH</span>
             <ChevronRight size={14} aria-hidden="true" />
-            <span className="qd-breadcrumb-current">{pageLabel}</span>
+            <span className="qd-breadcrumb-current" aria-current="page">{pageLabel}</span>
           </div>
         </div>
-        <button ref={detailsToggle} type="button" className="qd-details-toggle" data-testid="top-navigation-toggle"
-          aria-label={detailsOpen ? "Hide navigation details" : "Show navigation details"}
-          aria-expanded={detailsOpen} aria-controls="veritas-top-navigation-actions"
-          onClick={() => onDetailsChange(!detailsOpen)}>
-          <span>{detailsOpen ? "Hide details" : "Navigation"}</span>
-          <ChevronDown size={15} aria-hidden="true" className={detailsOpen ? "qd-chevron-up" : ""} />
+        <button type="button" className="qd-icon-button" data-testid="profile-button"
+          aria-label="Open profile" onClick={() => navigate("/profile")}>
+          <UserRound size={19} aria-hidden="true" />
         </button>
-        {detailsOpen && (
-          <div id="veritas-top-navigation-actions" className="qd-header-details"
-            onKeyDown={event => { if (event.key === "Escape") { onDetailsChange(false); detailsToggle.current?.focus(); } }}>
-            <span>VERITAS WEALTH</span>
-            <button type="button" data-testid="header-settings-button" aria-label="Settings" onClick={() => navigate("/settings")}>
-              <Settings size={17} aria-hidden="true" />
-            </button>
-          </div>
-        )}
       </header>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="qd-scrim" data-testid="drawer-scrim" />
-        <DialogPrimitive.Content id="veritas-side-navigation" className="qd-drawer" data-testid="sidebar-panel" aria-describedby={undefined}>
+        <DialogPrimitive.Content id="veritas-side-navigation" className="qd-drawer"
+          data-testid="sidebar-panel" aria-describedby={undefined}>
           <div className="qd-drawer-head">
             <div className="qd-brand">
               <span className="qd-brand-mark"><img src="/veritas-logo.png" alt="" /></span>
@@ -104,7 +86,8 @@ export function SlideOutNavigation(props: Props) {
               </span>
             </div>
             <DialogPrimitive.Close asChild>
-              <button type="button" className="qd-close-button" data-testid="sidebar-close" aria-label="Close menu"><X size={19} aria-hidden="true" /></button>
+              <button type="button" className="qd-close-button" data-testid="sidebar-close"
+                aria-label="Close menu"><X size={19} aria-hidden="true" /></button>
             </DialogPrimitive.Close>
           </div>
           <nav className="qd-nav" aria-label="Account navigation">
@@ -121,15 +104,9 @@ export function SlideOutNavigation(props: Props) {
               <a href="mailto:veritaswealth@accountant.com">Contact your advisor</a>
               <span className="qd-advisor-email">veritaswealth@accountant.com</span>
             </div>
-            <a className="qd-email-action" href="mailto:veritaswealth@accountant.com" aria-label="Email your advisor"><Mail size={16} aria-hidden="true" /></a>
+            <a className="qd-email-action" href="mailto:veritaswealth@accountant.com"
+              aria-label="Email your advisor"><Mail size={16} aria-hidden="true" /></a>
           </section>
-          <div className="qd-profile">
-            <div className="qd-avatar" aria-hidden="true">{name?.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("") || "U"}</div>
-            <div className="qd-profile-copy"><strong data-testid="text-username">{name}</strong><span>Private client</span></div>
-            <button type="button" className="qd-signout" onClick={onSignOut} disabled={signingOut}>
-              <LogOut size={16} aria-hidden="true" /><span>{signingOut ? "Signing out…" : "Sign out"}</span>
-            </button>
-          </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
