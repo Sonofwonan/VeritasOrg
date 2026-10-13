@@ -176,7 +176,7 @@ export default function DashboardPage() {
             {selectedTxn?.status === 'pending' && (
               <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-sm mb-2">
                 <p className="text-[10px] text-amber-400 uppercase tracking-widest font-black mb-1">Compliance Review</p>
-                <p className="text-xs text-white/60 leading-relaxed">This transaction is undergoing institutional verification per FINTRAC requirements and will settle upon clearance.</p>
+                <p className="text-xs text-white/60 leading-relaxed">This transaction is under review. Contact your advisor for an update.</p>
               </div>
             )}
             <Button onClick={() => setSelectedTxn(null)} className="w-full bg-white text-[#0B2218] hover:bg-white/90 rounded-sm font-bold">Close</Button>
@@ -549,7 +549,7 @@ export default function DashboardPage() {
 
         {/* Footer */}
         <div className="pt-2 pb-1 border-t border-border/40 text-[10px] text-muted-foreground/40">
-          <span>CDIC member · CIPF protected</span>
+          <span>Global private offshore wealth management</span>
         </div>
 
       </div>

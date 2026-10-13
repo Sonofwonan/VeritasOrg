@@ -38,7 +38,7 @@ export default function TransfersPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-5">
           <h2 className="text-xl font-bold font-display">Portfolio Transfer</h2>
-          <p className="text-muted-foreground text-xs">Move your entire portfolio to another registered Canadian investment institution.</p>
+          <p className="text-muted-foreground text-xs">Request a portfolio transfer to another financial institution.</p>
         </div>
 
         <Card className="border-none shadow-xl shadow-primary/5">
@@ -50,7 +50,7 @@ export default function TransfersPage() {
                   Transfer to Another Institution
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Move your full portfolio in-kind or as cash to any registered Canadian investment dealer. All requests are subject to admin review.
+                  Request a transfer in-kind or as cash to a listed destination institution. All requests require administrator review and approval.
                 </CardDescription>
               </div>
               <Button data-funds-action="" onClick={() => setShowInstTransferModal(true)} className="gap-2 shrink-0" data-testid="button-new-institutional-transfer">

@@ -429,7 +429,7 @@ export default function AccountsPage() {
 
       {/* ── Footer note ─────────────────────────────────────────────── */}
       <div className="mt-8 pt-4 border-t border-border/50 text-[10px] text-muted-foreground/40">
-        <span>CDIC insured · Accounts protected up to eligible limits</span>
+        <span>Global private offshore wealth management</span>
       </div>
 
     </LayoutShell>

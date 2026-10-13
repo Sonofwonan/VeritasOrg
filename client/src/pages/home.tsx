@@ -40,7 +40,7 @@ const PRINCIPLES = [
 const STORIES = [
   {
     name: "Catherine Mercer",
-    background: "Healthcare executive, Toronto, Ontario",
+    background: "Healthcare executive",
     before: "$620M",
     after: "$2.8B",
     years: 7,
@@ -48,7 +48,7 @@ const STORIES = [
   },
   {
     name: "James and Eleanor Thornton",
-    background: "Energy sector founders, Calgary, Alberta",
+    background: "Energy sector founders",
     before: "$1.4B",
     after: "$6.2B",
     years: 9,
@@ -56,7 +56,7 @@ const STORIES = [
   },
   {
     name: "Dr. Marcus Lin",
-    background: "Surgeon and private equity partner, Vancouver, BC",
+    background: "Surgeon and private equity partner",
     before: "$580M",
     after: "$2.3B",
     years: 6,
@@ -66,24 +66,24 @@ const STORIES = [
 
 const INSIGHTS = [
   {
-    category: "Canadian fixed income",
+    category: "Global fixed income",
     date: "June 2025",
-    headline: "What the Bank of Canada's rate path means for your bond portfolio",
-    excerpt: "With the Bank of Canada cutting ahead of the Fed, Government of Canada bonds are behaving differently than their US counterparts. Duration extension may finally make sense for Canadian investors holding short.",
+    headline: "Understanding interest rates across a global bond portfolio",
+    excerpt: "Interest-rate policies differ across markets. A global bond strategy considers duration, credit quality and currency exposure alongside your long-term objectives.",
     readTime: "6 min read",
   },
   {
     category: "Equity strategy",
     date: "May 2025",
-    headline: "The TSX is cheap relative to history. Here is why that matters",
-    excerpt: "Canadian equities trade at a meaningful discount to US peers on almost every valuation metric. For investors willing to look past the energy and financials concentration, the opportunity set is broader than it looks.",
+    headline: "Building an equity portfolio across international markets",
+    excerpt: "Diversification across regions and sectors helps manage concentration risk. Your investment strategy should also account for currency exposure and your individual circumstances.",
     readTime: "8 min read",
   },
   {
     category: "Tax and estate",
     date: "May 2025",
-    headline: "The 2025 capital gains inclusion rate change and what to do now",
-    excerpt: "Ottawa's proposed increase to the capital gains inclusion rate has prompted many high net worth Canadians to revisit their holding structures. We break down the scenarios and where planning still creates real value.",
+    headline: "Planning for wealth that spans borders and generations",
+    excerpt: "Cross-border wealth planning requires consideration of residency, succession and applicable local rules. Discuss your circumstances with qualified tax and legal advisors.",
     readTime: "5 min read",
   },
 ];
@@ -174,7 +174,7 @@ export default function HomePage() {
 
         <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-8 pb-10 sm:pb-14">
           <div className="max-w-2xl">
-            <p className="label-caps text-white/85 mb-4 tracking-[0.2em]">Private wealth management since 1967</p>
+            <p className="label-caps text-white/85 mb-4 tracking-[0.2em]">Global private offshore wealth management</p>
             <h1 className="font-serif text-white leading-[1.1]" style={{ fontSize: "clamp(2rem, 4vw, 3.8rem)" }}>
               Capital, <em>protected</em>. Wealth, grown.
             </h1>
@@ -205,10 +205,10 @@ export default function HomePage() {
       <div className="bg-cream border-b border-border">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-5 flex flex-wrap items-center justify-between gap-4">
           <p className="font-serif text-base italic text-muted-foreground">
-            Veritas Wealth has been serving investors, families and institutions for over <strong className="text-foreground not-italic font-medium">57 years</strong>.
+            Private wealth management for individuals, families and institutions with international financial interests.
           </p>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3 sm:gap-8 text-[11px]">
-            {["CIRO Registered Dealer", "CIPF Member", "Deloitte Canada Audited", "Fiduciary Standard"].map(b => (
+            {["Private wealth", "Family wealth", "Offshore wealth management"].map(b => (
               <span key={b} className="label-caps text-muted-foreground/60 flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-primary/40 inline-block" /> {b}
               </span>
@@ -299,12 +299,12 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-20 sm:py-28">
           <div className="grid lg:grid-cols-[auto_1fr] gap-16 lg:gap-32 items-start">
             <div className="lg:max-w-xs space-y-4">
-              <p className="label-caps text-white/85">Verified track record</p>
+              <p className="label-caps text-white/85">Portfolio perspective</p>
               <h2 className="font-serif text-white leading-tight" style={{ fontSize: "clamp(1.8rem, 3vw, 2.8rem)" }}>
                 Numbers that speak for themselves.
               </h2>
               <p className="text-white/85 text-[15px] leading-relaxed">
-                All performance figures are net of fees, across diversified model portfolios, and audited annually by Deloitte.
+                Investment performance depends on market conditions, portfolio choices and costs. Past performance does not guarantee future results.
               </p>
             </div>
             <div className="grid min-w-0 grid-cols-2 sm:grid-cols-4 gap-0 divide-x divide-white/10">

@@ -416,14 +416,14 @@ export default function AuthPage() {
           </div>
 
           <div className="space-y-6 max-w-xs">
-            <p className="label-caps text-primary-foreground/40 tracking-widest">Private Wealth Management</p>
+            <p className="label-caps text-primary-foreground/40 tracking-widest">Global Private Offshore Wealth Management</p>
             <h1 className="font-serif leading-tight" style={{ fontSize: "clamp(2rem, 3.5vw, 2.8rem)" }}>
               Your wealth,<br />
               managed with<br />
               <em>precision</em> and care.
             </h1>
             <p className="text-primary-foreground/60 text-sm leading-relaxed">
-              We work with ultra high net worth Canadians who have $500M or more to invest. Real people, real relationships, no templates.
+              Private offshore wealth management for individuals and families with international financial interests. Personal relationships, with a global perspective.
             </p>
           </div>
         </div>
@@ -433,7 +433,7 @@ export default function AuthPage() {
             { v: "CAD $4.2B", l: "Assets managed" },
             { v: "12.4%", l: "10 yr avg return" },
             { v: "0.32%", l: "Avg all in fee" },
-            { v: "50K+", l: "Canadian clients" },
+            { v: "Personal", l: "Client relationships" },
           ].map(s => (
             <div key={s.l}>
               <p className="font-mono-nums text-xl font-medium text-accent">{s.v}</p>
