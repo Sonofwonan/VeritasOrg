@@ -1,7 +1,8 @@
 import { test as base, expect, type Page } from "@playwright/test";
 import { randomBytes, scryptSync } from "node:crypto";
 import pg from "pg";
-import { writeFile } from "node:fs/promises";
+import { writeFile, unlink } from "node:fs/promises";
+import { resolve, sep } from "node:path";
 import { DEFAULT_FEE_COMPONENTS, OVERDRAFT_FEE_TERMS } from "../../shared/fees";
 
 export const HEADLINE = "CAD $2,003,900.25";
@@ -43,6 +44,7 @@ function isolatedDatabase() {
 export const test = base.extend<{
   identity: Identity; db: pg.Pool; browserEvidence: void;
   expectedHttpFailures: Record<string, number>;
+  failLiquidationQueries: (run: () => Promise<void>) => Promise<void>;
 }>({
   expectedHttpFailures: [{}, { option: true }],
   browserEvidence: [async ({ page, expectedHttpFailures }, use, info) => {
@@ -83,6 +85,21 @@ export const test = base.extend<{
     expect(row).toEqual({ name: "veritas_balance_e2e", role: "balance_test" });
     await use(db);
     await db.end();
+  },
+  failLiquidationQueries: async ({ db }, use) => {
+    const evidence = process.env.BALANCE_E2E_EVIDENCE;
+    const marker = process.env.BALANCE_E2E_LIQUIDATION_FAILURE;
+    if (!evidence || !resolve(evidence).startsWith(resolve("test-results/balances") + sep) ||
+        marker !== resolve(evidence, "liquidation-query-failure")) {
+      throw new Error("Refusing fault injection outside the runner-owned evidence directory");
+    }
+    // db's guarded fixture must be initialized before enabling failures.
+    await db.query("SELECT 1");
+    await use(async run => {
+      await writeFile(marker, "");
+      try { await run(); }
+      finally { await unlink(marker); }
+    });
   },
   identity: async ({ db }, use) => {
     const suffix = randomBytes(8).toString("hex");

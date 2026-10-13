@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
+import { useActiveLiquidation } from "@/hooks/use-liquidation-status";
 import {
   TrendingUp, ArrowUpRight, ArrowDownRight,
   ArrowLeftRight, Clock, Info, ChevronRight, Landmark,
@@ -61,7 +62,7 @@ export default function DashboardPage() {
   const feeSummary = { ...snapshot, data: snapshot.isError ? undefined : snapshot.data?.feeSummary };
   const { data: investments, isLoading: investmentsLoading, isError: investmentsError, refetch: refetchInvestments } = useInvestments();
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
-  const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"], refetchInterval: 15000 });
+  const { transfers: instTransfers, statusUnavailable } = useActiveLiquidation();
 
   // Active transfer = any that isn't rejected/completed
   const activeTransfer = instTransfers.find((t: any) =>
@@ -219,7 +220,7 @@ export default function DashboardPage() {
           {/* KPI strip */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
             {[
-              { label: 'Liquid Cash',    val: cashUnavailable ? "Unavailable" : fmt(cashTotal), sub: access.blocked ? 'Contact your advisor' : pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending${cashLocked ? " · Transfer on hold" : ""}` : cashLocked ? 'Transfer on hold' : 'Available now', icon: Landmark },
+              { label: 'Liquid Cash',    val: cashUnavailable ? "Unavailable" : fmt(cashTotal), sub: statusUnavailable ? 'Transfer status unavailable' : access.blocked ? 'Contact your advisor' : pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending${cashLocked ? " · Transfer on hold" : ""}` : cashLocked ? 'Transfer on hold' : 'Available now', icon: Landmark },
               { label: 'Investments',    val: investmentsUnavailable ? "Unavailable" : fmt(investTotal), sub: 'Recorded investment value', icon: BarChart3 },
               { label: 'Overdraft', val: overdraftUnavailable ? "Unavailable" : fmt(overdraftTotal === 0 ? 0 : -overdraftTotal), sub: undefined, debt: true, icon: ArrowDownRight },
               { label: TOTAL_OWED_LABEL, val: feeSummary.isLoading ? "Loading…" : feeSummary.isError ? "Unavailable" : totalOwedValue, sub: undefined, debt: true, icon: Clock },

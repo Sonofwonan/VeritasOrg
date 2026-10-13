@@ -4,6 +4,7 @@ import { useInactivityLogout } from "@/hooks/use-inactivity-logout";
 import { useActiveLiquidation } from "@/hooks/use-liquidation-status";
 import { useFundsAccess } from "@/hooks/use-funds-access";
 import { fundsActionFeedback } from "@shared/funds-access";
+import { LIQUIDATION_STATUS_UNAVAILABLE } from "@shared/liquidation";
 import { FundsActionDialog } from "@/components/fees/funds-action-dialog";
 import { 
   LayoutDashboard, 
@@ -112,15 +113,18 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [topNavigationOpen, setTopNavigationOpen] = useState(false);
   const access = useFundsAccess();
+  const { isUnderLiquidation, statusUnavailable, isError: liquidationError, refetch: refetchLiquidation } = useActiveLiquidation();
   const [fundsDialogOpen, setFundsDialogOpen] = useState(false);
   const fundsActionOrigin = useRef<HTMLElement | null>(null);
-  const feedback = fundsActionFeedback(access.blocked, access.data, access.isError);
+  const feedback = statusUnavailable
+    ? { title: "Portfolio transfer status unavailable", message: LIQUIDATION_STATUS_UNAVAILABLE.message, retry: true }
+    : fundsActionFeedback(access.blocked, access.data, access.isError);
 
   // Capture marked entry actions before navigation or any submit handler runs.
   const guardFundsAction = (event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target instanceof Element
       ? event.target.closest<HTMLElement>("[data-funds-action]") : null;
-    if (!target || !access.blocked) return;
+    if (!target || (!access.blocked && !statusUnavailable)) return;
     event.preventDefault();
     event.stopPropagation();
     fundsActionOrigin.current = target;
@@ -132,7 +136,6 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   }, [logout]);
 
   const { showWarning, secondsLeft, dismiss } = useInactivityLogout(handleAutoLogout);
-  const { isUnderLiquidation } = useActiveLiquidation();
 
   useEffect(() => {
     setTopNavigationOpen(false);
@@ -327,6 +330,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           )}
+          {statusUnavailable && (
+            <div role="alert" data-testid="liquidation-status-unavailable" className="bg-muted border-b px-6 py-3 space-y-1">
+              <p className="text-sm font-semibold">{liquidationError ? "Portfolio transfer status unavailable" : "Checking portfolio transfer status"}</p>
+              <p className="text-sm text-muted-foreground">
+                {liquidationError ? LIQUIDATION_STATUS_UNAVAILABLE.message : "Please wait before making transfers, trading or protected account changes."}
+              </p>
+              {liquidationError && <Button variant="outline" size="sm" onClick={() => void refetchLiquidation()}>Retry status check</Button>}
+            </div>
+          )}
           {isUnderLiquidation && !(user as any)?.accountFrozen && (
             <div className="bg-amber-950/60 border-b border-amber-500/30 px-6 py-3 flex items-start gap-3">
               <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0 animate-pulse" />
@@ -350,7 +362,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       <FundsActionDialog open={fundsDialogOpen} onOpenChange={setFundsDialogOpen}
         title={feedback?.title ?? "Access updated"}
         message={feedback?.message ?? "Your access has changed. Close this message and try again."}
-        retry={feedback?.retry ? () => void access.refetch() : undefined}
+        retry={feedback?.retry ? () => void (statusUnavailable ? refetchLiquidation() : access.refetch()) : undefined}
         onCloseAutoFocus={event => {
           event.preventDefault();
           if (fundsActionOrigin.current?.isConnected) fundsActionOrigin.current.focus();

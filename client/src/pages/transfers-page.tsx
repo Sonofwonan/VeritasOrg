@@ -8,7 +8,7 @@ import { useAuth as useFundsOwner } from "@/hooks/use-auth";
 import { clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { useFundsAccess } from "@/hooks/use-funds-access";
 import { FundsAccessNotice } from "@/components/fees/funds-access-notice";
-import { useQuery } from "@tanstack/react-query";
+import { useActiveLiquidation } from "@/hooks/use-liquidation-status";
 import { useAuth } from "@/hooks/use-auth";
 import { InstitutionalTransferModal } from "@/components/institutional-transfer-modal";
 
@@ -19,10 +19,7 @@ export default function TransfersPage() {
   const { user } = useAuth();
   const [showInstTransferModal, setShowInstTransferModal] = useState(false);
 
-  const { data: _institutionalTransferRaw = [] } = useQuery<any[]>({
-    queryKey: ["/api/institutional-transfers"],
-    refetchInterval: 15000,
-  });
+  const { transfers: _institutionalTransferRaw, statusUnavailable } = useActiveLiquidation();
   const institutionalTransfersList = _institutionalTransferRaw.filter((t: any) => t.status !== "rejected");
 
   if (loadingAccounts) {
@@ -71,7 +68,9 @@ export default function TransfersPage() {
               <p className="text-xs uppercase tracking-widest font-semibold text-muted-foreground">Live Transfer Monitor</p>
             </div>
 
-            {institutionalTransfersList.length === 0 ? (
+            {statusUnavailable ? (
+              <p className="text-sm text-muted-foreground">Transfer requests cannot be verified right now. Please retry the status check above.</p>
+            ) : institutionalTransfersList.length === 0 ? (
               <div className="text-center py-16 space-y-3">
                 <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto">
                   <Building2 className="w-7 h-7 text-muted-foreground" />

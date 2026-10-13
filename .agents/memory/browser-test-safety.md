@@ -74,3 +74,15 @@ A merge's dependency refresh can temporarily remove Playwright's worker entry wh
 **Why:** A suite passed its entire desktop project, then every mobile worker failed before executing any test because the merge setup was replacing dependencies. The worker entry existed again once setup finished.
 
 **How to apply:** Distinguish worker-startup/module-not-found failures from failed application assertions. Confirm dependency refresh has finished and the worker entry is restored, then rerun validation from the current merged project. Do not weaken security or financial checks to accommodate this infrastructure interruption.
+
+After closing a modal, wait for it to detach before checking whether a background Retry control is visible.
+
+**Why:** During the closing transition, the background can still be hidden from accessibility queries. A conditional visibility check can skip Retry even though it becomes available immediately afterward.
+
+**How to apply:** Assert that the dialog is gone before choosing between manual retry and automatic recovery. Keep the original failure in place until its notice has been verified.
+
+Inject only verification-read failures when proving that financial writes fail closed; keep the target writes available.
+
+**Why:** Renaming an entire table also breaks inserts, which can hide an unguarded transfer-request endpoint. A request must fail because verification was unavailable, not because its eventual insert independently failed.
+
+**How to apply:** Keep fault injection confined to the isolated test launcher, never a production endpoint. Check the explicit unavailable response, unchanged records and successful submission after restoring reads.

@@ -114,6 +114,7 @@ try {
     BALANCE_E2E_URL: `http://127.0.0.1:${appPort}`,
     BALANCE_E2E_DATABASE: database,
     BALANCE_E2E_EVIDENCE: evidence,
+    BALANCE_E2E_LIQUIDATION_FAILURE: join(evidence, "liquidation-query-failure"),
     BALANCE_E2E_ADMIN: "",
   };
   env.BALANCE_E2E_ADMIN = env.ADMIN_PASSWORD;
@@ -125,7 +126,7 @@ try {
     process.stderr.write(checks.stderr ?? "");
     if (checks.status !== 0) throw new Error("Isolated server checks failed");
   }
-  app = spawn(resolve("node_modules/.bin/tsx"), ["server/index.ts"], { cwd: workspace, env, stdio: ["ignore", log.fd, log.fd] });
+  app = spawn(resolve("node_modules/.bin/tsx"), ["script/balance-test-server.ts"], { cwd: workspace, env, stdio: ["ignore", log.fd, log.fd] });
   let ready = false;
   for (let i = 0; i < 120; i++) {
     if (app.exitCode !== null) throw new Error(`Isolated app exited; inspect ${join(evidence, "server.log")}`);

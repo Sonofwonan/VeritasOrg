@@ -148,6 +148,6 @@ test("loading, account fee failures and failed history remain explicit without z
   await expect(page.getByTestId("button-export-statement")).toBeEnabled();
   await page.route("**/api/accounts", route => route.fulfill({ status: 503, json: { message: "Synthetic account failure" } }));
   await page.reload();
-  await expect(page.getByRole("alert")).toContainText("Account details could not be loaded");
+  await expect(page.getByRole("alert").filter({ hasText: "Account details could not be loaded" })).toBeVisible();
   await expect(page.getByText("Account not found", { exact: true })).toHaveCount(0);
 });

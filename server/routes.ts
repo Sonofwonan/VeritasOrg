@@ -16,6 +16,7 @@ import { approvePayment, FundsAccessError, fundsAccess, fundsAccessGuard, regist
 import { accountLabel } from "@shared/account-display";
 import { registerDisplayCurrencyRoutes } from "./display-currency";
 import { MARKET_UNAVAILABLE } from "@shared/market";
+import { LIQUIDATION_STATUS_UNAVAILABLE } from "@shared/liquidation";
 import { ownedCashHistory } from "./account-history";
 import { registerHistoricalBalanceRoutes } from "./historical-balances-routes";
 import { audit, initializeSecurity, rateLimit, revokeSessions, safeUser, withSecurity } from "./security/store";
@@ -127,9 +128,11 @@ export async function registerRoutes(
     return next();
   };
 
-  // Middleware: block all write operations while an active liquidation is in progress
+  // Existing protected writes also block on active liquidation. Request-only
+  // institutional submissions must verify status without changing their existing
+  // rules for a successfully verified status.
   const LIQUIDATION_ACTIVE_STATUSES = ["liquidating", "approved", "transfer_out"];
-  const requireNoLiquidation = async (req: any, res: any, next: any) => {
+  const liquidationGuard = (blockActive: boolean) => async (req: any, res: any, next: any) => {
     try {
       const userId = (req.user as User).id;
       const transfers = await db
@@ -137,15 +140,19 @@ export async function registerRoutes(
         .from(institutionalTransfers)
         .where(eq(institutionalTransfers.userId, userId));
       const hasActive = transfers.some(t => LIQUIDATION_ACTIVE_STATUSES.includes(t.status ?? ""));
-      if (hasActive) {
+      if (blockActive && hasActive) {
         return res.status(423).json({
           message: "LIQUIDATION_IN_PROGRESS",
           detail: "This account is currently under an active portfolio liquidation. All transactions, investments, and account changes are suspended until the transfer is complete.",
         });
       }
-    } catch (_) { /* fail open — don't block on DB error */ }
+    } catch (_) {
+      return res.set("Cache-Control", "no-store").status(503).json(LIQUIDATION_STATUS_UNAVAILABLE);
+    }
     return next();
   };
+  const requireNoLiquidation = liquidationGuard(true);
+  const requireLiquidationVerification = liquidationGuard(false);
 
   const INVESTMENT_ACCOUNT_TYPES = new Set([
     "Brokerage Account",
@@ -963,7 +970,7 @@ export async function registerRoutes(
   // ─── Institutional Transfer Routes ────────────────────────────────────────────
 
   // Client: submit a new institutional transfer request
-  app.post("/api/institutional-transfers", requireAuth, requireFundsAccess, async (req, res) => {
+  app.post("/api/institutional-transfers", requireAuth, requireFundsAccess, requireLiquidationVerification, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     try {
       const { institutionName, institutionAccountNumber, accountType, transferType, transferScope, partialAmount, accountId, portfolioSnapshot, accountHolderType, accountHolderName } = req.body;
@@ -1001,8 +1008,8 @@ export async function registerRoutes(
       const user = req.user as any;
       const records = await storage.getInstitutionalTransfers(user.id);
       res.json(records);
-    } catch (err: any) {
-      res.status(500).json({ message: err.message });
+    } catch (_) {
+      res.set("Cache-Control", "no-store").status(503).json(LIQUIDATION_STATUS_UNAVAILABLE);
     }
   });
 

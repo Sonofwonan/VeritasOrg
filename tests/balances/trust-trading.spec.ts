@@ -25,6 +25,9 @@ async function financialRecords(db: Pool, userId: number) {
     "SELECT * FROM fee_enrollments WHERE user_id=$1 ORDER BY id",
     "SELECT * FROM fee_assessments WHERE account_id IN (SELECT id FROM accounts WHERE user_id=$1) ORDER BY id",
     "SELECT display_currency FROM users WHERE id=$1",
+    "SELECT * FROM payees WHERE user_id=$1 ORDER BY id",
+    "SELECT name,debt_clearance_required,debt_payment_confirmed_at FROM users WHERE id=$1",
+    "SELECT * FROM institutional_transfers WHERE user_id=$1 ORDER BY id",
   ];
   return Promise.all(queries.map(async sql => (await db.query(sql, [userId])).rows));
 }
@@ -69,6 +72,111 @@ test("clients select trusts alongside retirement accounts but cannot trade witho
   expect(await financialRecords(db, identity.userId)).toEqual(before);
   await page.screenshot({ path: info.outputPath("trust-trading-paused.png"), fullPage: true });
 });
+});
+
+test.describe("liquidation status verification failure", () => {
+  test.use({ expectedHttpFailures: { "/api/institutional-transfers": 503 } });
+
+  test("status query failures block every protected write without changing financial records, then recover", async ({ page, identity, db, failLiquidationQueries }, info) => {
+    await prepareTrust(db, identity);
+    await login(page, identity);
+    await expect(page.getByTestId("liquidation-status-unavailable")).toHaveCount(0);
+    const before = await financialRecords(db, identity.userId);
+
+    await failLiquidationQueries(async () => {
+      await page.goto("/transfers");
+      await page.reload();
+      const notice = page.getByTestId("liquidation-status-unavailable");
+      await expect(notice).toContainText("We cannot check portfolio transfer status right now");
+      await expect(page.getByText("No transfer requests yet", { exact: true })).toHaveCount(0);
+      await expect(page.getByText("Portfolio transfer in progress", { exact: true })).toHaveCount(0);
+      await expect(page.getByText("Transfers and investing are blocked until your account debt is cleared.", { exact: true })).toHaveCount(0);
+
+      const writes = [
+        { method: "POST", url: "/api/transactions/transfer", data: { fromAccountId: identity.funded, toAccountId: identity.extra, amount: "10" } },
+        // This incoming request is already liquidation-protected; no new exception.
+        { method: "POST", url: "/api/transactions/transfer", data: { fromAccountId: -1, toAccountId: identity.funded, amount: "10" } },
+        { method: "POST", url: "/api/transactions/payment", data: { fromAccountId: identity.funded, payeeId: 1, amount: "10" } },
+        { method: "POST", url: "/api/investments/buy", data: { accountId: identity.sixth, symbol: "AAPL", amount: "100" } },
+        { method: "POST", url: "/api/investments/sell", data: { accountId: identity.sixth, symbol: "AAPL", shares: "1" } },
+        { method: "POST", url: "/api/accounts", data: { accountType: "Trust Account", balance: "0" } },
+        { method: "DELETE", url: `/api/accounts/${identity.extra}` },
+        { method: "PATCH", url: "/api/user", data: { name: "Must Not Change" } },
+        { method: "POST", url: "/api/payees", data: { name: "Must Not Create" } },
+        { method: "DELETE", url: "/api/payees/1" },
+        { method: "POST", url: "/api/institutional-transfers", data: {
+          accountId: identity.sixth, institutionName: "Isolated Institution", institutionAccountNumber: "TEST-ONLY",
+          accountType: "Trust Account", transferType: "cash", transferScope: "full",
+        } },
+      ];
+      for (const write of writes) {
+        const response = await page.request.fetch(write.url, write);
+        expect(response.status(), `${write.method} ${write.url}`).toBe(503);
+        expect(response.headers()["cache-control"]).toBe("no-store");
+        const body = await response.json();
+        expect(body.code).toBe("LIQUIDATION_STATUS_UNAVAILABLE");
+        expect(body.message).toContain("Please try again");
+      }
+      // Marked actions explain the unavailable status without submitting a write.
+      const requests: string[] = [];
+      const record = (request: import("@playwright/test").Request) => {
+        if (request.method() === "POST") requests.push(request.url());
+      };
+      page.on("request", record);
+      await page.getByTestId("button-new-institutional-transfer").click();
+      const dialog = page.getByTestId("funds-action-dialog");
+      await expect(dialog).toContainText("Portfolio transfer status unavailable");
+      await dialog.getByRole("button", { name: "Close", exact: true }).first().click();
+      await expect(dialog).toHaveCount(0);
+      page.off("request", record);
+      expect(requests).toEqual([]);
+      expect(await financialRecords(db, identity.userId)).toEqual(before);
+      await page.screenshot({ path: info.outputPath("liquidation-status-unavailable.png"), fullPage: true });
+    });
+
+    const retry = page.getByRole("button", { name: "Retry status check" });
+    if (await retry.isVisible()) await retry.click();
+    await expect(page.getByTestId("liquidation-status-unavailable")).toHaveCount(0);
+    await expect(page.getByText("No transfer requests yet", { exact: true })).toBeVisible();
+    // Trading still respects the separate pricing restriction after recovery.
+    const trade = await page.request.post("/api/investments/buy", { data: { accountId: identity.sixth, symbol: "AAPL", amount: "100" } });
+    expect(trade.status()).toBe(503);
+    expect((await trade.json()).code).toBe("MARKET_DATA_UNAVAILABLE");
+    const transfer = await page.request.post("/api/transactions/transfer", { data: { fromAccountId: identity.funded, toAccountId: identity.extra, amount: "10" } });
+    expect(transfer.status()).toBe(201);
+    expect((await db.query("SELECT COUNT(*)::int AS n FROM transactions WHERE from_account_id=$1", [identity.funded])).rows[0].n).toBe(1);
+    const institution = await page.request.post("/api/institutional-transfers", { data: {
+      accountId: identity.sixth, institutionName: "Isolated Institution", institutionAccountNumber: "TEST-ONLY",
+      accountType: "Trust Account", transferType: "cash", transferScope: "full",
+    } });
+    expect(institution.status()).toBe(200);
+    expect((await institution.json()).status).toBe("pending");
+    expect((await db.query("SELECT COUNT(*)::int AS n FROM institutional_transfers WHERE user_id=$1", [identity.userId])).rows[0].n).toBe(1);
+  });
+
+  test("a failed background refresh never treats cached liquidation status as current", async ({ page, identity, db, failLiquidationQueries }) => {
+    await db.query(
+      `INSERT INTO institutional_transfers(user_id,account_id,institution_name,institution_account_number,account_type,transfer_type,transfer_scope,status)
+       VALUES($1,$2,'Isolated Institution','TEST-ONLY','Trust Account','cash','full','liquidating')`,
+      [identity.userId, identity.sixth]);
+    await login(page, identity);
+    await expect(page.getByText("Portfolio transfer in progress", { exact: true })).toBeVisible();
+    const before = await financialRecords(db, identity.userId);
+    await failLiquidationQueries(async () => {
+      await expect(page.getByTestId("liquidation-status-unavailable")).toContainText("We cannot check", { timeout: 25_000 });
+      await expect(page.getByText("Portfolio transfer in progress", { exact: true })).toHaveCount(0);
+      const response = await page.request.patch("/api/user", { data: { name: "Must Not Change" } });
+      expect(response.status()).toBe(503);
+      expect((await response.json()).code).toBe("LIQUIDATION_STATUS_UNAVAILABLE");
+      expect(await financialRecords(db, identity.userId)).toEqual(before);
+    });
+    await page.getByRole("button", { name: "Retry status check" }).click();
+    await expect(page.getByText("Portfolio transfer in progress", { exact: true })).toBeVisible();
+    const stillLocked = await page.request.patch("/api/user", { data: { name: "Must Not Change" } });
+    expect(stillLocked.status()).toBe(423);
+    expect((await stillLocked.json()).message).toBe("LIQUIDATION_IN_PROGRESS");
+    expect(await financialRecords(db, identity.userId)).toEqual(before);
+  });
 });
 
 test.describe("trust trading restrictions", () => {

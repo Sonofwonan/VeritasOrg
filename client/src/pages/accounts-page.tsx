@@ -8,7 +8,7 @@ import {
   CheckCircle2, AlertCircle, Lock, Building2
 } from "lucide-react";
 import { useAccounts, useInvestments, useCreateAccount, useAccountTransactions } from "@/hooks/use-finances";
-import { useQuery } from "@tanstack/react-query";
+import { useActiveLiquidation } from "@/hooks/use-liquidation-status";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -55,7 +55,7 @@ export default function AccountsPage() {
   const feeSummary = useClientFeeSummary();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"], refetchInterval: 15000 });
+  const { transfers: instTransfers } = useActiveLiquidation();
   const activeTransfer = (instTransfers as any[]).find((t: any) =>
     ["pending", "under_review", "approved", "liquidating", "transfer_out"].includes(t.status)
   );
