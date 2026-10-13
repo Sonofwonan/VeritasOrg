@@ -20,3 +20,9 @@ Bound financial admin dialogs to the visible viewport and allow long identity te
 **Why:** The currency dialog sometimes exceeded a 360-pixel viewport even after animations had settled. Waiting longer did not fix the containment failure.
 
 **How to apply:** Use viewport-bounded sizing, preserve desktop width caps, and keep strict containment assertions rather than allowing a few pixels of overflow.
+
+Text-bound checks must distinguish visually hidden accessibility labels from visible financial figures.
+
+**Why:** Native `checkVisibility()` still reports clipped screen-reader-only labels as visible; measuring their full text creates false overflow failures even when the displayed amount fits.
+
+**How to apply:** Exclude genuinely screen-reader-only text from visual bounds checks while retaining accessible-name checks. Never exempt the displayed transaction amount or balance-after figure from containment tests.

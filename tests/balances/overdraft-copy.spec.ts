@@ -79,7 +79,7 @@ test("plain overdrafts and fee descriptions preserve records, currencies and dis
         await expect(dialog).not.toContainText(/Assessment 61|Authorized fee overdraft|2026-05-01/);
         await dialog.getByRole("button", { name: "Close", exact: true }).first().click();
         const download = page.waitForEvent("download");
-        await page.getByRole("button", { name: "Export", exact: true }).click();
+        await page.getByTestId("button-export-statement").click();
         const csv = await readFile(await (await download).path(), "utf8");
         expect(csv).toContain('"Monthly service fee"');
         expect(csv).toContain('"May 1, 2026"');

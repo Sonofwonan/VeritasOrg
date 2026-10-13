@@ -1,7 +1,7 @@
 import { useAccounts, useAccountTransactions } from "@/hooks/use-finances";
 import { LayoutShell } from "@/components/layout-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
 import { ArrowLeft, Download, TrendingUp, TrendingDown, Clock, Info, ChevronDown } from "lucide-react";
 import { useLocation } from "wouter";
 import { useParams } from "wouter";
@@ -15,7 +15,7 @@ import { transactionDescription, clientBalanceCurrency, formatBalance, type Bala
 import { useAuth } from "@/hooks/use-auth";
 import { useClientFeeSummary } from "@/hooks/use-fees";
 import { accountStatementCsv } from "@/lib/account-statement";
-import { accountLabel, transactionDate, type CashPosting } from "@shared/account-display";
+import { accountLabel, maskAccountNumber, transactionDate, type CashPosting } from "@shared/account-display";
 import { TransactionAmountBalance } from "@/components/transaction-amount-balance";
 
 function exportStatement(account: { id: number; accountType: string; accountNumber?: string }, transactions: any[] = [], currency: BalanceCurrency = "CAD") {
@@ -88,21 +88,25 @@ export default function AccountDetailPage() {
 
   return (
     <LayoutShell>
-      <div className="mb-8">
+      <div className="mb-4 border-b border-border pb-4">
         <Button 
           variant="ghost" 
-          className="gap-2 mb-4"
+          className="mb-2 h-auto gap-2 px-0 py-1 text-sm text-muted-foreground hover:bg-transparent hover:text-primary"
           onClick={() => setLocation("/accounts")}
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Accounts
         </Button>
         
-        <div className="space-y-2">
-          <h2 className="break-words text-3xl font-bold font-display">
-            {accountLabel(account)}
-          </h2>
-          <Button ref={detailsTriggerRef} type="button" variant="outline" size="sm" className="mt-3"
+        <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0">
+            <p className="mb-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Account</p>
+            <h2 className="break-words font-serif text-2xl font-medium leading-tight sm:text-3xl">
+              {accountLabel(account)}
+            </h2>
+            <p className="mt-2 font-mono text-sm tracking-wide text-muted-foreground">{maskAccountNumber(account.accountNumber)}</p>
+          </div>
+          <Button ref={detailsTriggerRef} type="button" variant="outline" size="sm" className="w-fit shrink-0"
             aria-haspopup="dialog" aria-controls="account-details-dialog" onClick={() => setDetailsOpen(true)}>
             Account details
           </Button>
@@ -110,34 +114,31 @@ export default function AccountDetailPage() {
       </div>
 
       {/* Account Summary */}
-      <div className="mb-6 max-w-3xl">
-        <Card className="min-w-0 border-primary/15 bg-primary/[0.035]" data-testid="account-detail-balance">
-          <CardHeader>
-            <CardTitle>Balance</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <div className="mb-8 max-w-3xl">
+        <Card className="min-w-0 [container-type:inline-size] border-0 border-y border-primary/20 bg-primary/[0.035] shadow-none" data-testid="account-detail-balance">
+          <CardContent className="px-4 py-5 sm:px-6 sm:py-6">
             {balanceError ? (
               <div role="alert" className="text-sm text-destructive">Balance details are unavailable.</div>
             ) : (
-              <div className="space-y-3">
-                <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <p className="text-sm text-muted-foreground">Balance</p>
-                  <p data-testid="text-account-cash-balance" className={cn("whitespace-nowrap font-mono text-xl font-semibold tabular-nums sm:text-2xl", accountBalance < 0 ? "text-red-700 dark:text-red-300" : "text-primary")}>
+              <div className="space-y-4">
+                <div className="flex min-w-0 flex-col items-start gap-1">
+                  <p className="label-caps text-xs text-muted-foreground">Balance</p>
+                  <p data-testid="text-account-cash-balance" className={cn("max-w-full whitespace-nowrap font-sans [font-size:clamp(0.875rem,7cqi,2.25rem)] font-semibold leading-tight tracking-tight tabular-nums", accountBalance < 0 ? "text-red-700 dark:text-red-300" : "text-primary")}>
                     {money(accountBalance)}
                   </p>
                 </div>
                 {feeSummary.isLoading ? (
-                  <div role="status" aria-label="Loading unpaid fees" className="flex items-center justify-between gap-4 border-t pt-3">
+                  <div role="status" aria-label="Loading unpaid fees" className="flex items-center justify-between gap-4 border-t border-border/70 pt-3">
                     <p className="text-sm text-muted-foreground">Unpaid fees</p>
                     <Skeleton className="h-4 w-20" />
                   </div>
                 ) : feeSummary.isError ? (
-                  <div role="alert" className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-sm">
+                  <div role="alert" className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3 text-sm">
                     <span className="text-muted-foreground">Unpaid fee details are unavailable.</span>
                     <button type="button" className="underline underline-offset-4" onClick={() => void feeSummary.refetch()}>Retry</button>
                   </div>
                 ) : unpaidFees > 0 ? (
-                  <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t pt-3">
+                  <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-border/70 pt-3">
                     <p className="text-sm text-muted-foreground">Unpaid fees</p>
                     <p className="whitespace-nowrap font-mono font-semibold tabular-nums" data-testid="text-total-fee-debt">{money(unpaidFees)}</p>
                   </div>
@@ -180,19 +181,19 @@ export default function AccountDetailPage() {
       </Dialog>
 
       {/* Transaction History */}
-      <Card>
-        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="min-w-0 overflow-hidden border-0 border-y border-border bg-transparent shadow-none">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 border-b px-0 py-3">
           <div className="min-w-0">
-            <CardTitle>Transaction History</CardTitle>
-            <CardDescription>Recent account activity</CardDescription>
+            <h3 className="font-serif text-xl font-medium sm:text-2xl">Transaction history</h3>
+            <CardDescription className="mt-0.5 text-xs sm:text-sm">Recorded activity for this account</CardDescription>
           </div>
-           <Button data-testid="button-export-statement" variant="outline" size="sm" className="w-full gap-2 sm:w-auto" disabled={transactionsLoading || transactionsError} onClick={() => exportStatement(account, transactions || [], currency)}>
-            <Download className="w-4 h-4" />
-            Export
+           <Button data-testid="button-export-statement" aria-label="Export" title="Export statement" variant="outline" size="sm" className="h-9 w-9 shrink-0 p-0 sm:h-9 sm:w-auto sm:gap-2 sm:px-3" disabled={transactionsLoading || transactionsError} onClick={() => exportStatement(account, transactions || [], currency)}>
+            <Download className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
         </CardHeader>
-        <CardContent>
-          <div className="max-h-[min(65vh,720px)] space-y-1 overflow-y-auto overscroll-contain pr-1" aria-label="Scrollable account transaction history">
+        <CardContent className="px-0 py-2">
+          <div className="max-h-[min(65vh,720px)] overflow-y-auto overscroll-contain" aria-label="Scrollable account transaction history">
             {transactionsLoading ? (
               <div role="status" className="space-y-3 p-3">
                 <Skeleton className="h-12 w-full" />
@@ -214,7 +215,7 @@ export default function AccountDetailPage() {
                     role="button"
                     tabIndex={0}
                     aria-haspopup="dialog"
-                    className="group flex min-w-0 cursor-pointer items-start justify-between gap-3 border-b p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary last:border-0 sm:p-4"
+                    className="group grid min-w-0 cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 border-b border-border/80 px-2 py-3 transition-colors hover:bg-primary/[0.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary last:border-0 sm:grid-cols-[minmax(0,1fr)_minmax(9rem,auto)] sm:gap-x-5 sm:px-4 sm:py-4"
                     onClick={() => setSelectedTxn(transaction)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
@@ -223,32 +224,31 @@ export default function AccountDetailPage() {
                       }
                     }}
                   >
-                      <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+                      <div className="flex min-w-0 items-start gap-2 sm:gap-3">
                       <div className={cn(
-                        "p-2 rounded-full",
-                        transaction.status === 'pending' ? 'bg-red-100 text-red-700' : (isIncoming ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')
+                        "mt-0.5 shrink-0 border p-1.5",
+                        transaction.status === 'pending' ? 'border-amber-200 bg-amber-50 text-amber-800' : (isIncoming ? 'border-primary/20 bg-primary/[0.06] text-primary' : 'border-red-200 bg-red-50 text-red-700')
                       )}>
                         {transaction.status === 'pending' ? (
-                          <Clock className="w-5 h-5 animate-pulse" />
+                          <Clock className="h-4 w-4" />
                         ) : isIncoming ? (
-                          <TrendingUp className="w-5 h-5" />
+                          <TrendingUp className="h-4 w-4" />
                         ) : (
-                          <TrendingDown className="w-5 h-5" />
+                          <TrendingDown className="h-4 w-4" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="break-words font-medium transition-colors group-hover:text-primary">{transactionDescription(transaction.description,currency,transaction.transactionType)}</p>
-                        <p className="text-sm text-muted-foreground">{transactionDate(transaction.createdAt)}</p>
-                        <p className={cn("mt-0.5 text-xs font-semibold capitalize", transaction.status === "pending" ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground")}>
+                        <p className="break-words text-sm font-medium leading-snug transition-colors group-hover:text-primary sm:text-base">{transactionDescription(transaction.description,currency,transaction.transactionType)}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{transactionDate(transaction.createdAt)}<span className="px-1.5" aria-hidden="true">·</span><span className={cn("font-semibold capitalize", transaction.status === "pending" ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground")}>
                           {transaction.status}
-                        </p>
+                        </span></p>
                       </div>
                     </div>
                     <TransactionAmountBalance
                       amount={`${isIncoming ? "+" : "-"}${money(transaction.amount)}`}
                       currency={currency}
                       postings={(transaction.cashPostings as CashPosting[] | undefined)?.filter(posting => posting.accountId === accountId) || []}
-                      amountClassName={cn("text-lg font-bold", transaction.status === 'pending' ? 'text-red-700 dark:text-red-300' : (isIncoming ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'))}
+                      amountClassName={cn("text-sm font-semibold sm:text-base", transaction.status === 'pending' ? 'text-red-700 dark:text-red-300' : (isIncoming ? 'text-primary' : 'text-red-700 dark:text-red-300'))}
                       showAccountNames={false}
                     />
                   </div>
