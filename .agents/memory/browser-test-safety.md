@@ -27,6 +27,12 @@ A running browser suite may keep pre-edit test assertions. Its error message can
 
 **How to apply:** Use the recorded error and page snapshot to identify what ran. After assertion-only changes, finish the running suite and rerun affected cases; do not restore obsolete financial wording or behavior to satisfy cached tests.
 
+A backend merge during a live Vite browser suite can mix a hot-reloaded client with the suite's older server.
+
+**Why:** A new snapshot endpoint reached the client mid-run while the isolated server still lacked that route. Its SPA fallback returned HTTP 200, but not snapshot JSON, so otherwise valid balances appeared unavailable.
+
+**How to apply:** Restart the main app after backend changes and rerun affected isolated checks from a consistent version. Treat a suite spanning such a merge as invalid evidence; do not weaken financial assertions or add inconsistent fallback balances.
+
 Advancing frozen browser time does not settle network responses or synchronize independent queries.
 
 **Why:** A status-change regression showed refreshed activity while a separately polled pending summary still held an earlier response. With time paused, ordinary assertion retries could not trigger its next refresh.
