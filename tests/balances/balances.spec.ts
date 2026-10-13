@@ -225,7 +225,7 @@ test("pending deposits, internal transfer, and institutional status/navigation c
   await expect(page.getByTestId(`dash-account-${identity.extra}`)).toContainText("$600.00");
   await verifyHeadline(page);
   const request = await page.request.post("/api/institutional-transfers", { data: {
-    institutionName: "Isolated Test Institution", institutionAccountNumber: "TEST-NOT-REAL",
+    institutionName: "Isolated Test Institution", institutionCountry: "CA", institutionAccountNumber: "TEST-NOT-REAL",
     accountType: "Brokerage Account", transferType: "cash", transferScope: "full",
     accountId: identity.funded,
   } });

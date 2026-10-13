@@ -105,7 +105,7 @@ test.describe("liquidation status verification failure", () => {
         { method: "POST", url: "/api/payees", data: { name: "Must Not Create" } },
         { method: "DELETE", url: "/api/payees/1" },
         { method: "POST", url: "/api/institutional-transfers", data: {
-          accountId: identity.sixth, institutionName: "Isolated Institution", institutionAccountNumber: "TEST-ONLY",
+          accountId: identity.sixth, institutionName: "Isolated Institution", institutionCountry: "SG", institutionAccountNumber: "TEST-ONLY",
           accountType: "Trust Account", transferType: "cash", transferScope: "full",
         } },
       ];
@@ -146,7 +146,7 @@ test.describe("liquidation status verification failure", () => {
     expect(transfer.status()).toBe(201);
     expect((await db.query("SELECT COUNT(*)::int AS n FROM transactions WHERE from_account_id=$1", [identity.funded])).rows[0].n).toBe(1);
     const institution = await page.request.post("/api/institutional-transfers", { data: {
-      accountId: identity.sixth, institutionName: "Isolated Institution", institutionAccountNumber: "TEST-ONLY",
+      accountId: identity.sixth, institutionName: "Isolated Institution", institutionCountry: "SG", institutionAccountNumber: "TEST-ONLY",
       accountType: "Trust Account", transferType: "cash", transferScope: "full",
     } });
     expect(institution.status()).toBe(200);

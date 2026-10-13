@@ -152,6 +152,8 @@ export const institutionalTransfers = pgTable("institutional_transfers", {
   userId: integer("user_id").notNull(),
   accountId: integer("account_id"),
   institutionName: text("institution_name").notNull(),
+  institutionCountry: text("institution_country"), // nullable for legacy requests
+  destinationDetails: text("destination_details"),
   institutionAccountNumber: text("institution_account_number").notNull(),
   accountType: text("account_type").notNull(),
   transferType: text("transfer_type").notNull(), // "cash" | "in-kind"

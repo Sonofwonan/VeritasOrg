@@ -21,6 +21,7 @@ import { ClientCurrencyPanel } from "@/components/admin/client-currency-panel";
 import { DebtRestrictionPanel } from "@/components/admin/debt-restriction-panel";
 import { HistoricalBalances } from "@/components/admin/historical-balances";
 import { AdminRecoveryRequests } from "@/components/admin/recovery-requests";
+import { destinationCountryName } from "@shared/institutional-destination";
 
 const SESSION_KEY = "vw_admin_key";
 
@@ -1132,6 +1133,12 @@ function AdminDashboard({ adminKey, onLogout }: { adminKey: string; onLogout: ()
                                   </span>
                                 </div>
                                 <p className="text-slate-200 font-medium text-sm mt-1">{t.institutionName}</p>
+                                <div className="text-xs text-slate-300 mt-1 space-y-1 break-words">
+                                  <p>Destination: {t.institutionCountry ? destinationCountryName(t.institutionCountry) : "Country not supplied (legacy request)"}</p>
+                                  <p>Receiving account / portfolio ID: {t.institutionAccountNumber}</p>
+                                  {t.destinationDetails && <p className="whitespace-pre-wrap">Client-supplied destination details: {t.destinationDetails}</p>}
+                                  <p className="text-slate-400">Verify destination details and transfer support before approval or settlement confirmation.</p>
+                                </div>
                                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-xs text-slate-400">
                                   <span>Client: <span className="text-slate-300 font-medium">{t.userName}</span></span>
                                   <span>·</span>

@@ -25,6 +25,7 @@ import { registerSecurityRoutes, securityHandler, securityOrigin } from "./secur
 import { registerRecoveryRequests } from "./security/recovery-requests";
 import { registerClientSettings } from "./client-settings";
 import { destroySession, finishLogin, regenerateSession, saveSession } from "./security/session";
+import { institutionalDestinationSchema } from "@shared/institutional-destination";
 
 // Twilio Notification Setup (SMS/WhatsApp)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -113,6 +114,11 @@ export async function registerRoutes(
       CREATE INDEX IF NOT EXISTS account_setup_tokens_user_id_idx ON account_setup_tokens(user_id);
     `);
   } catch (_) { /* columns likely already exist */ }
+  // New request fields must be available; do not silently start with a schema
+  // that cannot persist or read international destinations.
+  await pool.query(`ALTER TABLE institutional_transfers
+    ADD COLUMN IF NOT EXISTS institution_country TEXT,
+    ADD COLUMN IF NOT EXISTS destination_details TEXT`);
 
   const INACTIVITY_LIMIT_MS = 25 * 60 * 1000;
 
@@ -985,7 +991,12 @@ export async function registerRoutes(
   app.post("/api/institutional-transfers", requireAuth, requireFundsAccess, requireLiquidationVerification, async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     try {
-      const { institutionName, institutionAccountNumber, accountType, transferType, transferScope, partialAmount, accountId, portfolioSnapshot, accountHolderType, accountHolderName } = req.body;
+      const destination = institutionalDestinationSchema.safeParse(req.body);
+      if (!destination.success) {
+        return res.status(400).json({ message: destination.error.issues[0].message });
+      }
+      const { institutionName, institutionAccountNumber, institutionCountry, destinationDetails, accountHolderType, accountHolderName } = destination.data;
+      const { accountType, transferType, transferScope, partialAmount, accountId, portfolioSnapshot } = req.body;
       const isFullPortfolio = transferScope === "full-portfolio";
       if (!institutionName || !institutionAccountNumber || !accountType || !transferType || !transferScope) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -999,6 +1010,8 @@ export async function registerRoutes(
         accountId: isFullPortfolio ? null : parseInt(accountId),
         institutionName,
         institutionAccountNumber,
+        institutionCountry,
+        destinationDetails: destinationDetails || null,
         accountType,
         transferType,
         transferScope,

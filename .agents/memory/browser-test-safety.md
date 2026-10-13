@@ -98,3 +98,9 @@ For isolated design artifacts, confirm which service a screenshot actually loads
 **Why:** The app-preview capture resolved a mockup path against the main app on port 5000, while the same proxied development-domain path correctly routed to the separate mockup service. The capture showed the wrong application.
 
 **How to apply:** Check the capture's reported URL and visible content. If it targets the main service instead of the design artifact, use Playwright against the artifact's proxied preview URL, inspect the resulting images, and keep all preview data and interactions isolated.
+
+When changing access restrictions during an isolated browser test, leave pages that poll protected financial endpoints before applying the restriction.
+
+**Why:** In-flight dashboard reads can correctly return an access denial after the hold takes effect, making a narrow endpoint test fail for unrelated background requests.
+
+**How to apply:** Navigate to a settled request-only page before toggling access, then assert the intended endpoint denial and unchanged financial records. Do not suppress unrelated failures broadly.

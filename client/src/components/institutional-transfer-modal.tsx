@@ -12,6 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Search, ArrowRight, Building2, CheckCircle2, X } from "lucide-react";
 import type { Account } from "@shared/schema";
+import { DESTINATION_COUNTRIES, destinationCountryName, institutionalDestinationSchema } from "@shared/institutional-destination";
+import { Textarea } from "@/components/ui/textarea";
+
+type Institution = { name: string; short: string; color: string; custom?: boolean };
 
 const INSTITUTIONS = [
   { name: "RBC Dominion Securities", short: "RBC", color: "#003168" },
@@ -46,7 +50,7 @@ function InstitutionAvatar({ inst, size = "md" }: { inst: typeof INSTITUTIONS[0]
   );
 }
 
-function InstitutionPicker({ onSelect }: { onSelect: (inst: typeof INSTITUTIONS[0]) => void }) {
+function InstitutionPicker({ onSelect }: { onSelect: (inst: Institution) => void }) {
   const [search, setSearch] = useState("");
   const filtered = INSTITUTIONS.filter(i =>
     i.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -54,6 +58,11 @@ function InstitutionPicker({ onSelect }: { onSelect: (inst: typeof INSTITUTIONS[
   );
   return (
     <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">Choose a listed institution or enter another destination. Listing does not confirm transfer support.</p>
+      <Button variant="outline" className="w-full" data-testid="institution-option-custom"
+        onClick={() => onSelect({ name: "Other international institution", short: "Other", color: "#2E4057", custom: true })}>
+        Other international institution
+      </Button>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -93,7 +102,7 @@ function TransferForm({
   onSubmit,
   isPending,
 }: {
-  institution: typeof INSTITUTIONS[0];
+  institution: Institution;
   accounts: Account[];
   onBack: () => void;
   onSubmit: (data: any) => void;
@@ -106,6 +115,13 @@ function TransferForm({
   const [transferType, setTransferType] = useState<"cash" | "in-kind">("in-kind");
   const [holderType, setHolderType] = useState<"own" | "other">("own");
   const [holderName, setHolderName] = useState("");
+  const [institutionName, setInstitutionName] = useState(institution.custom ? "" : institution.name);
+  const [institutionCountry, setInstitutionCountry] = useState(institution.custom ? "" : "CA");
+  const [destinationDetails, setDestinationDetails] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const destination = { institutionName, institutionCountry, destinationDetails,
+    institutionAccountNumber: portfolioId, accountHolderType: holderType,
+    accountHolderName: holderType === "own" ? null : holderName };
 
   const totalValue = useMemo(() =>
     accounts.reduce((sum, a) => sum + Number(a.balance), 0),
@@ -129,6 +145,30 @@ function TransferForm({
             <X className="w-3 h-3" /> Change institution
           </button>
         </div>
+      </div>
+
+      {institution.custom && (
+        <div className="space-y-1.5">
+          <Label htmlFor="destination-institution">Receiving financial institution</Label>
+          <Input id="destination-institution" value={institutionName} maxLength={200}
+            onChange={e => setInstitutionName(e.target.value)} data-testid="input-destination-institution" />
+        </div>
+      )}
+      <div className="space-y-1.5">
+        <Label htmlFor="destination-country">Destination country or territory</Label>
+        <select id="destination-country" className="w-full border border-input bg-background px-3 py-2 text-sm"
+          value={institutionCountry} onChange={e => setInstitutionCountry(e.target.value)} data-testid="select-destination-country">
+          <option value="">Select a country or territory</option>
+          {DESTINATION_COUNTRIES.map(code => ({ code, name: destinationCountryName(code) }))
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(({ code, name }) => <option key={code} value={code}>{name}</option>)}
+        </select>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="destination-details">Destination details (optional)</Label>
+        <Textarea id="destination-details" value={destinationDetails} maxLength={1000}
+          onChange={e => setDestinationDetails(e.target.value)} data-testid="input-destination-details" />
+        <p className="text-xs text-muted-foreground">Provide verified branch, address or routing details if available. Do not include passwords, PINs or access codes. Your advisor will confirm any additional information needed.</p>
       </div>
 
       {/* Portfolio summary */}
@@ -156,14 +196,16 @@ function TransferForm({
 
       {/* Portfolio ID */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Your Portfolio ID at {institution.short}</Label>
+        <Label htmlFor="destination-account" className="text-xs">Receiving account or portfolio ID</Label>
         <Input
-          placeholder="e.g. 123-456789"
+          id="destination-account"
+          maxLength={100}
+          placeholder="Enter the receiving account or portfolio ID"
           value={portfolioId}
           onChange={e => setPortfolioId(e.target.value)}
           data-testid="input-institution-account-number"
         />
-        <p className="text-xs text-muted-foreground">Your Portfolio ID at {institution.name} that will receive the assets.</p>
+        <p className="text-xs text-muted-foreground">Use the ID supplied by the receiving institution.</p>
       </div>
 
       {/* Account holder */}
@@ -191,6 +233,7 @@ function TransferForm({
           <div className="space-y-1">
             <Input
               placeholder="Full legal name of account holder"
+              maxLength={200}
               value={holderName}
               onChange={e => setHolderName(e.target.value)}
               data-testid="input-holder-name"
@@ -222,21 +265,27 @@ function TransferForm({
         </div>
       </div>
 
+      <p className="text-xs text-muted-foreground">This is a request only. Your advisor must verify the destination and transfer method before approval. Transfer support and settlement are not guaranteed.</p>
+      {validationError && <p role="alert" className="text-sm text-destructive">{validationError}</p>}
       <Button
         className="w-full"
         data-funds-action=""
-        disabled={isPending || (!access.blocked && (!portfolioId.trim() || (holderType === "other" && !holderName.trim())))}
-        onClick={() => onSubmit({
-          institutionName: institution.name,
-          institutionAccountNumber: portfolioId,
+        disabled={isPending}
+        onClick={() => {
+          const parsed = institutionalDestinationSchema.safeParse(destination);
+          if (!parsed.success && !access.blocked) {
+            setValidationError(parsed.error.issues[0].message);
+            return;
+          }
+          setValidationError("");
+          onSubmit({
+          ...(parsed.success ? parsed.data : destination),
           accountType: "Full Portfolio",
           transferType,
           transferScope: "full-portfolio",
           partialAmount: totalValue.toFixed(2),
           portfolioSnapshot,
-          accountHolderType: holderType,
-          accountHolderName: holderType === "own" ? null : holderName.trim(),
-        })}
+        }); }}
         data-testid="button-submit-institutional-transfer"
       >
         {isPending ? "Submitting…" : access.blocked ? "Transfer on hold" : `Submit Transfer — ${formatBalance(totalValue,currency)}`}
@@ -258,14 +307,16 @@ export function InstitutionalTransferModal({
   userId: number;
 }) {
   const [step, setStep] = useState<"pick" | "form" | "done">("pick");
-  const [selectedInst, setSelectedInst] = useState<typeof INSTITUTIONS[0] | null>(null);
+  const [selectedInst, setSelectedInst] = useState<Institution | null>(null);
+  const [submittedInstitution, setSubmittedInstitution] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: (data: any) =>
       apiRequest("POST", "/api/institutional-transfers", { ...data, userId }),
-    onSuccess: () => {
+    onSuccess: (_response, data) => {
+      setSubmittedInstitution(data.institutionName);
       queryClient.invalidateQueries({ queryKey: ["/api/institutional-transfers"] });
       setStep("done");
     },
@@ -314,7 +365,7 @@ export function InstitutionalTransferModal({
             <div>
               <h3 className="font-semibold text-lg">Transfer Request Submitted</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Your full portfolio transfer to <strong>{selectedInst?.name}</strong> is now pending admin review. All {accounts.length} accounts are included in this request.
+                Your full portfolio transfer to <strong>{submittedInstitution}</strong> is now pending admin review. All {accounts.length} accounts are included in this request. Transfer support and settlement remain subject to verification.
               </p>
             </div>
             <Button className="w-full" onClick={handleClose} data-testid="button-done-institutional-transfer">

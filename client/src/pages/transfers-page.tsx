@@ -11,6 +11,7 @@ import { FundsAccessNotice } from "@/components/fees/funds-access-notice";
 import { useActiveLiquidation } from "@/hooks/use-liquidation-status";
 import { useAuth } from "@/hooks/use-auth";
 import { InstitutionalTransferModal } from "@/components/institutional-transfer-modal";
+import { destinationCountryName } from "@shared/institutional-destination";
 
 export default function TransfersPage() {
   const { user: fundsOwner } = useFundsOwner();
@@ -50,7 +51,7 @@ export default function TransfersPage() {
                   Transfer to Another Institution
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Request a transfer in-kind or as cash to a listed destination institution. All requests require administrator review and approval.
+                  Request a transfer in-kind or as cash to a listed or client-entered international institution. Destination support must be verified. All requests require administrator review and approval.
                 </CardDescription>
               </div>
               <Button data-funds-action="" onClick={() => setShowInstTransferModal(true)} className="gap-2 shrink-0" data-testid="button-new-institutional-transfer">
@@ -145,6 +146,8 @@ export default function TransfersPage() {
                               <p className="font-semibold text-sm">{t.institutionName}</p>
                               <span className="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">Full Portfolio</span>
                             </div>
+                            {t.institutionCountry && <p className="text-xs text-muted-foreground">{destinationCountryName(t.institutionCountry)}</p>}
+                            {t.destinationDetails && <p className="text-xs text-muted-foreground whitespace-pre-wrap break-words mt-1">Destination details: {t.destinationDetails}</p>}
                             <p className="text-xs text-muted-foreground mt-0.5">
                               All accounts · {isCash ? "Cash Transfer" : "In-Kind Transfer"} · {formatBalance(t.partialAmount,clientBalanceCurrency(fundsOwner))} total
                             </p>
