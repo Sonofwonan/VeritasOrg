@@ -68,3 +68,9 @@ Responsive financial checks across both browser projects can exceed the foregrou
 **Why:** A targeted desktop/mobile run reached the shell timeout after desktop passed and while mobile was starting, leaving the combined run incomplete.
 
 **How to apply:** Use a background shell for long matrices, or run narrowly filtered projects within the foreground limit. Keep completed, unchanged project checks valid; a tool timeout is not evidence of an application defect.
+
+A merge's dependency refresh can temporarily remove Playwright's worker entry while a long suite is still running.
+
+**Why:** A suite passed its entire desktop project, then every mobile worker failed before executing any test because the merge setup was replacing dependencies. The worker entry existed again once setup finished.
+
+**How to apply:** Distinguish worker-startup/module-not-found failures from failed application assertions. Confirm dependency refresh has finished and the worker entry is restored, then rerun validation from the current merged project. Do not weaken security or financial checks to accommodate this infrastructure interruption.
