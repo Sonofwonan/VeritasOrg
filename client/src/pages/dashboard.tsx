@@ -549,7 +549,7 @@ export default function DashboardPage() {
 
         {/* Footer */}
         <div className="pt-2 pb-1 border-t border-border/40 text-[10px] text-muted-foreground/40">
-          <span>Global private offshore wealth management</span>
+          <span>Veritas Wealth</span>
         </div>
 
       </div>

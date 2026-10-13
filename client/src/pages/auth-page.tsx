@@ -416,7 +416,6 @@ export default function AuthPage() {
           </div>
 
           <div className="space-y-6 max-w-xs">
-            <p className="label-caps text-primary-foreground/40 tracking-widest">Global Private Offshore Wealth Management</p>
             <h1 className="font-serif leading-tight" style={{ fontSize: "clamp(2rem, 3.5vw, 2.8rem)" }}>
               Your wealth,<br />
               managed with<br />
@@ -537,7 +536,7 @@ export default function AuthPage() {
                       className="login-submit w-full flex items-center justify-center gap-2 py-3.5 text-sm"
                     >
                       {login.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                      Sign in to Veritas
+                      Sign in to Veritas Wealth
                     </button>
                   </form>
 

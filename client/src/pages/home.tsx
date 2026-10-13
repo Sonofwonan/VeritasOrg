@@ -115,7 +115,6 @@ export default function HomePage() {
             <img src="/veritas-logo.png" alt="Veritas Wealth logo" className="w-9 h-9 object-contain" />
             <div className="flex flex-col leading-tight">
               <span className="font-serif text-[1.05rem] tracking-tight">Veritas Wealth</span>
-              <span className="hidden sm:inline text-[10px] text-muted-foreground tracking-widest uppercase">Private wealth management since 1967</span>
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-7 text-[13px] text-muted-foreground">
@@ -270,7 +269,7 @@ export default function HomePage() {
               </blockquote>
               <div className="pt-4 flex items-center gap-3">
                 <div className="w-8 h-px bg-border" />
-                <span className="text-sm text-muted-foreground">Veritas Investment Committee, 2024</span>
+                <span className="text-sm text-muted-foreground">Veritas Wealth Investment Committee, 2024</span>
               </div>
               <button
                 onClick={() => setLocation("/auth")}

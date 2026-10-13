@@ -1,7 +1,7 @@
 {
   "id": "/",
   "name": "Veritas Wealth",
-  "short_name": "Veritas",
+  "short_name": "Veritas Wealth",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

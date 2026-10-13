@@ -81,8 +81,7 @@ export function SlideOutNavigation({ location, open, onOpenChange, onNavigate }:
             <div className="qd-brand">
               <span className="qd-brand-mark"><img src="/veritas-logo.png" alt="" /></span>
               <span className="qd-brand-copy">
-                <DialogPrimitive.Title asChild><strong>Veritas</strong></DialogPrimitive.Title>
-                <small>WEALTH MANAGEMENT</small>
+                <DialogPrimitive.Title asChild><strong>Veritas Wealth</strong></DialogPrimitive.Title>
               </span>
             </div>
             <DialogPrimitive.Close asChild>

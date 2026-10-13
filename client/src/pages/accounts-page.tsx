@@ -136,7 +136,7 @@ export default function AccountsPage() {
         <DialogContent className="sm:max-w-sm bg-[#0B2218] wealth-panel border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl text-white">Open New Account</DialogTitle>
-            <DialogDescription className="text-white/40 text-xs">Select an account type to establish with Veritas.</DialogDescription>
+            <DialogDescription className="text-white/40 text-xs">Select an account type to establish with Veritas Wealth.</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div className="space-y-1.5">
@@ -429,7 +429,7 @@ export default function AccountsPage() {
 
       {/* ── Footer note ─────────────────────────────────────────────── */}
       <div className="mt-8 pt-4 border-t border-border/50 text-[10px] text-muted-foreground/40">
-        <span>Global private offshore wealth management</span>
+        <span>Veritas Wealth</span>
       </div>
 
     </LayoutShell>

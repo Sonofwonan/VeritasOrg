@@ -51,7 +51,7 @@ export default function CompanyPage() {
             onClick={() => setLocation("/")}
           >
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-black text-xl shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] group-hover:scale-110 transition-transform">V</div>
-            <span className="font-display font-bold text-2xl tracking-tighter">Veritas<span className="text-primary">LLC</span></span>
+            <span className="font-display font-bold text-2xl tracking-tighter">Veritas Wealth</span>
           </motion.div>
 
           <div className="hidden md:flex items-center gap-10 text-[11px] font-black uppercase tracking-[0.3em] text-white/60">
@@ -134,7 +134,7 @@ export default function CompanyPage() {
                 Architecting <br />Global <span className="text-primary italic">Wealth.</span>
               </h1>
               <p className="text-xl md:text-2xl text-white/50 mb-12 leading-relaxed max-w-2xl font-light">
-                Veritas LLC orchestrates capital, infrastructure, and innovation across 45+ global markets. We don't just invest; we define the future.
+                Veritas Wealth orchestrates capital, infrastructure, and innovation across 45+ global markets. We don't just invest; we define the future.
               </p>
               <div className="flex flex-wrap gap-6">
                 <Button 
@@ -281,7 +281,7 @@ export default function CompanyPage() {
       <section id="contact" className="py-32">
         <div className="container mx-auto px-6 text-center">
           <div className="max-w-4xl mx-auto space-y-16">
-            <h2 className="text-5xl md:text-8xl font-black font-display tracking-tighter">Connect with <br /><span className="text-primary italic">Veritas Corp.</span></h2>
+            <h2 className="text-5xl md:text-8xl font-black font-display tracking-tighter">Connect with <br /><span className="text-primary italic">Veritas Wealth</span></h2>
             <div className="grid sm:grid-cols-3 gap-8">
               <ContactMethod icon={PhoneCall} label="Client Services" value="+1 (702) 718-8852" />
               <ContactMethod icon={PhoneCall} label="Global HQ" value="+1 702-718-8852" />
@@ -327,7 +327,7 @@ export default function CompanyPage() {
             <div className="space-y-8 max-w-sm">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-black text-xl">V</div>
-                <span className="font-display font-bold text-3xl tracking-tighter">Veritas<span className="text-primary">LLC</span></span>
+                <span className="font-display font-bold text-3xl tracking-tighter">Veritas Wealth</span>
               </div>
               <p className="text-white/30 text-base leading-relaxed font-light">
                 Architecting the future of global enterprise through strategic stewardship and technological innovation.

@@ -78,7 +78,7 @@ function AdminLogin({ onLogin }: { onLogin: (key: string) => void }) {
             <ShieldCheck className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold text-white">Admin Portal</h1>
-          <p className="text-slate-400 mt-1 text-sm">Veritas Wealth Management</p>
+          <p className="text-slate-400 mt-1 text-sm">Veritas Wealth</p>
         </div>
 
         <Card className="bg-slate-800/50 border-slate-700 backdrop-blur">

@@ -155,7 +155,7 @@ export default function AccountDetailPage() {
           <DialogHeader>
             <DialogTitle>Account details</DialogTitle>
             <DialogDescription>
-              Recorded account information. The application account number identifies this account within Veritas; it is not an external payment instruction.
+              Recorded account information. The application account number identifies this account within Veritas Wealth; it is not an external payment instruction.
             </DialogDescription>
           </DialogHeader>
           <div className="divide-y text-sm">
