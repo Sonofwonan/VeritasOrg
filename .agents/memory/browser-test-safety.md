@@ -3,6 +3,12 @@ name: Browser regression isolation
 description: Safety boundaries for signed-in financial browser tests in this shared-database project.
 ---
 
+Keep each isolated browser server's Vite dependency cache separate from the preview server.
+
+**Why:** The test server and managed preview use different environment/plugin configurations. Sharing the optimizer cache let a preview restart invalidate in-flight test imports with “504 Outdated Optimize Dep,” producing false loader failures.
+
+**How to apply:** Put test-only optimizer caches in the isolated runner's ignored evidence directory. Do not suppress those HTTP failures in regression checks or treat them as application errors.
+
 Signed-in financial tests must use dedicated disposable identities and the normal password/session flow, never an authentication bypass. Do not use or modify shared clients, the Mary fixture, actual credentials or live billing settings.
 
 **Why:** Development and production can share the external Supabase database. The user explicitly required isolation for browser setup and billing operations, not just cleanup after using real records.

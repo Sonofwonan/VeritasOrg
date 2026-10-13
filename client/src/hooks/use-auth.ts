@@ -72,6 +72,8 @@ export function useAuth() {
   return {
     user: userQuery.data,
     isLoading: userQuery.isLoading,
+    hasSessionError: userQuery.isError && userQuery.data === undefined,
+    retrySession: () => { void userQuery.refetch(); },
     login: loginMutation,
     verifyMfa: verifyMfaMutation,
     register: registerMutation,

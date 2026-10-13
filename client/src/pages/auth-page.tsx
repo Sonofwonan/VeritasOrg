@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { Loader2, Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
+import { BrandedLoader } from "@/components/branded-loader";
+import { SessionLoadError } from "@/components/session-load-error";
 
 const loginSchema = z.object({
   userId: z.string().min(1, "Client Reference is required"),
@@ -309,7 +311,7 @@ function ApplicationForm({ onBack }: { onBack: () => void }) {
 }
 
 export default function AuthPage() {
-  const { login, verifyMfa, logout, user, isLoading } = useAuth();
+  const { login, verifyMfa, logout, user, isLoading, hasSessionError, retrySession } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [view, setView] = useState<"login" | "apply">("login");
@@ -343,12 +345,10 @@ export default function AuthPage() {
   }, []);
 
   if (isLoading || user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-cream">
-        <Loader2 className="w-5 h-5 animate-spin text-primary" />
-      </div>
-    );
+    return <BrandedLoader />;
   }
+
+  if (hasSessionError) return <SessionLoadError onRetry={retrySession} />;
 
   const onLogin = handleSubmit(async data => {
     if (login.isPending) return;

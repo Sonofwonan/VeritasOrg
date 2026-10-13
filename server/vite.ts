@@ -17,6 +17,10 @@ export async function setupVite(server: Server, app: Express) {
 
   const vite = await createViteServer({
     ...viteConfig,
+    // Isolated browser servers must not invalidate the preview server's dependency cache.
+    cacheDir: process.env.NODE_ENV === "test" && process.env.BALANCE_E2E_EVIDENCE
+      ? path.join(process.env.BALANCE_E2E_EVIDENCE, "vite-cache")
+      : viteConfig.cacheDir,
     configFile: false,
     customLogger: {
       ...viteLogger,

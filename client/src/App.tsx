@@ -5,7 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { BrandedLoader } from "@/components/branded-loader";
+import { SessionLoadError } from "@/components/session-load-error";
 
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
@@ -23,22 +24,20 @@ import AdminPage from "@/pages/admin-page";
 import AccountActivationPage from "@/pages/account-activation";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, hasSessionError, retrySession } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isLoading && !hasSessionError && !user) {
       setLocation("/auth");
     }
-  }, [user, isLoading, setLocation]);
+  }, [user, isLoading, hasSessionError, setLocation]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <BrandedLoader />;
   }
+
+  if (hasSessionError) return <SessionLoadError onRetry={retrySession} />;
 
   if (!user) return null;
 

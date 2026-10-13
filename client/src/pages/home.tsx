@@ -1,7 +1,9 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useRef } from "react";
-import { Loader2, ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { BrandedLoader } from "@/components/branded-loader";
+import { SessionLoadError } from "@/components/session-load-error";
 
 const SEGMENTS = [
   {
@@ -90,7 +92,7 @@ const INSIGHTS = [
 
 export default function HomePage() {
   const [, setLocation] = useLocation();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, hasSessionError, retrySession } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -98,12 +100,10 @@ export default function HomePage() {
   }, [user, setLocation]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-cream">
-        <Loader2 className="w-5 h-5 animate-spin text-primary" />
-      </div>
-    );
+    return <BrandedLoader />;
   }
+
+  if (hasSessionError) return <SessionLoadError onRetry={retrySession} />;
 
   return (
     <div className="min-h-screen bg-cream text-foreground">
