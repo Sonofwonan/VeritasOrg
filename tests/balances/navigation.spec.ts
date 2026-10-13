@@ -1,5 +1,48 @@
 import { test, expect, login, verifyHeadline } from "./fixtures";
 
+test("slide-out menu preserves routes, focus, advisor contact and sign-out", async ({ page, identity }, info) => {
+  await login(page, identity);
+  await verifyHeadline(page);
+  const toggle = page.getByTestId("sidebar-toggle");
+  const panel = page.getByTestId("sidebar-panel");
+  await toggle.click();
+  await expect(panel).toBeVisible();
+  await expect(panel.getByTestId("text-username")).toHaveText("Balance Test Client");
+  await expect(panel.getByRole("link", { name: "Contact your advisor", exact: true }))
+    .toHaveAttribute("href", "mailto:veritaswealth@accountant.com");
+  for (let i = 0; i < 24; i++) {
+    await page.keyboard.press(i % 2 ? "Shift+Tab" : "Tab");
+    expect(await panel.evaluate(el => el.contains(document.activeElement))).toBe(true);
+  }
+  const screenshot = info.outputPath("slide-out-menu.png");
+  await page.screenshot({ path: screenshot });
+  await info.attach("slide-out-menu", { path: screenshot, contentType: "image/png" });
+  await page.keyboard.press("Escape");
+  await expect(panel).toHaveCount(0);
+  await expect(toggle).toBeFocused();
+  await toggle.click();
+  await page.mouse.click(page.viewportSize()!.width - 8, 70);
+  await expect(panel).toHaveCount(0);
+  await expect(toggle).toBeFocused();
+  for (const [label, route] of [
+    ["Accounts", "/accounts"], ["Investments", "/investments"], ["Transfers", "/transfers"],
+    ["Transaction history", "/transactions"], ["Education", "/education"], ["Settings", "/settings"],
+    ["Dashboard", "/dashboard"],
+  ]) {
+    await page.getByTestId("sidebar-toggle").click();
+    await page.getByTestId("sidebar-panel").getByRole("button", { name: label, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${route}$`));
+    await expect(page.getByTestId("sidebar-toggle")).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByTestId("top-navigation-toggle")).toHaveAttribute("aria-expanded", "false");
+  }
+  await page.getByTestId("sidebar-toggle").click();
+  const logoutResponse = page.waitForResponse(response =>
+    response.url().endsWith("/api/logout") && response.request().method() === "POST");
+  await page.getByTestId("sidebar-panel").getByRole("button", { name: "Sign out", exact: true }).click();
+  expect((await logoutResponse).status()).toBe(200);
+  await expect(page).toHaveURL(/\/auth$/);
+});
+
 test("client navigation stays collapsed until deliberately opened", async ({page,identity},info) => {
   await page.context().addCookies([{name:"sidebar_state",value:"true",url:process.env.BALANCE_E2E_URL!}]);
   await login(page,identity);
@@ -7,7 +50,7 @@ test("client navigation stays collapsed until deliberately opened", async ({page
   const sidebar=page.getByTestId("sidebar-toggle");
   const top=page.getByTestId("top-navigation-toggle");
   const gear=page.getByTestId("header-settings-button");
-  const nav=page.locator("#veritas-side-navigation");
+  const nav=page.getByTestId("sidebar-panel");
   const header=page.locator("header").filter({has:top});
   for (const width of [320,390,768,1024,1440]) {
     await page.setViewportSize({width,height:900});
@@ -19,7 +62,7 @@ test("client navigation stays collapsed until deliberately opened", async ({page
     await expect.poll(async () => {
       const box=await header.boundingBox();
       return {height:box?.height,x:box?.x};
-    }).toEqual({height:48,x:0});
+    }).toEqual({height:width <= 600 ? 56 : 58,x:0});
     for (const control of [sidebar,top]) {
       const target=await control.boundingBox();
       expect(target!.width).toBeGreaterThanOrEqual(44);
@@ -40,12 +83,12 @@ test("client navigation stays collapsed until deliberately opened", async ({page
     await expect(top).toHaveAttribute("aria-expanded","false");
     await expect(gear).toHaveCount(0);
     await sidebar.click();
-    await expect(page.getByTestId("sidebar-close")).toHaveAttribute("aria-expanded","true");
-    await expect(nav).not.toHaveAttribute("inert");
+    await expect(page.getByTestId("sidebar-close")).toBeVisible();
+    await expect(nav).toHaveAttribute("role","dialog");
     await expect(nav.getByRole("button",{name:"Accounts",exact:true})).toBeInViewport();
     await page.getByTestId("sidebar-close").click();
     await expect(sidebar).toHaveAttribute("aria-expanded","false");
-    if (width>=768) await expect(nav).toHaveAttribute("inert");
+    await expect(nav).toHaveCount(0);
     if ([390,1440].includes(width)) {
       await page.locator('main.overflow-y-auto').evaluate(el=>el.scrollTop=0);
       const path=info.outputPath(`navigation-collapsed-${width}.png`);

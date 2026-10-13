@@ -86,3 +86,9 @@ Inject only verification-read failures when proving that financial writes fail c
 **Why:** Renaming an entire table also breaks inserts, which can hide an unguarded transfer-request endpoint. A request must fail because verification was unavailable, not because its eventual insert independently failed.
 
 **How to apply:** Keep fault injection confined to the isolated test launcher, never a production endpoint. Check the explicit unavailable response, unchanged records and successful submission after restoring reads.
+
+For isolated design artifacts, confirm which service a screenshot actually loads before using it as verification.
+
+**Why:** The app-preview capture resolved a mockup path against the main app on port 5000, while the same proxied development-domain path correctly routed to the separate mockup service. The capture showed the wrong application.
+
+**How to apply:** Check the capture's reported URL and visible content. If it targets the main service instead of the design artifact, use Playwright against the artifact's proxied preview URL, inspect the resulting images, and keep all preview data and interactions isolated.
