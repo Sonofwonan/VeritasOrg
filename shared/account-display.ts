@@ -2,6 +2,11 @@ export function accountLabel(account: { accountType: string; displayName?: strin
   return account.displayName || account.accountType;
 }
 
+// Combined debt includes all overdrafts plus unposted unpaid fee assessments.
+// A balance or past fee charge alone cannot establish the origin of current debt.
+// Reserve fee-specific wording for verified fee records, not combined balances.
+export const TOTAL_OWED_LABEL = "Total owed";
+
 export type CashPosting = {
   accountId: number;
   accountName: string;

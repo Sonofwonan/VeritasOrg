@@ -19,7 +19,7 @@ import { useFundsAccess } from "@/hooks/use-funds-access";
 import { useClientAccountSnapshot } from "@/hooks/use-fees";
 import { DebtAccountSummary } from "@/components/fees/debt-account-summary";
 import { DebtRestrictionStatus } from "@/components/fees/debt-restriction-status";
-import { accountLabel, transactionDate, maskAccountNumber, type CashPosting } from "@shared/account-display";
+import { accountLabel, transactionDate, maskAccountNumber, TOTAL_OWED_LABEL, type CashPosting } from "@shared/account-display";
 import { TransactionAmountBalance } from "@/components/transaction-amount-balance";
 
 // ── Quick actions ─────────────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export default function DashboardPage() {
     ? Math.abs(proposedTotalOwed - totalUnpaid - totalOverdraft) < 0.01
     : true;
   const totalOwed = totalUnpaid === null || suppliedOverdraftInvalid || !totalsConsistent ? null : proposedTotalOwed;
-  const unpaidFeesValue = totalOwed === null ? "Unavailable" : fmt(totalOwed === 0 ? 0 : -totalOwed);
+  const totalOwedValue = totalOwed === null ? "Unavailable" : fmt(totalOwed === 0 ? 0 : -totalOwed);
   const totalBalance   = cashTotal + investValue;
   const cashUnavailable = accountsError || !accounts || accounts.some(a => !Number.isFinite(Number(a.balance)));
   const overdraftUnavailable = accountsError || !accounts || accounts.some(a =>
@@ -222,7 +222,7 @@ export default function DashboardPage() {
               { label: 'Liquid Cash',    val: cashUnavailable ? "Unavailable" : fmt(cashTotal), sub: access.blocked ? 'Contact your advisor' : pendingBalance !== 0 ? `${fmt(Math.abs(pendingBalance))} pending${cashLocked ? " · Transfer on hold" : ""}` : cashLocked ? 'Transfer on hold' : 'Available now', icon: Landmark },
               { label: 'Investments',    val: investmentsUnavailable ? "Unavailable" : fmt(investTotal), sub: 'Recorded investment value', icon: BarChart3 },
               { label: 'Overdraft', val: overdraftUnavailable ? "Unavailable" : fmt(overdraftTotal === 0 ? 0 : -overdraftTotal), sub: undefined, debt: true, icon: ArrowDownRight },
-              { label: 'Unpaid fees', val: feeSummary.isLoading ? "Loading…" : feeSummary.isError ? "Unavailable" : unpaidFeesValue, sub: undefined, debt: true, icon: Clock },
+              { label: TOTAL_OWED_LABEL, val: feeSummary.isLoading ? "Loading…" : feeSummary.isError ? "Unavailable" : totalOwedValue, sub: undefined, debt: true, icon: Clock },
             ].map(({ label, val, sub, debt, icon: Icon }) => (
               <div key={label} className="px-4 sm:px-6 py-4 flex items-center gap-3 min-w-0">
                 <Icon className="w-4 h-4 text-white/20 shrink-0" />

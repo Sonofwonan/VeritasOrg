@@ -131,6 +131,8 @@ export class FeeService {
   async clientSummary(userId: number, reader: Pick<PoolClient, "query"> = this.pool): Promise<ClientFeeSummary> {
     // Include all unpaid periods, even for paused/ended plans. Paid fees already
     // reduced cash; waived/refunded/skipped assessments are not liabilities.
+    // Overdrafts are origin-neutral: withdrawals/transfers can cause them too.
+    // Do not attribute current debt to historical fees without posting evidence.
     const { rows } = await reader.query(`SELECT a.id AS account_id,
       COALESCE(NULLIF(a.display_name,''),a.account_type) AS account_name,
       COALESCE(SUM(f.total) FILTER (WHERE f.status='unpaid'),0)::text AS unpaid_total,

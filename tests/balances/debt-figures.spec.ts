@@ -81,6 +81,8 @@ for(const currency of ["CAD","GBP"] as const){
         await assertReadable(page,`[data-testid="${id}"]`,info,`${currency}-dashboard-${id}-${width}`);
       }
       await expect(page.locator("main").last()).not.toContainText(/Negative cash balances|Outstanding assessments/);
+      await expect(page.getByTestId("text-unpaid-fees").locator("..")).toContainText("Total owed");
+      await expect(page.getByTestId("text-unpaid-fees").locator("..")).not.toContainText("Unpaid fees");
       if(width===390) await page.screenshot({path:info.outputPath(`dashboard-${currency}.jpg`)});
       await page.goto("/accounts");
       await expect(page.getByTestId("text-total-balance")).toHaveText(formatBalance("2003900.25",currency));

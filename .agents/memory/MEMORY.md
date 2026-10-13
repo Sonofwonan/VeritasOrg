@@ -15,3 +15,4 @@
 - [Authenticator grace policy](authenticator-grace-policy.md) — User approved 60-second server tolerance; keep 30-second rotation, single-use protections and unchanged challenge lifetimes.
 - [Cross-origin security](browser-origin-policy.md) — Same-origin passes do not prove deployed sign-in works; verify credentialed flows from every approved frontend.
 - [Financial snapshot consistency](financial-snapshot-consistency.md) — Keep dashboard cash and liabilities in one committed snapshot and one cache entry through financial changes.
+- [General-client debt naming](general-client-debt-naming.md) — Approved “Total owed” label for combined debt; never attribute overdrafts to fees without evidence.

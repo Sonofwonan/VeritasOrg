@@ -140,6 +140,29 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     assert.equal(view.accounts[0].balance, "1000");
     await assert.rejects(service.run(), /disabled/);
   });
+  it("includes non-fee and unknown-origin overdrafts without inventing fee liabilities or changing history", async () => {
+    for (const origin of ["withdrawal", "transfer", "unknown"]) {
+      await query("DELETE FROM transactions");
+      await query("UPDATE accounts SET balance=-125.75 WHERE id=1");
+      if (origin !== "unknown") {
+        await query(`INSERT INTO transactions(from_account_id,amount,description,transaction_type,status)
+          VALUES(1,1125.75,$1,$2,'completed')`, [`Synthetic ${origin}`, origin]);
+      }
+      const history = (await query("SELECT * FROM transactions ORDER BY id")).rows;
+      const view = await service.clientSummary(1);
+      assert.equal(view.totalUnpaid, "0.00", origin);
+      assert.equal(view.totalOverdraft, "125.75", origin);
+      assert.equal(view.totalOwed, "125.75", origin);
+      assert.deepEqual(view.accounts, [{
+        accountId: 1, accountName: "Brokerage Account", unpaidTotal: "0.00",
+        unpaidCount: 0, overdraft: "125.75", amountOwed: "125.75",
+      }]);
+      assert.deepEqual((await query("SELECT * FROM transactions ORDER BY id")).rows, history);
+      assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance, "-125.75");
+      assert.equal((await query("SELECT COUNT(*)::int AS n FROM fee_assessments")).rows[0].n, 0);
+      assert.equal((await query("SELECT balance FROM accounts WHERE id=2")).rows[0].balance, "1000");
+    }
+  });
   it("does not charge unaccepted offers and rejects fabricated acceptance or backdating", async () => {
     const e = await offer();
     await service.settings(true);

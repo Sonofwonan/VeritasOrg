@@ -114,7 +114,7 @@ it("uses signed red dashboard balances and positive black Amount owed with disti
     assert(!html.includes("1234"),"Single-account summary needs no extra number caption");
   }
 });
-it("includes posted overdraft in unpaid-fees KPI exactly once without changing funded totals",()=>{
+it("includes posted overdraft in total-owed KPI exactly once without changing funded totals",()=>{
   for(const currency of ["GBP","CAD"] as const) for(const unpaid of ["0.00","25.00"]){
     const data=dashboardData([
       {id:901,accountType:"Brokerage Account",balance:"-100"},
@@ -128,6 +128,30 @@ it("includes posted overdraft in unpaid-fees KPI exactly once without changing f
     assert.equal(displayedValue(html,"text-total-balance"),formatBalance("1622886",currency));
     assert(!html.includes("Negative cash balances") && !html.includes("Outstanding assessments"));
     assert.equal(JSON.stringify(data),before);
+  }
+});
+it("uses neutral total-owed wording for all debt origins without changing compact balances",()=>{
+  for (const origin of ["withdrawal","transfer","fee","mixed","unknown"] as const) {
+    for (const currency of ["CAD","GBP"] as const) {
+      const data=dashboardData([{id:901,accountType:"Brokerage Account",balance:"-100"}],[],origin==="mixed"?"25.00":"0.00");
+      data.find(item=>item.key[0]==="/api/user")!.value={id:7,name:"Synthetic client",displayCurrency:currency};
+      if(origin!=="unknown") data.find(item=>item.key[0]==="/api/transactions")!.value=[{
+        id:42,fromAccountId:901,amount:"100.00",transactionType:origin==="mixed"?"fee":origin,
+        description:origin==="fee" || origin==="mixed"?"Monthly service fee":"Completed "+origin,
+        status:"completed",createdAt:"2030-01-01T12:00:00Z",
+        cashPostings:[{accountId:901,accountName:"Brokerage Account",accountNumber:"TEST901",balanceAfter:"-100.00"}],
+      }];
+      const before=JSON.stringify(data);
+      const html=render(DashboardPage,{},data);
+      assert(html.includes("Total owed"),origin);
+      assert(!html.includes("Unpaid fees"),origin);
+      assert.equal(displayedValue(html,"text-unpaid-fees"),formatBalance(origin==="mixed"?"-125":"-100",currency));
+      const card=html.match(/<article[^>]*data-testid="debt-account-901"[^>]*>[\s\S]*?<\/article>/)?.[0];
+      assert(card);
+      assert(!/fee|maintenance|withdrawal|transfer|Amount owed|details link/i.test(card));
+      assert.equal(displayedValue(html,"debt-account-amount-901"),formatBalance(origin==="mixed"?"-125":"-100",currency));
+      assert.equal(JSON.stringify(data),before);
+    }
   }
 });
 it("rejects malformed or inconsistent owed totals and leaves genuine zero unsigned",()=>{
@@ -514,7 +538,8 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       if(Component===DashboardPage) {
         assert.equal(displayedValue(html,"text-total-balance"),"CAD $0.00");
         assert.equal(displayedValue(html,"dash-account-balance-24"),"CAD $0.00");
-        assert(html.includes("Unpaid fees"));
+        assert(html.includes("Total owed"));
+        assert(!html.includes("Unpaid fees"));
       } else {
         assert(!html.includes("32 unpaid fees"));
         assert(html.includes("CAD $11,636.48"));

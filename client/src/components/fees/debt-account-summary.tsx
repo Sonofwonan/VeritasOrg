@@ -90,6 +90,8 @@ export function DebtAccountSummary({
     return summary.totalOverdraft !== undefined && verifiedAmount(summary.totalOverdraft) === 0 ? 0 : null;
   };
 
+  // Keep combined balances neutral; unpaid assessments are verified fees,
+  // but an overdraft does not prove a maintenance-fee origin.
   const accountAmounts = summary.accounts.map(account => {
     const authoritative = account.amountOwed === undefined ? null : verifiedAmount(account.amountOwed);
     const unpaid = verifiedAmount(account.unpaidTotal);

@@ -100,7 +100,9 @@ export interface ManagementValuation {
   id: number; contractId: number; period: number; valuationDate: string; aum: string; evidence: string; createdAt: string;
 }
 export interface ClientFeeSummary {
+  /** Verified unposted unpaid fee assessments only. */
   totalUnpaid: string;
+  /** All negative cash balances, regardless of origin; totalOwed adds totalUnpaid. */
   totalOverdraft?: string; totalOwed?: string;
   accounts: { accountId: number; accountName?: string; unpaidTotal: string; unpaidCount: number; overdraft?: string; amountOwed?: string }[];
 }

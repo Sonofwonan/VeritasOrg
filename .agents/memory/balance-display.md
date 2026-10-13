@@ -117,7 +117,7 @@ Use different compact debt captions on the two overview screens: Dashboard keeps
 
 **How to apply:** Preserve normal account names and detail navigation in the account list. Category headings show names and counts only, not repeated totals; individual account rows retain their actual signed balances. Visually simplifying the debt summary must not remove accessible account identification or alter financial records.
 
-The dashboard “Unpaid fees” figure presents total still owed, including debt already posted as overdraft, rather than only assessments awaiting deduction.
+The dashboard combined debt figure presents total still owed, including debt already posted as overdraft, rather than only assessments awaiting deduction. Its approved general-client label is now “Total owed” (see general-client-debt-naming.md).
 
 **Why:** The user rejected a zero unpaid-fees figure while an overdraft still required payment and asked for the corresponding negative red amount.
 
