@@ -112,7 +112,7 @@ export default function HomePage() {
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-cream/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/assets/IMG_4531_1771684255921.jpeg" alt="Veritas" className="w-6 h-6 object-contain" />
+            <img src="/veritas-logo.png" alt="Veritas Wealth logo" className="w-9 h-9 object-contain" />
             <div className="flex flex-col leading-tight">
               <span className="font-serif text-[1.05rem] tracking-tight">Veritas Wealth</span>
               <span className="hidden sm:inline text-[10px] text-muted-foreground tracking-widest uppercase">Private wealth management since 1967</span>

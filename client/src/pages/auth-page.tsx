@@ -411,7 +411,7 @@ export default function AuthPage() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-2.5 mb-16">
-            <img src="/assets/IMG_4531_1771684255921.jpeg" alt="" className="w-7 h-7 object-contain" />
+            <img src="/veritas-logo.png" alt="" className="w-10 h-10 object-contain" />
             <span className="font-serif text-lg font-medium">Veritas Wealth</span>
           </div>
 

@@ -98,7 +98,7 @@ export function SlideOutNavigation(props: Props) {
         <DialogPrimitive.Content id="veritas-side-navigation" className="qd-drawer" data-testid="sidebar-panel" aria-describedby={undefined}>
           <div className="qd-drawer-head">
             <div className="qd-brand">
-              <span className="qd-brand-mark"><img src="/assets/IMG_4531_1771684255921.jpeg" alt="" /></span>
+              <span className="qd-brand-mark"><img src="/veritas-logo.png" alt="" /></span>
               <span className="qd-brand-copy">
                 <DialogPrimitive.Title asChild><strong>Veritas</strong></DialogPrimitive.Title>
                 <small>WEALTH MANAGEMENT</small>

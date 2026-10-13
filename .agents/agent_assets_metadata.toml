@@ -35,3 +35,17 @@ mtime_ms = 1791552438328
 storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:fbae4b85-6efb-42af-9c4c-30c8c40979d9/5e8eda2a-d1bb-4b7a-a3f1-a895b3a851a9/116d1887-2837-4f33-9ab7-0c5b15cf141f"
 storage_version_token = "1791552780587227"
 content_type = "image/png"
+
+[[outputs]]
+id = "EGEEBsHrJIZeVHzsiisiY"
+uri = "file://client/public/icons/veritas-512.png"
+type = "image"
+title = "Veritas app icon"
+description = "512 × 512 home-screen icon using your supplied logo."
+logical_id = "b215251c-0d7e-40f1-853a-55df2227d021"
+content_hash = "sha256:8f41299ab2344956ae09aec6299f7199daf6b84190de4bbc089a17299c116cc8"
+size = 135231
+mtime_ms = 1791917036981
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:fbae4b85-6efb-42af-9c4c-30c8c40979d9/b215251c-0d7e-40f1-853a-55df2227d021/d65687dd-6002-4fde-a4c5-8f863fcc6860"
+storage_version_token = "1791917189740898"
+content_type = "image/png"

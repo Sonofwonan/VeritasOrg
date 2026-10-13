@@ -51,8 +51,8 @@
 }
 .qd-drawer-head { min-height: 89px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid hsl(42 14% 87%); }
 .qd-brand { display: flex; align-items: center; gap: 12px; }
-.qd-brand-mark { display: grid; place-items: center; width: 39px; height: 39px; background: hsl(148 38% 23%); }
-.qd-brand-mark img { width: 25px; height: 25px; border-radius: 3px; object-fit: contain; }
+.qd-brand-mark { display: grid; place-items: center; width: 39px; height: 39px; }
+.qd-brand-mark img { width: 39px; height: 39px; object-fit: contain; }
 .qd-brand-copy { display: flex; flex-direction: column; gap: 4px; }
 .qd-brand-copy strong { font: 600 23px/1 'Cormorant Garamond', Georgia, serif; color: hsl(150 28% 8%); }
 .qd-brand-copy small { font: 600 8px 'DM Sans', sans-serif; letter-spacing: .16em; color: hsl(148 15% 34%); }

@@ -36,7 +36,7 @@ export function MetallicCard({
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
-                <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain brightness-125" />
+                <img src="/veritas-logo.png" alt="Veritas Wealth logo" className="w-8 h-8 object-contain" />
               </div>
               <div>
                 <h3 className="font-bold tracking-tighter text-lg leading-tight">VERITAS</h3>

@@ -9,6 +9,12 @@ description: Approved visual system for the platform. Apply to all new pages/com
 
 **Why:** User explicitly rejected generic AI/SaaS look and approved this system. Keep it consistent across all future screens.
 
+**Brand mark:** Use the user's green-and-gold torch, rising arrow and interlocking initials emblem for the website logo and app icon.
+
+**Why:** The user supplied this emblem and explicitly chose it for both uses.
+
+**How to apply:** Preserve the supplied artwork and its colors; do not replace it with the former logo or a generated alternative. Account and navigation previews kept for comparison are historical references.
+
 **Fonts**
 - Headlines/display: `Cormorant Garamond` serif (italic for emphasis words)
 - Body/UI: `DM Sans`
