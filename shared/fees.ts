@@ -1,4 +1,10 @@
 import { z } from "zod";
+import type { Account } from "./schema";
+
+export interface ClientAccountSnapshot {
+  accounts: Account[];
+  feeSummary: ClientFeeSummary;
+}
 
 export const BILLING_TIME_ZONE = "America/Toronto";
 export const DEFAULT_FEE_TERMS = "Monthly CAD service pricing for the listed services. You authorize deductions only from available cash recorded in this application, not an external bank account. No investment sales, overdraft, interest, late penalties, or partial charges. Insufficient cash leaves an unpaid assessment. You may end enrollment at any time to stop future fees; already assessed fees remain visible and may be waived by an administrator. No proration of a completed monthly period. Taxes are not calculated or represented as included. Applicable service eligibility and disclosures must be confirmed before offering this plan.";

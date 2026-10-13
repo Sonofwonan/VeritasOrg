@@ -293,7 +293,18 @@ const enrollment = {
 function render(Component: React.ElementType, props: unknown, data: { key: unknown[]; value: unknown }[], errors: unknown[][] = []) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: 0 } } });
   for (const item of data) client.setQueryData(item.key, item.value);
-  for (const key of errors) client.getQueryCache().build(client, { queryKey: key }).setState({
+  const snapshotKey = ["/api/accounts", "snapshot", 7];
+  if (Component === DashboardPage) {
+    // Reuse the synthetic fixture builders, but seed the dashboard's single
+    // response, not two independent live queries.
+    const accounts = data.find(item => item.key[0] === "/api/accounts" && item.key.length === 1);
+    const summary = data.find(item => item.key[0] === "/api/fees" && item.key[1] === "summary");
+    if (accounts && summary) client.setQueryData(snapshotKey, { accounts: accounts.value, feeSummary: summary.value });
+  }
+  for (const key of errors) client.getQueryCache().build(client, { queryKey:
+    Component === DashboardPage && (key[0] === "/api/accounts" && key.length === 1 ||
+      key[0] === "/api/fees" && key[1] === "summary") ? snapshotKey : key,
+  }).setState({
     status: "error", error: new Error("Synthetic query failure"), fetchStatus: "idle",
   });
   const html = renderToStaticMarkup(React.createElement(QueryClientProvider, { client },
@@ -666,18 +677,19 @@ describe("Fee interfaces rendered with synthetic cached data", () => {
       assert.equal(displayedValue(invalid,"text-liquid-cash"),"Unavailable");
     }
   });
-  it("preserves funded balance when fee details fail or load, and keeps separate liability amounts hidden when requested",()=>{
+  it("keeps the entire snapshot unavailable when it fails or loads, and respects liability privacy",()=>{
     const data=dashboardData([
       {id:25,accountType:"Brokerage Account",balance:"-12398.48"},
       {id:26,accountType:"Trust Account",balance:"1622886.00"},
     ],[],"100.00");
     const error=render(DashboardPage,{},data,[["/api/fees","summary",7]]);
-    assert.equal(displayedValue(error,"text-total-balance"),"CAD $1,622,886.00");
+    assert.equal(displayedValue(error,"text-total-balance"),"Unavailable");
+    assert.equal(displayedValue(error,"text-overdraft"),"Unavailable");
+    assert.equal(displayedValue(error,"text-unpaid-fees"),"Unavailable");
     assert(error.includes("Account balance details are unavailable"));
     assert(error.includes("Retry"));
     const loading=render(DashboardPage,{},data.filter(d=>d.key[0]!=="/api/fees"));
-    assert.equal(displayedValue(loading,"text-total-balance"),"CAD $1,622,886.00");
-    assert(loading.includes("Loading account balances"));
+    assert(!loading.includes('data-testid="text-total-balance"'));
     const summary=data.find(d=>d.key[0]==="/api/fees")!.value;
     const hidden=render(FeeLiability,{summary,hidden:true,separateFromBalance:true},[]);
     for(const amount of ["12,398.48","12,498.48","100.00"]) assert(!hidden.includes(amount));

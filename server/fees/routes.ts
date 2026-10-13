@@ -7,7 +7,7 @@ import { initializeFeeTables } from "./migration";
 const positiveId = z.coerce.number().int().positive();
 const confirmedAction = z.object({ confirmed: z.literal(true), reason: z.string().trim().min(3).max(1000) }).strict();
 
-export async function registerFeeRoutes(app: Express, pool: Pool, requireAdmin: RequestHandler) {
+export async function registerFeeRoutes(app: Express, pool: Pool, requireAdmin: RequestHandler, requireAccountRead: RequestHandler) {
   await initializeFeeTables(pool);
   const service = new FeeService(pool);
   const endpoint = (work: (req: any) => Promise<unknown>): RequestHandler => async (req, res) => {
@@ -64,6 +64,10 @@ export async function registerFeeRoutes(app: Express, pool: Pool, requireAdmin: 
     }));
   }
   app.get("/api/fees/summary", feeClient, endpoint(req => service.clientSummary(req.user.id)));
+  app.get("/api/accounts/snapshot", feeClient, requireAccountRead, (_req, res, next) => {
+    res.set("Cache-Control", "no-store");
+    next();
+  }, endpoint(req => service.clientAccountSnapshot(req.user.id)));
   app.get("/api/accounts/:id/fees", feeClient, endpoint(req => service.clientView(req.user.id, positiveId.parse(req.params.id))));
   app.post("/api/fees/enrollments/:id/accept", feeClient, endpoint(req => service.accept(req.user.id, positiveId.parse(req.params.id), req.body)));
   app.post("/api/fees/enrollments/:id/end", feeClient, endpoint(req => service.changeState(positiveId.parse(req.params.id), "ended", req.user.id)));

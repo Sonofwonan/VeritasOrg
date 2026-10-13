@@ -284,42 +284,42 @@ test("loading, request failures, malformed balances and recovery do not show fab
   await page.clock.install();
   let release!: () => void;
   const held = new Promise<void>(done => { release = done; });
-  await page.route("**/api/accounts", async route => { await held; await route.continue(); });
+  await page.route("**/api/accounts/snapshot", async route => { await held; await route.continue(); });
   await login(page, identity);
   await expect(page.getByTestId("text-total-balance")).toHaveCount(0);
   await evidence(page, info, "loading-without-fabricated-balance");
   release();
   await verifyHeadline(page);
-  await page.unroute("**/api/accounts");
-  for (const endpoint of ["accounts", "investments"]) {
+  await page.unroute("**/api/accounts/snapshot");
+  for (const endpoint of ["accounts/snapshot", "investments"]) {
     await page.route(`**/api/${endpoint}`, route => route.fulfill({ status: 503, json: { message: "Injected isolated failure" } }));
     // Failed polling must not continue displaying a stale funded headline.
     await page.clock.runFor(31000);
     await verifyHeadline(page, "Unavailable");
-    await evidence(page, info, `${endpoint}-poll-failure-hides-stale-total`);
+    await evidence(page, info, `${endpoint.replace("/", "-")}-poll-failure-hides-stale-total`);
     await page.reload();
     await verifyHeadline(page, "Unavailable");
     await expect(page.getByRole("alert").filter({ hasText: "Current balances could not be loaded" })).toBeVisible();
     await page.unroute(`**/api/${endpoint}`);
-    await page.getByRole("button", { name: "Retry", exact: true }).click();
+    await page.getByRole("button", { name: "Retry", exact: true }).first().click();
     await verifyHeadline(page);
   }
-  await page.route("**/api/fees/summary", route => route.fulfill({ status: 503, json: { message: "Injected fee failure" } }));
+  await page.route("**/api/accounts/snapshot", route => route.fulfill({ status: 503, json: { message: "Injected snapshot failure" } }));
   await page.reload();
-  await verifyHeadline(page);
+  await verifyHeadline(page, "Unavailable");
   await expect(page.getByRole("alert").filter({ hasText: "Account balance details are unavailable" })).toBeVisible();
-  await page.unroute("**/api/fees/summary");
-  await page.getByRole("button", { name: /retry/i }).click();
+  await page.unroute("**/api/accounts/snapshot");
+  await page.getByRole("button", { name: "Retry", exact: true }).first().click();
   await expect(page.getByTestId(`debt-account-amount-${identity.debt}`)).toHaveText("CAD -$1,614.39");
-  await page.route("**/api/accounts", async route => {
+  await page.route("**/api/accounts/snapshot", async route => {
     const response = await route.fetch();
-    const accounts = await response.json();
-    accounts[0].balance = "invalid";
-    await route.fulfill({ json: accounts });
+    const snapshot = await response.json();
+    snapshot.accounts[0].balance = "invalid";
+    await route.fulfill({ json: snapshot });
   });
   await page.reload();
   await verifyHeadline(page, "Unavailable");
-  await page.unroute("**/api/accounts");
+  await page.unroute("**/api/accounts/snapshot");
   await page.getByRole("button", { name: "Retry", exact: true }).click();
   await verifyHeadline(page);
 });

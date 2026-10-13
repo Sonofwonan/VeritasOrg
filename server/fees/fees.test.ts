@@ -108,6 +108,9 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     await registerFeeRoutes(app, pool, (req, res, next) => {
       if (req.header("x-admin-key") !== "isolated-test-admin") return void res.status(401).json({ message: "Unauthorized" });
       next();
+    }, (req, res, next) => {
+      if (req.header("x-test-frozen")) return void res.status(423).json({ message: "ACCOUNT_FROZEN" });
+      next();
     });
     server = app.listen(0, "127.0.0.1");
     await new Promise<void>(resolve => server.once("listening", resolve));
@@ -306,6 +309,12 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     assert.equal((await request("/api/admin/fees")).status, 401);
     assert.equal((await request("/api/accounts/1/fees")).status, 401);
     assert.equal((await request("/api/fees/summary")).status, 401);
+    assert.equal((await request("/api/accounts/snapshot")).status, 401);
+    const frozenSnapshot = await fetch(`${origin}/api/accounts/snapshot`, {
+      headers: { "x-test-user": "1", "x-test-frozen": "true" },
+    });
+    assert.equal(frozenSnapshot.status, 423);
+    assert.equal((await frozenSnapshot.json()).message, "ACCOUNT_FROZEN");
     assert.equal((await request("/api/accounts/1/fees", undefined, 2)).status, 404);
     assert.equal((await request("/api/accounts/1/fees", undefined, 1)).status, 200);
     const e = await offer();
@@ -329,6 +338,13 @@ describe("Billing persistence in an isolated PostgreSQL schema", () => {
     const other = await request("/api/fees/summary", undefined, 2);
     assert.deepEqual(other.body, { totalUnpaid: "0.00",totalOverdraft:"0.00",totalOwed:"0.00",
       accounts: [{ accountId: 2, accountName:"Trust Account", unpaidTotal: "0.00", unpaidCount: 0,overdraft:"0",amountOwed:"0.00" }] });
+    const snapshot = await request("/api/accounts/snapshot", undefined, 1);
+    assert.equal(snapshot.status, 200);
+    assert.deepEqual(snapshot.body.feeSummary, own.body);
+    assert.deepEqual(snapshot.body.accounts.map((a: any) => [a.id, a.userId, a.balance]), [[1, 1, "0"]]);
+    const otherSnapshot = await request("/api/accounts/snapshot", undefined, 2);
+    assert.deepEqual(otherSnapshot.body.accounts.map((a: any) => a.id), [2]);
+    assert.deepEqual(otherSnapshot.body.feeSummary, other.body);
     assert.equal((await query("SELECT balance FROM accounts WHERE id=1")).rows[0].balance, "0");
     await service.assessmentAction(run.results[0].id, "waive", "Fixture waiver");
     assert.equal((await service.clientSummary(1)).totalUnpaid, "0.00");

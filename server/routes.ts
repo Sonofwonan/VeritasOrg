@@ -165,7 +165,7 @@ export async function registerRoutes(
     next();
   };
 
-  await registerFeeRoutes(app, pool, requireAdmin);
+  await registerFeeRoutes(app, pool, requireAdmin, requireAuth);
   await registerHistoricalBalanceRoutes(app, pool, requireAdmin);
   await registerDisplayCurrencyRoutes(app, pool, requireAdmin);
   registerDebtRestrictionNoticeRoutes(app, pool, requireAdmin);

@@ -1,22 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
-import type { ClientFees, ClientFeeSummary, FeeOverview, FeePreview, FeeRunResult } from "@shared/fees";
+import type { ClientFees, ClientFeeSummary, ClientAccountSnapshot, FeeOverview, FeePreview, FeeRunResult } from "@shared/fees";
 import { useAuth } from "@/hooks/use-auth";
 
 export function useClientFeeSummary() {
   const { user } = useAuth();
-  const client = useQueryClient();
   const query = useQuery<ClientFeeSummary>({
     queryKey: ["/api/fees", "summary", user?.id],
     queryFn: async () => (await apiRequest("GET", "/api/fees/summary")).json(),
     enabled: !!user,
     refetchInterval: 30000,
   });
-  useEffect(() => {
-    if (query.data) void client.invalidateQueries({ queryKey: ["/api/accounts"], exact: true });
-  }, [query.data, client]);
   return query;
+}
+
+export function useClientAccountSnapshot() {
+  const { user } = useAuth();
+  return useQuery<ClientAccountSnapshot>({
+    // Existing balance-changing mutations invalidate the /api/accounts prefix.
+    // Keep this response whole; never copy either half into independent caches.
+    queryKey: ["/api/accounts", "snapshot", user?.id],
+    queryFn: async ({ signal }) =>
+      (await apiRequest("GET", "/api/accounts/snapshot", undefined, signal)).json(),
+    enabled: !!user,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: true,
+  });
 }
 
 export function useClientFees(accountId: number) {

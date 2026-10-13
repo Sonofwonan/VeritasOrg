@@ -8,6 +8,7 @@ test.use({ expectedHttpFailures: {
   "/api/investments/buy": 423,
   "/api/institutional-transfers": 423,
   "/api/accounts": 423,
+  "/api/accounts/snapshot": 423,
   "/api/investments": 423,
   "/api/transactions": 423,
 } });

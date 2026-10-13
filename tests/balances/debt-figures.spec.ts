@@ -45,7 +45,7 @@ for(const currency of ["CAD","GBP"] as const){
     test.setTimeout(120000);
     await db.query("UPDATE accounts SET account_type='Brokerage Account',display_name='Brokerage Account' WHERE id=$1 AND user_id=$2",[identity.debt,identity.userId]);
     await db.query("UPDATE users SET display_currency=$2,debt_clearance_required=true,debt_payment_account_id=$3 WHERE id=$1",[identity.userId,currency,identity.debt]);
-    const before=await snapshot(db,identity.userId);
+  const before=await snapshot(db,identity.userId);
     await login(page,identity);
     const accessBefore=await (await page.request.get("/api/funds-access")).json();
     await assertFundsActionBlocked(page,"button-quick-transfer");
@@ -157,18 +157,19 @@ test("multiple owed accounts retain masked permanent identities without details 
   expect(await snapshot(db,identity.userId)).toEqual(before);
 });
 
-test.use({expectedHttpFailures:{"/api/fees/summary":503}});
+test.use({expectedHttpFailures:{"/api/accounts/snapshot":503}});
 test("missing or malformed debt evidence cannot display a false zero",async ({page,identity})=>{
   await login(page,identity);
-  await page.route("**/api/fees/summary",route=>route.fulfill({status:503,json:{message:"Isolated failed debt evidence"}}));
+  await page.route("**/api/accounts/snapshot",route=>route.fulfill({status:503,json:{message:"Isolated failed debt evidence"}}));
   await page.reload();
   await expect(page.getByTestId("text-unpaid-fees")).toHaveText("Unavailable");
-  await expect(page.getByTestId("text-overdraft")).toHaveText("CAD -$1,250.75");
-  await page.unroute("**/api/fees/summary");
-  await page.route("**/api/fees/summary",async route=>{
+  await expect(page.getByTestId("text-overdraft")).toHaveText("Unavailable");
+  await page.unroute("**/api/accounts/snapshot");
+  await page.route("**/api/accounts/snapshot",async route=>{
     const response=await route.fetch();
-    const summary=await response.json();
-    await route.fulfill({json:{...summary,totalUnpaid:"NaN",totalOwed:"0"}});
+
+    const snapshot=await response.json();
+    await route.fulfill({json:{...snapshot,feeSummary:{...snapshot.feeSummary,totalUnpaid:"NaN",totalOwed:"0"}}});
   });
   await page.reload();
   await expect(page.getByTestId("text-unpaid-fees")).toHaveText("Unavailable");

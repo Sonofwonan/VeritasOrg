@@ -29,6 +29,7 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  signal?: AbortSignal,
 ): Promise<Response> {
   const fullUrl = url.startsWith('http') ? url : (url.startsWith('/api') ? API_BASE + url.replace('/api', '') : API_BASE + url);
   const res = await fetch(fullUrl, {
@@ -36,6 +37,7 @@ export async function apiRequest(
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
+    signal,
   });
 
   await throwIfResNotOk(res);

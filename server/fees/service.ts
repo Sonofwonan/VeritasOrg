@@ -4,7 +4,7 @@ import {
   BILLING_TIME_ZONE, billingToday, centsToMoney, feeAcceptanceInput, feeOfferInput, feeScheduleInput,
   availableCashCents, firstPeriodOnOrAfter, moneyToCents, periodDate, validateBillingDate,
   annualDate, managementFee, managementOfferInput, managementValuationInput,
-  type ClientFees, type ClientFeeSummary, type FeeAssessment, type FeeEnrollment, type FeeOverview, type FeePreview,
+  type ClientFees, type ClientFeeSummary, type ClientAccountSnapshot, type FeeAssessment, type FeeEnrollment, type FeeOverview, type FeePreview,
   type ManagementContract,
 } from "../../shared/fees";
 
@@ -111,10 +111,27 @@ export class FeeService {
     return { enrollments, assessments: assessments.rows.map(camel), settings: camel(settings.rows[0]), contracts,
       valuations: valuations.rows.map(camel), balance: rows[0].balance } as ClientFees;
   }
-  async clientSummary(userId: number): Promise<ClientFeeSummary> {
+  async clientAccountSnapshot(userId: number): Promise<ClientAccountSnapshot> {
+    const client = await this.pool.connect();
+    try {
+      // Payments need not take the billing advisory lock. MVCC gives both reads
+      // the same committed state without blocking approvals, posting or refunds.
+      await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+      const { rows } = await client.query("SELECT * FROM accounts WHERE user_id=$1 ORDER BY id", [userId]);
+      const feeSummary = await this.clientSummary(userId, client);
+      await client.query("COMMIT");
+      return { accounts: rows.map(camel) as ClientAccountSnapshot["accounts"], feeSummary };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+  async clientSummary(userId: number, reader: Pick<PoolClient, "query"> = this.pool): Promise<ClientFeeSummary> {
     // Include all unpaid periods, even for paused/ended plans. Paid fees already
     // reduced cash; waived/refunded/skipped assessments are not liabilities.
-    const { rows } = await this.pool.query(`SELECT a.id AS account_id,
+    const { rows } = await reader.query(`SELECT a.id AS account_id,
       COALESCE(NULLIF(a.display_name,''),a.account_type) AS account_name,
       COALESCE(SUM(f.total) FILTER (WHERE f.status='unpaid'),0)::text AS unpaid_total,
       COUNT(f.id) FILTER (WHERE f.status='unpaid')::integer AS unpaid_count

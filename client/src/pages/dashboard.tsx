@@ -1,4 +1,4 @@
-import { useAccounts, useInvestments, useAccountTransactions, usePortfolioTransactions } from "@/hooks/use-finances";
+import { useInvestments, useAccountTransactions, usePortfolioTransactions } from "@/hooks/use-finances";
 import { useLocation } from "wouter";
 import { LayoutShell } from "@/components/layout-shell";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { transactionDescription, clientBalanceCurrency, formatBalance } from "@shared/balance-currency";
 import { useFundsAccess } from "@/hooks/use-funds-access";
-import { useClientFeeSummary } from "@/hooks/use-fees";
+import { useClientAccountSnapshot } from "@/hooks/use-fees";
 import { DebtAccountSummary } from "@/components/fees/debt-account-summary";
 import { DebtRestrictionStatus } from "@/components/fees/debt-restriction-status";
 import { accountLabel, transactionDate, maskAccountNumber, type CashPosting } from "@shared/account-display";
@@ -53,8 +53,12 @@ export default function DashboardPage() {
   const currency = clientBalanceCurrency(user);
   const access = useFundsAccess();
   const [, setLocation] = useLocation();
-  const { data: accounts, isLoading: accountsLoading, isError: accountsError, refetch: refetchAccounts } = useAccounts();
-  const feeSummary = useClientFeeSummary();
+  const snapshot = useClientAccountSnapshot();
+  const accounts = snapshot.data?.accounts;
+  const accountsLoading = snapshot.isLoading;
+  const accountsError = snapshot.isError;
+  const refetchAccounts = snapshot.refetch;
+  const feeSummary = { ...snapshot, data: snapshot.isError ? undefined : snapshot.data?.feeSummary };
   const { data: investments, isLoading: investmentsLoading, isError: investmentsError, refetch: refetchInvestments } = useInvestments();
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
   const { data: instTransfers = [] } = useQuery<any[]>({ queryKey: ["/api/institutional-transfers"], refetchInterval: 15000 });
