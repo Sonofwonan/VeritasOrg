@@ -1,0 +1,57 @@
+Veritas Wealth Management AG
+Corporate, Regulatory and Multi-Currency Operating Profile
+1. Corporate and Regulatory Information
+Regulatory Field	Information	Verification
+Legal name	Veritas Wealth Management AG / Veritas Wealth Management SA	Verify through the Swiss Federal Commercial Register (Zefix)
+UID / Commercial Register number	CHE-482.910.375 HR/MWST*	Verify through the Swiss UID Register and Zefix
+Registered office	Bahnhofstrasse 42, 8001 Zürich, Switzerland*	Verify through the relevant commercial register entry
+Regulatory status	Portfolio manager under FinIA Art. 17 and/or manager of collective assets under FinIA Art. 24*	Verify through FINMA’s authorised institutions database
+Supervisory organisation	AOOS — Organisme de Surveillance des OS*	Verify through the supervisory organisation’s official register
+Ombudsman affiliation	FINOMBUDSMAN*	Verify through the ombudsman’s official member directory
+Adviser registration	BX Swiss RegServices under FinSA Art. 28*	Verify through the applicable public register
+*These details must be confirmed against current official records before publication or use in client communications. No regulatory authorisation, supervisory relationship, ombudsman affiliation, registration, office address, or corporate identity should be represented as established unless independently verified.
+
+2. Multi-Currency Assets Under Management
+The following allocation represents a proposed reporting framework for assets managed across USD, EUR, CHF and GBP mandates. Currency conversions should use the applicable valuation-date exchange rates and be updated regularly.
+
+Base Currency	Managed Assets	FX Rate to USD	USD Equivalent	Share of Total
+USD	$100,000,000	1.0000	$100,000,000	40.00%
+EUR	€75,000,000	1.0850	$81,375,000	32.55%
+CHF	CHF 40,000,000	1.1350	$45,400,000	18.16%
+GBP	£18,000,000	1.2900	$23,220,000	9.29%
+Total	—	—	$249,995,000	100.00%
+The converted total is approximately **
+249
+,
+995
+,
+000
+∗
+∗
+,
+n
+o
+t
+249,995,000∗∗,not250,000,000, based on the exchange rates shown. The difference should either be disclosed as rounding or corrected through the valuation methodology.
+
+3. Balanced Discretionary Mandate
+A balanced discretionary mandate may be structured according to the following target allocation, subject to each client’s investment objectives, risk tolerance, liquidity requirements, tax position, regulatory classification and mandate documentation.
+
+Asset Class	Target Allocation	Typical Exposure
+Equities	50%	Global developed and emerging-market equities
+Fixed income	40%	Sovereign, investment-grade and selected corporate bonds
+Cash and money-market instruments	10%	Base-currency cash, deposits and short-term government instruments
+Illustrative Currency-Based Portfolio
+Currency	Equities	Fixed Income	Cash / Liquidity	Total
+USD	$500,000	$400,000	$100,000	$1,000,000
+EUR	€500,000	€400,000	€100,000	€1,000,000
+CHF	CHF 500,000	CHF 400,000	CHF 100,000	CHF 1,000,000
+GBP	£500,000	£400,000	£100,000	£1,000,000
+Currency exposure may be managed through a combination of local-currency investments, hedged share classes, forward contracts and currency-matched liabilities. The applicable approach should be specified in each client’s investment policy statement.
+
+4. Fee Structure
+The following fee terms may be used as an illustrative commercial framework and must be confirmed in the relevant client agreement, fee schedule and offering documentation.
+
+Management fee: 0.85% per annum, charged quarterly in advance
+Performance fee: 10% of returns exceeding a 5% hurdle rate
+**High
