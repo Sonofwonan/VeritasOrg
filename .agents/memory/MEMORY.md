@@ -1,5 +1,6 @@
 - [Design Identity](design-identity.md) — Approved "Old Money, Digital Precision" visual system: Cormorant serif, forest green + cream + gold, near-zero radius, underline inputs, editorial layout.
 - [Business positioning](business-positioning.md) — Global private offshore wealth management, not a Canadian institution; currencies do not imply regulatory status.
+- [Supabase hosting](supabase-hosting.md) — Keep this app on its existing Supabase database when deploying the server to another host.
 - [Application password retention](application-password-retention.md) — Legacy application password hashes remain stored but are not used; do not erase them without explicit approval.
 - [Balance display](balance-display.md) — Full digits and separate overdrafts; CAD by default, with Mary Scott using only £ and unchanged numeric amounts.
 - [Fictional test records](fictional-test-records.md) — Mary Scott is fictional test data; use normal screens without a visible demo label, preserving internal test provenance.
