@@ -1,17 +1,21 @@
 # Deploy Veritas Wealth on Render
 
 This project runs as one Render Node web service: Express serves the API and the
-Vite-built frontend from the same origin. The existing Supabase PostgreSQL
-database stays in place; this setup does not create, migrate, seed, or copy a
-database.
+Vite-built frontend from the same origin. The Blueprint selects Render's Free
+compute plan. Free web services spin down after 15 minutes without traffic and
+can take about a minute to wake up; Render advises against using them for
+production.
+
+The existing Supabase PostgreSQL database stays in place; this setup does not
+create, migrate, seed, or copy a database.
 
 ## Deploy
 
 1. Push this repository, including `render.yaml`, to the Git provider connected
    to your Render account.
-2. In Render, create a new Blueprint and select the repository. Review the
-   service name and plan before creating it; Render will show any applicable
-   charges.
+2. In Render, create a new Blueprint and select the repository. Confirm that
+   the service uses the Free compute plan before creating it; review any
+   billing or usage notice Render displays.
 3. Enter the prompted values in Render's private environment-variable form:
    - `SUPABASE_DATABASE_URL`: the existing Supabase PostgreSQL connection URL.
    - `ADMIN_PASSWORD`: a new, strong administrator password. Do not leave this
@@ -29,6 +33,10 @@ database.
    `PORT` and serves both the frontend and `/api` routes.
 5. After the deploy succeeds, open the Render URL and verify sign-in and the
    expected Supabase-backed data before directing users to it.
+
+If you are testing the frontend on Vercel, update the `/api/(.*)` rewrite in
+`vercel.json` to use the actual public URL Render assigns to this service, then
+redeploy Vercel. Do not guess the Render URL before the service is created.
 
 Do not run the seed scripts or `db:push` as part of deployment. Review and
 authorize any future schema changes separately against the existing Supabase
