@@ -11,6 +11,7 @@
 - [Performance evidence](performance-evidence.md) — Stored numeric prices are not verified market evidence; deposits and fee liabilities must never imply investment gains.
 - [Navigation collapse](navigation-collapse.md) — Client side menu and top settings bar start collapsed; only deliberate user actions open them.
 - [Diagnostic runtime safety](diagnostic-runtime-safety.md) — One-off language commands can add unwanted runtimes; use the project's existing runtime for diagnostics.
+- [External build lockfiles](external-build-lockfiles.md) — Replace Replit-only package tarball URLs before external CI, preserving locked versions and integrity hashes.
 - [Plain-language interface](plain-language-ui.md) — Simple client wording, real transaction-history links and advisor-directed payment popups; preserve terms and access rules.
 - [Historical cash evidence](account-history-evidence.md) — Legacy completed rows may not represent cash movements; never infer historical balances from today's balance.
 - [Authenticator key rotation](security-key-rotation.md) — Re-encrypt authenticator secrets before replacing their encryption root; session-key rotation must not lock clients out.
